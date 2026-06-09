@@ -811,14 +811,14 @@ function rDup(k){return`
 
 // ── ACTIONS ──────────────────────────────
 async function saveRemark(k,n){const r=document.getElementById('rm-'+k)?.value||'';commit(k,n,'matched',{remark:r});await saveScanLog(k,'matched',{remark:r});hideR();}
-async async function doSerial(k,n,exp,match){
+async function doSerial(k,n,exp,match){
   const found=document.getElementById('sr-'+k)?.value||'';
   const remark=document.getElementById('rm-'+k)?.value||'';
   commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark});
   await saveScanLog(k,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark});
   toast(match?'Serial verified ✓':'Serial mismatch — flagged to HQ');hideR();
 }
-async async function doUnmatch(k){
+async function doUnmatch(k){
   const n=document.getElementById('un-'+k)?.value||'Unknown device';
   const s=document.getElementById('us-'+k)?.value||'';
   const r=document.getElementById('ur-'+k)?.value||'';
