@@ -580,7 +580,7 @@ function updateFocusStatus(focused) {
 }
 
 async function processScan(code) {
-  code = code.trim();
+  code = code.trim().toUpperCase();
   if (!code || S.cd) return;
   S.cd = true;
   setTimeout(() => S.cd = false, 2500);
@@ -685,7 +685,7 @@ function initCam(){
 
 // ── SCAN ────────────────────────────────
 async function scan(raw) {
-  const key  = raw.replace(/\s/g,'');
+  const key  = raw.replace(/\s/g,'').toUpperCase();
   const area = document.getElementById('ra');
   area.style.display = 'block';
 
@@ -757,6 +757,23 @@ function rMatch(k,a){return`
     <div class="ir"><span class="il">Purchase date</span><span class="iv">${a.date}</span></div>
     ${a.serial?`<div class="ir"><span class="il">Serial no.</span><span class="iv">${a.serial}</span></div>`:''}
     <div class="dv"></div>
+    <div class="fg">
+      <div class="fl">Photo verification (optional)</div>
+      <div class="ph-area" onclick="document.getElementById('photo-match-${k}').click()" style="padding:12px;display:flex;align-items:center;gap:10px;text-align:left;">
+        <input type="file" id="photo-match-${k}" accept="image/*" capture="environment" style="display:none" onchange="prevMatchPhoto(this,'${k}')">
+        <img id="photo-match-prev-${k}" class="ph-prev" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0;">
+        <div id="photo-match-ph-${k}" style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:22px;">📷</span>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--gray2);">Take verification photo</div>
+            <div style="font-size:11px;color:var(--gray3);">Tap to open camera</div>
+          </div>
+        </div>
+        <div id="photo-match-done-${k}" style="display:none;align-items:center;gap:6px;color:var(--green);font-size:13px;font-weight:500;">
+          <span>✓</span><span>Photo taken</span>
+        </div>
+      </div>
+    </div>
     <div class="fg"><div class="fl">Remark (optional)</div><input class="fi" id="rm-${k}" placeholder="e.g. damaged label, moved location..."/></div>
     <button class="btn-save" onclick="saveRemark('${k}','${a.name}')">SAVE & NEXT</button>
   </div>
@@ -810,7 +827,13 @@ function rDup(k){return`
 </div>`;}
 
 // ── ACTIONS ──────────────────────────────
-async function saveRemark(k,n){const r=document.getElementById('rm-'+k)?.value||'';commit(k,n,'matched',{remark:r});await saveScanLog(k,'matched',{remark:r});hideR();}
+async function saveRemark(k,n){
+  const r     = document.getElementById('rm-'+k)?.value||'';
+  const photo = window['photoData_'+k] || null;
+  commit(k,n,'matched',{remark:r, has_photo: !!photo});
+  await saveScanLog(k,'matched',{remark:r});
+  hideR();
+}
 async function doSerial(k,n,exp,match){
   const found=document.getElementById('sr-'+k)?.value||'';
   const remark=document.getElementById('rm-'+k)?.value||'';
@@ -827,6 +850,22 @@ async function doUnmatch(k){
   toast('Sent to HQ for review');hideR();
 }
 function hideR(){document.getElementById('ra').style.display='none';}
+function prevMatchPhoto(inp, k) {
+  if (!inp.files[0]) return;
+  const fr = new FileReader();
+  fr.onload = e => {
+    const prev = document.getElementById('photo-match-prev-'+k);
+    const ph   = document.getElementById('photo-match-ph-'+k);
+    const done = document.getElementById('photo-match-done-'+k);
+    if (prev) { prev.src = e.target.result; prev.style.display = 'block'; }
+    if (ph)   ph.style.display   = 'none';
+    if (done) done.style.display = 'flex';
+    // store photo data for save
+    window['photoData_'+k] = e.target.result;
+  };
+  fr.readAsDataURL(inp.files[0]);
+}
+
 function prevPhoto(inp,k){
   if(!inp.files[0])return;
   const fr=new FileReader();
