@@ -317,8 +317,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
             <input id="mc"
               style="width:100%;background:var(--offwhite);border:1.5px solid var(--border);border-radius:var(--rs);padding:14px 14px 14px 40px;font-family:var(--mono);font-size:14px;color:var(--gray1);outline:none;transition:border-color .2s;"
               placeholder="COM012022010001SEQ001"
-              onfocus="this.style.borderColor='var(--red)'"
-              onblur="this.style.borderColor='var(--border)';setTimeout(focusScanner,200)"
+              onfocus="this.style.borderColor='var(--red)';stopUrovoRefocus();"
+              onblur="this.style.borderColor='var(--border)';setTimeout(resumeUrovoFocus,500);"
+              onclick="this.focus();"
               onkeypress="if(event.key==='Enter')handleManual()"
             />
           </div>
@@ -554,6 +555,21 @@ let urovoBuffer = '';
 let urovoTimer  = null;
 const SCAN_TIMEOUT = 300; // เพิ่มจาก 80ms เพื่อรอ Urovo ส่งครบ
 
+// ── ควบคุม urovo focus ──────────────────────────────────
+let urovoFocusEnabled = true;
+
+function stopUrovoRefocus() {
+  urovoFocusEnabled = false;
+}
+
+function resumeUrovoFocus() {
+  urovoFocusEnabled = true;
+  // refocus urovo ถ้า mc ไม่ได้ active อยู่
+  if (document.activeElement?.id !== 'mc') {
+    focusScanner();
+  }
+}
+
 function focusScanner() {
   const inp = document.getElementById('urovo-input');
   if (!inp) return;
@@ -601,12 +617,12 @@ function initUrovoScanner() {
   inp.addEventListener('focus', () => updateFocusStatus(true));
   inp.addEventListener('blur', () => {
     setTimeout(() => {
+      if (!urovoFocusEnabled) return; // หยุด refocus ถ้า user กำลังพิมพ์ใน mc
       const active = document.activeElement;
       const isForm = active && active.id !== 'urovo-input' &&
                      (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
       if (isForm) {
         updateFocusStatus(false);
-        // ไม่ refocus — ปล่อยให้ user พิมพ์
       } else if (document.getElementById('ss')?.classList.contains('active')) {
         inp.focus();
         updateFocusStatus(true);
@@ -617,12 +633,13 @@ function initUrovoScanner() {
   // Refocus only when tapping scan area — not form fields
   document.addEventListener('touchend', (e) => {
     const t = e.target;
-    const isInteractive = t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' ||
-                          t.tagName === 'BUTTON' || t.tagName === 'SELECT' ||
+    const isInput = t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT';
+    if (isInput) return; // ปล่อยให้ input นั้น focus เอง
+    const isInteractive = t.tagName === 'BUTTON' ||
                           t.closest('.fi') || t.closest('.rc-body') ||
                           t.closest('.review-card') || t.closest('.unmatched-form') ||
-                          t.closest('#ra');
-    if (!isInteractive) {
+                          t.closest('#ra') || t.closest('#noqr-modal');
+    if (!isInteractive && urovoFocusEnabled) {
       setTimeout(() => { inp.focus(); updateFocusStatus(true); }, 50);
     }
   });
@@ -662,10 +679,11 @@ function initUrovoScanner() {
 
   // Keepalive: refocus every 5s ถ้าไม่มี form active และไม่มี result card แสดงอยู่
   setInterval(() => {
+    if (!urovoFocusEnabled) return; // user กำลังพิมพ์อยู่ ไม่ขัด
     if (!document.getElementById('ss')?.classList.contains('active')) return;
     const ra = document.getElementById('ra');
     const resultVisible = ra && ra.style.display !== 'none';
-    if (resultVisible) return; // ถ้า result card เปิดอยู่ ไม่ refocus
+    if (resultVisible) return;
     const active = document.activeElement;
     const isForm = active && active.id !== 'urovo-input' &&
                    (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
