@@ -444,7 +444,7 @@ def hq_get_unmatched(db=Depends(get_db), user=Depends(get_current_user)):
 # ════════════════════════════════════════════════════════════════
 @app.get("/")
 def root():
-    return {"status": "ok", "service": "Bata Asset Audit API", "version": "1.0.0"}
+    return {"status": "ok", "service": "Bata Asset Audit API", "version": "1.1.0"}
 
 @app.get("/health")
 def health(db=Depends(get_db)):
