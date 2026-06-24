@@ -10,8 +10,7 @@
 :root {
   --red:#CC0000;--red-d:#A30000;--red-l:#fff0f0;--red-bd:#ffcccc;
   --white:#fff;--bg:#f4f2ef;--sf:#fff;--sf2:#f9f8f5;
-  --border:#e0ddd6;--border2:#ccc9c0;
-  --text:#1a1a1a;--text2:#555;--text3:#999;
+  --border:#e0ddd6;--text:#1a1a1a;--text2:#555;--text3:#999;
   --green:#1a7a3c;--green-bg:#f0faf3;--green-bd:#b3dfc0;
   --amber:#b85c00;--amber-bg:#fff8f0;--amber-bd:#ffd4a0;
   --blue:#1a56db;--blue-bg:#eff4ff;--blue-bd:#c3d4fc;
@@ -20,8 +19,6 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;display:flex;}
-
-/* LOGIN */
 #login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200;}
 .login-box{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:40px 36px;width:360px;}
 .login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
@@ -37,8 +34,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .btn-login{width:100%;padding:12px;background:var(--red);color:#fff;border:none;border-radius:var(--rs);font-family:var(--cond);font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;}
 .login-err{color:var(--red);font-size:12px;margin-top:10px;display:none;}
 .login-err.show{display:block;}
-
-/* LAYOUT */
 #app{display:none;width:100%;min-height:100vh;}
 .sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:50;}
 .sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
@@ -60,8 +55,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .refresh-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);transition:all .15s;}
 .refresh-btn:hover{border-color:var(--red);color:var(--red);}
 .page{padding:24px 28px;display:flex;flex-direction:column;gap:20px;}
-
-/* STATS */
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
 .stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;}
 .stat-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
@@ -70,14 +63,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .stat-card.green .stat-val{color:var(--green);}
 .stat-card.amber .stat-val{color:var(--amber);}
 .stat-card.red .stat-val{color:var(--red);}
-
-/* SECTION */
 .section{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
 .section-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .section-title{font-family:var(--cond);font-size:16px;font-weight:700;}
 .section-actions{display:flex;gap:8px;align-items:center;}
-
-/* BUTTONS */
 .btn{padding:7px 14px;border-radius:var(--rs);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
 .btn-outline{background:var(--white);border-color:var(--border);color:var(--text2);}
 .btn-outline:hover{border-color:var(--red);color:var(--red);}
@@ -85,53 +74,38 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .btn-red:hover{background:var(--red-d);}
 .btn-green{background:var(--green);border-color:var(--green);color:#fff;}
 .btn-sm{padding:5px 10px;font-size:12px;}
-
-/* TABLE */
 .tbl-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 thead th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;background:var(--sf2);border-bottom:1px solid var(--border);white-space:nowrap;}
 tbody td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
 tbody tr:last-child td{border-bottom:none;}
 tbody tr:hover{background:var(--sf2);}
-
-/* BADGE */
 .badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid;}
 .badge-green{background:var(--green-bg);color:var(--green);border-color:var(--green-bd);}
 .badge-amber{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd);}
 .badge-red{background:var(--red-l);color:var(--red);border-color:var(--red-bd);}
 .badge-gray{background:var(--sf2);color:var(--text3);border-color:var(--border);}
-.badge-blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd);}
-
-/* PHOTO GRID */
 .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:16px 18px;}
 .photo-card{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--white);}
 .photo-card img{width:100%;height:160px;object-fit:cover;display:block;cursor:pointer;}
 .photo-no-img{width:100%;height:160px;background:var(--sf2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3);font-size:12px;}
 .photo-body{padding:12px 14px;display:flex;flex-direction:column;gap:5px;}
 .photo-code{font-family:var(--mono);font-size:11px;color:var(--text3);}
-.photo-name{font-size:13px;font-weight:600;color:var(--text);}
+.photo-name{font-size:13px;font-weight:600;}
 .photo-meta{font-size:11px;color:var(--text3);}
 .photo-actions{display:flex;gap:6px;margin-top:6px;}
-
-/* TABS */
 .tab-bar{display:flex;border-bottom:1px solid var(--border);padding:0 18px;}
 .tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .tab.active{color:var(--red);border-bottom-color:var(--red);}
-
-/* FILTER BAR */
 .filter-bar{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
 .filter-bar input,.filter-bar select{padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-family:var(--sans);background:var(--sf2);outline:none;}
 .filter-bar input:focus,.filter-bar select:focus{border-color:var(--red);}
 .filter-bar input{min-width:200px;}
-
-/* PROGRESS BAR */
 .pb{background:#e8e5e0;border-radius:99px;height:7px;overflow:hidden;width:100px;}
 .pb-fill{height:100%;border-radius:99px;}
 .pb-green{background:var(--green);}
 .pb-amber{background:var(--amber);}
 .pb-red{background:var(--red);}
-
-/* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
 .modal{background:var(--white);border-radius:var(--r);max-width:640px;width:100%;max-height:90vh;overflow-y:auto;}
 .modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
@@ -146,25 +120,18 @@ tbody tr:hover{background:var(--sf2);}
 .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red);}
 .field textarea{resize:vertical;min-height:70px;}
 .modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
-
-/* LOADING */
 .loading{text-align:center;padding:40px;color:var(--text3);font-size:13px;}
-
-/* TOAST */
 .toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:300;}
 .toast{background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--rs);font-size:13px;font-weight:500;animation:fadeIn .2s ease;max-width:320px;}
 .toast.success{background:var(--green);}
 .toast.error{background:var(--red);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-
-/* LIGHTBOX */
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
 .lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">
@@ -172,7 +139,7 @@ tbody tr:hover{background:var(--sf2);}
       <div class="login-brand">BATA<span>THAILAND · HQ</span></div>
     </div>
     <div class="login-title">HQ Dashboard v2</div>
-    <div class="login-sub">Fixed Asset Audit — Neon Direct</div>
+    <div class="login-sub">Fixed Asset Audit Management</div>
     <div class="lf"><label>Employee ID</label><input id="l-id" type="text" placeholder="ADMIN01"/></div>
     <div class="lf"><label>Password</label><input id="l-pw" type="password" placeholder="••••••••"/></div>
     <button class="btn-login" onclick="doLogin()">SIGN IN</button>
@@ -180,7 +147,6 @@ tbody tr:hover{background:var(--sf2);}
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <div class="sidebar">
     <div class="sidebar-logo">
@@ -190,16 +156,13 @@ tbody tr:hover{background:var(--sf2);}
     <div class="sidebar-nav">
       <button class="nav-item active" id="nav-overview" onclick="showPage('overview')">📊 Overview</button>
       <button class="nav-item" id="nav-scans" onclick="showPage('scans')">
-        🔍 Scan Logs
-        <span class="nav-badge" id="badge-scans"></span>
+        🔍 Scan Logs <span class="nav-badge" id="badge-scans"></span>
       </button>
       <button class="nav-item" id="nav-photos" onclick="showPage('photos')">
-        📷 Photos
-        <span class="nav-badge amber" id="badge-photos"></span>
+        📷 Photos <span class="nav-badge amber" id="badge-photos"></span>
       </button>
       <button class="nav-item" id="nav-unmatched" onclick="showPage('unmatched')">
-        ⚠️ Unmatched
-        <span class="nav-badge" id="badge-unmatched"></span>
+        ⚠️ Unmatched <span class="nav-badge" id="badge-unmatched"></span>
       </button>
       <button class="nav-item" id="nav-export" onclick="showPage('export')">📥 Export</button>
     </div>
@@ -220,18 +183,17 @@ tbody tr:hover{background:var(--sf2);}
 
     <!-- OVERVIEW -->
     <div class="page" id="page-overview">
-      <div class="stat-grid" id="stat-grid">
+      <div class="stat-grid">
         <div class="stat-card"><div class="stat-label">Total Scans</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all sessions</div></div>
         <div class="stat-card green"><div class="stat-label">With Photo</div><div class="stat-val" id="s-photo">—</div><div class="stat-sub">รูปถ่ายแนบมา</div></div>
         <div class="stat-card amber"><div class="stat-label">Unmatched</div><div class="stat-val" id="s-unmatched">—</div><div class="stat-sub">pending review</div></div>
         <div class="stat-card red"><div class="stat-label">Serial Mismatch</div><div class="stat-val" id="s-mismatch">—</div><div class="stat-sub">ไม่ตรงกับ master</div></div>
       </div>
-
       <div class="section">
         <div class="section-head"><div class="section-title">Branch Sessions</div></div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Branch</th><th>Session</th><th>Date</th><th>Progress</th><th>Scanned</th><th>Pending</th><th>Status</th></tr></thead>
+            <thead><tr><th>Branch</th><th>Total Assets</th><th>Progress</th><th>Scanned</th><th>Pending</th><th>Unmatched</th><th>Status</th></tr></thead>
             <tbody id="sessions-tbody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -272,13 +234,11 @@ tbody tr:hover{background:var(--sf2);}
       <div class="section">
         <div class="section-head">
           <div class="section-title">📷 รูปถ่ายจากสาขา</div>
-          <div class="section-actions">
-            <span id="photo-count" style="font-size:12px;color:var(--text3);">—</span>
-          </div>
+          <div class="section-actions"><span id="photo-count" style="font-size:12px;color:var(--text3);">—</span></div>
         </div>
         <div class="filter-bar">
-          <input id="photo-search" type="text" placeholder="ค้นหา..." oninput="filterPhotos()">
-          <select id="photo-branch" onchange="filterPhotos()"><option value="">ทุกสาขา</option></select>
+          <input id="photo-search" type="text" placeholder="ค้นหา..." oninput="renderPhotos()">
+          <select id="photo-branch" onchange="renderPhotos()"><option value="">ทุกสาขา</option></select>
         </div>
         <div class="photo-grid" id="photo-grid"><div class="loading" style="grid-column:1/-1">Loading...</div></div>
       </div>
@@ -289,9 +249,7 @@ tbody tr:hover{background:var(--sf2);}
       <div class="section">
         <div class="section-head">
           <div class="section-title">⚠️ Unmatched Assets</div>
-          <div class="section-actions">
-            <span id="unmatched-count" style="font-size:12px;color:var(--text3);">—</span>
-          </div>
+          <div class="section-actions"><span id="unmatched-count" style="font-size:12px;color:var(--text3);">—</span></div>
         </div>
         <div class="tab-bar">
           <div class="tab active" onclick="filterUnmatched('pending',this)">Pending</div>
@@ -311,18 +269,17 @@ tbody tr:hover{background:var(--sf2);}
           <button class="btn btn-outline" onclick="exportScans()">🔍 Export Scan Logs (.xlsx)</button>
           <button class="btn btn-outline" onclick="exportUnmatchedXlsx()">⚠️ Export Unmatched (.xlsx)</button>
           <div style="background:var(--sf2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--text3);line-height:1.7;margin-top:8px;">
-            ข้อมูลดึงตรงจาก Neon database ครับ ไฟล์จะมี sheet: Scan Logs, Unmatched, Sessions
+            ข้อมูลดึงผ่าน Railway API ครับ ไฟล์จะมี sheet: Summary, Scan Logs, Unmatched
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
 <!-- EDIT SCAN MODAL -->
-<div class="modal-overlay" id="edit-modal" style="display:none" onclick="closeModal(event)">
-  <div class="modal" onclick="event.stopPropagation()">
+<div class="modal-overlay" id="edit-modal" style="display:none" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
     <div class="modal-head">
       <div class="modal-title">✏️ แก้ไข Scan Log</div>
       <button class="modal-close" onclick="closeEditModal()">✕</button>
@@ -360,96 +317,84 @@ tbody tr:hover{background:var(--sf2);}
   </div>
 </div>
 
-<!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" style="display:none" onclick="closeLightbox()">
   <img id="lightbox-img" src="" alt="">
 </div>
-
 <div class="toast-wrap" id="toast-wrap"></div>
 
 <script>
-// ── CONFIG ──────────────────────────────────────────
-const NEON_API = 'https://ep-flat-leaf-aqjdw2ld.apirest.c-8.us-east-1.aws.neon.tech/neondb/rest/v1';
-const NEON_KEY = 'napi_yw59mk3yr1ays5uvhtz2xgxdywi4lq73ii35kbnuy8soyo9s40jm10vhujsx934m';
-
-// HQ credentials (local check — no backend needed)
-const HQ_USERS = { 'ADMIN01': 'admin999', 'ADMIN02': 'admin999' };
-
-// ── STATE ────────────────────────────────────────────
+const API = 'https://bata-asset-api-production.up.railway.app';
+let token = null;
 let currentUser = null;
 let allScans = [];
 let allUnmatched = [];
 let allSessions = [];
 let filteredScans = [];
+let unmatchedFilter = 'pending';
 
 // ── SESSION ──────────────────────────────────────────
-function saveSession(user) { sessionStorage.setItem('bata_hq_v2', user); }
+function saveSession(t, user) { sessionStorage.setItem('bata_hq_v2', JSON.stringify({token:t,user})); }
 function restoreSession() {
-  const u = sessionStorage.getItem('bata_hq_v2');
-  if (!u) return false;
-  currentUser = u;
-  document.getElementById('sb-user').textContent = u;
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  return true;
+  try {
+    const s = JSON.parse(sessionStorage.getItem('bata_hq_v2'));
+    if (!s?.token) return false;
+    token = s.token; currentUser = s.user;
+    document.getElementById('sb-user').textContent = s.user;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    return true;
+  } catch(e) { return false; }
 }
 window.addEventListener('load', () => { if (restoreSession()) loadAll(); });
-document.addEventListener('keypress', e => { if (e.key === 'Enter') doLogin(); });
+document.addEventListener('keypress', e => { if (e.key==='Enter') doLogin(); });
 
 // ── LOGIN ────────────────────────────────────────────
-function doLogin() {
+async function doLogin() {
   const id = document.getElementById('l-id').value.trim();
   const pw = document.getElementById('l-pw').value;
   const err = document.getElementById('l-err');
   err.classList.remove('show');
-  if (HQ_USERS[id] && HQ_USERS[id] === pw) {
-    currentUser = id;
+  const btn = document.querySelector('.btn-login');
+  btn.textContent = 'Signing in...'; btn.disabled = true;
+  try {
+    const res = await fetch(API + '/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({employee_id: id, password: pw, branch_id: 'HQ'})
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Login failed');
+    if (data.role !== 'hq_admin') throw new Error('HQ admin access required');
+    token = data.token; currentUser = id;
     document.getElementById('sb-user').textContent = id;
-    saveSession(id);
+    saveSession(token, id);
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     loadAll();
-  } else {
-    err.textContent = 'Invalid credentials — HQ admin only';
-    err.classList.add('show');
-  }
+  } catch(e) {
+    err.textContent = e.message; err.classList.add('show');
+  } finally { btn.textContent = 'SIGN IN'; btn.disabled = false; }
 }
 function doLogout() {
-  sessionStorage.removeItem('bata_hq_v2');
+  token = null; sessionStorage.removeItem('bata_hq_v2');
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
 }
-
-// ── NEON API ─────────────────────────────────────────
-async function neonQuery(sql) {
-  const res = await fetch(NEON_API + '/query', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Neon-Api-Key': NEON_KEY
-    },
-    body: JSON.stringify({ query: sql })
-  });
-  if (!res.ok) {
-    const txt = await res.text();
-    throw new Error('Neon API error: ' + txt);
-  }
-  const data = await res.json();
-  return data.rows || data;
-}
+function authHeader() { return {'Authorization':'Bearer '+token,'Content-Type':'application/json'}; }
 
 // ── LOAD ALL ─────────────────────────────────────────
 async function loadAll() {
+  if (!token) return;
   document.getElementById('last-updated').textContent = 'Loading...';
   try {
-    await Promise.all([loadScans(), loadUnmatched(), loadSessions()]);
+    await Promise.all([loadScans(), loadUnmatched(), loadSummary()]);
     renderOverview();
     renderScans();
     renderPhotos();
-    renderUnmatched('pending');
+    renderUnmatched(unmatchedFilter);
     updateBadges();
     document.getElementById('last-updated').textContent =
-      'Updated ' + new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      'Updated ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
   } catch(e) {
     console.error(e);
     showToast('Error: ' + e.message, 'error');
@@ -458,127 +403,80 @@ async function loadAll() {
 }
 
 async function loadScans() {
-  const rows = await neonQuery(`
-    SELECT sl.id, sl.condition, sl.serial_match, sl.serial_found, sl.photo_url,
-           sl.scanned_at, sl.hq_note,
-           a.asset_code, a.name as asset_name,
-           u.email as auditor,
-           s.id as session_id,
-           b.id as branch_id, b.name as branch_name
-    FROM scan_logs sl
-    LEFT JOIN assets a ON sl.asset_id = a.id
-    LEFT JOIN users u ON sl.scanned_by = u.id
-    LEFT JOIN audit_sessions s ON sl.session_id = s.id
-    LEFT JOIN branches b ON s.branch_id = b.id
-    ORDER BY sl.scanned_at DESC
-  `);
-  allScans = rows;
-  filteredScans = rows;
-  populateBranchFilter('scan-branch', rows);
-  populateBranchFilter('photo-branch', rows);
+  const res = await fetch(API + '/hq/scans', {headers: authHeader()});
+  if (!res.ok) throw new Error('Cannot load scans: ' + res.status);
+  const data = await res.json();
+  allScans = data.scans || [];
+  filteredScans = allScans;
+  populateBranchFilter('scan-branch', allScans);
+  populateBranchFilter('photo-branch', allScans);
 }
 
 async function loadUnmatched() {
-  try {
-    const rows = await neonQuery(`
-      SELECT ua.id, ua.scanned_qr, ua.name_guess, ua.serial_no, ua.photo_url,
-             ua.scanned_at, ua.status, ua.hq_note,
-             u.email as auditor,
-             b.id as branch_id, b.name as branch_name
-      FROM unmatched_assets ua
-      LEFT JOIN users u ON ua.reported_by = u.id
-      LEFT JOIN audit_sessions s ON ua.session_id = s.id
-      LEFT JOIN branches b ON s.branch_id = b.id
-      ORDER BY ua.scanned_at DESC
-    `);
-    allUnmatched = rows;
-  } catch(e) { allUnmatched = []; }
+  const res = await fetch(API + '/hq/unmatched', {headers: authHeader()});
+  if (!res.ok) throw new Error('Cannot load unmatched: ' + res.status);
+  const data = await res.json();
+  allUnmatched = data.items || [];
 }
 
-async function loadSessions() {
-  try {
-    const rows = await neonQuery(`
-      SELECT s.id, s.branch_id, s.status, s.created_at,
-             b.name as branch_name,
-             COUNT(sl.id) as scanned_count,
-             (SELECT COUNT(*) FROM assets a WHERE a.branch_id = s.branch_id) as total_assets
-      FROM audit_sessions s
-      LEFT JOIN branches b ON s.branch_id = b.id
-      LEFT JOIN scan_logs sl ON sl.session_id = s.id
-      GROUP BY s.id, b.name
-      ORDER BY s.created_at DESC
-    `);
-    allSessions = rows;
-  } catch(e) { allSessions = []; }
+async function loadSummary() {
+  const res = await fetch(API + '/dashboard/summary', {headers: authHeader()});
+  if (!res.ok) throw new Error('Cannot load summary: ' + res.status);
+  const data = await res.json();
+  allSessions = data.sessions || [];
 }
 
 function populateBranchFilter(selectId, rows) {
   const sel = document.getElementById(selectId);
-  const branches = [...new Set(rows.map(r => r.branch_id).filter(Boolean))];
-  const current = sel.value;
-  sel.innerHTML = '<option value="">ทุกสาขา</option>' +
-    branches.map(b => `<option value="${b}">${b}</option>`).join('');
-  sel.value = current;
+  const cur = sel.value;
+  const branches = [...new Set(rows.map(r => r.branch_id).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">ทุกสาขา</option>' + branches.map(b=>`<option value="${b}">${b}</option>`).join('');
+  sel.value = cur;
 }
 
-// ── RENDER OVERVIEW ──────────────────────────────────
+// ── OVERVIEW ─────────────────────────────────────────
 function renderOverview() {
-  const total = allScans.length;
-  const withPhoto = allScans.filter(s => s.photo_url).length;
-  const unmatched = allUnmatched.filter(u => u.status === 'pending').length;
-  const mismatch = allScans.filter(s => s.serial_match === false).length;
-
-  document.getElementById('s-total').textContent = total.toLocaleString();
-  document.getElementById('s-photo').textContent = withPhoto.toLocaleString();
-  document.getElementById('s-unmatched').textContent = unmatched.toLocaleString();
-  document.getElementById('s-mismatch').textContent = mismatch.toLocaleString();
+  document.getElementById('s-total').textContent = allScans.length.toLocaleString();
+  document.getElementById('s-photo').textContent = allScans.filter(s=>s.photo_url).length.toLocaleString();
+  document.getElementById('s-unmatched').textContent = allUnmatched.filter(u=>u.status==='pending').length.toLocaleString();
+  document.getElementById('s-mismatch').textContent = allScans.filter(s=>s.serial_match===false).length.toLocaleString();
 
   const tbody = document.getElementById('sessions-tbody');
-  if (!allSessions.length) {
-    tbody.innerHTML = '<tr><td colspan="7" class="loading">No sessions found</td></tr>';
-    return;
-  }
+  if (!allSessions.length) { tbody.innerHTML='<tr><td colspan="7" class="loading">No sessions</td></tr>'; return; }
   tbody.innerHTML = allSessions.map(s => {
-    const total = parseInt(s.total_assets) || 0;
-    const scanned = parseInt(s.scanned_count) || 0;
-    const pct = total ? Math.round(scanned / total * 100) : 0;
-    const cls = pct === 100 ? 'pb-green' : pct >= 50 ? 'pb-amber' : 'pb-red';
+    const total = parseInt(s.total_assets)||0;
+    const scanned = parseInt(s.scanned_count)||0;
+    const pct = total ? Math.round(scanned/total*100) : 0;
+    const cls = pct===100?'pb-green':pct>=50?'pb-amber':'pb-red';
     return `<tr>
       <td><strong>${s.branch_id}</strong><br><span style="font-size:11px;color:var(--text3);">${s.branch_name||''}</span></td>
-      <td style="font-family:var(--mono);font-size:11px;">${s.id}</td>
-      <td style="font-size:12px;">${s.created_at ? new Date(s.created_at).toLocaleDateString('th-TH') : '—'}</td>
+      <td>${total.toLocaleString()}</td>
       <td><div style="display:flex;align-items:center;gap:8px;"><div class="pb"><div class="pb-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:12px;font-family:var(--mono);">${pct}%</span></div></td>
       <td>${scanned}</td>
-      <td>${Math.max(0, total - scanned)}</td>
+      <td>${Math.max(0,total-scanned)}</td>
+      <td>${parseInt(s.unmatched_count)||0 ? `<span class="badge badge-red">${s.unmatched_count}</span>` : '<span class="badge badge-gray">0</span>'}</td>
       <td><span class="badge ${s.status==='closed'?'badge-green':'badge-amber'}">${s.status||'open'}</span></td>
     </tr>`;
   }).join('');
 }
 
-// ── RENDER SCANS ─────────────────────────────────────
+// ── SCAN LOGS ─────────────────────────────────────────
 function renderScans() {
-  const tbody = document.getElementById('scans-tbody');
   document.getElementById('scan-count').textContent = filteredScans.length + ' รายการ';
-  if (!filteredScans.length) {
-    tbody.innerHTML = '<tr><td colspan="8" class="loading">ไม่พบข้อมูล</td></tr>'; return;
-  }
+  const tbody = document.getElementById('scans-tbody');
+  if (!filteredScans.length) { tbody.innerHTML='<tr><td colspan="8" class="loading">ไม่พบข้อมูล</td></tr>'; return; }
   tbody.innerHTML = filteredScans.map(s => `<tr>
     <td style="font-family:var(--mono);font-size:11px;">${s.asset_code||'—'}</td>
-    <td style="max-width:200px;">
-      <div style="font-weight:500;font-size:13px;">${s.asset_name||'—'}</div>
-      <div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div>
-    </td>
+    <td><div style="font-weight:500;">${s.asset_name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
     <td><span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span></td>
     <td>${s.serial_match===true?'<span class="badge badge-green">✓ Match</span>':s.serial_match===false?'<span class="badge badge-red">✗ Mismatch</span>':'<span class="badge badge-gray">N/A</span>'}</td>
     <td style="font-family:var(--mono);font-size:11px;">${s.serial_found||'—'}</td>
     <td style="font-size:12px;">${s.branch_id||'—'}</td>
     <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</td>
-    <td>
-      <div style="display:flex;gap:4px;">
-        ${s.photo_url?`<button class="btn btn-outline btn-sm" onclick="openLightbox('${s.photo_url}')">📷</button>`:''}
-        <button class="btn btn-outline btn-sm" onclick="openEditModal(${s.id})">✏️ Edit</button>
-      </div>
-    </td>
+    <td><div style="display:flex;gap:4px;">
+      ${s.photo_url?`<button class="btn btn-outline btn-sm" onclick="openLightbox('${s.photo_url}')">📷</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="openEditModal(${s.id})">✏️ Edit</button>
+    </div></td>
   </tr>`).join('');
 }
 
@@ -588,51 +486,48 @@ function filterScans() {
   const cond = document.getElementById('scan-condition').value;
   filteredScans = allScans.filter(s =>
     (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q)) &&
-    (!branch || s.branch_id === branch) &&
-    (!cond || s.condition === cond)
+    (!branch || s.branch_id===branch) &&
+    (!cond || s.condition===cond)
   );
   renderScans();
 }
 
-// ── RENDER PHOTOS ─────────────────────────────────────
+// ── PHOTOS ────────────────────────────────────────────
 function renderPhotos() {
   const q = document.getElementById('photo-search').value.toLowerCase();
   const branch = document.getElementById('photo-branch').value;
-  const withPhoto = allScans.filter(s =>
+  const items = allScans.filter(s =>
     s.photo_url &&
     (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q)) &&
-    (!branch || s.branch_id === branch)
+    (!branch || s.branch_id===branch)
   );
-  document.getElementById('photo-count').textContent = withPhoto.length + ' รูป';
+  document.getElementById('photo-count').textContent = items.length + ' รูป';
   const grid = document.getElementById('photo-grid');
-  if (!withPhoto.length) {
-    grid.innerHTML = '<div class="loading" style="grid-column:1/-1">ไม่มีรูปถ่าย</div>'; return;
-  }
-  grid.innerHTML = withPhoto.map(s => `
+  if (!items.length) { grid.innerHTML='<div class="loading" style="grid-column:1/-1">ไม่มีรูปถ่าย</div>'; return; }
+  grid.innerHTML = items.map(s => `
     <div class="photo-card">
-      <img src="${s.photo_url}" alt="${s.asset_name||''}" onclick="openLightbox('${s.photo_url}')" title="คลิกเพื่อขยาย">
+      <img src="${s.photo_url}" alt="${s.asset_name||''}" onclick="openLightbox('${s.photo_url}')">
       <div class="photo-body">
         <div class="photo-code">${s.asset_code||'—'}</div>
         <div class="photo-name">${s.asset_name||'—'}</div>
         <div class="photo-meta">สาขา: ${s.branch_id||'—'} · ${s.auditor||'—'}</div>
         <div class="photo-meta">${s.scanned_at?new Date(s.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</div>
         <span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span>
+        ${s.hq_note?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">📝 ${s.hq_note}</div>`:''}
         <div class="photo-actions">
           <button class="btn btn-outline btn-sm" style="flex:1;" onclick="openEditModal(${s.id})">✏️ Edit</button>
         </div>
       </div>
     </div>`).join('');
 }
-function filterPhotos() { renderPhotos(); }
 
-// ── RENDER UNMATCHED ──────────────────────────────────
+// ── UNMATCHED ─────────────────────────────────────────
 function renderUnmatched(filter) {
-  const items = filter === 'all' ? allUnmatched : allUnmatched.filter(u => u.status === filter);
+  unmatchedFilter = filter;
+  const items = filter==='all' ? allUnmatched : allUnmatched.filter(u=>u.status===filter);
   document.getElementById('unmatched-count').textContent = items.length + ' รายการ';
   const grid = document.getElementById('unmatched-grid');
-  if (!items.length) {
-    grid.innerHTML = '<div class="loading" style="grid-column:1/-1">ไม่มีรายการ</div>'; return;
-  }
+  if (!items.length) { grid.innerHTML='<div class="loading" style="grid-column:1/-1">ไม่มีรายการ</div>'; return; }
   grid.innerHTML = items.map(u => `
     <div class="photo-card">
       ${u.photo_url
@@ -645,7 +540,8 @@ function renderUnmatched(filter) {
         ${u.serial_no?`<div class="photo-meta">Serial: <strong>${u.serial_no}</strong></div>`:''}
         <div class="photo-meta">${u.scanned_at?new Date(u.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</div>
         <span class="badge ${u.status==='matched'?'badge-green':u.status==='pending'?'badge-amber':'badge-gray'}">${u.status}</span>
-        ${u.hq_note?`<div style="font-size:11px;color:var(--text3);margin-top:4px;">${u.hq_note}</div>`:''}
+        ${u.hq_note?`<div style="font-size:11px;color:var(--text3);margin-top:4px;">📝 ${u.hq_note}</div>`:''}
+        ${u.matched_asset_code?`<div style="font-size:11px;color:var(--green);margin-top:2px;">✓ Matched: ${u.matched_asset_code}</div>`:''}
         ${u.status==='pending'?`
           <div class="photo-actions">
             <button class="btn btn-green btn-sm" style="flex:1;" onclick="approveUnmatched(${u.id})">✓ Matched</button>
@@ -654,147 +550,127 @@ function renderUnmatched(filter) {
       </div>
     </div>`).join('');
 }
+
 function filterUnmatched(filter, el) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   renderUnmatched(filter);
 }
 
-// ── APPROVE/REJECT UNMATCHED ─────────────────────────
+// ── APPROVE / REJECT ──────────────────────────────────
 async function approveUnmatched(id) {
   try {
-    await neonQuery(`UPDATE unmatched_assets SET status='matched', hq_note='Approved by HQ - ${currentUser}', updated_at=NOW() WHERE id=${id}`);
-    const item = allUnmatched.find(u => u.id == id);
-    if (item) { item.status = 'matched'; item.hq_note = 'Approved by HQ - ' + currentUser; }
-    renderUnmatched('pending');
-    updateBadges();
+    const res = await fetch(API + '/hq/unmatched/' + id, {
+      method: 'PATCH', headers: authHeader(),
+      body: JSON.stringify({status:'matched'})
+    });
+    if (!res.ok) throw new Error((await res.json()).detail);
+    const item = allUnmatched.find(u=>u.id==id);
+    if (item) { item.status='matched'; item.hq_note='Approved by HQ - '+currentUser; }
+    renderUnmatched(unmatchedFilter); updateBadges();
     showToast('Approved ✓', 'success');
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+  } catch(e) { showToast('Error: '+e.message,'error'); }
 }
 
 async function rejectUnmatched(id) {
   try {
-    await neonQuery(`UPDATE unmatched_assets SET status='rejected', hq_note='Rejected by HQ - ${currentUser}', updated_at=NOW() WHERE id=${id}`);
-    const item = allUnmatched.find(u => u.id == id);
-    if (item) { item.status = 'rejected'; }
-    renderUnmatched('pending');
-    updateBadges();
+    const res = await fetch(API + '/hq/unmatched/' + id, {
+      method: 'PATCH', headers: authHeader(),
+      body: JSON.stringify({status:'rejected'})
+    });
+    if (!res.ok) throw new Error((await res.json()).detail);
+    const item = allUnmatched.find(u=>u.id==id);
+    if (item) item.status='rejected';
+    renderUnmatched(unmatchedFilter); updateBadges();
     showToast('Rejected', 'error');
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+  } catch(e) { showToast('Error: '+e.message,'error'); }
 }
 
-// ── EDIT SCAN MODAL ───────────────────────────────────
+// ── EDIT MODAL ────────────────────────────────────────
 function openEditModal(id) {
-  const s = allScans.find(r => r.id == id);
+  const s = allScans.find(r=>r.id==id);
   if (!s) return;
   document.getElementById('m-scan-id').value = id;
-  document.getElementById('m-code').value = s.asset_code || '';
-  document.getElementById('m-name').value = s.asset_name || '';
-  document.getElementById('m-condition').value = s.condition || 'good';
-  document.getElementById('m-serial').value = s.serial_found || '';
-  document.getElementById('m-note').value = s.hq_note || '';
+  document.getElementById('m-code').value = s.asset_code||'';
+  document.getElementById('m-name').value = s.asset_name||'';
+  document.getElementById('m-condition').value = s.condition||'good';
+  document.getElementById('m-serial').value = s.serial_found||'';
+  document.getElementById('m-note').value = s.hq_note||'';
   const img = document.getElementById('modal-img');
-  if (s.photo_url) { img.src = s.photo_url; img.style.display = 'block'; }
-  else img.style.display = 'none';
-  document.getElementById('edit-modal').style.display = 'flex';
+  if (s.photo_url) { img.src=s.photo_url; img.style.display='block'; }
+  else img.style.display='none';
+  document.getElementById('edit-modal').style.display='flex';
 }
-function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
-function closeModal(e) { if (e.target === document.getElementById('edit-modal')) closeEditModal(); }
+function closeEditModal() { document.getElementById('edit-modal').style.display='none'; }
 
 async function saveScanEdit() {
   const id = document.getElementById('m-scan-id').value;
-  const condition = document.getElementById('m-condition').value;
-  const serial = document.getElementById('m-serial').value.trim();
-  const note = document.getElementById('m-note').value.trim();
+  const body = {
+    condition: document.getElementById('m-condition').value,
+    serial_found: document.getElementById('m-serial').value.trim() || null,
+    hq_note: document.getElementById('m-note').value.trim() || null
+  };
   try {
-    await neonQuery(`
-      UPDATE scan_logs SET
-        condition='${condition}',
-        serial_found=${serial ? `'${serial.replace(/'/g,"''")}'` : 'NULL'},
-        hq_note=${note ? `'${note.replace(/'/g,"''")}'` : 'NULL'},
-        updated_at=NOW()
-      WHERE id=${id}
-    `);
-    const s = allScans.find(r => r.id == id);
-    if (s) { s.condition = condition; s.serial_found = serial || null; s.hq_note = note || null; }
-    closeEditModal();
-    renderScans();
-    renderPhotos();
-    showToast('บันทึกสำเร็จ ✓', 'success');
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    const res = await fetch(API + '/hq/scans/' + id, {
+      method: 'PATCH', headers: authHeader(), body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error((await res.json()).detail);
+    const s = allScans.find(r=>r.id==id);
+    if (s) { s.condition=body.condition; s.serial_found=body.serial_found; s.hq_note=body.hq_note; }
+    closeEditModal(); renderScans(); renderPhotos();
+    showToast('บันทึกสำเร็จ ✓','success');
+  } catch(e) { showToast('Error: '+e.message,'error'); }
 }
 
 // ── LIGHTBOX ──────────────────────────────────────────
-function openLightbox(url) {
-  document.getElementById('lightbox-img').src = url;
-  document.getElementById('lightbox').style.display = 'flex';
-}
-function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+function openLightbox(url) { document.getElementById('lightbox-img').src=url; document.getElementById('lightbox').style.display='flex'; }
+function closeLightbox() { document.getElementById('lightbox').style.display='none'; }
 
 // ── BADGES ────────────────────────────────────────────
 function updateBadges() {
-  const scanBadge = document.getElementById('badge-scans');
-  scanBadge.textContent = allScans.length;
-  scanBadge.style.display = allScans.length ? 'inline' : 'none';
-
-  const photoBadge = document.getElementById('badge-photos');
-  const photoCount = allScans.filter(s => s.photo_url).length;
-  photoBadge.textContent = photoCount;
-  photoBadge.style.display = photoCount ? 'inline' : 'none';
-
-  const unmatchedBadge = document.getElementById('badge-unmatched');
-  const pendingCount = allUnmatched.filter(u => u.status === 'pending').length;
-  unmatchedBadge.textContent = pendingCount;
-  unmatchedBadge.style.display = pendingCount ? 'inline' : 'none';
+  const sb = document.getElementById('badge-scans');
+  sb.textContent=allScans.length; sb.style.display=allScans.length?'inline':'none';
+  const pb = document.getElementById('badge-photos');
+  const pc = allScans.filter(s=>s.photo_url).length;
+  pb.textContent=pc; pb.style.display=pc?'inline':'none';
+  const ub = document.getElementById('badge-unmatched');
+  const uc = allUnmatched.filter(u=>u.status==='pending').length;
+  ub.textContent=uc; ub.style.display=uc?'inline':'none';
 }
 
 // ── EXPORT ────────────────────────────────────────────
 function toXlsx(sheets, filename) {
   const wb = XLSX.utils.book_new();
-  Object.entries(sheets).forEach(([name, data]) => {
+  Object.entries(sheets).forEach(([name,data]) => {
     if (!data.length) return;
     const ws = XLSX.utils.json_to_sheet(data);
-    ws['!cols'] = Object.keys(data[0]).map(() => ({ wch: 20 }));
+    ws['!cols'] = Object.keys(data[0]).map(()=>({wch:20}));
     XLSX.utils.book_append_sheet(wb, ws, name);
   });
   XLSX.writeFile(wb, filename);
-  showToast('Exported: ' + filename, 'success');
+  showToast('Exported: '+filename,'success');
 }
-
 function exportScans() {
-  toXlsx({ 'Scan Logs': allScans.map(s => ({
-    'Scan ID': s.id, 'Asset Code': s.asset_code, 'Asset Name': s.asset_name,
-    'Condition': s.condition, 'Serial Match': s.serial_match, 'Serial Found': s.serial_found,
-    'Branch': s.branch_id, 'Auditor': s.auditor, 'Scanned At': s.scanned_at,
-    'Photo URL': s.photo_url || '', 'HQ Note': s.hq_note || ''
-  })) }, `bata_scan_logs_${today()}.xlsx`);
+  toXlsx({'Scan Logs': allScans.map(s=>({'Asset Code':s.asset_code,'Asset Name':s.asset_name,'Condition':s.condition,'Serial Match':s.serial_match,'Serial Found':s.serial_found||'','Branch':s.branch_id,'Auditor':s.auditor,'Scanned At':s.scanned_at,'Photo':s.photo_url?'Yes':'No','HQ Note':s.hq_note||''}))}, `bata_scan_logs_${today()}.xlsx`);
 }
-
 function exportUnmatchedXlsx() {
-  toXlsx({ 'Unmatched': allUnmatched.map(u => ({
-    'ID': u.id, 'QR Scanned': u.scanned_qr, 'Name Guess': u.name_guess,
-    'Serial': u.serial_no || '', 'Branch': u.branch_id,
-    'Auditor': u.auditor, 'Status': u.status, 'HQ Note': u.hq_note || '',
-    'Scanned At': u.scanned_at
-  })) }, `bata_unmatched_${today()}.xlsx`);
+  toXlsx({'Unmatched': allUnmatched.map(u=>({'QR Scanned':u.scanned_qr,'Name Guess':u.name_guess,'Serial':u.serial_no||'','Branch':u.branch_id,'Auditor':u.auditor,'Status':u.status,'HQ Note':u.hq_note||'','Matched Code':u.matched_asset_code||'','Scanned At':u.scanned_at}))}, `bata_unmatched_${today()}.xlsx`);
 }
-
 function exportAll() {
   toXlsx({
-    'Summary': [{ 'Export Date': new Date().toLocaleString('th-TH'), 'Total Scans': allScans.length, 'With Photo': allScans.filter(s=>s.photo_url).length, 'Unmatched Pending': allUnmatched.filter(u=>u.status==='pending').length }],
-    'Scan Logs': allScans.map(s => ({ 'Asset Code': s.asset_code, 'Asset Name': s.asset_name, 'Condition': s.condition, 'Serial Found': s.serial_found||'', 'Branch': s.branch_id, 'Scanned At': s.scanned_at, 'Photo': s.photo_url?'Yes':'No' })),
-    'Unmatched': allUnmatched.map(u => ({ 'QR': u.scanned_qr, 'Name': u.name_guess, 'Branch': u.branch_id, 'Status': u.status, 'HQ Note': u.hq_note||'' })),
+    'Summary':[{'Export Date':new Date().toLocaleString('th-TH'),'Total Scans':allScans.length,'With Photo':allScans.filter(s=>s.photo_url).length,'Unmatched Pending':allUnmatched.filter(u=>u.status==='pending').length}],
+    'Scan Logs':allScans.map(s=>({'Asset Code':s.asset_code,'Asset Name':s.asset_name,'Condition':s.condition,'Serial Found':s.serial_found||'','Branch':s.branch_id,'Scanned At':s.scanned_at,'Photo':s.photo_url?'Yes':'No','HQ Note':s.hq_note||''})),
+    'Unmatched':allUnmatched.map(u=>({'QR':u.scanned_qr,'Name':u.name_guess,'Branch':u.branch_id,'Status':u.status,'HQ Note':u.hq_note||''})),
   }, `bata_full_report_${today()}.xlsx`);
 }
-
 function today() { return new Date().toISOString().slice(0,10); }
 
 // ── NAV ───────────────────────────────────────────────
 const pages = ['overview','scans','photos','unmatched','export'];
-const titles = { overview:'Overview', scans:'Scan Logs', photos:'Photos', unmatched:'Unmatched Assets', export:'Export' };
+const titles = {overview:'Overview',scans:'Scan Logs',photos:'Photos',unmatched:'Unmatched Assets',export:'Export'};
 function showPage(name) {
   pages.forEach(p => {
-    document.getElementById('page-'+p).style.display = p===name ? 'flex' : 'none';
+    document.getElementById('page-'+p).style.display = p===name?'flex':'none';
     document.getElementById('nav-'+p).classList.toggle('active', p===name);
   });
   document.getElementById('page-title').textContent = titles[name];
@@ -804,10 +680,9 @@ function showPage(name) {
 function showToast(msg, type='') {
   const wrap = document.getElementById('toast-wrap');
   const t = document.createElement('div');
-  t.className = 'toast ' + type;
-  t.textContent = msg;
+  t.className='toast '+type; t.textContent=msg;
   wrap.appendChild(t);
-  setTimeout(() => t.remove(), 3500);
+  setTimeout(()=>t.remove(), 3500);
 }
 </script>
 </body>
