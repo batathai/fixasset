@@ -330,13 +330,32 @@ const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/imag
 let S = { user:null, branch:null, branchName:null, sid:null, token:null,
           scanned:new Set(), log:[], total:0, cd:false };
 const assetCache = new Map();
-let scanQueue = [], isSyncing = false;
+let isSyncing = false;
 let CHECKLIST = [], noQRList = [], clVisible = false;
 let autoRefreshInterval = null;
 
 // photo blobs stored per scan key
 const photoBlobs = {};
 let noQRPhotoBlob = null;
+
+// ── OFFLINE QUEUE (localStorage-backed) ──────────────────────
+const QUEUE_KEY = 'bata_scan_queue';
+
+function getQueue() {
+  try { return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveQueue(q) {
+  try { localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); } catch(e) {}
+}
+function addToQueue(item) {
+  const q = getQueue();
+  q.push({ ...item, ts: Date.now() });
+  saveQueue(q);
+}
+function removeFromQueue(ts) {
+  const q = getQueue().filter(i => i.ts !== ts);
+  saveQueue(q);
+}
 
 // ── CLOUDINARY UPLOAD ────────────────────────────────────────
 async function uploadToCloudinary(file, folder) {
@@ -422,7 +441,9 @@ async function doLogin() {
     document.getElementById('hinfo').textContent=id+' · '+S.branchName;
     document.getElementById('sum-branch').textContent=S.branchName;
     go('ss'); initUrovoScanner(); warmupAPI();
-    await startSession(); await loadChecklist(br); await syncProgressFromDB(); startAutoRefresh(); saveSession();
+    await startSession(); await loadChecklist(br); await syncProgressFromDB();
+    flushQueue(); // sync any pending items from previous session
+    startAutoRefresh(); saveSession();
   } catch(e) { showErr(e.message); }
   finally { btn.textContent='SIGN IN'; btn.disabled=false; }
 }
@@ -444,7 +465,11 @@ function restoreSession() {
   } catch(e) { return false; }
 }
 window.addEventListener('load',async()=>{
-  if (restoreSession()) { go('ss'); initUrovoScanner(); if(S.token){await loadChecklist(S.branch);await syncProgressFromDB();} updatePB(); renderList(); startAutoRefresh(); }
+  if (restoreSession()) {
+    go('ss'); initUrovoScanner();
+    if(S.token){ await loadChecklist(S.branch); await syncProgressFromDB(); flushQueue(); }
+    updatePB(); renderList(); startAutoRefresh();
+  }
 });
 
 function focusScanner() { const mc=document.getElementById('mc'); if(mc){mc.focus();updateFocusStatus(true);} }
@@ -475,20 +500,70 @@ function initUrovoScanner() {
 }
 
 function buildCache(assets) { assets.forEach(a=>assetCache.set(a.qr_key,a)); }
-function queueScanLog(qrKey,type,extra={}) { scanQueue.push({qrKey,type,extra,ts:Date.now()}); flushQueue(); }
+
+function queueScanLog(qrKey, type, extra={}) {
+  addToQueue({ type:'scan', qrKey, extra });
+  flushQueue();
+}
+
+function queueUnmatched(qrKey, extra={}) {
+  addToQueue({ type:'unmatched', qrKey, extra });
+  flushQueue();
+}
+
 async function flushQueue() {
-  if (isSyncing||!scanQueue.length||!S.sid||!S.token) return;
-  isSyncing=true;
-  while (scanQueue.length) {
-    const item=scanQueue[0];
+  if (isSyncing || !S.sid || !S.token) return;
+  const q = getQueue();
+  if (!q.length) return;
+  isSyncing = true;
+  updateSyncStatus('syncing...');
+  for (const item of [...q]) {
     try {
-      await fetch(API+'/scans',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
-        body:JSON.stringify({session_id:S.sid,qr_key:item.qrKey,serial_found:item.extra.serial_found||null,serial_match:item.extra.serial_match??null,condition:item.extra.condition||'good',remark:item.extra.remark||null,photo_url:item.extra.photo_url||null})});
-      scanQueue.shift();
+      if (item.type === 'scan') {
+        const res = await fetch(API+'/scans', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
+          body:JSON.stringify({
+            session_id: S.sid,
+            qr_key: item.qrKey,
+            serial_found: item.extra.serial_found||null,
+            serial_match: item.extra.serial_match??null,
+            condition: item.extra.condition||'good',
+            remark: item.extra.remark||null,
+            photo_url: item.extra.photo_url||null
+          })
+        });
+        if (res.ok || res.status===409) removeFromQueue(item.ts);
+      } else if (item.type === 'unmatched') {
+        const res = await fetch(API+'/unmatched', {
+          method:'POST',
+          headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
+          body:JSON.stringify({
+            session_id: S.sid,
+            scanned_qr: item.qrKey,
+            serial_no: item.extra.serial_no||null,
+            name_guess: item.extra.name||null,
+            remark: item.extra.remark||null,
+            photo_url: item.extra.photo_url||null
+          })
+        });
+        if (res.ok) removeFromQueue(item.ts);
+      }
     } catch(e) { break; }
   }
-  isSyncing=false;
-  if (scanQueue.length) setTimeout(flushQueue,3000);
+  isSyncing = false;
+  const remaining = getQueue().length;
+  if (remaining > 0) {
+    updateSyncStatus('⚠ '+remaining+' pending');
+    setTimeout(flushQueue, 5000);
+  } else {
+    updateSyncStatus('✓ synced');
+  }
+}
+
+function updateSyncStatus(msg) {
+  const el = document.getElementById('cl-sync-status');
+  if (el) el.textContent = msg;
 }
 
 async function scan(raw) {
@@ -656,6 +731,7 @@ async function saveRemark(k, n) {
   commit(k, n, 'matched', {remark:r, photo_url:photoUrl});
   queueScanLog(k, 'matched', {remark:r, photo_url:photoUrl});
   hideR();
+  flushQueue();
 }
 
 async function doSerial(k, n, exp, match) {
@@ -664,7 +740,7 @@ async function doSerial(k, n, exp, match) {
   commit(k, n, match?'matched':'mismatch', {serial_found:found, serial_match:match, remark});
   queueScanLog(k, match?'matched':'mismatch', {serial_found:found, serial_match:match, remark});
   toast(match ? 'Serial verified ✓' : 'Serial mismatch — flagged to HQ');
-  hideR();
+  hideR(); flushQueue();
 }
 
 async function doUnmatch(k) {
@@ -682,8 +758,8 @@ async function doUnmatch(k) {
     } catch(e) { toast('Photo upload failed — saving without photo'); }
   }
   commit(k, n, 'unmatched', {serial_no:s, remark:r});
-  await saveUnmatched(k, {serial_no:s, name:n, remark:r, photo_url:photoUrl});
-  toast('Sent to HQ for review'); hideR();
+  queueUnmatched(k, {serial_no:s, name:n, remark:r, photo_url:photoUrl});
+  toast('Sent to HQ for review'); hideR(); flushQueue();
 }
 
 function hideR() { document.getElementById('ra').style.display='none'; }
@@ -782,7 +858,16 @@ async function syncProgressFromDB() {
     updateChecklist(); renderList();
   } catch(e){}
 }
-function startAutoRefresh() { stopAutoRefresh(); autoRefreshInterval=setInterval(async()=>{if(!S.token||!S.sid) return; if(!document.getElementById('ss')?.classList.contains('active')) return; await syncProgressFromDB();},30000); }
+function startAutoRefresh() {
+  stopAutoRefresh();
+  autoRefreshInterval = setInterval(async()=>{
+    if(!S.token||!S.sid) return;
+    if(!document.getElementById('ss')?.classList.contains('active')) return;
+    await syncProgressFromDB();
+    const pending = getQueue().length;
+    if (pending > 0) flushQueue();
+  }, 30000);
+}
 function stopAutoRefresh() { if(autoRefreshInterval){clearInterval(autoRefreshInterval);autoRefreshInterval=null;} }
 
 async function loadChecklist(branchId) {
@@ -855,14 +940,14 @@ async function submitNoQR() {
       document.getElementById('noqr-upload-status').textContent='✓';
     } catch(e) { toast('Photo upload failed'); }
   }
-  if (S.sid&&S.token) {
-    try {
-      await fetch(API+'/unmatched',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
-        body:JSON.stringify({session_id:S.sid,scanned_qr:'NOQR-'+Date.now(),serial_no:serial||null,name_guess:name+(location?' @ '+location:''),photo_url:photoUrl})});
-    } catch(e){}
-  }
-  noQRList.push({id:Date.now(),name_guess:name,serial_no:serial,location_note:location,branch_id:S.branch,status:'need_label',qr_key:'NOQR-'+Date.now(),photo_url:photoUrl});
-  closeNoQR(); updateChecklist(); saveSession();
+  const noQRKey = 'NOQR-'+Date.now();
+  queueUnmatched(noQRKey, {
+    serial_no: serial||null,
+    name: name+(location?' @ '+location:''),
+    photo_url: photoUrl
+  });
+  noQRList.push({id:Date.now(),name_guess:name,serial_no:serial,location_note:location,branch_id:S.branch,status:'need_label',qr_key:noQRKey,photo_url:photoUrl});
+  closeNoQR(); updateChecklist(); saveSession(); flushQueue();
   btn.disabled=false; btn.textContent='REPORT TO HQ';
   toast('Reported — HQ will print and send QR label');
 }
