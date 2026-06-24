@@ -23,8 +23,6 @@ html,body{overscroll-behavior:none;}
 body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:100vh;max-width:430px;margin:0 auto;font-size:15px;}
 .screen{display:none;flex-direction:column;min-height:100vh;}
 .screen.active{display:flex;}
-
-/* ── LOGIN ── */
 #sl{background:var(--white);}
 .login-hero{background:var(--red);padding:48px 28px 36px;position:relative;overflow:hidden;}
 .login-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:rgba(255,255,255,.08);}
@@ -45,8 +43,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .btn-login:active{background:var(--red-d);transform:scale(.98);}
 .err{background:var(--red-l);border:1.5px solid var(--red-bd);border-radius:var(--rs);padding:10px 14px;font-size:13px;color:var(--red);margin-top:12px;display:none;}
 .err.show{display:block;}
-
-/* ── HEADER ── */
 .hdr{background:var(--red);display:flex;align-items:center;justify-content:space-between;padding:12px 16px;position:sticky;top:0;z-index:50;}
 .hdr-logo{display:flex;align-items:center;gap:8px;}
 .hdr-b{width:30px;height:30px;background:var(--white);border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--cond);font-size:16px;font-weight:700;color:var(--red);}
@@ -54,22 +50,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .hdr-r{display:flex;align-items:center;gap:8px;}
 .hdr-info{font-size:11px;color:rgba(255,255,255,.75);font-family:var(--mono);text-align:right;}
 .out-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--white);cursor:pointer;}
-
-/* ── PROGRESS ── */
 .prog{background:var(--red-d);padding:8px 16px;display:flex;align-items:center;gap:12px;}
 .pb-bg{flex:1;height:5px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden;}
 .pb-fill{height:100%;background:var(--white);border-radius:99px;transition:width .4s;}
 .pb-pct{font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.9);font-weight:500;min-width:32px;text-align:right;}
 .pb-cnt{font-family:var(--mono);font-size:11px;color:rgba(255,255,255,.6);white-space:nowrap;}
-
-/* ── MAIN ── */
 .main{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px;background:var(--bg);}
-
-/* ── STATUS DOT ── */
 .sc-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite;flex-shrink:0;}
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-
-/* ── RESULT CARDS ── */
 .rc{border-radius:var(--r);border:1.5px solid;overflow:hidden;animation:su .2s ease;background:var(--white);}
 @keyframes su{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
 .rc.matched{border-color:var(--green-bd);}
@@ -108,16 +96,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .btn-c{flex:1;padding:10px;background:var(--red);border:none;border-radius:var(--rs);color:var(--white);font-family:var(--cond);font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;}
 .btn-d{flex:1;padding:10px;background:var(--red-l);border:1.5px solid var(--red-bd);border-radius:var(--rs);color:var(--red);font-family:var(--cond);font-size:14px;font-weight:700;cursor:pointer;}
 .btn-save{width:100%;padding:12px;background:var(--red);border:none;border-radius:var(--rs);color:var(--white);font-family:var(--cond);font-size:15px;font-weight:700;letter-spacing:.3px;cursor:pointer;}
-
-/* ── PHOTO ── */
-.ph-area{border:2px dashed var(--border);border-radius:var(--rs);padding:20px;text-align:center;cursor:pointer;transition:border-color .2s;position:relative;}
+.btn-save:disabled{opacity:.5;cursor:not-allowed;}
+.ph-area{border:2px dashed var(--border);border-radius:var(--rs);padding:16px;text-align:center;cursor:pointer;transition:border-color .2s;position:relative;display:flex;align-items:center;gap:10px;}
 .ph-area:hover{border-color:var(--red);}
 .ph-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.ph-ico{font-size:28px;margin-bottom:6px;}
-.ph-txt{font-size:12px;color:var(--gray3);}
-.ph-prev{width:100%;height:120px;object-fit:cover;border-radius:var(--rs);display:none;}
-
-/* ── SCAN LIST ── */
+.ph-prev{width:64px;height:64px;object-fit:cover;border-radius:6px;display:none;flex-shrink:0;}
+.ph-uploading{font-size:12px;color:var(--red);font-weight:500;}
 .sec-t{font-size:11px;font-weight:700;color:var(--gray4);letter-spacing:1.5px;text-transform:uppercase;padding:0 2px;}
 .slist{display:flex;flex-direction:column;gap:6px;}
 .si{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--white);border:1.5px solid var(--border);border-radius:var(--rs);}
@@ -128,14 +112,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .scode{font-family:var(--mono);font-size:11px;color:var(--gray3);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .sname{color:var(--gray1);flex:2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;}
 .stime{font-family:var(--mono);font-size:11px;color:var(--gray4);flex-shrink:0;}
-
-/* ── NAV ── */
 .nav{background:var(--white);border-top:1.5px solid var(--border);display:flex;padding:8px 0 24px;position:sticky;bottom:0;}
 .nb{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px;background:none;border:none;color:var(--gray4);font-size:10px;font-family:var(--sans);font-weight:600;letter-spacing:.3px;text-transform:uppercase;cursor:pointer;}
 .nb.act{color:var(--red);}
 .nb svg{width:20px;height:20px;}
-
-/* ── CHECKLIST ── */
 .checklist-bar{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px;}
 .cl-row{display:flex;align-items:center;justify-content:space-between;font-size:13px;}
 .cl-nums{font-family:var(--mono);font-size:12px;color:var(--gray3);}
@@ -150,20 +130,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .cl-done{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
 .cl-miss{background:var(--border);color:var(--gray3);border:1px solid var(--border);}
 .cl-noqr{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
-
-/* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:flex-end;justify-content:center;}
 .modal-overlay.show{display:flex;}
 .modal-box{background:var(--white);border-radius:var(--r) var(--r) 0 0;width:100%;max-width:430px;max-height:90vh;overflow-y:auto;padding:24px 20px 40px;}
 .modal-title{font-family:var(--cond);font-size:20px;font-weight:700;color:var(--gray1);margin-bottom:4px;}
 .modal-sub{font-size:13px;color:var(--gray3);margin-bottom:20px;}
 .modal-close{position:absolute;top:16px;right:16px;background:var(--offwhite);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--gray3);display:flex;align-items:center;justify-content:center;}
-
-/* ── TOAST ── */
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--gray1);color:var(--white);border-radius:20px;padding:9px 18px;font-size:13px;font-weight:500;z-index:300;opacity:0;transition:all .25s;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-/* ── BACK HEADER ── */
 .back-hdr{background:var(--red);display:flex;align-items:center;justify-content:space-between;padding:12px 16px;position:sticky;top:0;z-index:50;}
 .back-title{font-family:var(--cond);font-size:18px;font-weight:700;color:var(--white);letter-spacing:.5px;}
 .back-sub{font-size:11px;color:rgba(255,255,255,.7);}
@@ -174,9 +148,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 </head>
 <body>
 
-<!-- ════════════════════════════════════════
-     LOGIN SCREEN
-════════════════════════════════════════ -->
 <div class="screen active" id="sl">
   <div class="login-hero">
     <div class="bata-logo">
@@ -187,14 +158,8 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
     <div class="login-sub">Scan & verify branch assets</div>
   </div>
   <div class="login-form">
-    <div class="field">
-      <label>Employee ID</label>
-      <input type="text" id="li" placeholder="e.g. EMP001" autocomplete="username"/>
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="lp" placeholder="••••••••" autocomplete="current-password"/>
-    </div>
+    <div class="field"><label>Employee ID</label><input type="text" id="li" placeholder="e.g. EMP001" autocomplete="username"/></div>
+    <div class="field"><label>Password</label><input type="password" id="lp" placeholder="••••••••" autocomplete="current-password"/></div>
     <div class="field">
       <label>Branch</label>
       <div style="position:relative;">
@@ -204,12 +169,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
           oninput="filterBranch(this.value)"
           onfocus="showDropdown();this.style.borderColor='var(--red)'"
           onblur="setTimeout(()=>{hideBranchDrop();document.getElementById('lb-search').style.borderColor='var(--border)'},200)"
-          autocomplete="off"
-        />
+          autocomplete="off"/>
         <input type="hidden" id="lb" value=""/>
-        <div id="branch-drop"
-          style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);border:1.5px solid var(--red);border-top:none;border-radius:0 0 var(--rs) var(--rs);max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.1);">
-        </div>
+        <div id="branch-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--white);border:1.5px solid var(--red);border-top:none;border-radius:0 0 var(--rs) var(--rs);max-height:200px;overflow-y:auto;z-index:100;box-shadow:0 4px 12px rgba(0,0,0,.1);"></div>
       </div>
     </div>
     <button class="btn-login" onclick="doLogin()">SIGN IN</button>
@@ -217,15 +179,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     SCANNER SCREEN
-════════════════════════════════════════ -->
 <div class="screen" id="ss">
   <div class="hdr">
-    <div class="hdr-logo">
-      <div class="hdr-b">B</div>
-      <div class="hdr-name">BATA AUDIT</div>
-    </div>
+    <div class="hdr-logo"><div class="hdr-b">B</div><div class="hdr-name">BATA AUDIT</div></div>
     <div class="hdr-r">
       <div class="hdr-info" id="hinfo">—</div>
       <button class="out-btn" onclick="doLogout()">Sign out</button>
@@ -236,9 +192,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
     <div class="pb-pct" id="pb-pct">0%</div>
     <div class="pb-cnt" id="pb-cnt">0 / 0</div>
   </div>
-
   <div class="main">
-    <!-- Scanner Input Card -->
     <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;" onclick="focusScanner()">
       <div style="background:var(--red);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
         <div style="display:flex;align-items:center;gap:8px;">
@@ -257,13 +211,11 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
               <rect x="13" y="4" width="2" height="16" fill="currentColor"/><rect x="16" y="4" width="1" height="16" fill="currentColor"/>
               <rect x="18" y="4" width="3" height="16" fill="currentColor"/>
             </svg>
-            <input id="mc"
-              style="width:100%;background:var(--offwhite);border:1.5px solid var(--border);border-radius:var(--rs);padding:14px 14px 14px 40px;font-family:var(--mono);font-size:14px;color:var(--gray1);outline:none;transition:border-color .2s;"
+            <input id="mc" style="width:100%;background:var(--offwhite);border:1.5px solid var(--border);border-radius:var(--rs);padding:14px 14px 14px 40px;font-family:var(--mono);font-size:14px;color:var(--gray1);outline:none;transition:border-color .2s;"
               placeholder="COM012022010001SEQ001"
               onfocus="this.style.borderColor='var(--red)'"
               onblur="this.style.borderColor='var(--border)'"
-              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
-            />
+              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
           </div>
           <button style="background:var(--red);border:none;border-radius:var(--rs);padding:14px 20px;color:var(--white);font-family:var(--cond);font-size:14px;font-weight:700;letter-spacing:.3px;cursor:pointer;" onclick="handleManual()">SEARCH</button>
         </div>
@@ -271,7 +223,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
       </div>
     </div>
 
-    <!-- Checklist Progress -->
     <div class="checklist-bar">
       <div class="cl-row">
         <span style="font-weight:500;font-size:13px;">Branch Checklist</span>
@@ -289,36 +240,23 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
       </div>
     </div>
 
-    <!-- Result Area -->
     <div id="ra" style="display:none"></div>
-
-    <!-- No QR Button -->
     <button class="btn-noqr" onclick="openNoQR()">🏷 Asset has no QR label — tap to report</button>
-
-    <!-- Checklist Toggle -->
     <div style="display:flex;align-items:center;justify-content:space-between;">
       <div class="sec-t">Recent Scans</div>
       <button onclick="toggleChecklist()" style="background:none;border:none;font-size:11px;color:var(--red);font-weight:600;cursor:pointer;" id="cl-toggle-btn">Show checklist ▾</button>
     </div>
-
-    <!-- Checklist Panel -->
     <div class="cl-panel" id="cl-panel" style="display:none;">
       <div class="cl-head">
         <span>Checklist — Branch <span id="cl-branch-label">—</span></span>
         <span id="cl-panel-count" style="color:var(--red);">0 remaining</span>
       </div>
-      <div id="cl-list" style="max-height:300px;overflow-y:auto;">
-        <div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">Loading...</div>
-      </div>
+      <div id="cl-list" style="max-height:300px;overflow-y:auto;"><div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">Loading...</div></div>
     </div>
-
     <div class="sec-t" style="margin-top:4px;">Recent Scans</div>
-    <div class="slist" id="sl-list">
-      <div style="text-align:center;padding:24px;color:var(--gray4);font-size:13px;">No scans yet</div>
-    </div>
+    <div class="slist" id="sl-list"><div style="text-align:center;padding:24px;color:var(--gray4);font-size:13px;">No scans yet</div></div>
     <div style="height:16px"></div>
   </div>
-
   <div class="nav">
     <button class="nb act" id="nb-scan">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
@@ -335,9 +273,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     LOG SCREEN
-════════════════════════════════════════ -->
 <div class="screen" id="slog">
   <div class="back-hdr">
     <div><div class="back-title">Scan Log</div><div class="back-sub" id="log-cnt">0 items</div></div>
@@ -346,9 +281,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
   <div class="main" id="log-body"></div>
 </div>
 
-<!-- ════════════════════════════════════════
-     SUMMARY SCREEN
-════════════════════════════════════════ -->
 <div class="screen" id="ssum">
   <div class="back-hdr">
     <div><div class="back-title">Session Summary</div><div class="back-sub" id="sum-branch">—</div></div>
@@ -361,44 +293,26 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
   </div>
 </div>
 
-<!-- ════════════════════════════════════════
-     NO QR MODAL  ← เพิ่มใหม่ (ของเดิมหายไป)
-════════════════════════════════════════ -->
 <div class="modal-overlay" id="noqr-modal" onclick="if(event.target===this)closeNoQR()">
   <div class="modal-box" style="position:relative;">
     <button class="modal-close" onclick="closeNoQR()">✕</button>
     <div class="modal-title">🏷 Report Missing QR</div>
     <div class="modal-sub">กรอกข้อมูล asset ที่ไม่มี QR label เพื่อแจ้ง HQ ปริ้นส่งมา</div>
-
-    <div class="fg" style="margin-bottom:14px;">
-      <div class="fl">Asset Description *</div>
-      <input class="fi" id="noqr-name" placeholder="e.g. Dell Monitor 24 inch, Printer HP..."/>
-    </div>
-    <div class="fg" style="margin-bottom:14px;">
-      <div class="fl">Serial No. (ถ้ามี)</div>
-      <input class="fi" id="noqr-serial" placeholder="e.g. TH2024XXXX"/>
-    </div>
-    <div class="fg" style="margin-bottom:14px;">
-      <div class="fl">Location in store</div>
-      <input class="fi" id="noqr-location" placeholder="e.g. หน้าเคาน์เตอร์, ห้องสต็อก..."/>
-    </div>
-
-    <!-- Photo -->
+    <div class="fg" style="margin-bottom:14px;"><div class="fl">Asset Description *</div><input class="fi" id="noqr-name" placeholder="e.g. Dell Monitor 24 inch, Printer HP..."/></div>
+    <div class="fg" style="margin-bottom:14px;"><div class="fl">Serial No. (ถ้ามี)</div><input class="fi" id="noqr-serial" placeholder="e.g. TH2024XXXX"/></div>
+    <div class="fg" style="margin-bottom:14px;"><div class="fl">Location in store</div><input class="fi" id="noqr-location" placeholder="e.g. หน้าเคาน์เตอร์, ห้องสต็อก..."/></div>
     <div class="fg" style="margin-bottom:20px;">
-      <div class="fl">Photo</div>
-      <div class="ph-area" style="padding:16px;" onclick="document.getElementById('noqr-photo-input').click()">
-        <input type="file" id="noqr-photo-input" accept="image/*" capture="environment" style="display:none" onchange="prevNoQRPhoto(this)">
-        <img id="noqr-photo-prev" class="ph-prev" style="height:140px;">
-        <div id="noqr-photo-ph">
-          <div class="ph-ico">📷</div>
-          <div class="ph-txt">แตะเพื่อถ่ายรูป</div>
-        </div>
+      <div class="fl">Photo <span id="noqr-upload-status" style="color:var(--red);font-size:10px;"></span></div>
+      <div class="ph-area" onclick="document.getElementById('noqr-photo-input').click()">
+        <input type="file" id="noqr-photo-input" accept="image/*" capture="environment" style="display:none" onchange="handleNoQRPhoto(this)">
+        <img id="noqr-photo-prev" class="ph-prev">
+        <div id="noqr-photo-ph"><div style="font-size:28px;">📷</div><div style="font-size:12px;color:var(--gray3);">แตะเพื่อถ่ายรูป</div></div>
+        <div id="noqr-photo-done" style="display:none;font-size:12px;color:var(--green);font-weight:500;">✓ พร้อม upload</div>
       </div>
     </div>
-
     <div class="br">
       <button class="btn-g" onclick="closeNoQR()">Cancel</button>
-      <button class="btn-c" onclick="submitNoQR()">REPORT TO HQ</button>
+      <button class="btn-c" id="noqr-submit-btn" onclick="submitNoQR()">REPORT TO HQ</button>
     </div>
   </div>
 </div>
@@ -408,6 +322,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 <script>
 // ── CONFIG ───────────────────────────────────────────────────
 const API = 'https://bata-asset-api-production.up.railway.app';
+const CLOUDINARY_CLOUD = 'dhpwh4io1';
+const CLOUDINARY_PRESET = 'bata_audit';
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`;
 
 // ── STATE ────────────────────────────────────────────────────
 let S = { user:null, branch:null, branchName:null, sid:null, token:null,
@@ -417,311 +334,236 @@ let scanQueue = [], isSyncing = false;
 let CHECKLIST = [], noQRList = [], clVisible = false;
 let autoRefreshInterval = null;
 
+// photo blobs stored per scan key
+const photoBlobs = {};
+let noQRPhotoBlob = null;
+
+// ── CLOUDINARY UPLOAD ────────────────────────────────────────
+async function uploadToCloudinary(file, folder) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLOUDINARY_PRESET);
+  fd.append('folder', `bata-audit/${folder}`);
+
+  // compress ก่อน upload ถ้ารูปใหญ่เกิน 1MB
+  const compressed = file.size > 1024*1024 ? await compressImage(file) : file;
+  fd.set('file', compressed);
+
+  const res = await fetch(CLOUDINARY_URL, { method: 'POST', body: fd });
+  if (!res.ok) throw new Error('Upload failed');
+  const data = await res.json();
+  return data.secure_url;
+}
+
+async function compressImage(file) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 1200;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => { URL.revokeObjectURL(url); resolve(blob || file); }, 'image/jpeg', 0.8);
+    };
+    img.src = url;
+  });
+}
+
 // ── BRANCHES ─────────────────────────────────────────────────
 const BRANCHES = [{"code":"0051132","name":"Big C Lopburi"},{"code":"0051403","name":"Future Park Rangsit"},{"code":"0051404","name":"Fashion Island"},{"code":"0051407","name":"The Mall 6 Ngamwongwan"},{"code":"0051409","name":"IT Laksi Plaza"},{"code":"0051410","name":"Central Bangna"},{"code":"0051415","name":"Central Ramindra"},{"code":"0051416","name":"The Mall 8 Bangkapi"},{"code":"0051418","name":"Lotus Rangsit Klong 7"},{"code":"0051419","name":"Lotus Navanakorn"},{"code":"0051425","name":"Central Jeangwattana"},{"code":"0051426","name":"Big C Rajdamri"},{"code":"0051427","name":"Paradise Park"},{"code":"0051428","name":"Maboonkrong 2"},{"code":"0051430","name":"Central Rama 9"},{"code":"0051431","name":"Mega Bangna"},{"code":"0051433","name":"Central Salaya"},{"code":"0051434","name":"Sukhumvit 15"},{"code":"0051435","name":"Homepro Sunvannabhumi"},{"code":"0051436","name":"Central Westgate"},{"code":"0051438","name":"Central Pinklow"},{"code":"0051439","name":"Robinson Ladkabang"},{"code":"0051446","name":"Lotus Rangsit Klong 4"},{"code":"0051450","name":"Central Westville"},{"code":"0051498","name":"Minburi Outlet"},{"code":"0051506","name":"Imperial Samrong"},{"code":"0051508","name":"Taprachan"},{"code":"0051510","name":"Yaowaraj"},{"code":"0051511","name":"The Mall 7 Bangkae"},{"code":"0051512","name":"Seacon Square 1"},{"code":"0051514","name":"Big C Rama 4"},{"code":"0051517","name":"Lotus Salaya"},{"code":"0051518","name":"Central Rama 3"},{"code":"0051520","name":"Robinsan Srisamarn"},{"code":"0051521","name":"Lotus Bangpakok"},{"code":"0051524","name":"Lotus Charansanitwong"},{"code":"0051530","name":"Big C Petkasem"},{"code":"0051532","name":"Big C Omyai"},{"code":"0051533","name":"Lotus Lumlookka"},{"code":"0051534","name":"Big C Bangpakok"},{"code":"0051535","name":"Big C Suwinthavong"},{"code":"0051540","name":"Big C Ramindra"},{"code":"0051542","name":"Supreme Samsen"},{"code":"0051545","name":"Robinson Samuthprakarn"},{"code":"0051546","name":"Lotus Bangyai"},{"code":"0051548","name":"Big C Bangplee"},{"code":"0051549","name":"Big C Bangyai"},{"code":"0051550","name":"Big C Suksawas"},{"code":"0051903","name":"Imperial Ladplaow"},{"code":"0051905","name":"Central Rama 2"},{"code":"0051906","name":"Seacon Bangkae"},{"code":"0051938","name":"Lotus Ladplaow"},{"code":"0051939","name":"Lotus Chaengwattana"},{"code":"0051944","name":"Maboonkrong"},{"code":"0051946","name":"Big C Rangsit"},{"code":"0051948","name":"Lotus Laksi"},{"code":"0051960","name":"Big C Rama 2"},{"code":"0051965","name":"Lotus Bangkapi"},{"code":"0051968","name":"Lotus Rama 4"},{"code":"0052002","name":"Central Chiengrai"},{"code":"0052003","name":"Ayutthaya Park"},{"code":"0052005","name":"Big C Chiengmai"},{"code":"0052007","name":"Lotus Kamteing"},{"code":"0052008","name":"Central Airport"},{"code":"0052010","name":"Central Pitsanuloke"},{"code":"0052017","name":"Lotus Maesot"},{"code":"0052018","name":"Robinson Kamphaengphet"},{"code":"0052019","name":"Lotus Payao"},{"code":"0052023","name":"Prae"},{"code":"0052025","name":"Maya Chiengmai"},{"code":"0052026","name":"Central Nakornsawan"},{"code":"0052031","name":"Central Lampang"},{"code":"0052032","name":"Lotus Pitsanuloke 2"},{"code":"0052033","name":"Happy Pichit"},{"code":"0052036","name":"Lotus Ruomchok"},{"code":"0052037","name":"Central Cheingmai"},{"code":"0052040","name":"Big C Pitsanulok"},{"code":"0052042","name":"Uttaradit"},{"code":"0052043","name":"Big C Petchaboon"},{"code":"0052048","name":"Lotus Nan"},{"code":"0052098","name":"Chiangmai Outlet"},{"code":"0052901","name":"Big C Kampengpech"},{"code":"0052902","name":"Big C Chiangmai 2"},{"code":"0052942","name":"Big C Chiangrai"},{"code":"0052943","name":"Big C Lampang"},{"code":"0053002","name":"Big C Udornthani"},{"code":"0053003","name":"Thaweekit Buriram 2"},{"code":"0053006","name":"Lotus Thabor"},{"code":"0053008","name":"Lotus Det Udom"},{"code":"0053009","name":"The Mall Koraj"},{"code":"0053010","name":"Surin Plaza"},{"code":"0053011","name":"Kalasin Plaza"},{"code":"0053012","name":"Central Udonthani"},{"code":"0053018","name":"Big C Warin Ubol"},{"code":"0053020","name":"Big C Srisakate"},{"code":"0053021","name":"Lotus Udonthani 2"},{"code":"0053022","name":"Central Khonkaen"},{"code":"0053023","name":"Top Phol Plaza"},{"code":"0053024","name":"Big C Pakchong"},{"code":"0053026","name":"Fairy Khonkean"},{"code":"0053029","name":"Sermthai Complex"},{"code":"0053030","name":"Big C Roi-et"},{"code":"0053031","name":"Central Ubolratchathani"},{"code":"0053032","name":"Robinson Sakonnakorn"},{"code":"0053035","name":"Robinson Roi-et"},{"code":"0053036","name":"Robinson Mukdahan"},{"code":"0053037","name":"Assawan 2 Nongkai"},{"code":"0053038","name":"Lotus Khonkean"},{"code":"0053040","name":"Big C Nakhonratchasima2"},{"code":"0053041","name":"Central Nakhonratchasima"},{"code":"0053043","name":"Big C Amnatcharoen"},{"code":"0053045","name":"Lotus Nangrong"},{"code":"0053046","name":"Lotus Khonkeaen 2"},{"code":"0053047","name":"Lotus Ubonratchathani"},{"code":"0053048","name":"Lotus Chumpaer"},{"code":"0053049","name":"Robinson Chaiyaphoom"},{"code":"0053905","name":"Big C Loei"},{"code":"0053947","name":"Big C Rayong"},{"code":"0053948","name":"Big C Nakhonratchasima"},{"code":"0053953","name":"Big C Ubolratchathani"},{"code":"0053955","name":"Lotus Nongkai"},{"code":"0053958","name":"Big C Khonkaen"},{"code":"0054001","name":"Petchburi"},{"code":"0054004","name":"Big C Pattaya"},{"code":"0054005","name":"Central Sriracha"},{"code":"0054007","name":"Lotus Pattaya"},{"code":"0054011","name":"Central Ayuthaya"},{"code":"0054012","name":"Big C Petchaburi"},{"code":"0054013","name":"Big C Chacheungsao 2"},{"code":"0054014","name":"Lotus Banpong"},{"code":"0054016","name":"Big C Cholburi (2)"},{"code":"0054017","name":"Robinson Kanchanaburi"},{"code":"0054018","name":"Big C Ayutthaya"},{"code":"0054019","name":"Big C Sakaew"},{"code":"0054021","name":"Central Pattaya Beach"},{"code":"0054022","name":"Central Mahachai"},{"code":"0054023","name":"Central Cholburi"},{"code":"0054026","name":"Big C Pattaya 2"},{"code":"0054027","name":"Big C Mahachai"},{"code":"0054029","name":"Harbor Mall"},{"code":"0054030","name":"Big C Chonburi"},{"code":"0054032","name":"Sukanan Park"},{"code":"0054035","name":"Robinson Saraburi"},{"code":"0054038","name":"Big C Srimahaphot"},{"code":"0054039","name":"Lotus Nakhonnayok"},{"code":"0054040","name":"Robinson Supanburi"},{"code":"0054042","name":"Nakhonpathom"},{"code":"0054044","name":"Robinson Chachuengsao"},{"code":"0054045","name":"Robinson Prachinburi"},{"code":"0054046","name":"Central Rayong"},{"code":"0054048","name":"Central Marina Pattaya"},{"code":"0054094","name":"Central Nakornpathom"},{"code":"0054095","name":"Lotus Saraburi"},{"code":"0054945","name":"Lotus Suphanburi"},{"code":"0054960","name":"Lotus Rajburi"},{"code":"0055001","name":"Hua Hin Market Village"},{"code":"0055005","name":"Lotus Suratthani"},{"code":"0055008","name":"Jungceylon Phuket"},{"code":"0055009","name":"Big C Hadyai 2"},{"code":"0055010","name":"Lotus Krabi"},{"code":"0055012","name":"Central Phuket"},{"code":"0055018","name":"Lotus Pattalung"},{"code":"0055019","name":"Lotus Samui Lamai"},{"code":"0055023","name":"Pattanee 1"},{"code":"0055024","name":"Lotus Hadyai 2"},{"code":"0055030","name":"Central Suratthani"},{"code":"0055031","name":"Big C Phuket"},{"code":"0055033","name":"Lotus Vengsa"},{"code":"0055035","name":"Central Hadyai"},{"code":"0055036","name":"Big C Trang"},{"code":"0055038","name":"Central Samui"},{"code":"0055040","name":"Lotus Jana"},{"code":"0055041","name":"Lotus Hadyai"},{"code":"0055042","name":"Lotus Songkla"},{"code":"0055043","name":"Central Nakornsrithammarat"},{"code":"0055044","name":"Bluport Huahin"},{"code":"0055046","name":"Big C Phang-nga"},{"code":"0055049","name":"Lotus Yala"},{"code":"0055901","name":"Robinson Trung"},{"code":"0055902","name":"Big C Nakhonsrithammarat"},{"code":"0055906","name":"Big C Satun"},{"code":"0055949","name":"Big C Suratthani"},{"code":"0055950","name":"Lotus Phuket"},{"code":"0055951","name":"Big C Hadyai"},{"code":"0068000","name":"Warehouse"},{"code":"0071205","name":"Infinic (Samut Prakan)"},{"code":"0072007","name":"Chaiyapong Pichit"},{"code":"0072011","name":"Chareonphan Payao"},{"code":"0073005","name":"Roi-et Plaza"},{"code":"0073015","name":"Suenheng Srisakate"},{"code":"0074023","name":"Kanockkarn Kanchanaburi"},{"code":"0075011","name":"Siribun Trang"},{"code":"0075012","name":"Vouge Krabi"},{"code":"0075014","name":"Ocean Chumporn"},{"code":"0099993","name":"IT Hold"},{"code":"0099994","name":"IT"},{"code":"0099995","name":"IT Tem"},{"code":"0099999","name":"Office"}];
 
-// ── BRANCH DROPDOWN ──────────────────────────────────────────
 function renderBranchOptions(list) {
   const drop = document.getElementById('branch-drop');
   drop.innerHTML = !list.length
     ? '<div style="padding:10px 14px;font-size:13px;color:var(--gray3);">ไม่พบสาขา</div>'
-    : list.map(b => `
-      <div onclick="selectBranch('${b.code}','${b.name.replace(/'/g,"\\'")}')"
+    : list.map(b => `<div onclick="selectBranch('${b.code}','${b.name.replace(/'/g,"\\'")}')"
         style="padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border);"
-        onmouseover="this.style.background='var(--red-l)'"
-        onmouseout="this.style.background=''">
+        onmouseover="this.style.background='var(--red-l)'" onmouseout="this.style.background=''">
         <strong style="font-family:var(--mono);color:var(--red);">${b.code}</strong> — ${b.name}
       </div>`).join('');
 }
-function showDropdown() {
-  document.getElementById('branch-drop').style.display = 'block';
-  filterBranch(document.getElementById('lb-search').value || '');
-}
-function hideBranchDrop() {
-  document.getElementById('branch-drop').style.display = 'none';
-}
+function showDropdown() { document.getElementById('branch-drop').style.display='block'; filterBranch(document.getElementById('lb-search').value||''); }
+function hideBranchDrop() { document.getElementById('branch-drop').style.display='none'; }
 function filterBranch(val) {
-  const q = val.toLowerCase().trim();
-  const filtered = q ? BRANCHES.filter(b => b.code.includes(q) || b.name.toLowerCase().includes(q)) : BRANCHES;
-  renderBranchOptions(filtered.slice(0, 50));
-  document.getElementById('branch-drop').style.display = 'block';
+  const q=val.toLowerCase().trim();
+  const filtered=q?BRANCHES.filter(b=>b.code.includes(q)||b.name.toLowerCase().includes(q)):BRANCHES;
+  renderBranchOptions(filtered.slice(0,50));
+  document.getElementById('branch-drop').style.display='block';
 }
-function selectBranch(code, name) {
-  document.getElementById('lb').value = code;
-  document.getElementById('lb-search').value = code + ' — ' + name;
-  document.getElementById('branch-drop').style.display = 'none';
+function selectBranch(code,name) {
+  document.getElementById('lb').value=code;
+  document.getElementById('lb-search').value=code+' — '+name;
+  document.getElementById('branch-drop').style.display='none';
 }
 
-// ── LOGIN ────────────────────────────────────────────────────
 async function doLogin() {
-  const id = document.getElementById('li').value.trim();
-  const pw = document.getElementById('lp').value;
-
-  // ★ FIX: รองรับทั้งเลือกจาก dropdown และพิมพ์รหัสตรงๆ
-  let br = document.getElementById('lb').value.trim();
+  const id=document.getElementById('li').value.trim();
+  const pw=document.getElementById('lp').value;
+  let br=document.getElementById('lb').value.trim();
   if (!br) {
-    const typed = document.getElementById('lb-search').value.trim().split(' ')[0]; // เอาแค่รหัส
-    const found = BRANCHES.find(b => b.code === typed || b.code === typed.padStart(7,'0'));
-    if (found) { br = found.code; document.getElementById('lb').value = br; }
+    const typed=document.getElementById('lb-search').value.trim().split(' ')[0];
+    const found=BRANCHES.find(b=>b.code===typed||b.code===typed.padStart(7,'0'));
+    if (found) { br=found.code; document.getElementById('lb').value=br; }
   }
-
-  if (!id || !pw) { showErr('Please fill in Employee ID and Password'); return; }
-  if (!br)        { showErr('Please select a branch from the list'); return; }
-
-  const btn = document.querySelector('.btn-login');
-  btn.textContent = 'Signing in...'; btn.disabled = true;
-
+  if (!id||!pw) { showErr('Please fill in Employee ID and Password'); return; }
+  if (!br) { showErr('Please select a branch from the list'); return; }
+  const btn=document.querySelector('.btn-login');
+  btn.textContent='Signing in...'; btn.disabled=true;
   try {
-    const res = await fetch(API + '/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ employee_id: id, password: pw, branch_id: br })
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.detail || 'Login failed');
-
-    S.token  = data.token;
-    S.user   = id;
-    S.branch = br;
-    S.branchName = BRANCHES.find(b => b.code === br)?.name || br;
-    S.sid    = null;
-
-    document.getElementById('hinfo').textContent = id + ' · ' + S.branchName;
-    document.getElementById('sum-branch').textContent = S.branchName;
-
-    go('ss');
-    initUrovoScanner();
-    warmupAPI();
-    await startSession();
-    await loadChecklist(br);
-    await syncProgressFromDB();
-    startAutoRefresh();
-    saveSession();
-  } catch(e) {
-    showErr(e.message);
-  } finally {
-    btn.textContent = 'SIGN IN'; btn.disabled = false;
-  }
+    const res=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employee_id:id,password:pw,branch_id:br})});
+    const data=await res.json();
+    if (!res.ok) throw new Error(data.detail||'Login failed');
+    S.token=data.token; S.user=id; S.branch=br;
+    S.branchName=BRANCHES.find(b=>b.code===br)?.name||br; S.sid=null;
+    document.getElementById('hinfo').textContent=id+' · '+S.branchName;
+    document.getElementById('sum-branch').textContent=S.branchName;
+    go('ss'); initUrovoScanner(); warmupAPI();
+    await startSession(); await loadChecklist(br); await syncProgressFromDB(); startAutoRefresh(); saveSession();
+  } catch(e) { showErr(e.message); }
+  finally { btn.textContent='SIGN IN'; btn.disabled=false; }
 }
-function showErr(m) {
-  const e = document.getElementById('lerr');
-  e.textContent = m; e.classList.add('show');
-  setTimeout(() => e.classList.remove('show'), 3500);
-}
-function doLogout() {
-  stopAutoRefresh();
-  S = { user:null, branch:null, branchName:null, sid:null, token:null,
-        scanned:new Set(), log:[], total:0, cd:false };
-  localStorage.removeItem('bata_session');
-  go('sl');
-}
+function showErr(m) { const e=document.getElementById('lerr'); e.textContent=m; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),3500); }
+function doLogout() { stopAutoRefresh(); S={user:null,branch:null,branchName:null,sid:null,token:null,scanned:new Set(),log:[],total:0,cd:false}; localStorage.removeItem('bata_session'); go('sl'); }
 
-// ── SESSION PERSIST ──────────────────────────────────────────
 function saveSession() {
-  localStorage.setItem('bata_session', JSON.stringify({
-    user:S.user, branch:S.branch, branchName:S.branchName,
-    sid:S.sid, token:S.token, log:S.log, scanned:[...S.scanned]
-  }));
+  localStorage.setItem('bata_session',JSON.stringify({user:S.user,branch:S.branch,branchName:S.branchName,sid:S.sid,token:S.token,log:S.log,scanned:[...S.scanned]}));
 }
 function restoreSession() {
   try {
-    const d = JSON.parse(localStorage.getItem('bata_session') || 'null');
+    const d=JSON.parse(localStorage.getItem('bata_session')||'null');
     if (!d?.user) return false;
     S.user=d.user; S.branch=d.branch; S.branchName=d.branchName||d.branch;
     S.sid=d.sid; S.token=d.token; S.log=d.log||[]; S.scanned=new Set(d.scanned||[]);
-    document.getElementById('hinfo').textContent = d.user + ' · ' + (d.branchName||d.branch);
-    document.getElementById('sum-branch').textContent = d.branchName||d.branch;
+    document.getElementById('hinfo').textContent=d.user+' · '+(d.branchName||d.branch);
+    document.getElementById('sum-branch').textContent=d.branchName||d.branch;
     return true;
   } catch(e) { return false; }
 }
-window.addEventListener('load', async () => {
-  if (restoreSession()) {
-    go('ss'); initUrovoScanner();
-    if (S.token) { await loadChecklist(S.branch); await syncProgressFromDB(); }
-    updatePB(); renderList(); startAutoRefresh();
-  }
+window.addEventListener('load',async()=>{
+  if (restoreSession()) { go('ss'); initUrovoScanner(); if(S.token){await loadChecklist(S.branch);await syncProgressFromDB();} updatePB(); renderList(); startAutoRefresh(); }
 });
 
-// ── UROVO SCANNER ────────────────────────────────────────────
-function focusScanner() {
-  const mc = document.getElementById('mc');
-  if (mc) { mc.focus(); updateFocusStatus(true); }
-}
+function focusScanner() { const mc=document.getElementById('mc'); if(mc){mc.focus();updateFocusStatus(true);} }
 function updateFocusStatus(focused) {
-  const el = document.getElementById('focus-status');
-  const st = document.getElementById('sc-stat-txt');
+  const el=document.getElementById('focus-status'); const st=document.getElementById('sc-stat-txt');
   if (!el) return;
-  if (focused) {
-    el.style.background='rgba(255,255,255,.2)'; el.style.color='#fff'; el.textContent='READY';
-    if(st) st.textContent='Hardware scanner ready';
-  } else {
-    el.style.background='rgba(255,255,255,.1)'; el.style.color='rgba(255,255,255,.6)'; el.textContent='TAP TO FOCUS';
-    if(st) st.textContent='Tap screen to activate';
-  }
+  if (focused) { el.style.background='rgba(255,255,255,.2)';el.style.color='#fff';el.textContent='READY'; if(st)st.textContent='Hardware scanner ready'; }
+  else { el.style.background='rgba(255,255,255,.1)';el.style.color='rgba(255,255,255,.6)';el.textContent='TAP TO FOCUS'; if(st)st.textContent='Tap screen to activate'; }
 }
 function initUrovoScanner() {
-  const mc = document.getElementById('mc');
-  if (!mc) return;
+  const mc=document.getElementById('mc'); if(!mc) return;
   mc.focus(); updateFocusStatus(true);
-
-  let lastKeyTime = 0, scanTimer = null;
-  const SPEED = 50, DONE = 300;
-
-  mc.addEventListener('keydown', e => {
-    const now = Date.now(), diff = now - lastKeyTime;
-    lastKeyTime = now;
-
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const val = mc.value.trim();
-      if (val && !S.cd) {
-        mc.value = ''; clearTimeout(scanTimer);
-        S.cd = true; setTimeout(() => S.cd = false, 2500);
-        scan(val.toUpperCase());
-      }
-      return;
-    }
-    if (diff < SPEED && e.key.length === 1) {
-      clearTimeout(scanTimer);
-      scanTimer = setTimeout(() => {
-        const val = mc.value.trim();
-        if (val && val.length > 5 && !S.cd) {
-          mc.value = '';
-          S.cd = true; setTimeout(() => S.cd = false, 2500);
-          scan(val.toUpperCase());
-        }
-      }, DONE);
-    }
+  let lastKeyTime=0, scanTimer=null;
+  mc.addEventListener('keydown',e=>{
+    const now=Date.now(),diff=now-lastKeyTime; lastKeyTime=now;
+    if (e.key==='Enter') { e.preventDefault(); const val=mc.value.trim(); if(val&&!S.cd){mc.value='';clearTimeout(scanTimer);S.cd=true;setTimeout(()=>S.cd=false,2500);scan(val.toUpperCase());} return; }
+    if (diff<50&&e.key.length===1) { clearTimeout(scanTimer); scanTimer=setTimeout(()=>{const val=mc.value.trim();if(val&&val.length>5&&!S.cd){mc.value='';S.cd=true;setTimeout(()=>S.cd=false,2500);scan(val.toUpperCase());}},300); }
   });
-  setInterval(() => {
-    if (!document.getElementById('ss')?.classList.contains('active')) return;
-    if (document.getElementById('ra')?.style.display !== 'none') return;
-    const a = document.activeElement;
-    if (a && a.id !== 'mc' && (a.tagName==='INPUT'||a.tagName==='TEXTAREA')) return;
-    if (a?.id !== 'mc') { mc.focus(); updateFocusStatus(true); }
-  }, 3000);
-  mc.addEventListener('focus', () => updateFocusStatus(true));
-  mc.addEventListener('blur',  () => updateFocusStatus(false));
+  setInterval(()=>{
+    if(!document.getElementById('ss')?.classList.contains('active')) return;
+    if(document.getElementById('ra')?.style.display!=='none') return;
+    const a=document.activeElement;
+    if(a&&a.id!=='mc'&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA')) return;
+    if(a?.id!=='mc'){mc.focus();updateFocusStatus(true);}
+  },3000);
+  mc.addEventListener('focus',()=>updateFocusStatus(true));
+  mc.addEventListener('blur',()=>updateFocusStatus(false));
 }
 
-// ── ASSET CACHE ──────────────────────────────────────────────
-function buildCache(assets) {
-  assets.forEach(a => assetCache.set(a.qr_key, a));
-}
-function queueScanLog(qrKey, type, extra={}) {
-  scanQueue.push({ qrKey, type, extra, ts:Date.now() });
-  flushQueue();
-}
+function buildCache(assets) { assets.forEach(a=>assetCache.set(a.qr_key,a)); }
+function queueScanLog(qrKey,type,extra={}) { scanQueue.push({qrKey,type,extra,ts:Date.now()}); flushQueue(); }
 async function flushQueue() {
-  if (isSyncing || !scanQueue.length || !S.sid || !S.token) return;
-  isSyncing = true;
+  if (isSyncing||!scanQueue.length||!S.sid||!S.token) return;
+  isSyncing=true;
   while (scanQueue.length) {
-    const item = scanQueue[0];
+    const item=scanQueue[0];
     try {
-      await fetch(API+'/scans', {
-        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
-        body: JSON.stringify({
-          session_id:S.sid, qr_key:item.qrKey,
-          serial_found:item.extra.serial_found||null,
-          serial_match:item.extra.serial_match??null,
-          condition:item.extra.condition||'good',
-          remark:item.extra.remark||null
-        })
-      });
+      await fetch(API+'/scans',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
+        body:JSON.stringify({session_id:S.sid,qr_key:item.qrKey,serial_found:item.extra.serial_found||null,serial_match:item.extra.serial_match??null,condition:item.extra.condition||'good',remark:item.extra.remark||null,photo_url:item.extra.photo_url||null})});
       scanQueue.shift();
     } catch(e) { break; }
   }
-  isSyncing = false;
-  if (scanQueue.length) setTimeout(flushQueue, 3000);
+  isSyncing=false;
+  if (scanQueue.length) setTimeout(flushQueue,3000);
 }
 
-// ── SCAN ─────────────────────────────────────────────────────
 async function scan(raw) {
-  const key  = raw.replace(/\s/g,'').toUpperCase();
-  const area = document.getElementById('ra');
-  area.style.display = 'block';
-
-  if (S.scanned.has(key)) {
-    area.innerHTML = rDup(key);
-    toast('Already scanned');
-    area.scrollIntoView({behavior:'smooth',block:'nearest'});
-    return;
-  }
-
-  // instant from cache
-  if (assetCache.has(key)) {
-    const asset = assetCache.get(key);
-    showAssetResult(key, asset, area);
-    area.scrollIntoView({behavior:'smooth',block:'nearest'});
-    return;
-  }
-
-  // loading spinner
-  area.innerHTML = `<div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:24px;text-align:center;color:var(--gray3);font-size:13px;">
-    <div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 8px;"></div>
-    <span style="font-family:var(--mono);font-size:11px;color:var(--red);">${key}</span>
-  </div>`;
-  if (!document.getElementById('spin-style')) {
-    const s=document.createElement('style');s.id='spin-style';
-    s.textContent='@keyframes spin{to{transform:rotate(360deg)}}';
-    document.head.appendChild(s);
-  }
-
+  const key=raw.replace(/\s/g,'').toUpperCase();
+  const area=document.getElementById('ra');
+  area.style.display='block';
+  if (S.scanned.has(key)) { area.innerHTML=rDup(key); toast('Already scanned'); area.scrollIntoView({behavior:'smooth',block:'nearest'}); return; }
+  if (assetCache.has(key)) { const asset=assetCache.get(key); showAssetResult(key,asset,area); area.scrollIntoView({behavior:'smooth',block:'nearest'}); return; }
+  area.innerHTML=`<div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:24px;text-align:center;color:var(--gray3);font-size:13px;"><div style="width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .6s linear infinite;margin:0 auto 8px;"></div><span style="font-family:var(--mono);font-size:11px;color:var(--red);">${key}</span></div>`;
+  if (!document.getElementById('spin-style')) { const s=document.createElement('style');s.id='spin-style';s.textContent='@keyframes spin{to{transform:rotate(360deg)}}';document.head.appendChild(s); }
   try {
-    const ctrl = new AbortController();
-    const tout = setTimeout(() => ctrl.abort(), 8000);
-    const res  = await fetch(API+'/assets/lookup/'+encodeURIComponent(key), {
-      headers:{'Authorization':'Bearer '+S.token}, signal:ctrl.signal
-    });
-    clearTimeout(tout);
-    const data = await res.json();
-
-    if (!data.found) {
-      area.innerHTML = rUnmatch(key); toast('Not found in system');
-    } else {
-      assetCache.set(key, data.asset);
-      showAssetResult(key, data.asset, area);
-    }
+    const ctrl=new AbortController(); const tout=setTimeout(()=>ctrl.abort(),8000);
+    const res=await fetch(API+'/assets/lookup/'+encodeURIComponent(key),{headers:{'Authorization':'Bearer '+S.token},signal:ctrl.signal});
+    clearTimeout(tout); const data=await res.json();
+    if (!data.found) { area.innerHTML=rUnmatch(key); toast('Not found in system'); }
+    else { assetCache.set(key,data.asset); showAssetResult(key,data.asset,area); }
   } catch(e) {
-    if (e.name === 'AbortError') {
-      toast('Slow connection — retrying...');
-      setTimeout(() => scan(key), 1000); area.style.display='none';
-    } else {
-      area.innerHTML = rUnmatch(key); toast('Error: '+e.message);
-    }
+    if (e.name==='AbortError') { toast('Slow connection — retrying...'); setTimeout(()=>scan(key),1000); area.style.display='none'; }
+    else { area.innerHTML=rUnmatch(key); toast('Error: '+e.message); }
   }
   area.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
-function showAssetResult(key, asset, area) {
-  const isComputer = asset.asset_code?.startsWith('COM') ||
-    ['notebook','laptop','computer','dell','lenovo','hp ','asus','acer']
-      .some(w => asset.name?.toLowerCase().includes(w));
-  const a = {
-    name:   asset.name,
-    cat:    isComputer ? 'Computer' : 'Equipment',
-    serial: asset.serial_no,
-    date:   asset.purchase_date,
-    loc:    asset.location_name || asset.location_code,
+function showAssetResult(key,asset,area) {
+  const isComputer=asset.asset_code?.startsWith('COM')||['notebook','laptop','computer','dell','lenovo','hp ','asus','acer'].some(w=>asset.name?.toLowerCase().includes(w));
+  const a={name:asset.name,cat:isComputer?'Computer':'Equipment',serial:asset.serial_no,date:asset.purchase_date,loc:asset.location_name||asset.location_code};
+  if (isComputer&&a.serial) { area.innerHTML=rSerial(key,a); }
+  else { area.innerHTML=rMatch(key,a); commit(key,a.name,'matched'); queueScanLog(key,'matched',{}); }
+}
+async function handleManual() { const v=document.getElementById('mc').value.trim().toUpperCase(); if(!v) return; document.getElementById('mc').value=''; await scan(v); }
+document.addEventListener('keypress',e=>{ if(e.key==='Enter'&&document.activeElement.id==='mc') handleManual(); });
+
+// ── PHOTO HANDLERS ───────────────────────────────────────────
+function handleMatchPhoto(inp, k) {
+  if (!inp.files[0]) return;
+  const file = inp.files[0];
+  photoBlobs[k] = file;
+  const fr = new FileReader();
+  fr.onload = e => {
+    const prev = document.getElementById('pmp-'+k);
+    const ph = document.getElementById('pmph-'+k);
+    const done = document.getElementById('pmd-'+k);
+    if (prev) { prev.src=e.target.result; prev.style.display='block'; }
+    if (ph) ph.style.display='none';
+    if (done) done.style.display='flex';
   };
-  if (isComputer && a.serial) {
-    area.innerHTML = rSerial(key, a);
-  } else {
-    area.innerHTML = rMatch(key, a);
-    commit(key, a.name, 'matched');
-    queueScanLog(key, 'matched', {});
-  }
+  fr.readAsDataURL(file);
 }
 
-async function handleManual() {
-  const v = document.getElementById('mc').value.trim().toUpperCase();
-  if (!v) return;
-  document.getElementById('mc').value = '';
-  await scan(v);
+function handleUnmatchPhoto(inp, k) {
+  if (!inp.files[0]) return;
+  const file = inp.files[0];
+  photoBlobs[k] = file;
+  const fr = new FileReader();
+  fr.onload = e => {
+    const img = document.getElementById('pv-'+k);
+    const ph = document.getElementById('pp-'+k);
+    img.src=e.target.result; img.style.display='block';
+    if (ph) ph.style.display='none';
+  };
+  fr.readAsDataURL(file);
 }
-document.addEventListener('keypress', e => {
-  if (e.key==='Enter' && document.activeElement.id==='mc') handleManual();
-});
+
+function handleNoQRPhoto(inp) {
+  if (!inp.files[0]) return;
+  noQRPhotoBlob = inp.files[0];
+  const fr = new FileReader();
+  fr.onload = e => {
+    const prev = document.getElementById('noqr-photo-prev');
+    prev.src=e.target.result; prev.style.display='block';
+    document.getElementById('noqr-photo-ph').style.display='none';
+    document.getElementById('noqr-photo-done').style.display='block';
+  };
+  fr.readAsDataURL(inp.files[0]);
+}
 
 // ── RENDER CARDS ─────────────────────────────────────────────
 function rMatch(k,a){ return `
@@ -736,18 +578,18 @@ function rMatch(k,a){ return `
     <div class="dv"></div>
     <div class="fg">
       <div class="fl">Photo (optional)</div>
-      <div class="ph-area" onclick="document.getElementById('pm-${k}').click()" style="padding:12px;display:flex;align-items:center;gap:10px;text-align:left;">
-        <input type="file" id="pm-${k}" accept="image/*" capture="environment" style="display:none" onchange="prevMatchPhoto(this,'${k}')">
-        <img id="pmp-${k}" class="ph-prev" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0;">
+      <div class="ph-area" onclick="document.getElementById('pm-${k}').click()" style="padding:12px;">
+        <input type="file" id="pm-${k}" accept="image/*" capture="environment" style="display:none" onchange="handleMatchPhoto(this,'${k}')">
+        <img id="pmp-${k}" class="ph-prev">
         <div id="pmph-${k}" style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:22px;">📷</span>
-          <div><div style="font-size:13px;font-weight:500;">Take verification photo</div><div style="font-size:11px;color:var(--gray3);">Tap to open camera</div></div>
+          <div><div style="font-size:13px;font-weight:500;">Take verification photo</div><div style="font-size:11px;color:var(--gray3);">Optional — tap to open camera</div></div>
         </div>
-        <div id="pmd-${k}" style="display:none;align-items:center;gap:6px;color:var(--green);font-size:13px;font-weight:500;"><span>✓</span><span>Photo taken</span></div>
+        <div id="pmd-${k}" style="display:none;align-items:center;gap:6px;color:var(--green);font-size:13px;font-weight:500;"><span>✓</span><span>Photo ready</span></div>
       </div>
     </div>
     <div class="fg"><div class="fl">Remark (optional)</div><input class="fi" id="rm-${k}" placeholder="e.g. damaged label, moved location..."/></div>
-    <button class="btn-save" onclick="saveRemark('${k}','${a.name.replace(/'/g,"\\'")}')">SAVE & NEXT</button>
+    <button class="btn-save" id="save-${k}" onclick="saveRemark('${k}','${a.name.replace(/'/g,"\\'")}')">SAVE & NEXT</button>
   </div>
 </div>`; }
 
@@ -777,13 +619,17 @@ function rUnmatch(k){ return `
     <div class="fg"><div class="fl">Serial no. (from device)</div><input class="fi" id="us-${k}" placeholder="e.g. 7TK4B63"/></div>
     <div class="fg"><div class="fl">Device description</div><input class="fi" id="un-${k}" placeholder="e.g. Dell Monitor 24 inch"/></div>
     <div class="fg">
-      <div class="fl">Photo</div>
-      <div class="ph-area"><input type="file" accept="image/*" capture="environment" onchange="prevPhoto(this,'${k}')"><img id="pv-${k}" class="ph-prev"><div id="pp-${k}"><div class="ph-ico">📷</div><div class="ph-txt">Tap to take photo</div></div></div>
+      <div class="fl">Photo <span id="uph-status-${k}" style="color:var(--red);font-size:10px;"></span></div>
+      <div class="ph-area">
+        <input type="file" accept="image/*" capture="environment" onchange="handleUnmatchPhoto(this,'${k}')">
+        <img id="pv-${k}" class="ph-prev">
+        <div id="pp-${k}"><div style="font-size:28px;">📷</div><div style="font-size:12px;color:var(--gray3);">Tap to take photo</div></div>
+      </div>
     </div>
     <div class="fg"><div class="fl">Remark</div><input class="fi" id="ur-${k}" placeholder="Notes for HQ..."/></div>
     <div class="br">
       <button class="btn-g" onclick="hideR()">Skip</button>
-      <button class="btn-c" onclick="doUnmatch('${k}')">SEND TO HQ</button>
+      <button class="btn-c" id="unmatch-btn-${k}" onclick="doUnmatch('${k}')">SEND TO HQ</button>
     </div>
   </div>
 </div>`; }
@@ -795,60 +641,62 @@ function rDup(k){ return `
 </div>`; }
 
 // ── ACTIONS ──────────────────────────────────────────────────
-async function saveRemark(k,n) {
+async function saveRemark(k, n) {
+  const btn = document.getElementById('save-'+k);
+  if (btn) { btn.disabled=true; btn.textContent='Saving...'; }
   const r = document.getElementById('rm-'+k)?.value||'';
-  commit(k,n,'matched',{remark:r});
-  await saveScanLog(k,'matched',{remark:r});
+  let photoUrl = null;
+  if (photoBlobs[k]) {
+    try {
+      if (btn) btn.textContent='Uploading photo...';
+      photoUrl = await uploadToCloudinary(photoBlobs[k], S.branch);
+      delete photoBlobs[k];
+    } catch(e) { toast('Photo upload failed — saving without photo'); }
+  }
+  commit(k, n, 'matched', {remark:r, photo_url:photoUrl});
+  queueScanLog(k, 'matched', {remark:r, photo_url:photoUrl});
   hideR();
 }
-async function doSerial(k,n,exp,match) {
+
+async function doSerial(k, n, exp, match) {
   const found  = document.getElementById('sr-'+k)?.value||'';
   const remark = document.getElementById('rm-'+k)?.value||'';
-  commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark});
-  queueScanLog(k,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark});
+  commit(k, n, match?'matched':'mismatch', {serial_found:found, serial_match:match, remark});
+  queueScanLog(k, match?'matched':'mismatch', {serial_found:found, serial_match:match, remark});
   toast(match ? 'Serial verified ✓' : 'Serial mismatch — flagged to HQ');
   hideR();
 }
+
 async function doUnmatch(k) {
   const n = document.getElementById('un-'+k)?.value||'Unknown device';
   const s = document.getElementById('us-'+k)?.value||'';
   const r = document.getElementById('ur-'+k)?.value||'';
-  commit(k,n,'unmatched',{serial_no:s,remark:r});
-  await saveUnmatched(k,{serial_no:s,name:n,remark:r});
+  const btn = document.getElementById('unmatch-btn-'+k);
+  if (btn) { btn.disabled=true; btn.textContent='Sending...'; }
+  let photoUrl = null;
+  if (photoBlobs[k]) {
+    try {
+      if (btn) btn.textContent='Uploading photo...';
+      photoUrl = await uploadToCloudinary(photoBlobs[k], S.branch);
+      delete photoBlobs[k];
+    } catch(e) { toast('Photo upload failed — saving without photo'); }
+  }
+  commit(k, n, 'unmatched', {serial_no:s, remark:r});
+  await saveUnmatched(k, {serial_no:s, name:n, remark:r, photo_url:photoUrl});
   toast('Sent to HQ for review'); hideR();
 }
+
 function hideR() { document.getElementById('ra').style.display='none'; }
-function prevMatchPhoto(inp,k) {
-  if (!inp.files[0]) return;
-  const fr=new FileReader(); fr.onload=e=>{
-    const prev=document.getElementById('pmp-'+k);
-    const ph=document.getElementById('pmph-'+k);
-    const done=document.getElementById('pmd-'+k);
-    if(prev){prev.src=e.target.result;prev.style.display='block';}
-    if(ph)ph.style.display='none';
-    if(done)done.style.display='flex';
-  }; fr.readAsDataURL(inp.files[0]);
-}
-function prevPhoto(inp,k) {
-  if (!inp.files[0]) return;
-  const fr=new FileReader(); fr.onload=e=>{
-    const img=document.getElementById('pv-'+k);
-    const ph=document.getElementById('pp-'+k);
-    img.src=e.target.result; img.style.display='block';
-    if(ph)ph.style.display='none';
-  }; fr.readAsDataURL(inp.files[0]);
-}
+
 function commit(k,n,type,extra={}) {
   S.scanned.add(k);
-  const now=new Date();
-  const t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  const now=new Date(); const t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
   S.log.unshift({k,n,type,t,...extra});
   updatePB(); renderList(); updateChecklist(); saveSession();
 }
 
-// ── PROGRESS ─────────────────────────────────────────────────
 function updatePB() {
-  const c=S.scanned.size, tot=S.total, pct=tot?Math.round(c/tot*100):0;
+  const c=S.scanned.size,tot=S.total,pct=tot?Math.round(c/tot*100):0;
   document.getElementById('pb').style.width=pct+'%';
   document.getElementById('pb-pct').textContent=pct+'%';
   document.getElementById('pb-cnt').textContent=c+' / '+tot;
@@ -865,11 +713,7 @@ function renderList() {
     </div>`).join('');
 }
 
-// ── SCREENS ──────────────────────────────────────────────────
-function go(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+function go(id) { document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 function showLog() {
   document.getElementById('log-cnt').textContent=S.log.length+' items';
   document.getElementById('log-body').innerHTML=S.log.length
@@ -880,7 +724,7 @@ function showLog() {
           <div style="font-size:12px;font-family:var(--mono);color:var(--gray3);">${s.k}</div>
           <div style="font-size:13px;font-weight:500;margin-top:2px;">${s.n}</div>
           ${s.remark?`<div style="font-size:11px;color:var(--gray3);margin-top:2px;">Note: ${s.remark}</div>`:''}
-          ${s.serial_found?`<div style="font-size:11px;color:var(--gray3);margin-top:2px;">Serial: ${s.serial_found}</div>`:''}
+          ${s.photo_url?`<div style="margin-top:6px;"><img src="${s.photo_url}" style="width:60px;height:60px;object-fit:cover;border-radius:6px;border:1px solid var(--border);"></div>`:''}
         </div>
         <div style="font-size:11px;color:var(--gray4);font-family:var(--mono);">${s.t}</div>
       </div>`).join('')
@@ -891,8 +735,7 @@ function showSum() {
   const matched=S.log.filter(s=>s.type==='matched').length;
   const mism=S.log.filter(s=>s.type==='mismatch').length;
   const unm=S.log.filter(s=>s.type==='unmatched').length;
-  const tot=S.scanned.size;
-  const pend=Math.max(0,S.total-tot);
+  const tot=S.scanned.size; const pend=Math.max(0,S.total-tot);
   const pct=S.total?Math.round(tot/S.total*100):0;
   document.getElementById('sum-stats').innerHTML=
     sc('Scanned',tot,'var(--red)')+sc('Verified',matched,'var(--green)')+
@@ -911,172 +754,120 @@ function showSum() {
 }
 function sc(l,v,c){return`<div class="stat-card"><div class="stat-label">${l}</div><div class="stat-val" style="color:${c};">${v}</div></div>`;}
 
-// ── API CALLS ────────────────────────────────────────────────
-async function warmupAPI() {
-  try { await fetch(API+'/health'); } catch(e){}
-}
+async function warmupAPI() { try{await fetch(API+'/health');}catch(e){} }
 async function startSession() {
   try {
-    const res = await fetch(API+'/sessions', {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
-      body: JSON.stringify({branch_id:S.branch, audit_date:new Date().toISOString().slice(0,10)})
-    });
-    const d = await res.json(); S.sid = d.session_id;
-  } catch(e) { S.sid = Date.now(); }
+    const res=await fetch(API+'/sessions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},body:JSON.stringify({branch_id:S.branch,audit_date:new Date().toISOString().slice(0,10)})});
+    const d=await res.json(); S.sid=d.session_id;
+  } catch(e) { S.sid=Date.now(); }
 }
-async function saveScanLog(qrKey, type, extra={}) {
+async function saveUnmatched(qrKey,extra={}) {
   if (!S.sid||!S.token) return;
   try {
-    await fetch(API+'/scans', {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
-      body: JSON.stringify({session_id:S.sid, qr_key:qrKey,
-        serial_found:extra.serial_found||null, serial_match:extra.serial_match??null,
-        condition:extra.condition||'good', remark:extra.remark||null})
-    });
-  } catch(e){}
-}
-async function saveUnmatched(qrKey, extra={}) {
-  if (!S.sid||!S.token) return;
-  try {
-    await fetch(API+'/unmatched', {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
-      body: JSON.stringify({session_id:S.sid, scanned_qr:qrKey,
-        serial_no:extra.serial_no||null, name_guess:extra.name||null, remark:extra.remark||null})
-    });
+    await fetch(API+'/unmatched',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
+      body:JSON.stringify({session_id:S.sid,scanned_qr:qrKey,serial_no:extra.serial_no||null,name_guess:extra.name||null,remark:extra.remark||null,photo_url:extra.photo_url||null})});
   } catch(e){}
 }
 async function syncProgressFromDB() {
   if (!S.sid||!S.token) return;
   try {
-    const res = await fetch(API+'/sessions/'+S.sid+'/scans', {headers:{'Authorization':'Bearer '+S.token}});
+    const res=await fetch(API+'/sessions/'+S.sid+'/scans',{headers:{'Authorization':'Bearer '+S.token}});
     if (!res.ok) return;
-    const data = await res.json();
-    (data.scans||[]).forEach(s => { S.scanned.add(s.qr_key); });
-    const dbLog = (data.scans||[]).slice(0,8).map(s => ({
-      k:s.qr_key, n:s.name||s.qr_key,
-      type:s.serial_match===false?'mismatch':'matched',
-      t:new Date(s.scanned_at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})
-    }));
-    dbLog.forEach(dl => { if(!S.log.find(l=>l.k===dl.k)) S.log.push(dl); });
+    const data=await res.json();
+    (data.scans||[]).forEach(s=>{ S.scanned.add(s.qr_key); });
+    const dbLog=(data.scans||[]).slice(0,8).map(s=>({k:s.qr_key,n:s.name||s.qr_key,type:s.serial_match===false?'mismatch':'matched',t:new Date(s.scanned_at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})}));
+    dbLog.forEach(dl=>{if(!S.log.find(l=>l.k===dl.k))S.log.push(dl);});
     const now=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-    const el=document.getElementById('cl-sync-status');
-    if(el) el.textContent='synced '+now;
+    const el=document.getElementById('cl-sync-status'); if(el) el.textContent='synced '+now;
     updateChecklist(); renderList();
   } catch(e){}
 }
+function startAutoRefresh() { stopAutoRefresh(); autoRefreshInterval=setInterval(async()=>{if(!S.token||!S.sid) return; if(!document.getElementById('ss')?.classList.contains('active')) return; await syncProgressFromDB();},30000); }
+function stopAutoRefresh() { if(autoRefreshInterval){clearInterval(autoRefreshInterval);autoRefreshInterval=null;} }
 
-// ── AUTO REFRESH ──────────────────────────────────────────────
-function startAutoRefresh() {
-  stopAutoRefresh();
-  autoRefreshInterval = setInterval(async () => {
-    if (!S.token||!S.sid) return;
-    if (!document.getElementById('ss')?.classList.contains('active')) return;
-    await syncProgressFromDB();
-  }, 30000);
-}
-function stopAutoRefresh() {
-  if (autoRefreshInterval) { clearInterval(autoRefreshInterval); autoRefreshInterval=null; }
-}
-
-// ── CHECKLIST ────────────────────────────────────────────────
 async function loadChecklist(branchId) {
-  document.getElementById('cl-branch-label').textContent = branchId;
-  document.getElementById('cl-remain').textContent = 'Loading...';
+  document.getElementById('cl-branch-label').textContent=branchId;
+  document.getElementById('cl-remain').textContent='Loading...';
   try {
-    const res = await fetch(API+'/assets/branch/'+branchId, {headers:{'Authorization':'Bearer '+S.token}});
-    const data = await res.json();
-    CHECKLIST = (data.assets||[]).map(a=>({qr_key:a.qr_key,name:a.name,serial:a.serial_no,status:'pending'}));
-    S.total = CHECKLIST.length;
-    buildCache(data.assets||[]);
+    const res=await fetch(API+'/assets/branch/'+branchId,{headers:{'Authorization':'Bearer '+S.token}});
+    const data=await res.json();
+    CHECKLIST=(data.assets||[]).map(a=>({qr_key:a.qr_key,name:a.name,serial:a.serial_no,status:'pending'}));
+    S.total=CHECKLIST.length; buildCache(data.assets||[]);
   } catch(e) { CHECKLIST=[]; S.total=0; }
   updateChecklist();
 }
 function updateChecklist() {
   let ok=0;
-  CHECKLIST.forEach(item => {
-    if (S.scanned.has(item.qr_key)) { item.status='done'; ok++; }
-    else item.status='pending';
-  });
-  const noqr = noQRList.length;
-  const total = CHECKLIST.length + noqr;
-  const done  = ok + noqr;
-  const pct   = total ? Math.round(done/total*100) : 0;
-  const remain = total - done;
-
-  document.getElementById('cl-nums').textContent = done+' / '+total;
-  document.getElementById('cl-pb').style.width   = pct+'%';
-  document.getElementById('cl-ok').textContent   = ok;
-  document.getElementById('cl-unm').textContent  = S.log.filter(l=>l.type==='unmatched').length;
-  document.getElementById('cl-noqr-cnt').textContent = noqr;
-  document.getElementById('cl-remain').textContent = remain>0 ? remain+' remaining' : '✓ Complete!';
-  document.getElementById('pb').style.width      = pct+'%';
-  document.getElementById('pb-pct').textContent  = pct+'%';
-  document.getElementById('pb-cnt').textContent  = done+' / '+total;
+  CHECKLIST.forEach(item=>{ if(S.scanned.has(item.qr_key)){item.status='done';ok++;}else item.status='pending'; });
+  const noqr=noQRList.length; const total=CHECKLIST.length+noqr; const done=ok+noqr;
+  const pct=total?Math.round(done/total*100):0; const remain=total-done;
+  document.getElementById('cl-nums').textContent=done+' / '+total;
+  document.getElementById('cl-pb').style.width=pct+'%';
+  document.getElementById('cl-ok').textContent=ok;
+  document.getElementById('cl-unm').textContent=S.log.filter(l=>l.type==='unmatched').length;
+  document.getElementById('cl-noqr-cnt').textContent=noqr;
+  document.getElementById('cl-remain').textContent=remain>0?remain+' remaining':'✓ Complete!';
+  document.getElementById('pb').style.width=pct+'%';
+  document.getElementById('pb-pct').textContent=pct+'%';
+  document.getElementById('pb-cnt').textContent=done+' / '+total;
   if (clVisible) renderChecklistPanel();
 }
 function renderChecklistPanel() {
-  const remaining = CHECKLIST.filter(i=>i.status==='pending');
-  const done      = CHECKLIST.filter(i=>i.status==='done');
-  const all       = [...remaining, ...noQRList.map(n=>({...n,status:'noqr'})), ...done];
-  document.getElementById('cl-panel-count').textContent = remaining.length+' remaining';
-  document.getElementById('cl-list').innerHTML = all.slice(0,50).map(item => {
-    const icon = item.status==='done'?'✓':item.status==='noqr'?'🏷':' ';
-    const cls  = item.status==='done'?'cl-done':item.status==='noqr'?'cl-noqr':'cl-miss';
-    return `<div class="cl-item">
-      <div class="cl-status ${cls}">${icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name||item.name_guess||'Unknown'}</div>
-        <div style="font-family:var(--mono);font-size:11px;color:var(--gray3);">${item.qr_key||'NOQR-'+item.id}</div>
-      </div>
-    </div>`;
-  }).join('') + (all.length>50?`<div style="padding:10px;text-align:center;font-size:12px;color:var(--gray3);">+${all.length-50} more</div>`:'');
+  const remaining=CHECKLIST.filter(i=>i.status==='pending');
+  const done=CHECKLIST.filter(i=>i.status==='done');
+  const all=[...remaining,...noQRList.map(n=>({...n,status:'noqr'})),...done];
+  document.getElementById('cl-panel-count').textContent=remaining.length+' remaining';
+  document.getElementById('cl-list').innerHTML=all.slice(0,50).map(item=>{
+    const icon=item.status==='done'?'✓':item.status==='noqr'?'🏷':' ';
+    const cls=item.status==='done'?'cl-done':item.status==='noqr'?'cl-noqr':'cl-miss';
+    return `<div class="cl-item"><div class="cl-status ${cls}">${icon}</div><div style="flex:1;min-width:0;"><div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name||item.name_guess||'Unknown'}</div><div style="font-family:var(--mono);font-size:11px;color:var(--gray3);">${item.qr_key||'NOQR-'+item.id}</div></div></div>`;
+  }).join('')+(all.length>50?`<div style="padding:10px;text-align:center;font-size:12px;color:var(--gray3);">+${all.length-50} more</div>`:'');
 }
-function toggleChecklist() {
-  clVisible = !clVisible;
-  document.getElementById('cl-panel').style.display = clVisible?'block':'none';
-  document.getElementById('cl-toggle-btn').textContent = clVisible?'Hide checklist ▴':'Show checklist ▾';
-  if (clVisible) renderChecklistPanel();
-}
+function toggleChecklist() { clVisible=!clVisible; document.getElementById('cl-panel').style.display=clVisible?'block':'none'; document.getElementById('cl-toggle-btn').textContent=clVisible?'Hide checklist ▴':'Show checklist ▾'; if(clVisible) renderChecklistPanel(); }
 
-// ── NO QR MODAL ──────────────────────────────────────────────
+// ── NO QR ────────────────────────────────────────────────────
 function openNoQR() {
+  noQRPhotoBlob=null;
   document.getElementById('noqr-modal').classList.add('show');
   document.getElementById('noqr-name').value='';
   document.getElementById('noqr-serial').value='';
   document.getElementById('noqr-location').value='';
   document.getElementById('noqr-photo-prev').style.display='none';
   document.getElementById('noqr-photo-ph').style.display='block';
+  document.getElementById('noqr-photo-done').style.display='none';
+  document.getElementById('noqr-upload-status').textContent='';
 }
-function closeNoQR() {
-  document.getElementById('noqr-modal').classList.remove('show');
-}
-function prevNoQRPhoto(inp) {
-  if (!inp.files[0]) return;
-  const fr=new FileReader(); fr.onload=e=>{
-    document.getElementById('noqr-photo-prev').src=e.target.result;
-    document.getElementById('noqr-photo-prev').style.display='block';
-    document.getElementById('noqr-photo-ph').style.display='none';
-  }; fr.readAsDataURL(inp.files[0]);
-}
-function submitNoQR() {
-  const name     = document.getElementById('noqr-name').value.trim();
-  const serial   = document.getElementById('noqr-serial').value.trim();
-  const location = document.getElementById('noqr-location').value.trim();
+function closeNoQR() { document.getElementById('noqr-modal').classList.remove('show'); }
+
+async function submitNoQR() {
+  const name=document.getElementById('noqr-name').value.trim();
+  const serial=document.getElementById('noqr-serial').value.trim();
+  const location=document.getElementById('noqr-location').value.trim();
   if (!name) { toast('Please enter asset description'); return; }
-  noQRList.push({
-    id:Date.now(), name_guess:name, serial_no:serial, location_note:location,
-    branch_id:S.branch, status:'need_label', qr_key:'NOQR-'+Date.now()
-  });
+  const btn=document.getElementById('noqr-submit-btn');
+  btn.disabled=true; btn.textContent='Sending...';
+  let photoUrl=null;
+  if (noQRPhotoBlob) {
+    try {
+      document.getElementById('noqr-upload-status').textContent='uploading...';
+      btn.textContent='Uploading photo...';
+      photoUrl=await uploadToCloudinary(noQRPhotoBlob, S.branch);
+      document.getElementById('noqr-upload-status').textContent='✓';
+    } catch(e) { toast('Photo upload failed'); }
+  }
+  if (S.sid&&S.token) {
+    try {
+      await fetch(API+'/unmatched',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
+        body:JSON.stringify({session_id:S.sid,scanned_qr:'NOQR-'+Date.now(),serial_no:serial||null,name_guess:name+(location?' @ '+location:''),photo_url:photoUrl})});
+    } catch(e){}
+  }
+  noQRList.push({id:Date.now(),name_guess:name,serial_no:serial,location_note:location,branch_id:S.branch,status:'need_label',qr_key:'NOQR-'+Date.now(),photo_url:photoUrl});
   closeNoQR(); updateChecklist(); saveSession();
+  btn.disabled=false; btn.textContent='REPORT TO HQ';
   toast('Reported — HQ will print and send QR label');
 }
 
-// ── TOAST ────────────────────────────────────────────────────
-function toast(m) {
-  const t=document.getElementById('toast');
-  t.textContent=m; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
+function toast(m) { const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500); }
 </script>
 </body>
 </html>
