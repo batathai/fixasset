@@ -298,6 +298,146 @@ def dashboard_summary(db=Depends(get_db), user=Depends(get_current_user)):
         "pending_unmatched": pending_unmatched,
         "sessions":          sessions_data,
     }
+# ════════════════════════════════════════════════════════════════
+# HQ ENDPOINTS — เพิ่มใน main.py ต่อจาก /dashboard/summary
+# ════════════════════════════════════════════════════════════════
+
+class ScanLogUpdate(BaseModel):
+    condition: Optional[str] = None
+    serial_found: Optional[str] = None
+    hq_note: Optional[str] = None
+
+class UnmatchedUpdate(BaseModel):
+    status: str  # 'matched' | 'rejected'
+    hq_note: Optional[str] = None
+    matched_asset_code: Optional[str] = None
+
+@app.get("/hq/scans")
+def hq_get_scans(db=Depends(get_db), user=Depends(get_current_user)):
+    """HQ ดู scan logs ทั้งหมดทุกสาขา พร้อมรูปและข้อมูล asset"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    cur = db.cursor()
+    cur.execute("""
+        SELECT
+            sl.id,
+            sl.condition,
+            sl.serial_found,
+            sl.serial_match,
+            sl.photo_url,
+            sl.scanned_at,
+            sl.hq_note,
+            a.asset_code,
+            a.name        AS asset_name,
+            a.serial_no   AS serial_master,
+            u.email       AS auditor,
+            s.id          AS session_id,
+            b.id          AS branch_id,
+            b.name        AS branch_name
+        FROM scan_logs sl
+        LEFT JOIN assets         a ON a.id = sl.asset_id
+        LEFT JOIN users          u ON u.id = sl.scanned_by
+        LEFT JOIN audit_sessions s ON s.id = sl.session_id
+        LEFT JOIN branches       b ON b.id = s.branch_id
+        ORDER BY sl.scanned_at DESC
+    """)
+    return {"scans": [dict(r) for r in cur.fetchall()]}
+
+
+@app.patch("/hq/scans/{scan_id}")
+def hq_update_scan(scan_id: int, req: ScanLogUpdate, db=Depends(get_db), user=Depends(get_current_user)):
+    """HQ แก้ไข scan log — condition, serial_found, hq_note"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    cur = db.cursor()
+
+    fields = []
+    values = []
+    if req.condition is not None:
+        fields.append("condition = %s")
+        values.append(req.condition)
+    if req.serial_found is not None:
+        fields.append("serial_found = %s")
+        values.append(req.serial_found or None)
+    if req.hq_note is not None:
+        fields.append("hq_note = %s")
+        values.append(req.hq_note or None)
+
+    if not fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    fields.append("updated_at = NOW()")
+    values.append(scan_id)
+
+    cur.execute(
+        f"UPDATE scan_logs SET {', '.join(fields)} WHERE id = %s RETURNING id",
+        values
+    )
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Scan log not found")
+    db.commit()
+    return {"ok": True, "scan_id": scan_id}
+
+
+@app.patch("/hq/unmatched/{unmatched_id}")
+def hq_update_unmatched(unmatched_id: int, req: UnmatchedUpdate, db=Depends(get_db), user=Depends(get_current_user)):
+    """HQ approve หรือ reject unmatched asset"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    if req.status not in ("matched", "rejected"):
+        raise HTTPException(status_code=400, detail="status must be 'matched' or 'rejected'")
+
+    cur = db.cursor()
+    cur.execute("""
+        UPDATE unmatched_assets
+        SET status = %s,
+            hq_note = %s,
+            matched_asset_code = %s,
+            reviewed_by = %s,
+            reviewed_at = NOW(),
+            updated_at = NOW()
+        WHERE id = %s
+        RETURNING id
+    """, (
+        req.status,
+        req.hq_note or f"{'Approved' if req.status == 'matched' else 'Rejected'} by HQ - {user['employee_id']}",
+        req.matched_asset_code,
+        user["user_id"],
+        unmatched_id
+    ))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Unmatched asset not found")
+    db.commit()
+    return {"ok": True, "unmatched_id": unmatched_id, "status": req.status}
+
+
+@app.get("/hq/unmatched")
+def hq_get_unmatched(db=Depends(get_db), user=Depends(get_current_user)):
+    """HQ ดู unmatched assets ทั้งหมด (ทุก status)"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    cur = db.cursor()
+    cur.execute("""
+        SELECT
+            ua.id,
+            ua.scanned_qr,
+            ua.name_guess,
+            ua.serial_no,
+            ua.photo_url,
+            ua.scanned_at,
+            ua.status,
+            ua.hq_note,
+            ua.matched_asset_code,
+            u.email  AS auditor,
+            b.id     AS branch_id,
+            b.name   AS branch_name
+        FROM unmatched_assets ua
+        LEFT JOIN users          u ON u.id = ua.scanned_by
+        LEFT JOIN audit_sessions s ON s.id = ua.session_id
+        LEFT JOIN branches       b ON b.id = s.branch_id
+        ORDER BY ua.scanned_at DESC
+    """)
+    return {"items": [dict(r) for r in cur.fetchall()]}    
 
 # ════════════════════════════════════════════════════════════════
 # HEALTH CHECK
