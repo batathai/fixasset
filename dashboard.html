@@ -511,7 +511,7 @@ function renderOverview() {
       <td><div style="display:flex;align-items:center;gap:8px;"><div class="pb"><div class="pb-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:12px;font-family:var(--mono);">${pct}%</span></div></td>
       <td>${scanned}</td>
       <td>${Math.max(0,total-scanned)}</td>
-      <td>${parseInt(s.unmatched_count)||0 ? `<span class="badge badge-red">${s.unmatched_count}</span>` : '<span class="badge badge-gray">0</span>'}</td>
+      <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${Math.max(0,total-scanned)}</span></td>
       <td>${statusBadge}</td>
       <td><button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.session_id||s.id},'${s.branch_id}')">🗑 Delete</button></td>
     </tr>`;
