@@ -458,10 +458,10 @@ function renderOverview() {
     const pct = total ? Math.round(scanned/total*100) : 0;
     const cls = pct===100?'pb-green':pct>=50?'pb-amber':'pb-red';
     const statusBadge = s.status==='done'
-      ? '<span class="badge badge-green">Done</span>'
+      ? '<span class="badge badge-green">✓ Done</span>'
       : s.status==='on_process'
-      ? '<span class="badge badge-amber">On Process</span>'
-      : '<span class="badge badge-gray">Open</span>';
+      ? '<span class="badge badge-amber" style="background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd);">⟳ On Process</span>'
+      : '<span class="badge badge-gray">○ Open</span>';
     return `<tr>
       <td><strong>${s.branch_id}</strong><br><span style="font-size:11px;color:var(--text3);">${s.branch_name||''}</span></td>
       <td>${total.toLocaleString()}</td>
@@ -470,7 +470,7 @@ function renderOverview() {
       <td>${Math.max(0,total-scanned)}</td>
       <td>${parseInt(s.unmatched_count)||0 ? `<span class="badge badge-red">${s.unmatched_count}</span>` : '<span class="badge badge-gray">0</span>'}</td>
       <td>${statusBadge}</td>
-      <td><button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.id},'${s.branch_id}')">🗑 Delete</button></td>
+      <td><button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.session_id||s.id},'${s.branch_id}')">🗑 Delete</button></td>
     </tr>`;
   }).join('');
 }
@@ -705,13 +705,17 @@ function showToast(msg, type='') {
 }
 // ── DELETE SESSION ────────────────────────────────────────────
 async function deleteSession(id, branchId) {
-  if (!confirm(`ยืนยันการลบ Session ของสาขา ${branchId}?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย`)) return;
+  if (!confirm('ยืนยันการลบ Session ของสาขา ' + branchId + '?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย')) return;
   try {
     const res = await fetch(API + '/hq/sessions/' + id, {
       method: 'DELETE', headers: authHeader()
     });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Error '+res.status);
-    allSessions = allSessions.filter(s => s.id != id);
+    if (!res.ok) {
+      let msg = 'Error ' + res.status;
+      try { const j = await res.json(); msg = j.detail || msg; } catch(e) {}
+      throw new Error(msg);
+    }
+    allSessions = allSessions.filter(s => String(s.session_id||s.id) !== String(id));
     renderOverview();
     showToast('ลบ Session ' + branchId + ' เรียบร้อย', 'success');
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
