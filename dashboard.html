@@ -541,7 +541,7 @@ function renderScans() {
         : `<div class="scan-no-photo" title="ไม่มีรูปถ่าย">📷</div>`}
     </td>
     <td style="font-family:var(--mono);font-size:11px;">${s.asset_code||'—'}</td>
-    <td><div style="font-weight:500;">${s.asset_name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
+    <td><div style="font-weight:500;">${a.name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
     <td><span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span></td>
     <td>${s.serial_match===true?'<span class="badge badge-green">✓ Match</span>':s.serial_match===false?'<span class="badge badge-red">✗ Mismatch</span>':'<span class="badge badge-gray">N/A</span>'}</td>
     <td style="font-family:var(--mono);font-size:11px;">${s.serial_found||'—'}</td>
@@ -836,7 +836,10 @@ async function exportPending(branchId) {
   const masterAssets = await loadMasterAssets(branchId);
   const scannedCodes = new Set(allScans.filter(s=>s.branch_id===branchId).map(s=>s.asset_code));
   const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
-  const data = pendingAssets.map(a => ({'Asset Code': a.asset_code||'', 'Asset Name': a.asset_name||a.name||'', 'Branch': branchId, 'Status': 'Pending - ยังไม่สแกน'}));
+  const data = pendingAssets.map(a => ({'Asset Code': a.asset_code || '','Asset Name': a.name || '','Serial No': a.serial_no || '','Branch': branchId,'Status': 'Pending - ยังไม่สแกน'}));
+  console.log('Scanned codes sample:', [...scannedCodes].slice(0,3));
+  console.log('Master code sample:', masterAssets.slice(0,3).map(a=>a.asset_code));
+  console.log('Pending count:', pendingAssets.length);
   if (!data.length) { showToast('ไม่มีรายการ Pending', ''); return; }
   toXlsx({'Pending Assets': data}, `bata_pending_${branchId}_${today()}.xlsx`);
 }
