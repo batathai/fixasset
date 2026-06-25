@@ -128,7 +128,6 @@ tbody tr:hover{background:var(--sf2);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
 .lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;}
-/* ── SCAN THUMBNAIL (เพิ่ม) ── */
 .scan-thumb{width:52px;height:52px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);display:block;transition:transform .15s;}
 .scan-thumb:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.15);}
 .scan-no-photo{width:52px;height:52px;border-radius:6px;border:1.5px dashed var(--border);background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:20px;}
@@ -198,7 +197,7 @@ tbody tr:hover{background:var(--sf2);}
         <div class="tbl-wrap">
           <table>
             <thead><tr><th>Branch</th><th>Total Assets</th><th>Progress</th><th>Scanned</th><th>Pending</th><th>Unmatched</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody id="sessions-tbody"><tr><td colspan="7" class="loading">Loading...</td></tr></tbody>
+            <tbody id="sessions-tbody"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -519,8 +518,8 @@ function renderOverview() {
       <td>${total.toLocaleString()}</td>
       <td><div style="display:flex;align-items:center;gap:8px;"><div class="pb"><div class="pb-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:12px;font-family:var(--mono);">${pct}%</span></div></td>
       <td>${scanned}</td>
-      <td>${Math.max(0,total-scanned)}</td>
       <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${Math.max(0,total-scanned)}</span></td>
+      <td>${parseInt(s.unmatched_count)||0 ? `<span class="badge badge-red">${s.unmatched_count}</span>` : '<span class="badge badge-gray">0</span>'}</td>
       <td>${statusBadge}</td>
       <td><button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.session_id||s.id},'${s.branch_id}')">🗑 Delete</button></td>
     </tr>`;
@@ -555,40 +554,12 @@ function filterScans() {
   const cond = document.getElementById('scan-condition').value;
   const photo = document.getElementById('scan-photo').value;
 
-  // หา master list จาก sessions
-  const session = allSessions.find(s => !branch || s.branch_id === branch);
-  const totalAssets = session ? parseInt(session.total_assets)||0 : 0;
-  const scannedCodes = new Set(allScans.map(s => s.asset_code));
-
- if (cond === 'pending') {
-  filteredScans = [];
-  renderPendingScans(branch || (allSessions[0]?.branch_id));
-  return;
-}
-
-    const pending = Math.max(0, (parseInt(session.total_assets)||0) - (parseInt(session.scanned_count)||0));
-    document.getElementById('scan-count').textContent = pending + ' รายการ (Pending ยังไม่สแกน)';
-    if (!pending) {
-      tbody.innerHTML = '<tr><td colspan="9" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>';
-      return;
-    }
-    tbody.innerHTML = `<tr><td colspan="9" style="padding:20px 14px;">
-      <div style="background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--r);padding:16px 20px;">
-        <div style="font-family:var(--cond);font-size:18px;font-weight:700;color:var(--amber);margin-bottom:8px;">
-          ⏳ Pending: ${pending} รายการ ยังไม่ได้สแกน
-        </div>
-        <div style="font-size:13px;color:var(--text2);line-height:1.8;">
-          สาขา <strong>${session.branch_id}</strong> — ${session.branch_name||''}<br>
-          สแกนแล้ว <strong>${session.scanned_count}</strong> จากทั้งหมด <strong>${session.total_assets}</strong> รายการ<br>
-          <span style="color:var(--text3);font-size:12px;">รายการที่ยังไม่สแกนไม่มีข้อมูลในระบบ กรุณาส่งทีมตรวจสอบเพิ่มเติม หรือ Export Excel เพื่อดู Asset Code ที่หายไป</span>
-        </div>
-        <div style="margin-top:12px;">
-          <button class="btn btn-red btn-sm" onclick="exportPending('${session.branch_id}')">📥 Export รายการ Pending</button>
-        </div>
-      </div>
-    </td></tr>`;
+  if (cond === 'pending') {
+    filteredScans = [];
+    renderPendingScans(branch || allSessions[0]?.branch_id);
+    return;
   }
-  
+
   filteredScans = allScans.filter(s =>
     (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q)) &&
     (!branch || s.branch_id===branch) &&
@@ -596,6 +567,39 @@ function filterScans() {
     (!photo || (photo==='yes' ? !!s.photo_url : !s.photo_url))
   );
   renderScans();
+}
+
+// ── PENDING SCANS ─────────────────────────────────────
+async function renderPendingScans(branchId) {
+  const tbody = document.getElementById('scans-tbody');
+  const session = allSessions.find(s => !branchId || s.branch_id === branchId);
+  if (!session) {
+    tbody.innerHTML = '<tr><td colspan="9" class="loading">ไม่พบข้อมูล session</td></tr>';
+    document.getElementById('scan-count').textContent = '0 รายการ (Pending)';
+    return;
+  }
+  tbody.innerHTML = '<tr><td colspan="9" class="loading">กำลังโหลด Master List...</td></tr>';
+  const masterAssets = await loadMasterAssets(session.branch_id);
+  const scannedCodes = new Set(
+    allScans.filter(s => s.branch_id === session.branch_id).map(s => s.asset_code)
+  );
+  const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
+  document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending ยังไม่สแกน)';
+  if (!pendingAssets.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = pendingAssets.map(a => `<tr>
+    <td style="padding:8px 10px;"><div class="scan-no-photo" title="ยังไม่สแกน">⏳</div></td>
+    <td style="font-family:var(--mono);font-size:11px;">${a.asset_code||'—'}</td>
+    <td><div style="font-weight:500;">${a.asset_name||a.name||'—'}</div><div style="font-size:11px;color:var(--text3);">${session.branch_id}</div></td>
+    <td><span class="badge badge-amber">Pending</span></td>
+    <td><span class="badge badge-gray">—</span></td>
+    <td style="font-family:var(--mono);font-size:11px;">—</td>
+    <td style="font-size:12px;">${session.branch_id}</td>
+    <td style="font-size:11px;color:var(--text3);">—</td>
+    <td>—</td>
+  </tr>`).join('');
 }
 
 // ── PHOTOS ────────────────────────────────────────────
@@ -822,6 +826,17 @@ function exportAll() {
     'Unmatched':allUnmatched.map(u=>({'QR':u.scanned_qr,'Name':u.name_guess,'Branch':u.branch_id,'Status':u.status,'HQ Note':u.hq_note||''})),
   }, `bata_full_report_${today()}.xlsx`);
 }
+async function exportPending(branchId) {
+  const session = allSessions.find(s => s.branch_id === branchId);
+  if (!session) return;
+  showToast('กำลังโหลดข้อมูล...', '');
+  const masterAssets = await loadMasterAssets(branchId);
+  const scannedCodes = new Set(allScans.filter(s=>s.branch_id===branchId).map(s=>s.asset_code));
+  const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
+  const data = pendingAssets.map(a => ({'Asset Code': a.asset_code||'', 'Asset Name': a.asset_name||a.name||'', 'Branch': branchId, 'Status': 'Pending - ยังไม่สแกน'}));
+  if (!data.length) { showToast('ไม่มีรายการ Pending', ''); return; }
+  toXlsx({'Pending Assets': data}, `bata_pending_${branchId}_${today()}.xlsx`);
+}
 function today() { return new Date().toISOString().slice(0,10); }
 
 // ── NAV ───────────────────────────────────────────────
@@ -843,6 +858,7 @@ function showToast(msg, type='') {
   wrap.appendChild(t);
   setTimeout(()=>t.remove(), 3500);
 }
+
 // ── DELETE SESSION ────────────────────────────────────────────
 async function deleteSession(id, branchId) {
   if (!confirm('ยืนยันการลบ Session ของสาขา ' + branchId + '?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย')) return;
@@ -861,45 +877,7 @@ async function deleteSession(id, branchId) {
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
-async function renderPendingScans(branchId) {
-  const tbody = document.getElementById('scans-tbody');
-  const session = allSessions.find(s => !branchId || s.branch_id === branchId);
-  if (!session) {
-    tbody.innerHTML = '<tr><td colspan="9" class="loading">ไม่พบข้อมูล session</td></tr>';
-    return;
-  }
-  tbody.innerHTML = '<tr><td colspan="9" class="loading">กำลังโหลด Master List...</td></tr>';
-  const masterAssets = await loadMasterAssets(session.branch_id);
-  const scannedCodes = new Set(
-    allScans.filter(s => s.branch_id === session.branch_id).map(s => s.asset_code)
-  );
-  const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
-  document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending ยังไม่สแกน)';
-  if (!pendingAssets.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>';
-    return;
-  }
-  tbody.innerHTML = pendingAssets.map(a => `<tr>
-    <td style="padding:8px 10px;"><div class="scan-no-photo" title="ยังไม่สแกน">⏳</div></td>
-    <td style="font-family:var(--mono);font-size:11px;">${a.asset_code||'—'}</td>
-    <td><div style="font-weight:500;">${a.asset_name||a.name||'—'}</div><div style="font-size:11px;color:var(--text3);">${session.branch_id}</div></td>
-    <td><span class="badge badge-amber">Pending</span></td>
-    <td><span class="badge badge-gray">—</span></td>
-    <td style="font-family:var(--mono);font-size:11px;">—</td>
-    <td style="font-size:12px;">${session.branch_id}</td>
-    <td style="font-size:11px;color:var(--text3);">—</td>
-    <td>—</td>
-  </tr>`).join('');
-}
-
-function exportPending(branchId) {
-  const session = allSessions.find(s => s.branch_id === branchId);
-  if (!session) return;
-  const scannedCodes = new Set(allScans.filter(s=>s.branch_id===branchId).map(s=>s.asset_code));
-  const data = [{'Branch': branchId, 'Total Assets': session.total_assets, 'Scanned': session.scanned_count, 'Pending': Math.max(0,parseInt(session.total_assets)-parseInt(session.scanned_count)), 'Note': 'รายการ Pending ยังไม่มีข้อมูลใน Scan Logs'}];
-  toXlsx({'Pending Assets': data}, `bata_pending_${branchId}_${today()}.xlsx`);
-}
-
+// ── GO TO PENDING ─────────────────────────────────────
 function goToPending(branchId) {
   showPage('scans');
   document.getElementById('scan-branch').value = branchId;
@@ -907,3 +885,5 @@ function goToPending(branchId) {
   filterScans();
 }
 </script>
+</body>
+</html>
