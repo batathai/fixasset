@@ -217,11 +217,11 @@ tbody tr:hover{background:var(--sf2);}
           <input id="scan-search" type="text" placeholder="ค้นหา asset code / ชื่อ..." oninput="filterScans()">
           <select id="scan-branch" onchange="filterScans()"><option value="">ทุกสาขา</option></select>
           <select id="scan-condition" onchange="filterScans()">
-            <option value="">ทุกสภาพ</option>
+            <option value="">📋 ทุกสภาพ</option>
             <option value="pending">⏳ Pending (ยังไม่สแกน)</option>
-            <option value="good">Good</option>
-            <option value="damaged">Damaged</option>
-            <option value="missing">Missing</option>
+            <option value="good">✅ Good</option>
+            <option value="damaged">⚠️ Damaged</option>
+            <option value="missing">❌ Missing</option>
           </select>
           <select id="scan-photo" onchange="filterScans()">
             <option value="">ทุกรายการ</option>
