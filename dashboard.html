@@ -219,6 +219,7 @@ tbody tr:hover{background:var(--sf2);}
           <select id="scan-branch" onchange="filterScans()"><option value="">ทุกสาขา</option></select>
           <select id="scan-condition" onchange="filterScans()">
             <option value="">ทุกสภาพ</option>
+            <option value="pending">⏳ Pending (ยังไม่สแกน)</option>
             <option value="good">Good</option>
             <option value="damaged">Damaged</option>
             <option value="missing">Missing</option>
@@ -544,6 +545,50 @@ function filterScans() {
   const branch = document.getElementById('scan-branch').value;
   const cond = document.getElementById('scan-condition').value;
   const photo = document.getElementById('scan-photo').value;
+
+  // หา master list จาก sessions
+  const session = allSessions.find(s => !branch || s.branch_id === branch);
+  const totalAssets = session ? parseInt(session.total_assets)||0 : 0;
+  const scannedCodes = new Set(allScans.map(s => s.asset_code));
+
+  if (cond === 'pending') {
+    // แสดง asset จาก master ที่ยังไม่มีใน scan logs
+    // ดึง pending จาก session แล้วแสดงเป็น placeholder rows
+    filteredScans = [];
+    renderPendingScans(branch, totalAssets, scannedCodes);
+    return;
+  }
+  function renderPendingScans(branch, totalAssets, scannedCodes) {
+    const tbody = document.getElementById('scans-tbody');
+    const session = allSessions.find(s => !branch || s.branch_id === branch);
+    if (!session) {
+      tbody.innerHTML = '<tr><td colspan="9" class="loading">ไม่พบข้อมูล session</td></tr>';
+      document.getElementById('scan-count').textContent = '0 รายการ (Pending)';
+      return;
+    }
+    const pending = Math.max(0, (parseInt(session.total_assets)||0) - (parseInt(session.scanned_count)||0));
+    document.getElementById('scan-count').textContent = pending + ' รายการ (Pending ยังไม่สแกน)';
+    if (!pending) {
+      tbody.innerHTML = '<tr><td colspan="9" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>';
+      return;
+    }
+    tbody.innerHTML = `<tr><td colspan="9" style="padding:20px 14px;">
+      <div style="background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:var(--r);padding:16px 20px;">
+        <div style="font-family:var(--cond);font-size:18px;font-weight:700;color:var(--amber);margin-bottom:8px;">
+          ⏳ Pending: ${pending} รายการ ยังไม่ได้สแกน
+        </div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.8;">
+          สาขา <strong>${session.branch_id}</strong> — ${session.branch_name||''}<br>
+          สแกนแล้ว <strong>${session.scanned_count}</strong> จากทั้งหมด <strong>${session.total_assets}</strong> รายการ<br>
+          <span style="color:var(--text3);font-size:12px;">รายการที่ยังไม่สแกนไม่มีข้อมูลในระบบ กรุณาส่งทีมตรวจสอบเพิ่มเติม หรือ Export Excel เพื่อดู Asset Code ที่หายไป</span>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="btn btn-red btn-sm" onclick="exportPending('${session.branch_id}')">📥 Export รายการ Pending</button>
+        </div>
+      </div>
+    </td></tr>`;
+  }
+  
   filteredScans = allScans.filter(s =>
     (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q)) &&
     (!branch || s.branch_id===branch) &&
@@ -814,5 +859,19 @@ async function deleteSession(id, branchId) {
     renderOverview();
     showToast('ลบ Session ' + branchId + ' เรียบร้อย', 'success');
   } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+function exportPending(branchId) {
+  const session = allSessions.find(s => s.branch_id === branchId);
+  if (!session) return;
+  const scannedCodes = new Set(allScans.filter(s=>s.branch_id===branchId).map(s=>s.asset_code));
+  const data = [{'Branch': branchId, 'Total Assets': session.total_assets, 'Scanned': session.scanned_count, 'Pending': Math.max(0,parseInt(session.total_assets)-parseInt(session.scanned_count)), 'Note': 'รายการ Pending ยังไม่มีข้อมูลใน Scan Logs'}];
+  toXlsx({'Pending Assets': data}, `bata_pending_${branchId}_${today()}.xlsx`);
+}
+
+function goToPending(branchId) {
+  showPage('scans');
+  document.getElementById('scan-branch').value = branchId;
+  document.getElementById('scan-condition').value = 'pending';
+  filterScans();
 }
 </script>
