@@ -483,7 +483,10 @@ async function loadMasterAssets(branchId) {
   const res = await fetch(API + '/assets/branch/' + branchId, {headers: authHeader()});
   if (!res.ok) return [];
   const data = await res.json();
-  return data.assets || data || [];
+  const assets = data.assets || data || [];
+  console.log('Master sample:', assets[0]); // ดู field names
+  console.log('Total master:', assets.length);
+  return assets;
 }
 
 function populateBranchFilter(selectId, rows) {
