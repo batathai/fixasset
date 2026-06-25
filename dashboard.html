@@ -897,6 +897,7 @@ function goToPending(branchId) {
   document.getElementById('scan-condition').value = 'pending';
   filterScans();
 }
+function today() { return new Date().toISOString().slice(0,10); }
 </script>
 </body>
 </html>
