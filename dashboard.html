@@ -55,19 +55,46 @@ tr:hover td{background:#fafaf8;}
 .btn-force:hover{background:#FAEEDA;}
 .btn-del{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;background:transparent;color:#993C1D;border:0.5px solid #F0997B;border-radius:8px;cursor:pointer;white-space:nowrap;}
 .btn-del:hover{background:#FAECE7;}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;}
-.overlay.show{display:flex;}
-.modal{background:#fff;border-radius:12px;padding:24px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
+
+/* KEY FIX: pointer-events:none ตอนซ่อน, none ตอนแสดง */
+.overlay{
+  display:none;
+  pointer-events:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.4);
+  z-index:9999;
+  align-items:center;
+  justify-content:center;
+}
+.overlay.show{
+  display:flex;
+  pointer-events:all;
+}
+
+.modal{background:#fff;border-radius:12px;padding:24px;width:380px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
 .modal-title{font-size:15px;font-weight:500;color:#1a1a1a;margin-bottom:8px;}
 .modal-body{font-size:13px;color:#666;margin-bottom:20px;line-height:1.6;}
 .modal-actions{display:flex;justify-content:flex-end;gap:8px;}
 .btn-cancel{padding:7px 16px;font-size:13px;background:transparent;border:0.5px solid #CCC;border-radius:8px;cursor:pointer;color:#333;}
 .btn-cancel:hover{background:#f5f5f5;}
-.btn-ok-force{padding:7px 16px;font-size:13px;background:#BA7517;color:#fff;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.btn-ok-force{padding:7px 16px;font-size:13px;background:#BA7517;color:#fff;border:none;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
 .btn-ok-force:hover{background:#854F0B;}
-.btn-ok-del{padding:7px 16px;font-size:13px;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.btn-ok-del{padding:7px 16px;font-size:13px;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
 .btn-ok-del:hover{background:#992d22;}
-.toast{position:fixed;bottom:24px;right:24px;padding:10px 16px;border-radius:8px;font-size:13px;color:#fff;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;}
+
+.toast{
+  position:fixed;
+  bottom:24px;right:24px;
+  padding:10px 16px;
+  border-radius:8px;
+  font-size:13px;
+  color:#fff;
+  z-index:10000;
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .3s;
+}
 </style>
 </head>
 <body>
@@ -127,9 +154,9 @@ tr:hover td{background:#fafaf8;}
     <div class="section">
       <div class="section-title">Branch Sessions</div>
       <div class="legend">
-        <div class="leg-item"><span class="s-open"><i class="ti ti-circle" style="font-size:10px;"></i> Open</span> รอเริ่มงาน</div>
-        <div class="leg-item"><span class="s-process"><i class="ti ti-loader" style="font-size:10px;"></i> On Process</span> กำลังสแกน</div>
-        <div class="leg-item"><span class="s-done"><i class="ti ti-circle-check" style="font-size:10px;"></i> Done</span> สแกนเสร็จแล้ว</div>
+        <div class="leg-item"><span class="s-open"><i class="ti ti-circle" style="font-size:10px;"></i> Open</span>&nbsp;รอเริ่มงาน</div>
+        <div class="leg-item"><span class="s-process"><i class="ti ti-loader" style="font-size:10px;"></i> On Process</span>&nbsp;กำลังสแกน</div>
+        <div class="leg-item"><span class="s-done"><i class="ti ti-circle-check" style="font-size:10px;"></i> Done</span>&nbsp;สแกนเสร็จแล้ว</div>
       </div>
       <table>
         <thead>
@@ -150,6 +177,7 @@ tr:hover td{background:#fafaf8;}
   </div>
 </div>
 
+<!-- Modal Overlay -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-title" id="modal-title"></div>
@@ -167,56 +195,50 @@ tr:hover td{background:#fafaf8;}
   // =============================================
   // ข้อมูล Jobs — แก้ตรงนี้เพื่อเชื่อมกับ API จริง
   // =============================================
-  let jobs = [
+  var jobs = [
     { id: 1, branch: '0051548', total: 300, scanned: 254, unmatched: 6, status: 'on_process' },
     { id: 2, branch: '0051426', total: 359, scanned: 34,  unmatched: 1, status: 'open' },
     { id: 3, branch: '0051301', total: 200, scanned: 200, unmatched: 0, status: 'done' },
   ];
   // =============================================
 
-  let pendingAction = null;
+  var pendingAction = null;
+  var toastTimer = null;
 
   function pct(j) { return Math.round(j.scanned / j.total * 100); }
   function barColor(p) { return p >= 80 ? '#1D9E75' : p >= 40 ? '#BA7517' : '#c0392b'; }
 
   function statusBadge(s) {
-    if (s === 'open')       return `<span class="s-open"><i class="ti ti-circle" style="font-size:10px;"></i> Open</span>`;
-    if (s === 'on_process') return `<span class="s-process"><i class="ti ti-loader" style="font-size:10px;"></i> On Process</span>`;
-    return `<span class="s-done"><i class="ti ti-circle-check" style="font-size:10px;"></i> Done</span>`;
+    if (s === 'open')       return '<span class="s-open"><i class="ti ti-circle" style="font-size:10px;"></i> Open</span>';
+    if (s === 'on_process') return '<span class="s-process"><i class="ti ti-loader" style="font-size:10px;"></i> On Process</span>';
+    return '<span class="s-done"><i class="ti ti-circle-check" style="font-size:10px;"></i> Done</span>';
   }
 
   function render() {
-    const tbody = document.getElementById('tbody');
+    var tbody = document.getElementById('tbody');
     tbody.innerHTML = '';
-    let totalScans = 0, totalUn = 0;
+    var totalScans = 0, totalUn = 0;
 
-    jobs.forEach(j => {
+    for (var i = 0; i < jobs.length; i++) {
+      var j = jobs[i];
       totalScans += j.scanned;
       totalUn += j.unmatched;
-      const p = pct(j);
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="font-weight:500;">${j.branch}</td>
-        <td>${j.total}</td>
-        <td>
-          <div class="progress-wrap">
-            <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${barColor(p)};"></div></div>
-            <span class="pct">${p}%</span>
-          </div>
-        </td>
-        <td>${j.scanned}</td>
-        <td>${j.total - j.scanned}</td>
-        <td><span class="badge-un">${j.unmatched}</span></td>
-        <td>${statusBadge(j.status)}</td>
-        <td>
-          <div class="actions">
-            ${j.status === 'on_process' ? `<button class="btn-force" onclick="confirmForce(${j.id})"><i class="ti ti-lock"></i> Force Close</button>` : ''}
-            <button class="btn-del" onclick="confirmDelete(${j.id})"><i class="ti ti-trash"></i> ลบ</button>
-          </div>
-        </td>
-      `;
+      var p = pct(j);
+      var forceBtn = j.status === 'on_process'
+        ? '<button class="btn-force" onclick="confirmForce(' + j.id + ')"><i class="ti ti-lock"></i> Force Close</button>'
+        : '';
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td style="font-weight:500;">' + j.branch + '</td>' +
+        '<td>' + j.total + '</td>' +
+        '<td><div class="progress-wrap"><div class="progress-bar"><div class="progress-fill" style="width:' + p + '%;background:' + barColor(p) + ';"></div></div><span class="pct">' + p + '%</span></div></td>' +
+        '<td>' + j.scanned + '</td>' +
+        '<td>' + (j.total - j.scanned) + '</td>' +
+        '<td><span class="badge-un">' + j.unmatched + '</span></td>' +
+        '<td>' + statusBadge(j.status) + '</td>' +
+        '<td><div class="actions">' + forceBtn + '<button class="btn-del" onclick="confirmDelete(' + j.id + ')"><i class="ti ti-trash"></i> ลบ</button></div></td>';
       tbody.appendChild(tr);
-    });
+    }
 
     document.getElementById('total-scans').textContent = totalScans;
     document.getElementById('total-un').textContent = totalUn;
@@ -225,11 +247,12 @@ tr:hover td{background:#fafaf8;}
   }
 
   function confirmForce(id) {
-    const j = jobs.find(x => x.id === id);
-    pendingAction = { type: 'force', id };
-    document.getElementById('modal-title').textContent = `Force Close — สาขา ${j.branch}`;
-    document.getElementById('modal-body').textContent = `พนักงานยังสแกนไม่เสร็จ (${pct(j)}%) ต้องการปิดงานสาขานี้จาก HQ? สถานะจะเปลี่ยนเป็น Done ทันที`;
-    const btn = document.getElementById('modal-confirm-btn');
+    var j = null;
+    for (var i = 0; i < jobs.length; i++) { if (jobs[i].id === id) { j = jobs[i]; break; } }
+    pendingAction = { type: 'force', id: id };
+    document.getElementById('modal-title').textContent = 'Force Close — สาขา ' + j.branch;
+    document.getElementById('modal-body').textContent = 'พนักงานยังสแกนไม่เสร็จ (' + pct(j) + '%) ต้องการปิดงานสาขานี้จาก HQ? สถานะจะเปลี่ยนเป็น Done ทันที';
+    var btn = document.getElementById('modal-confirm-btn');
     btn.innerHTML = '<i class="ti ti-lock"></i> Force Close';
     btn.className = 'btn-ok-force';
     btn.onclick = doForce;
@@ -237,11 +260,12 @@ tr:hover td{background:#fafaf8;}
   }
 
   function confirmDelete(id) {
-    const j = jobs.find(x => x.id === id);
-    pendingAction = { type: 'delete', id };
-    document.getElementById('modal-title').textContent = `ลบ Job — สาขา ${j.branch}`;
-    document.getElementById('modal-body').textContent = `ต้องการลบ Job สาขา ${j.branch} (สแกนแล้ว ${j.scanned}/${j.total} รายการ, ${pct(j)}%) ออกจากระบบ? ข้อมูลการสแกนทั้งหมดจะหายไป`;
-    const btn = document.getElementById('modal-confirm-btn');
+    var j = null;
+    for (var i = 0; i < jobs.length; i++) { if (jobs[i].id === id) { j = jobs[i]; break; } }
+    pendingAction = { type: 'delete', id: id };
+    document.getElementById('modal-title').textContent = 'ลบ Job — สาขา ' + j.branch;
+    document.getElementById('modal-body').textContent = 'ต้องการลบ Job สาขา ' + j.branch + ' (สแกนแล้ว ' + j.scanned + '/' + j.total + ' รายการ, ' + pct(j) + '%) ออกจากระบบ? ข้อมูลการสแกนทั้งหมดจะหายไป';
+    var btn = document.getElementById('modal-confirm-btn');
     btn.innerHTML = '<i class="ti ti-trash"></i> ลบ Job';
     btn.className = 'btn-ok-del';
     btn.onclick = doDelete;
@@ -249,14 +273,20 @@ tr:hover td{background:#fafaf8;}
   }
 
   function doForce() {
-    jobs = jobs.map(j => j.id === pendingAction.id ? { ...j, status: 'done' } : j);
+    for (var i = 0; i < jobs.length; i++) {
+      if (jobs[i].id === pendingAction.id) { jobs[i].status = 'done'; break; }
+    }
     closeModal();
     showToast('Force Close เรียบร้อยแล้ว', '#854F0B');
     render();
   }
 
   function doDelete() {
-    jobs = jobs.filter(j => j.id !== pendingAction.id);
+    var newJobs = [];
+    for (var i = 0; i < jobs.length; i++) {
+      if (jobs[i].id !== pendingAction.id) newJobs.push(jobs[i]);
+    }
+    jobs = newJobs;
     closeModal();
     showToast('ลบ Job เรียบร้อยแล้ว', '#993C1D');
     render();
@@ -268,16 +298,17 @@ tr:hover td{background:#fafaf8;}
   }
 
   function showToast(msg, bg) {
-    const t = document.getElementById('toast');
+    var t = document.getElementById('toast');
     t.textContent = msg;
     t.style.background = bg;
     t.style.opacity = '1';
-    setTimeout(() => t.style.opacity = '0', 2500);
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(function() { t.style.opacity = '0'; }, 2500);
   }
 
   function refreshTime() {
-    const n = new Date();
-    document.getElementById('upd').textContent = `Updated ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+    var n = new Date();
+    document.getElementById('upd').textContent = 'Updated ' + String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
   }
 
   document.getElementById('overlay').addEventListener('click', function(e) {
