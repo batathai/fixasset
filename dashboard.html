@@ -286,6 +286,48 @@ tbody tr:hover{background:var(--sf2);}
   </div>
 </div>
 
+<!-- UNMATCHED EDIT MODAL -->
+<div class="modal-overlay" id="unmatched-edit-modal" style="display:none" onclick="if(event.target===this)closeUnmatchedEdit()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">✏️ Edit & Match — Unmatched Asset</div>
+      <button class="modal-close" onclick="closeUnmatchedEdit()">✕</button>
+    </div>
+    <div class="modal-body">
+      <img id="um-modal-img" src="" alt="" style="display:none;width:100%;border-radius:8px;margin-bottom:16px;max-height:260px;object-fit:cover;cursor:zoom-in;" onclick="openLightbox(this.src)">
+      <div style="background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;margin-bottom:16px;font-size:13px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;">QR ที่สแกนได้</div>
+        <div style="font-family:var(--mono);font-size:12px;" id="um-qr">—</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="um-meta">—</div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Asset Code ที่ถูกต้อง</label>
+          <input id="um-asset-code" type="text" placeholder="เช่น SFU01202402009">
+        </div>
+        <div class="field">
+          <label>ชื่อ Asset</label>
+          <input id="um-asset-name" type="text" placeholder="ชื่อครุภัณฑ์">
+        </div>
+      </div>
+      <div class="field">
+        <label>Serial Number (ถ้ามี)</label>
+        <input id="um-serial" type="text" placeholder="Serial ที่พบจริง">
+      </div>
+      <div class="field" style="margin-top:10px;">
+        <label>หมายเหตุ HQ</label>
+        <textarea id="um-note" placeholder="อธิบายเพิ่มเติม เช่น ย้ายจากสาขาอื่น, ของใหม่ยังไม่ได้ลงระบบ..."></textarea>
+      </div>
+      <input type="hidden" id="um-edit-id">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeUnmatchedEdit()">ยกเลิก</button>
+      <button class="btn btn-outline" style="color:var(--red);" onclick="saveAndReject()">✕ Reject</button>
+      <button class="btn btn-green" onclick="saveAndMatch()">✓ บันทึก & Matched</button>
+    </div>
+  </div>
+</div>
+
 <!-- EDIT SCAN MODAL -->
 <div class="modal-overlay" id="edit-modal" style="display:none" onclick="if(event.target===this)closeEditModal()">
   <div class="modal">
@@ -563,8 +605,8 @@ function renderUnmatched(filter) {
         ${u.matched_asset_code?`<div style="font-size:11px;color:var(--green);margin-top:2px;">✓ Matched: ${u.matched_asset_code}</div>`:''}
         ${u.status==='pending'?`
           <div class="photo-actions">
-            <button class="btn btn-green btn-sm" style="flex:1;" onclick="approveUnmatched(${u.id})">✓ Matched</button>
-            <button class="btn btn-outline btn-sm" style="flex:1;" onclick="rejectUnmatched(${u.id})">✕ Reject</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;" onclick="openUnmatchedEdit(${u.id})">✏️ Edit & Match</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;color:var(--red);border-color:var(--red-bd);" onclick="rejectUnmatched(${u.id})">✕ Reject</button>
           </div>`:''}
       </div>
     </div>`).join('');
@@ -574,6 +616,59 @@ function filterUnmatched(filter, el) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   renderUnmatched(filter);
+}
+
+// ── UNMATCHED EDIT MODAL ─────────────────────────────
+function openUnmatchedEdit(id) {
+  const u = allUnmatched.find(r => r.id == id);
+  if (!u) return;
+  document.getElementById('um-edit-id').value = id;
+  document.getElementById('um-qr').textContent = u.scanned_qr || '—';
+  document.getElementById('um-meta').textContent = 'สาขา: ' + (u.branch_id||'—') + '  ·  ' + (u.auditor||'—') + '  ·  ' + (u.scanned_at ? new Date(u.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : '—');
+  document.getElementById('um-asset-code').value = u.matched_asset_code || '';
+  document.getElementById('um-asset-name').value = u.name_guess || '';
+  document.getElementById('um-serial').value = u.serial_no || '';
+  document.getElementById('um-note').value = u.hq_note || '';
+  const img = document.getElementById('um-modal-img');
+  if (u.photo_url) { img.src = u.photo_url; img.style.display = 'block'; }
+  else img.style.display = 'none';
+  document.getElementById('unmatched-edit-modal').style.display = 'flex';
+}
+function closeUnmatchedEdit() {
+  document.getElementById('unmatched-edit-modal').style.display = 'none';
+}
+async function saveAndMatch() {
+  const id = document.getElementById('um-edit-id').value;
+  const assetCode = document.getElementById('um-asset-code').value.trim();
+  const note = document.getElementById('um-note').value.trim();
+  const serial = document.getElementById('um-serial').value.trim();
+  if (!assetCode) { showToast('กรุณาใส่ Asset Code ก่อน', 'error'); return; }
+  try {
+    const res = await fetch(API + '/hq/unmatched/' + id, {
+      method: 'PATCH', headers: authHeader(),
+      body: JSON.stringify({ status: 'matched', matched_asset_code: assetCode, hq_note: note || 'Matched by HQ - ' + currentUser, serial_no: serial || undefined })
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
+    const u = allUnmatched.find(r => r.id == id);
+    if (u) { u.status = 'matched'; u.matched_asset_code = assetCode; u.hq_note = note || 'Matched by HQ - ' + currentUser; u.serial_no = serial; }
+    closeUnmatchedEdit(); renderUnmatched(unmatchedFilter); updateBadges();
+    showToast('Matched เรียบร้อย ✓', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+}
+async function saveAndReject() {
+  const id = document.getElementById('um-edit-id').value;
+  const note = document.getElementById('um-note').value.trim();
+  try {
+    const res = await fetch(API + '/hq/unmatched/' + id, {
+      method: 'PATCH', headers: authHeader(),
+      body: JSON.stringify({ status: 'rejected', hq_note: note || 'Rejected by HQ - ' + currentUser })
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
+    const u = allUnmatched.find(r => r.id == id);
+    if (u) { u.status = 'rejected'; u.hq_note = note; }
+    closeUnmatchedEdit(); renderUnmatched(unmatchedFilter); updateBadges();
+    showToast('Rejected', 'error');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 
 // ── APPROVE / REJECT ──────────────────────────────────
