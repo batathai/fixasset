@@ -128,6 +128,10 @@ tbody tr:hover{background:var(--sf2);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
 .lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;}
+/* ── SCAN THUMBNAIL (เพิ่ม) ── */
+.scan-thumb{width:52px;height:52px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);display:block;transition:transform .15s;}
+.scan-thumb:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+.scan-no-photo{width:52px;height:52px;border-radius:6px;border:1.5px dashed var(--border);background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:20px;}
 </style>
 </head>
 <body>
@@ -219,11 +223,16 @@ tbody tr:hover{background:var(--sf2);}
             <option value="damaged">Damaged</option>
             <option value="missing">Missing</option>
           </select>
+          <select id="scan-photo" onchange="filterScans()">
+            <option value="">ทุกรายการ</option>
+            <option value="yes">มีรูปถ่าย</option>
+            <option value="no">ไม่มีรูป</option>
+          </select>
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Asset Code</th><th>ชื่อ Asset</th><th>สภาพ</th><th>Serial Match</th><th>Serial Found</th><th>สาขา</th><th>เวลา</th><th>Actions</th></tr></thead>
-            <tbody id="scans-tbody"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
+            <thead><tr><th style="width:68px;">รูป</th><th>Asset Code</th><th>ชื่อ Asset</th><th>สภาพ</th><th>Serial Match</th><th>Serial Found</th><th>สาขา</th><th>เวลา</th><th>Actions</th></tr></thead>
+            <tbody id="scans-tbody"><tr><td colspan="9" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -464,8 +473,13 @@ function renderOverview() {
 function renderScans() {
   document.getElementById('scan-count').textContent = filteredScans.length + ' รายการ';
   const tbody = document.getElementById('scans-tbody');
-  if (!filteredScans.length) { tbody.innerHTML='<tr><td colspan="8" class="loading">ไม่พบข้อมูล</td></tr>'; return; }
+  if (!filteredScans.length) { tbody.innerHTML='<tr><td colspan="9" class="loading">ไม่พบข้อมูล</td></tr>'; return; }
   tbody.innerHTML = filteredScans.map(s => `<tr>
+    <td style="padding:8px 10px;">
+      ${s.photo_url
+        ? `<img class="scan-thumb" src="${s.photo_url}" alt="" onclick="openLightbox('${s.photo_url}')" title="คลิกเพื่อขยาย">`
+        : `<div class="scan-no-photo" title="ไม่มีรูปถ่าย">📷</div>`}
+    </td>
     <td style="font-family:var(--mono);font-size:11px;">${s.asset_code||'—'}</td>
     <td><div style="font-weight:500;">${s.asset_name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
     <td><span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span></td>
@@ -473,10 +487,7 @@ function renderScans() {
     <td style="font-family:var(--mono);font-size:11px;">${s.serial_found||'—'}</td>
     <td style="font-size:12px;">${s.branch_id||'—'}</td>
     <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</td>
-    <td><div style="display:flex;gap:4px;">
-      ${s.photo_url?`<button class="btn btn-outline btn-sm" onclick="openLightbox('${s.photo_url}')">📷</button>`:''}
-      <button class="btn btn-outline btn-sm" onclick="openEditModal(${s.id})">✏️ Edit</button>
-    </div></td>
+    <td><button class="btn btn-outline btn-sm" onclick="openEditModal(${s.id})">✏️ Edit</button></td>
   </tr>`).join('');
 }
 
@@ -484,10 +495,12 @@ function filterScans() {
   const q = document.getElementById('scan-search').value.toLowerCase();
   const branch = document.getElementById('scan-branch').value;
   const cond = document.getElementById('scan-condition').value;
+  const photo = document.getElementById('scan-photo').value;
   filteredScans = allScans.filter(s =>
     (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q)) &&
     (!branch || s.branch_id===branch) &&
-    (!cond || s.condition===cond)
+    (!cond || s.condition===cond) &&
+    (!photo || (photo==='yes' ? !!s.photo_url : !s.photo_url))
   );
   renderScans();
 }
