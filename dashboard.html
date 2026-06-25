@@ -647,7 +647,7 @@ function filterScans() {
 
   hideScanBanner();
   filteredScans = allScans.filter(s =>
-    (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q)) &&
+    (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q) || (s.qr_key||'').toLowerCase().includes(q)) &&
     (!branch || s.branch_id===branch) &&
     (!cond || s.condition===cond) &&
     (!photo || (photo==='yes' ? !!s.photo_url : !s.photo_url))
