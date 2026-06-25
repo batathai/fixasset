@@ -5,9 +5,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 USERS = [
-    ("EMP001", "bata1234", "Audit Team 1", "auditor",  "0054011"),
-    ("EMP002", "bata1234", "Audit Team 2", "auditor",  "0099999"),
-    ("ADMIN01","admin999", "HQ Admin",     "hq_admin", None),
+    ("Acc01", "bata1234", "Account Team 1", "Account",  None),
+    ("Acc02", "bata1234", "Account Team 2", "Account",  None),
+    ("Audit01", "bata1234", "Admin Audit Team 1", "auditor",  None),
+    ("Admin01","admin999", "HQ Admin",     "hq_admin", None),
 ]
 
 def hash_pw(pw): return hashlib.sha256(pw.encode()).hexdigest()
