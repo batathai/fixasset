@@ -390,32 +390,71 @@ def hq_update_scan(scan_id: int, req: ScanLogUpdate, db=Depends(get_db), user=De
 
 @app.patch("/hq/unmatched/{unmatched_id}")
 def hq_update_unmatched(unmatched_id: int, req: UnmatchedUpdate, db=Depends(get_db), user=Depends(get_current_user)):
-    """HQ approve หรือ reject unmatched asset"""
+    """HQ approve หรือ reject unmatched asset — ถ้า matched จะ insert เข้า scan_logs ด้วย"""
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     if req.status not in ("matched", "rejected"):
         raise HTTPException(status_code=400, detail="status must be 'matched' or 'rejected'")
 
     cur = db.cursor()
+
+    # ดึงข้อมูล unmatched เดิมก่อน
+    cur.execute("""
+        SELECT ua.*, u.full_name as auditor_name
+        FROM unmatched_assets ua
+        LEFT JOIN users u ON u.id = ua.scanned_by
+        WHERE ua.id = %s
+    """, (unmatched_id,))
+    um = cur.fetchone()
+    if not um:
+        raise HTTPException(status_code=404, detail="Unmatched asset not found")
+
+    hq_note = req.hq_note or f"{'Matched' if req.status == 'matched' else 'Rejected'} by HQ - {user['employee_id']}"
+
+    # อัปเดต unmatched_assets
     cur.execute("""
         UPDATE unmatched_assets
         SET status = %s,
             hq_note = %s,
             matched_asset_code = %s,
+            serial_no = COALESCE(%s, serial_no),
             reviewed_by = %s,
             reviewed_at = NOW(),
             updated_at = NOW()
         WHERE id = %s
-        RETURNING id
     """, (
         req.status,
-        req.hq_note or f"{'Approved' if req.status == 'matched' else 'Rejected'} by HQ - {user['employee_id']}",
+        hq_note,
         req.matched_asset_code,
+        req.serial_no,
         user["user_id"],
         unmatched_id
     ))
-    if not cur.fetchone():
-        raise HTTPException(status_code=404, detail="Unmatched asset not found")
+
+    # ถ้า matched และมี asset code — หา asset แล้ว insert เข้า scan_logs
+    if req.status == "matched" and req.matched_asset_code:
+        cur.execute("SELECT id FROM assets WHERE asset_code = %s LIMIT 1", (req.matched_asset_code,))
+        asset = cur.fetchone()
+        if asset:
+            cur.execute("""
+                INSERT INTO scan_logs
+                  (session_id, asset_id, scanned_by, serial_found, serial_match,
+                   condition, remark, photo_url, hq_note, scanned_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT DO NOTHING
+            """, (
+                um["session_id"],
+                asset["id"],
+                um["scanned_by"],
+                req.serial_no or um.get("serial_no"),
+                None,   # serial_match ไม่ทราบ
+                "good", # default condition
+                f"[Matched from Unmatched] QR: {um['scanned_qr']}",
+                um.get("photo_url"),
+                hq_note,
+                um.get("scanned_at") or datetime.now()
+            ))
+
     db.commit()
     return {"ok": True, "unmatched_id": unmatched_id, "status": req.status}
 
