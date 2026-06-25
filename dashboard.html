@@ -55,14 +55,24 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .refresh-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);transition:all .15s;}
 .refresh-btn:hover{border-color:var(--red);color:var(--red);}
 .page{padding:24px 28px;display:flex;flex-direction:column;gap:20px;}
+
+/* ── STAT CARDS (clickable) ── */
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
-.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .15s;position:relative;}
+.stat-card:hover{border-color:var(--red);box-shadow:0 4px 16px rgba(204,0,0,0.08);transform:translateY(-1px);}
+.stat-card .click-hint{position:absolute;bottom:10px;right:12px;font-size:10px;color:var(--text3);opacity:0;}
+.stat-card:hover .click-hint{opacity:1;}
 .stat-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
 .stat-val{font-family:var(--cond);font-size:30px;font-weight:700;line-height:1;}
 .stat-sub{font-size:12px;color:var(--text3);margin-top:4px;}
 .stat-card.green .stat-val{color:var(--green);}
+.stat-card.green:hover{border-color:var(--green);}
 .stat-card.amber .stat-val{color:var(--amber);}
+.stat-card.amber:hover{border-color:var(--amber);}
 .stat-card.red .stat-val{color:var(--red);}
+.stat-card.blue .stat-val{color:var(--blue);}
+.stat-card.blue:hover{border-color:var(--blue);}
+
 .section{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
 .section-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .section-title{font-family:var(--cond);font-size:16px;font-weight:700;}
@@ -73,6 +83,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .btn-red{background:var(--red);border-color:var(--red);color:#fff;}
 .btn-red:hover{background:var(--red-d);}
 .btn-green{background:var(--green);border-color:var(--green);color:#fff;}
+.btn-blue{background:var(--blue);border-color:var(--blue);color:#fff;}
 .btn-sm{padding:5px 10px;font-size:12px;}
 .tbl-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -85,6 +96,7 @@ tbody tr:hover{background:var(--sf2);}
 .badge-amber{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd);}
 .badge-red{background:var(--red-l);color:var(--red);border-color:var(--red-bd);}
 .badge-gray{background:var(--sf2);color:var(--text3);border-color:var(--border);}
+.badge-blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd);}
 .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:16px 18px;}
 .photo-card{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--white);}
 .photo-card img{width:100%;height:160px;object-fit:cover;display:block;cursor:pointer;}
@@ -97,10 +109,16 @@ tbody tr:hover{background:var(--sf2);}
 .tab-bar{display:flex;border-bottom:1px solid var(--border);padding:0 18px;}
 .tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .tab.active{color:var(--red);border-bottom-color:var(--red);}
-.filter-bar{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
-.filter-bar input,.filter-bar select{padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-family:var(--sans);background:var(--sf2);outline:none;}
-.filter-bar input:focus,.filter-bar select:focus{border-color:var(--red);}
-.filter-bar input{min-width:200px;}
+
+/* ── SEARCH BAR ── */
+.filter-bar{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.filter-bar select{padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-family:var(--sans);background:var(--sf2);outline:none;}
+.filter-bar select:focus{border-color:var(--red);}
+.search-wrap{display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;background:var(--sf2);}
+.search-wrap input{border:none;background:transparent;padding:7px 10px;font-size:13px;font-family:var(--sans);outline:none;min-width:200px;}
+.search-btn{padding:7px 12px;background:var(--red);border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;transition:background .15s;}
+.search-btn:hover{background:var(--red-d);}
+
 .pb{background:#e8e5e0;border-radius:99px;height:7px;overflow:hidden;width:100px;}
 .pb-fill{height:100%;border-radius:99px;}
 .pb-green{background:var(--green);}
@@ -131,6 +149,11 @@ tbody tr:hover{background:var(--sf2);}
 .scan-thumb{width:52px;height:52px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);display:block;transition:transform .15s;}
 .scan-thumb:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.15);}
 .scan-no-photo{width:52px;height:52px;border-radius:6px;border:1.5px dashed var(--border);background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:20px;}
+
+/* page-banner */
+.page-banner{padding:10px 18px;background:var(--blue-bg);border-bottom:1px solid var(--blue-bd);font-size:13px;color:var(--blue);display:flex;align-items:center;gap:8px;}
+.page-banner.amber{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber);}
+.page-banner.green{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
 </style>
 </head>
 <body>
@@ -187,10 +210,29 @@ tbody tr:hover{background:var(--sf2);}
     <!-- OVERVIEW -->
     <div class="page" id="page-overview">
       <div class="stat-grid">
-        <div class="stat-card"><div class="stat-label">Total Scans</div><div class="stat-val" id="s-total">—</div><div class="stat-sub">all sessions</div></div>
-        <div class="stat-card green"><div class="stat-label">With Photo</div><div class="stat-val" id="s-photo">—</div><div class="stat-sub">รูปถ่ายแนบมา</div></div>
-        <div class="stat-card amber"><div class="stat-label">Unmatched</div><div class="stat-val" id="s-unmatched">—</div><div class="stat-sub">pending review</div></div>
-        <div class="stat-card red"><div class="stat-label">Serial Mismatch</div><div class="stat-val" id="s-mismatch">—</div><div class="stat-sub">ไม่ตรงกับ master</div></div>
+        <div class="stat-card blue" onclick="goToAllAssets()" title="คลิกดูรายการทั้งหมด">
+          <div class="stat-label">Total Assets</div>
+          <div class="stat-val" id="s-total-assets">—</div>
+          <div class="stat-sub">ทรัพย์สินทั้งหมด</div>
+          <div class="click-hint">คลิกเพื่อดูรายการ →</div>
+        </div>
+        <div class="stat-card green" onclick="goToScanned()" title="คลิกดูรายการที่สแกนแล้ว">
+          <div class="stat-label">Scanned</div>
+          <div class="stat-val" id="s-total">—</div>
+          <div class="stat-sub">สแกนแล้ว</div>
+          <div class="click-hint">คลิกเพื่อดูรายการ →</div>
+        </div>
+        <div class="stat-card amber" onclick="goToPendingOverview()" title="คลิกดูรายการ Pending">
+          <div class="stat-label">Pending</div>
+          <div class="stat-val" id="s-pending">—</div>
+          <div class="stat-sub">ยังไม่ได้สแกน</div>
+          <div class="click-hint">คลิกเพื่อดูรายการ →</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Unmatched</div>
+          <div class="stat-val" id="s-unmatched">—</div>
+          <div class="stat-sub">pending review</div>
+        </div>
       </div>
       <div class="section">
         <div class="section-head"><div class="section-title">Branch Sessions</div></div>
@@ -213,21 +255,26 @@ tbody tr:hover{background:var(--sf2);}
             <button class="btn btn-red btn-sm" onclick="exportScans()">📥 Export</button>
           </div>
         </div>
+        <div id="scan-banner" style="display:none"></div>
         <div class="filter-bar">
-          <input id="scan-search" type="text" placeholder="ค้นหา asset code / ชื่อ..." oninput="filterScans()">
+          <div class="search-wrap">
+            <input id="scan-search" type="text" placeholder="ค้นหา asset code / ชื่อ..." onkeydown="if(event.key==='Enter')doSearch()">
+            <button class="search-btn" onclick="doSearch()" title="ค้นหา">🔍</button>
+          </div>
           <select id="scan-branch" onchange="filterScans()"><option value="">ทุกสาขา</option></select>
           <select id="scan-condition" onchange="filterScans()">
-            <option value="">📋 ทุกสภาพ</option>
+            <option value="">ทุกสภาพ</option>
             <option value="pending">⏳ Pending (ยังไม่สแกน)</option>
-            <option value="good">✅ Good</option>
-            <option value="damaged">⚠️ Damaged</option>
-            <option value="missing">❌ Missing</option>
+            <option value="good">Good</option>
+            <option value="damaged">Damaged</option>
+            <option value="missing">Missing</option>
           </select>
           <select id="scan-photo" onchange="filterScans()">
-            <option value="">🖼️ ทุกรายการ</option>
-            <option value="yes">📷 มีรูปถ่าย</option>
-            <option value="no">🚫 ไม่มีรูป</option>
+            <option value="">ทุกรายการ</option>
+            <option value="yes">มีรูปถ่าย</option>
+            <option value="no">ไม่มีรูป</option>
           </select>
+          <button class="btn btn-outline btn-sm" onclick="clearSearch()">✕ ล้าง</button>
         </div>
         <div class="tbl-wrap">
           <table>
@@ -246,7 +293,10 @@ tbody tr:hover{background:var(--sf2);}
           <div class="section-actions"><span id="photo-count" style="font-size:12px;color:var(--text3);">—</span></div>
         </div>
         <div class="filter-bar">
-          <input id="photo-search" type="text" placeholder="ค้นหา..." oninput="renderPhotos()">
+          <div class="search-wrap">
+            <input id="photo-search" type="text" placeholder="ค้นหา..." onkeydown="if(event.key==='Enter')renderPhotos()">
+            <button class="search-btn" onclick="renderPhotos()" title="ค้นหา">🔍</button>
+          </div>
           <select id="photo-branch" onchange="renderPhotos()"><option value="">ทุกสาขา</option></select>
         </div>
         <div class="photo-grid" id="photo-grid"><div class="loading" style="grid-column:1/-1">Loading...</div></div>
@@ -274,11 +324,11 @@ tbody tr:hover{background:var(--sf2);}
       <div class="section">
         <div class="section-head"><div class="section-title">📥 Export Audit Report</div></div>
         <div style="padding:24px 18px;display:flex;flex-direction:column;gap:12px;max-width:480px;">
-          <button class="btn btn-red" onclick="exportAll()">📊 Export Full Report (.xlsx)</button>
+          <button class="btn btn-red" onclick="exportFullReport()">📊 Export Full Report — ทุกรายการ (Scanned + Pending)</button>
           <button class="btn btn-outline" onclick="exportScans()">🔍 Export Scan Logs (.xlsx)</button>
           <button class="btn btn-outline" onclick="exportUnmatchedXlsx()">⚠️ Export Unmatched (.xlsx)</button>
           <div style="background:var(--sf2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--text3);line-height:1.7;margin-top:8px;">
-            ข้อมูลดึงผ่าน Railway API ครับ ไฟล์จะมี sheet: Summary, Scan Logs, Unmatched
+            Full Report จะมีทุกรายการ 300 รายการ แยก Status: Scanned / Pending ชัดเจนครับ
           </div>
         </div>
       </div>
@@ -301,23 +351,11 @@ tbody tr:hover{background:var(--sf2);}
         <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="um-meta">—</div>
       </div>
       <div class="field-row">
-        <div class="field">
-          <label>Asset Code ที่ถูกต้อง</label>
-          <input id="um-asset-code" type="text" placeholder="เช่น SFU01202402009">
-        </div>
-        <div class="field">
-          <label>ชื่อ Asset</label>
-          <input id="um-asset-name" type="text" placeholder="ชื่อครุภัณฑ์">
-        </div>
+        <div class="field"><label>Asset Code ที่ถูกต้อง</label><input id="um-asset-code" type="text" placeholder="เช่น SFU01202402009"></div>
+        <div class="field"><label>ชื่อ Asset</label><input id="um-asset-name" type="text" placeholder="ชื่อครุภัณฑ์"></div>
       </div>
-      <div class="field">
-        <label>Serial Number (ถ้ามี)</label>
-        <input id="um-serial" type="text" placeholder="Serial ที่พบจริง">
-      </div>
-      <div class="field" style="margin-top:10px;">
-        <label>หมายเหตุ HQ</label>
-        <textarea id="um-note" placeholder="อธิบายเพิ่มเติม เช่น ย้ายจากสาขาอื่น, ของใหม่ยังไม่ได้ลงระบบ..."></textarea>
-      </div>
+      <div class="field"><label>Serial Number (ถ้ามี)</label><input id="um-serial" type="text" placeholder="Serial ที่พบจริง"></div>
+      <div class="field" style="margin-top:10px;"><label>หมายเหตุ HQ</label><textarea id="um-note" placeholder="อธิบายเพิ่มเติม..."></textarea></div>
       <input type="hidden" id="um-edit-id">
     </div>
     <div class="modal-foot">
@@ -350,15 +388,9 @@ tbody tr:hover{background:var(--sf2);}
             <option value="missing">Missing — หาย</option>
           </select>
         </div>
-        <div class="field">
-          <label>Serial Found (ที่พบจริง)</label>
-          <input id="m-serial" type="text" placeholder="ใส่ serial ที่พบจริง">
-        </div>
+        <div class="field"><label>Serial Found (ที่พบจริง)</label><input id="m-serial" type="text" placeholder="ใส่ serial ที่พบจริง"></div>
       </div>
-      <div class="field">
-        <label>หมายเหตุ HQ</label>
-        <textarea id="m-note" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
-      </div>
+      <div class="field"><label>หมายเหตุ HQ</label><textarea id="m-note" placeholder="หมายเหตุเพิ่มเติม..."></textarea></div>
       <input type="hidden" id="m-scan-id">
     </div>
     <div class="modal-foot">
@@ -375,16 +407,11 @@ tbody tr:hover{background:var(--sf2);}
 
 <script>
 const API = 'https://bata-asset-api-production.up.railway.app';
-let token = null;
-let currentUser = null;
-let allScans = [];
-let allUnmatched = [];
-let allSessions = [];
-let allMasterAssets = [];
-let filteredScans = [];
-let unmatchedFilter = 'pending';
+let token = null, currentUser = null;
+let allScans = [], allUnmatched = [], allSessions = [];
+let filteredScans = [], unmatchedFilter = 'pending';
+let currentScanMode = 'normal'; // 'normal' | 'pending' | 'all'
 
-// ── SESSION ──────────────────────────────────────────
 function saveSession(t, user) { sessionStorage.setItem('bata_hq_v2', JSON.stringify({token:t,user})); }
 function restoreSession() {
   try {
@@ -398,9 +425,8 @@ function restoreSession() {
   } catch(e) { return false; }
 }
 window.addEventListener('load', () => { if (restoreSession()) loadAll(); });
-document.addEventListener('keypress', e => { if (e.key==='Enter') doLogin(); });
+document.addEventListener('keypress', e => { if (e.key==='Enter' && document.getElementById('login-screen').style.display!=='none') doLogin(); });
 
-// ── LOGIN ────────────────────────────────────────────
 async function doLogin() {
   const id = document.getElementById('l-id').value.trim();
   const pw = document.getElementById('l-pw').value;
@@ -409,11 +435,7 @@ async function doLogin() {
   const btn = document.querySelector('.btn-login');
   btn.textContent = 'Signing in...'; btn.disabled = true;
   try {
-    const res = await fetch(API + '/auth/login', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({employee_id: id, password: pw, branch_id: 'HQ'})
-    });
+    const res = await fetch(API + '/auth/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employee_id:id,password:pw,branch_id:'HQ'})});
     const data = await res.json();
     if (!res.ok) throw new Error(data.detail || 'Login failed');
     if (data.role !== 'hq_admin') throw new Error('HQ admin access required');
@@ -423,9 +445,8 @@ async function doLogin() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'flex';
     loadAll();
-  } catch(e) {
-    err.textContent = e.message; err.classList.add('show');
-  } finally { btn.textContent = 'SIGN IN'; btn.disabled = false; }
+  } catch(e) { err.textContent = e.message; err.classList.add('show'); }
+  finally { btn.textContent = 'SIGN IN'; btn.disabled = false; }
 }
 function doLogout() {
   token = null; sessionStorage.removeItem('bata_hq_v2');
@@ -434,99 +455,142 @@ function doLogout() {
 }
 function authHeader() { return {'Authorization':'Bearer '+token,'Content-Type':'application/json'}; }
 
-// ── LOAD ALL ─────────────────────────────────────────
 async function loadAll() {
   if (!token) return;
   document.getElementById('last-updated').textContent = 'Loading...';
   try {
     await Promise.all([loadScans(), loadUnmatched(), loadSummary()]);
-    renderOverview();
-    renderScans();
-    renderPhotos();
-    renderUnmatched(unmatchedFilter);
-    updateBadges();
-    document.getElementById('last-updated').textContent =
-      'Updated ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
-  } catch(e) {
-    console.error(e);
-    showToast('Error: ' + e.message, 'error');
-    document.getElementById('last-updated').textContent = 'Error';
-  }
+    renderOverview(); renderScans(); renderPhotos(); renderUnmatched(unmatchedFilter); updateBadges();
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  } catch(e) { console.error(e); showToast('Error: '+e.message,'error'); document.getElementById('last-updated').textContent='Error'; }
 }
 
 async function loadScans() {
-  const res = await fetch(API + '/hq/scans', {headers: authHeader()});
-  if (!res.ok) throw new Error('Cannot load scans: ' + res.status);
+  const res = await fetch(API+'/hq/scans',{headers:authHeader()});
+  if (!res.ok) throw new Error('Cannot load scans: '+res.status);
   const data = await res.json();
   allScans = data.scans || [];
   filteredScans = allScans;
   populateBranchFilter('scan-branch', allScans);
   populateBranchFilter('photo-branch', allScans);
 }
-
 async function loadUnmatched() {
-  const res = await fetch(API + '/hq/unmatched', {headers: authHeader()});
-  if (!res.ok) throw new Error('Cannot load unmatched: ' + res.status);
+  const res = await fetch(API+'/hq/unmatched',{headers:authHeader()});
+  if (!res.ok) throw new Error('Cannot load unmatched: '+res.status);
   const data = await res.json();
   allUnmatched = data.items || [];
 }
-
 async function loadSummary() {
-  const res = await fetch(API + '/dashboard/summary', {headers: authHeader()});
-  if (!res.ok) throw new Error('Cannot load summary: ' + res.status);
+  const res = await fetch(API+'/dashboard/summary',{headers:authHeader()});
+  if (!res.ok) throw new Error('Cannot load summary: '+res.status);
   const data = await res.json();
   allSessions = data.sessions || [];
 }
-
 async function loadMasterAssets(branchId) {
   if (!branchId) return [];
-  const res = await fetch(API + '/assets/branch/' + branchId, {headers: authHeader()});
+  const res = await fetch(API+'/assets/branch/'+branchId,{headers:authHeader()});
   if (!res.ok) return [];
   const data = await res.json();
-  const assets = data.assets || data || [];
-  console.log('Master sample:', assets[0]); // ดู field names
-  console.log('Total master:', assets.length);
-  return assets;
+  return data.assets || data || [];
 }
 
 function populateBranchFilter(selectId, rows) {
   const sel = document.getElementById(selectId);
   const cur = sel.value;
-  const branches = [...new Set(rows.map(r => r.branch_id).filter(Boolean))].sort();
+  const branches = [...new Set(rows.map(r=>r.branch_id).filter(Boolean))].sort();
   sel.innerHTML = '<option value="">ทุกสาขา</option>' + branches.map(b=>`<option value="${b}">${b}</option>`).join('');
   sel.value = cur;
 }
 
 // ── OVERVIEW ─────────────────────────────────────────
 function renderOverview() {
-  document.getElementById('s-total').textContent = allScans.length.toLocaleString();
-  document.getElementById('s-photo').textContent = allScans.filter(s=>s.photo_url).length.toLocaleString();
+  const totalScanned = allScans.length;
+  const totalPending = allSessions.reduce((sum,s)=>sum+Math.max(0,(parseInt(s.total_assets)||0)-(parseInt(s.scanned_count)||0)),0);
+  const totalAssets = allSessions.reduce((sum,s)=>sum+(parseInt(s.total_assets)||0),0);
+
+  document.getElementById('s-total-assets').textContent = totalAssets.toLocaleString();
+  document.getElementById('s-total').textContent = totalScanned.toLocaleString();
+  document.getElementById('s-pending').textContent = totalPending.toLocaleString();
   document.getElementById('s-unmatched').textContent = allUnmatched.filter(u=>u.status==='pending').length.toLocaleString();
-  document.getElementById('s-mismatch').textContent = allScans.filter(s=>s.serial_match===false).length.toLocaleString();
 
   const tbody = document.getElementById('sessions-tbody');
   if (!allSessions.length) { tbody.innerHTML='<tr><td colspan="8" class="loading">No sessions</td></tr>'; return; }
   tbody.innerHTML = allSessions.map(s => {
     const total = parseInt(s.total_assets)||0;
     const scanned = parseInt(s.scanned_count)||0;
+    const pending = Math.max(0,total-scanned);
     const pct = total ? Math.round(scanned/total*100) : 0;
     const cls = pct===100?'pb-green':pct>=50?'pb-amber':'pb-red';
     const statusBadge = s.status==='done'
       ? '<span class="badge badge-green">✓ Done</span>'
       : s.status==='on_process'
-      ? '<span class="badge badge-amber" style="background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd);">⟳ On Process</span>'
+      ? '<span class="badge badge-amber">⟳ On Process</span>'
       : '<span class="badge badge-gray">○ Open</span>';
     return `<tr>
       <td><strong>${s.branch_id}</strong><br><span style="font-size:11px;color:var(--text3);">${s.branch_name||''}</span></td>
-      <td>${total.toLocaleString()}</td>
+      <td><span style="cursor:pointer;color:var(--blue);font-weight:600;text-decoration:underline;" onclick="goToAllAssetsBranch('${s.branch_id}')">${total.toLocaleString()}</span></td>
       <td><div style="display:flex;align-items:center;gap:8px;"><div class="pb"><div class="pb-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:12px;font-family:var(--mono);">${pct}%</span></div></td>
-      <td>${scanned}</td>
-      <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${Math.max(0,total-scanned)}</span></td>
-      <td>${parseInt(s.unmatched_count)||0 ? `<span class="badge badge-red">${s.unmatched_count}</span>` : '<span class="badge badge-gray">0</span>'}</td>
+      <td><span style="cursor:pointer;color:var(--green);font-weight:600;text-decoration:underline;" onclick="goToScannedBranch('${s.branch_id}')">${scanned}</span></td>
+      <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${pending}</span></td>
+      <td>${parseInt(s.unmatched_count)||0?`<span class="badge badge-red">${s.unmatched_count}</span>`:'<span class="badge badge-gray">0</span>'}</td>
       <td>${statusBadge}</td>
       <td><button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.session_id||s.id},'${s.branch_id}')">🗑 Delete</button></td>
     </tr>`;
   }).join('');
+}
+
+// ── OVERVIEW CLICK ACTIONS ────────────────────────────
+function goToAllAssets() {
+  const branchId = allSessions[0]?.branch_id || '';
+  goToAllAssetsBranch(branchId);
+}
+async function goToAllAssetsBranch(branchId) {
+  showPage('scans');
+  document.getElementById('scan-branch').value = branchId;
+  document.getElementById('scan-condition').value = '';
+  document.getElementById('scan-photo').value = '';
+  document.getElementById('scan-search').value = '';
+  currentScanMode = 'all';
+  showScanBanner('blue', `📋 แสดงทุกรายการที่สแกนแล้ว — สาขา ${branchId}`);
+  filteredScans = allScans.filter(s => !branchId || s.branch_id === branchId);
+  renderScans();
+}
+function goToScanned() {
+  const branchId = allSessions[0]?.branch_id || '';
+  goToScannedBranch(branchId);
+}
+function goToScannedBranch(branchId) {
+  showPage('scans');
+  document.getElementById('scan-branch').value = branchId;
+  document.getElementById('scan-condition').value = '';
+  document.getElementById('scan-photo').value = '';
+  document.getElementById('scan-search').value = '';
+  currentScanMode = 'normal';
+  showScanBanner('green', `✓ แสดงรายการที่สแกนแล้ว — สาขา ${branchId}`);
+  filteredScans = allScans.filter(s => !branchId || s.branch_id === branchId);
+  renderScans();
+}
+function goToPendingOverview() {
+  const branchId = allSessions[0]?.branch_id || '';
+  goToPending(branchId);
+}
+function goToPending(branchId) {
+  showPage('scans');
+  document.getElementById('scan-branch').value = branchId;
+  document.getElementById('scan-condition').value = 'pending';
+  document.getElementById('scan-photo').value = '';
+  document.getElementById('scan-search').value = '';
+  filterScans();
+}
+
+function showScanBanner(type, msg) {
+  const b = document.getElementById('scan-banner');
+  b.className = 'page-banner' + (type !== 'blue' ? ' '+type : '');
+  b.textContent = msg;
+  b.style.display = 'flex';
+}
+function hideScanBanner() {
+  document.getElementById('scan-banner').style.display = 'none';
 }
 
 // ── SCAN LOGS ─────────────────────────────────────────
@@ -551,6 +615,22 @@ function renderScans() {
   </tr>`).join('');
 }
 
+function doSearch() {
+  currentScanMode = 'normal';
+  hideScanBanner();
+  filterScans();
+}
+function clearSearch() {
+  document.getElementById('scan-search').value = '';
+  document.getElementById('scan-branch').value = '';
+  document.getElementById('scan-condition').value = '';
+  document.getElementById('scan-photo').value = '';
+  currentScanMode = 'normal';
+  hideScanBanner();
+  filteredScans = allScans;
+  renderScans();
+}
+
 function filterScans() {
   const q = document.getElementById('scan-search').value.toLowerCase();
   const branch = document.getElementById('scan-branch').value;
@@ -563,6 +643,7 @@ function filterScans() {
     return;
   }
 
+  hideScanBanner();
   filteredScans = allScans.filter(s =>
     (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q)) &&
     (!branch || s.branch_id===branch) &&
@@ -572,36 +653,30 @@ function filterScans() {
   renderScans();
 }
 
-// ── PENDING SCANS ─────────────────────────────────────
 async function renderPendingScans(branchId) {
   const tbody = document.getElementById('scans-tbody');
   const session = allSessions.find(s => !branchId || s.branch_id === branchId);
-  if (!session) {
-    tbody.innerHTML = '<tr><td colspan="9" class="loading">ไม่พบข้อมูล session</td></tr>';
-    document.getElementById('scan-count').textContent = '0 รายการ (Pending)';
-    return;
-  }
-  tbody.innerHTML = '<tr><td colspan="9" class="loading">กำลังโหลด Master List...</td></tr>';
+  if (!session) { tbody.innerHTML='<tr><td colspan="9" class="loading">ไม่พบข้อมูล session</td></tr>'; return; }
+  tbody.innerHTML = '<tr><td colspan="9" class="loading">⏳ กำลังโหลด Master List...</td></tr>';
   const masterAssets = await loadMasterAssets(session.branch_id);
-  const scannedCodes = new Set(
-    allScans.filter(s => s.branch_id === session.branch_id).map(s => s.asset_code)
-  );
+  const scannedCodes = new Set(allScans.filter(s=>s.branch_id===session.branch_id).map(s=>s.asset_code));
   const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
-  document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending ยังไม่สแกน)';
+  document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending)';
+  showScanBanner('amber', `⏳ Pending ${pendingAssets.length} รายการ — ยังไม่ได้สแกน สาขา ${session.branch_id}`);
   if (!pendingAssets.length) {
-    tbody.innerHTML = '<tr><td colspan="9" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>';
+    tbody.innerHTML='<tr><td colspan="9" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>';
     return;
   }
-  tbody.innerHTML = pendingAssets.map(a => `<tr>
+  tbody.innerHTML = pendingAssets.map(a => `<tr style="background:var(--amber-bg);">
     <td style="padding:8px 10px;"><div class="scan-no-photo" title="ยังไม่สแกน">⏳</div></td>
-    <td style="font-family:var(--mono);font-size:11px;">${a.asset_code||'—'}</td>
-    <td><div style="font-weight:500;">${a.asset_name||a.name||'—'}</div><div style="font-size:11px;color:var(--text3);">${session.branch_id}</div></td>
+    <td style="font-family:var(--mono);font-size:11px;font-weight:600;">${a.asset_code||'—'}</td>
+    <td><div style="font-weight:500;">${a.name||'—'}</div><div style="font-size:11px;color:var(--text3);">ยังไม่มีผู้สแกน</div></td>
     <td><span class="badge badge-amber">Pending</span></td>
     <td><span class="badge badge-gray">—</span></td>
-    <td style="font-family:var(--mono);font-size:11px;">—</td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${a.serial_no||'—'}</td>
     <td style="font-size:12px;">${session.branch_id}</td>
     <td style="font-size:11px;color:var(--text3);">—</td>
-    <td>—</td>
+    <td><button class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber-bd);" onclick="exportFullReport('${session.branch_id}')">📥</button></td>
   </tr>`).join('');
 }
 
@@ -609,11 +684,7 @@ async function renderPendingScans(branchId) {
 function renderPhotos() {
   const q = document.getElementById('photo-search').value.toLowerCase();
   const branch = document.getElementById('photo-branch').value;
-  const items = allScans.filter(s =>
-    s.photo_url &&
-    (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q)) &&
-    (!branch || s.branch_id===branch)
-  );
+  const items = allScans.filter(s => s.photo_url && (!q||(s.asset_code||'').toLowerCase().includes(q)||(s.asset_name||'').toLowerCase().includes(q)) && (!branch||s.branch_id===branch));
   document.getElementById('photo-count').textContent = items.length + ' รูป';
   const grid = document.getElementById('photo-grid');
   if (!items.length) { grid.innerHTML='<div class="loading" style="grid-column:1/-1">ไม่มีรูปถ่าย</div>'; return; }
@@ -627,9 +698,7 @@ function renderPhotos() {
         <div class="photo-meta">${s.scanned_at?new Date(s.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</div>
         <span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span>
         ${s.hq_note?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">📝 ${s.hq_note}</div>`:''}
-        <div class="photo-actions">
-          <button class="btn btn-outline btn-sm" style="flex:1;" onclick="openEditModal(${s.id})">✏️ Edit</button>
-        </div>
+        <div class="photo-actions"><button class="btn btn-outline btn-sm" style="flex:1;" onclick="openEditModal(${s.id})">✏️ Edit</button></div>
       </div>
     </div>`).join('');
 }
@@ -643,9 +712,7 @@ function renderUnmatched(filter) {
   if (!items.length) { grid.innerHTML='<div class="loading" style="grid-column:1/-1">ไม่มีรายการ</div>'; return; }
   grid.innerHTML = items.map(u => `
     <div class="photo-card">
-      ${u.photo_url
-        ? `<img src="${u.photo_url}" alt="${u.name_guess||''}" onclick="openLightbox('${u.photo_url}')">`
-        : `<div class="photo-no-img"><span style="font-size:28px;">📷</span><span>ไม่มีรูป</span></div>`}
+      ${u.photo_url?`<img src="${u.photo_url}" alt="${u.name_guess||''}" onclick="openLightbox('${u.photo_url}')">`:`<div class="photo-no-img"><span style="font-size:28px;">📷</span><span>ไม่มีรูป</span></div>`}
       <div class="photo-body">
         <div class="photo-code">QR: ${u.scanned_qr||'—'}</div>
         <div class="photo-name">${u.name_guess||'Unknown device'}</div>
@@ -655,267 +722,190 @@ function renderUnmatched(filter) {
         <span class="badge ${u.status==='matched'?'badge-green':u.status==='pending'?'badge-amber':'badge-gray'}">${u.status}</span>
         ${u.hq_note?`<div style="font-size:11px;color:var(--text3);margin-top:4px;">📝 ${u.hq_note}</div>`:''}
         ${u.matched_asset_code?`<div style="font-size:11px;color:var(--green);margin-top:2px;">✓ Matched: ${u.matched_asset_code}</div>`:''}
-        ${u.status==='pending'?`
-          <div class="photo-actions">
-            <button class="btn btn-outline btn-sm" style="flex:1;" onclick="openUnmatchedEdit(${u.id})">✏️ Edit & Match</button>
-            <button class="btn btn-outline btn-sm" style="flex:1;color:var(--red);border-color:var(--red-bd);" onclick="rejectUnmatched(${u.id})">✕ Reject</button>
-          </div>`:''}
+        ${u.status==='pending'?`<div class="photo-actions">
+          <button class="btn btn-outline btn-sm" style="flex:1;" onclick="openUnmatchedEdit(${u.id})">✏️ Edit & Match</button>
+          <button class="btn btn-outline btn-sm" style="flex:1;color:var(--red);border-color:var(--red-bd);" onclick="rejectUnmatched(${u.id})">✕ Reject</button>
+        </div>`:''}
       </div>
     </div>`).join('');
 }
-
 function filterUnmatched(filter, el) {
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   renderUnmatched(filter);
 }
 
-// ── UNMATCHED EDIT MODAL ─────────────────────────────
+// ── UNMATCHED MODAL ───────────────────────────────────
 function openUnmatchedEdit(id) {
-  const u = allUnmatched.find(r => r.id == id);
-  if (!u) return;
+  const u = allUnmatched.find(r=>r.id==id); if (!u) return;
   document.getElementById('um-edit-id').value = id;
-  document.getElementById('um-qr').textContent = u.scanned_qr || '—';
-  document.getElementById('um-meta').textContent = 'สาขา: ' + (u.branch_id||'—') + '  ·  ' + (u.auditor||'—') + '  ·  ' + (u.scanned_at ? new Date(u.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : '—');
-  document.getElementById('um-asset-code').value = u.matched_asset_code || '';
-  document.getElementById('um-asset-name').value = u.name_guess || '';
-  document.getElementById('um-serial').value = u.serial_no || '';
-  document.getElementById('um-note').value = u.hq_note || '';
+  document.getElementById('um-qr').textContent = u.scanned_qr||'—';
+  document.getElementById('um-meta').textContent = 'สาขา: '+(u.branch_id||'—')+'  ·  '+(u.auditor||'—')+'  ·  '+(u.scanned_at?new Date(u.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—');
+  document.getElementById('um-asset-code').value = u.matched_asset_code||'';
+  document.getElementById('um-asset-name').value = u.name_guess||'';
+  document.getElementById('um-serial').value = u.serial_no||'';
+  document.getElementById('um-note').value = u.hq_note||'';
   const img = document.getElementById('um-modal-img');
-  if (u.photo_url) { img.src = u.photo_url; img.style.display = 'block'; }
-  else img.style.display = 'none';
-  document.getElementById('unmatched-edit-modal').style.display = 'flex';
+  if (u.photo_url){img.src=u.photo_url;img.style.display='block';}else img.style.display='none';
+  document.getElementById('unmatched-edit-modal').style.display='flex';
 }
-function closeUnmatchedEdit() {
-  document.getElementById('unmatched-edit-modal').style.display = 'none';
+function closeUnmatchedEdit(){document.getElementById('unmatched-edit-modal').style.display='none';}
+async function saveAndMatch(){
+  const id=document.getElementById('um-edit-id').value;
+  const assetCode=document.getElementById('um-asset-code').value.trim();
+  const note=document.getElementById('um-note').value.trim();
+  const serial=document.getElementById('um-serial').value.trim();
+  if(!assetCode){showToast('กรุณาใส่ Asset Code ก่อน','error');return;}
+  try{
+    const res=await fetch(API+'/hq/unmatched/'+id,{method:'PATCH',headers:authHeader(),body:JSON.stringify({status:'matched',matched_asset_code:assetCode,hq_note:note||'Matched by HQ - '+currentUser,serial_no:serial||undefined})});
+    if(!res.ok)throw new Error((await res.json()).detail||'Error');
+    const u=allUnmatched.find(r=>r.id==id);
+    if(u){u.status='matched';u.matched_asset_code=assetCode;u.hq_note=note||'Matched by HQ - '+currentUser;u.serial_no=serial;}
+    closeUnmatchedEdit();renderUnmatched(unmatchedFilter);updateBadges();
+    showToast('Matched เรียบร้อย ✓','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
-async function saveAndMatch() {
-  const id = document.getElementById('um-edit-id').value;
-  const assetCode = document.getElementById('um-asset-code').value.trim();
-  const note = document.getElementById('um-note').value.trim();
-  const serial = document.getElementById('um-serial').value.trim();
-  if (!assetCode) { showToast('กรุณาใส่ Asset Code ก่อน', 'error'); return; }
-  try {
-    const res = await fetch(API + '/hq/unmatched/' + id, {
-      method: 'PATCH', headers: authHeader(),
-      body: JSON.stringify({ status: 'matched', matched_asset_code: assetCode, hq_note: note || 'Matched by HQ - ' + currentUser, serial_no: serial || undefined })
-    });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
-    const u = allUnmatched.find(r => r.id == id);
-    if (u) { u.status = 'matched'; u.matched_asset_code = assetCode; u.hq_note = note || 'Matched by HQ - ' + currentUser; u.serial_no = serial; }
-    closeUnmatchedEdit(); renderUnmatched(unmatchedFilter); updateBadges();
-    showToast('Matched เรียบร้อย ✓', 'success');
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+async function saveAndReject(){
+  const id=document.getElementById('um-edit-id').value;
+  const note=document.getElementById('um-note').value.trim();
+  try{
+    const res=await fetch(API+'/hq/unmatched/'+id,{method:'PATCH',headers:authHeader(),body:JSON.stringify({status:'rejected',hq_note:note||'Rejected by HQ - '+currentUser})});
+    if(!res.ok)throw new Error((await res.json()).detail||'Error');
+    const u=allUnmatched.find(r=>r.id==id);
+    if(u){u.status='rejected';u.hq_note=note;}
+    closeUnmatchedEdit();renderUnmatched(unmatchedFilter);updateBadges();
+    showToast('Rejected','error');
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
-async function saveAndReject() {
-  const id = document.getElementById('um-edit-id').value;
-  const note = document.getElementById('um-note').value.trim();
-  try {
-    const res = await fetch(API + '/hq/unmatched/' + id, {
-      method: 'PATCH', headers: authHeader(),
-      body: JSON.stringify({ status: 'rejected', hq_note: note || 'Rejected by HQ - ' + currentUser })
-    });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
-    const u = allUnmatched.find(r => r.id == id);
-    if (u) { u.status = 'rejected'; u.hq_note = note; }
-    closeUnmatchedEdit(); renderUnmatched(unmatchedFilter); updateBadges();
-    showToast('Rejected', 'error');
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
-}
-
-// ── APPROVE / REJECT ──────────────────────────────────
-async function approveUnmatched(id) {
-  try {
-    const res = await fetch(API + '/hq/unmatched/' + id, {
-      method: 'PATCH', headers: authHeader(),
-      body: JSON.stringify({status:'matched'})
-    });
-    if (!res.ok) throw new Error((await res.json()).detail);
-    const item = allUnmatched.find(u=>u.id==id);
-    if (item) { item.status='matched'; item.hq_note='Approved by HQ - '+currentUser; }
-    renderUnmatched(unmatchedFilter); updateBadges();
-    showToast('Approved ✓', 'success');
-  } catch(e) { showToast('Error: '+e.message,'error'); }
-}
-
-async function rejectUnmatched(id) {
-  try {
-    const res = await fetch(API + '/hq/unmatched/' + id, {
-      method: 'PATCH', headers: authHeader(),
-      body: JSON.stringify({status:'rejected'})
-    });
-    if (!res.ok) throw new Error((await res.json()).detail);
-    const item = allUnmatched.find(u=>u.id==id);
-    if (item) item.status='rejected';
-    renderUnmatched(unmatchedFilter); updateBadges();
-    showToast('Rejected', 'error');
-  } catch(e) { showToast('Error: '+e.message,'error'); }
+async function rejectUnmatched(id){
+  try{
+    const res=await fetch(API+'/hq/unmatched/'+id,{method:'PATCH',headers:authHeader(),body:JSON.stringify({status:'rejected'})});
+    if(!res.ok)throw new Error((await res.json()).detail);
+    const item=allUnmatched.find(u=>u.id==id);
+    if(item)item.status='rejected';
+    renderUnmatched(unmatchedFilter);updateBadges();
+    showToast('Rejected','error');
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
 
 // ── EDIT MODAL ────────────────────────────────────────
-function openEditModal(id) {
-  const s = allScans.find(r=>r.id==id);
-  if (!s) return;
-  document.getElementById('m-scan-id').value = id;
-  document.getElementById('m-code').value = s.asset_code||'';
-  document.getElementById('m-name').value = s.asset_name||'';
-  document.getElementById('m-condition').value = s.condition||'good';
-  document.getElementById('m-serial').value = s.serial_found||'';
-  document.getElementById('m-note').value = s.hq_note||'';
-  const img = document.getElementById('modal-img');
-  if (s.photo_url) { img.src=s.photo_url; img.style.display='block'; }
-  else img.style.display='none';
+function openEditModal(id){
+  const s=allScans.find(r=>r.id==id);if(!s)return;
+  document.getElementById('m-scan-id').value=id;
+  document.getElementById('m-code').value=s.asset_code||'';
+  document.getElementById('m-name').value=s.asset_name||'';
+  document.getElementById('m-condition').value=s.condition||'good';
+  document.getElementById('m-serial').value=s.serial_found||'';
+  document.getElementById('m-note').value=s.hq_note||'';
+  const img=document.getElementById('modal-img');
+  if(s.photo_url){img.src=s.photo_url;img.style.display='block';}else img.style.display='none';
   document.getElementById('edit-modal').style.display='flex';
 }
-function closeEditModal() { document.getElementById('edit-modal').style.display='none'; }
-
-async function saveScanEdit() {
-  const id = document.getElementById('m-scan-id').value;
-  const body = {
-    condition: document.getElementById('m-condition').value,
-    serial_found: document.getElementById('m-serial').value.trim() || null,
-    hq_note: document.getElementById('m-note').value.trim() || null
-  };
-  try {
-    const res = await fetch(API + '/hq/scans/' + id, {
-      method: 'PATCH', headers: authHeader(), body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error((await res.json()).detail);
-    const s = allScans.find(r=>r.id==id);
-    if (s) { s.condition=body.condition; s.serial_found=body.serial_found; s.hq_note=body.hq_note; }
-    closeEditModal(); renderScans(); renderPhotos();
+function closeEditModal(){document.getElementById('edit-modal').style.display='none';}
+async function saveScanEdit(){
+  const id=document.getElementById('m-scan-id').value;
+  const body={condition:document.getElementById('m-condition').value,serial_found:document.getElementById('m-serial').value.trim()||null,hq_note:document.getElementById('m-note').value.trim()||null};
+  try{
+    const res=await fetch(API+'/hq/scans/'+id,{method:'PATCH',headers:authHeader(),body:JSON.stringify(body)});
+    if(!res.ok)throw new Error((await res.json()).detail);
+    const s=allScans.find(r=>r.id==id);
+    if(s){s.condition=body.condition;s.serial_found=body.serial_found;s.hq_note=body.hq_note;}
+    closeEditModal();renderScans();renderPhotos();
     showToast('บันทึกสำเร็จ ✓','success');
-  } catch(e) { showToast('Error: '+e.message,'error'); }
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
 
 // ── LIGHTBOX ──────────────────────────────────────────
-function openLightbox(url) { document.getElementById('lightbox-img').src=url; document.getElementById('lightbox').style.display='flex'; }
-function closeLightbox() { document.getElementById('lightbox').style.display='none'; }
+function openLightbox(url){document.getElementById('lightbox-img').src=url;document.getElementById('lightbox').style.display='flex';}
+function closeLightbox(){document.getElementById('lightbox').style.display='none';}
 
 // ── BADGES ────────────────────────────────────────────
-function updateBadges() {
-  const sb = document.getElementById('badge-scans');
-  sb.textContent=allScans.length; sb.style.display=allScans.length?'inline':'none';
-  const pb = document.getElementById('badge-photos');
-  const pc = allScans.filter(s=>s.photo_url).length;
-  pb.textContent=pc; pb.style.display=pc?'inline':'none';
-  const ub = document.getElementById('badge-unmatched');
-  const uc = allUnmatched.filter(u=>u.status==='pending').length;
-  ub.textContent=uc; ub.style.display=uc?'inline':'none';
+function updateBadges(){
+  const sb=document.getElementById('badge-scans');
+  sb.textContent=allScans.length;sb.style.display=allScans.length?'inline':'none';
+  const pb=document.getElementById('badge-photos');
+  const pc=allScans.filter(s=>s.photo_url).length;
+  pb.textContent=pc;pb.style.display=pc?'inline':'none';
+  const ub=document.getElementById('badge-unmatched');
+  const uc=allUnmatched.filter(u=>u.status==='pending').length;
+  ub.textContent=uc;ub.style.display=uc?'inline':'none';
 }
 
 // ── EXPORT ────────────────────────────────────────────
-function toXlsx(sheets, filename) {
-  const wb = XLSX.utils.book_new();
-  Object.entries(sheets).forEach(([name,data]) => {
-    if (!data.length) return;
-    const ws = XLSX.utils.json_to_sheet(data);
-    ws['!cols'] = Object.keys(data[0]).map(()=>({wch:20}));
-    XLSX.utils.book_append_sheet(wb, ws, name);
+function toXlsx(sheets,filename){
+  const wb=XLSX.utils.book_new();
+  Object.entries(sheets).forEach(([name,data])=>{
+    if(!data.length)return;
+    const ws=XLSX.utils.json_to_sheet(data);
+    ws['!cols']=Object.keys(data[0]).map(()=>({wch:22}));
+    XLSX.utils.book_append_sheet(wb,ws,name);
   });
-  XLSX.writeFile(wb, filename);
+  XLSX.writeFile(wb,filename);
   showToast('Exported: '+filename,'success');
 }
-function exportScans() {
-  toXlsx({'Scan Logs': allScans.map(s=>({'Asset Code':s.asset_code,'Asset Name':s.asset_name,'Condition':s.condition,'Serial Match':s.serial_match,'Serial Found':s.serial_found||'','Branch':s.branch_id,'Auditor':s.auditor,'Scanned At':s.scanned_at,'Photo':s.photo_url?'Yes':'No','HQ Note':s.hq_note||''}))}, `bata_scan_logs_${today()}.xlsx`);
-}
-function exportUnmatchedXlsx() {
-  toXlsx({'Unmatched': allUnmatched.map(u=>({'QR Scanned':u.scanned_qr,'Name Guess':u.name_guess,'Serial':u.serial_no||'','Branch':u.branch_id,'Auditor':u.auditor,'Status':u.status,'HQ Note':u.hq_note||'','Matched Code':u.matched_asset_code||'','Scanned At':u.scanned_at}))}, `bata_unmatched_${today()}.xlsx`);
-}
-function exportAll() {
-  toXlsx({
-    'Summary':[{'Export Date':new Date().toLocaleString('th-TH'),'Total Scans':allScans.length,'With Photo':allScans.filter(s=>s.photo_url).length,'Unmatched Pending':allUnmatched.filter(u=>u.status==='pending').length}],
-    'Scan Logs':allScans.map(s=>({'Asset Code':s.asset_code,'Asset Name':s.asset_name,'Condition':s.condition,'Serial Found':s.serial_found||'','Branch':s.branch_id,'Scanned At':s.scanned_at,'Photo':s.photo_url?'Yes':'No','HQ Note':s.hq_note||''})),
-    'Unmatched':allUnmatched.map(u=>({'QR':u.scanned_qr,'Name':u.name_guess,'Branch':u.branch_id,'Status':u.status,'HQ Note':u.hq_note||''})),
-  }, `bata_full_report_${today()}.xlsx`);
-}
-async function exportPending(branchId) {
-  const session = allSessions.find(s => s.branch_id === branchId);
-  if (!session) return;
-  showToast('กำลังโหลดข้อมูล...', '');
-  const masterAssets = await loadMasterAssets(branchId);
-  const scannedMap = {};
-  allScans.filter(s => s.branch_id === branchId).forEach(s => {
-    scannedMap[s.asset_code] = s;
-  });
 
+async function exportFullReport(branchId) {
+  const session = allSessions.find(s => s.branch_id === (branchId || allSessions[0]?.branch_id));
+  if (!session) { showToast('ไม่พบ session', 'error'); return; }
+  showToast('กำลังโหลด Master List...', '');
+  const masterAssets = await loadMasterAssets(session.branch_id);
+  const scannedMap = {};
+  allScans.filter(s=>s.branch_id===session.branch_id).forEach(s=>{
+    if (!scannedMap[s.asset_code]) scannedMap[s.asset_code] = s;
+  });
   const data = masterAssets.map(a => {
     const scan = scannedMap[a.asset_code];
-    if (scan) {
-      return {
-        'Asset Code': a.asset_code,
-        'Asset Name': a.name || '',
-        'Status': 'Scanned',
-        'สภาพ': scan.condition || '',
-        'ผู้สแกน': scan.auditor || '',
-        'เวลาสแกน': scan.scanned_at || '',
-        'Serial Found': scan.serial_found || '',
-        'HQ Note': scan.hq_note || ''
-      };
-    } else {
-      return {
-        'Asset Code': a.asset_code,
-        'Asset Name': a.name || '',
-        'Status': '⚠️ PENDING - ยังไม่สแกน',
-        'สภาพ': '',
-        'ผู้สแกน': '',
-        'เวลาสแกน': '',
-        'Serial Found': '',
-        'HQ Note': ''
-      };
-    }
+    return scan ? {
+      'Asset Code': a.asset_code, 'Asset Name': a.name||'', 'Status': 'Scanned ✓',
+      'สภาพ': scan.condition||'', 'ผู้สแกน': scan.auditor||'',
+      'เวลาสแกน': scan.scanned_at||'', 'Serial Found': scan.serial_found||'',
+      'มีรูปถ่าย': scan.photo_url?'Yes':'No', 'HQ Note': scan.hq_note||''
+    } : {
+      'Asset Code': a.asset_code, 'Asset Name': a.name||'', 'Status': '⚠️ PENDING - ยังไม่สแกน',
+      'สภาพ': '', 'ผู้สแกน': '', 'เวลาสแกน': '', 'Serial Found': a.serial_no||'',
+      'มีรูปถ่าย': '', 'HQ Note': ''
+    };
   });
-
-  toXlsx({'Audit Report': data}, `bata_audit_full_${branchId}_${today()}.xlsx`);
-  showToast('Export สำเร็จ ' + data.length + ' รายการ', 'success');
+  toXlsx({'Full Audit Report': data}, `bata_full_report_${session.branch_id}_${today()}.xlsx`);
 }
+
+function exportScans(){
+  toXlsx({'Scan Logs':allScans.map(s=>({'Asset Code':s.asset_code,'Asset Name':s.asset_name,'Condition':s.condition,'Serial Match':s.serial_match,'Serial Found':s.serial_found||'','Branch':s.branch_id,'Auditor':s.auditor,'Scanned At':s.scanned_at,'Photo':s.photo_url?'Yes':'No','HQ Note':s.hq_note||''}))},`bata_scan_logs_${today()}.xlsx`);
+}
+function exportUnmatchedXlsx(){
+  toXlsx({'Unmatched':allUnmatched.map(u=>({'QR Scanned':u.scanned_qr,'Name Guess':u.name_guess,'Serial':u.serial_no||'','Branch':u.branch_id,'Auditor':u.auditor,'Status':u.status,'HQ Note':u.hq_note||'','Matched Code':u.matched_asset_code||'','Scanned At':u.scanned_at}))},`bata_unmatched_${today()}.xlsx`);
+}
+function today(){return new Date().toISOString().slice(0,10);}
 
 // ── NAV ───────────────────────────────────────────────
-const pages = ['overview','scans','photos','unmatched','export'];
-const titles = {overview:'Overview',scans:'Scan Logs',photos:'Photos',unmatched:'Unmatched Assets',export:'Export'};
-function showPage(name) {
-  pages.forEach(p => {
-    document.getElementById('page-'+p).style.display = p===name?'flex':'none';
-    document.getElementById('nav-'+p).classList.toggle('active', p===name);
+const pages=['overview','scans','photos','unmatched','export'];
+const titles={overview:'Overview',scans:'Scan Logs',photos:'Photos',unmatched:'Unmatched Assets',export:'Export'};
+function showPage(name){
+  pages.forEach(p=>{
+    document.getElementById('page-'+p).style.display=p===name?'flex':'none';
+    document.getElementById('nav-'+p).classList.toggle('active',p===name);
   });
-  document.getElementById('page-title').textContent = titles[name];
+  document.getElementById('page-title').textContent=titles[name];
 }
 
-// ── TOAST ─────────────────────────────────────────────
-function showToast(msg, type='') {
-  const wrap = document.getElementById('toast-wrap');
-  const t = document.createElement('div');
-  t.className='toast '+type; t.textContent=msg;
+function showToast(msg,type=''){
+  const wrap=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast '+type;t.textContent=msg;
   wrap.appendChild(t);
-  setTimeout(()=>t.remove(), 3500);
+  setTimeout(()=>t.remove(),3500);
 }
 
-// ── DELETE SESSION ────────────────────────────────────────────
-async function deleteSession(id, branchId) {
-  if (!confirm('ยืนยันการลบ Session ของสาขา ' + branchId + '?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย')) return;
-  try {
-    const res = await fetch(API + '/hq/sessions/' + id, {
-      method: 'DELETE', headers: authHeader()
-    });
-    if (!res.ok) {
-      let msg = 'Error ' + res.status;
-      try { const j = await res.json(); msg = j.detail || msg; } catch(e) {}
-      throw new Error(msg);
-    }
-    allSessions = allSessions.filter(s => String(s.session_id||s.id) !== String(id));
+async function deleteSession(id,branchId){
+  if(!confirm('ยืนยันการลบ Session ของสาขา '+branchId+'?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย'))return;
+  try{
+    const res=await fetch(API+'/hq/sessions/'+id,{method:'DELETE',headers:authHeader()});
+    if(!res.ok){let msg='Error '+res.status;try{const j=await res.json();msg=j.detail||msg;}catch(e){}throw new Error(msg);}
+    allSessions=allSessions.filter(s=>String(s.session_id||s.id)!==String(id));
     renderOverview();
-    showToast('ลบ Session ' + branchId + ' เรียบร้อย', 'success');
-  } catch(e) { showToast('Error: ' + e.message, 'error'); }
+    showToast('ลบ Session '+branchId+' เรียบร้อย','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
 }
-
-// ── GO TO PENDING ─────────────────────────────────────
-function goToPending(branchId) {
-  showPage('scans');
-  document.getElementById('scan-branch').value = branchId;
-  document.getElementById('scan-condition').value = 'pending';
-  filterScans();
-}
-function today() { return new Date().toISOString().slice(0,10); }
 </script>
 </body>
 </html>
