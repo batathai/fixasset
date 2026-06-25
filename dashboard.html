@@ -834,22 +834,40 @@ async function exportPending(branchId) {
   if (!session) return;
   showToast('กำลังโหลดข้อมูล...', '');
   const masterAssets = await loadMasterAssets(branchId);
-  
-  console.log('allScans total:', allScans.length);
-  console.log('allScans branch sample:', allScans.slice(0,2).map(s => ({branch: s.branch_id, code: s.asset_code})));
-  
-  const scannedCodes = new Set(allScans.filter(s => s.branch_id === branchId).map(s => s.asset_code));
-  
-  console.log('branchId:', branchId);
-  console.log('scannedCodes size:', scannedCodes.size);
-  console.log('Scanned codes sample:', [...scannedCodes].slice(0,3));
-  
-  const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
-  console.log('Pending count:', pendingAssets.length);
-  
-  const data = pendingAssets.map(a => ({'Asset Code': a.asset_code||'','Asset Name': a.name||'','Serial No': a.serial_no||'','Branch': branchId,'Status': 'Pending - ยังไม่สแกน'}));
-  if (!data.length) { showToast('ไม่มีรายการ Pending', ''); return; }
-  toXlsx({'Pending Assets': data}, `bata_pending_${branchId}_${today()}.xlsx`);
+  const scannedMap = {};
+  allScans.filter(s => s.branch_id === branchId).forEach(s => {
+    scannedMap[s.asset_code] = s;
+  });
+
+  const data = masterAssets.map(a => {
+    const scan = scannedMap[a.asset_code];
+    if (scan) {
+      return {
+        'Asset Code': a.asset_code,
+        'Asset Name': a.name || '',
+        'Status': 'Scanned',
+        'สภาพ': scan.condition || '',
+        'ผู้สแกน': scan.auditor || '',
+        'เวลาสแกน': scan.scanned_at || '',
+        'Serial Found': scan.serial_found || '',
+        'HQ Note': scan.hq_note || ''
+      };
+    } else {
+      return {
+        'Asset Code': a.asset_code,
+        'Asset Name': a.name || '',
+        'Status': '⚠️ PENDING - ยังไม่สแกน',
+        'สภาพ': '',
+        'ผู้สแกน': '',
+        'เวลาสแกน': '',
+        'Serial Found': '',
+        'HQ Note': ''
+      };
+    }
+  });
+
+  toXlsx({'Audit Report': data}, `bata_audit_full_${branchId}_${today()}.xlsx`);
+  showToast('Export สำเร็จ ' + data.length + ' รายการ', 'success');
 }
 
 // ── NAV ───────────────────────────────────────────────
