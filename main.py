@@ -186,9 +186,11 @@ def session_progress(session_id: int, db=Depends(get_db), user=Depends(get_curre
 def close_session(session_id: int, db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
     cur.execute(
-        "UPDATE audit_sessions SET status='closed', closed_at=now() WHERE id=%s",
+        "UPDATE audit_sessions SET status='done', closed_at=now() WHERE id=%s RETURNING id",
         (session_id,)
     )
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Session not found")
     db.commit()
     return {"ok": True}
 
@@ -224,6 +226,13 @@ def create_scan(req: ScanLogCreate, db=Depends(get_db), user=Depends(get_current
         req.serial_found, req.serial_match,
         req.condition, req.remark, req.photo_url
     ))
+
+    # ── auto-set session → on_process เมื่อมี scan แรก ──
+    cur.execute("""
+        UPDATE audit_sessions
+        SET status = 'on_process'
+        WHERE id = %s AND status = 'open'
+    """, (req.session_id,))
     scan_id = cur.fetchone()["id"]
     db.commit()
     return {"scan_id": scan_id, "asset_id": asset["id"]}
@@ -438,6 +447,25 @@ def hq_get_unmatched(db=Depends(get_db), user=Depends(get_current_user)):
         ORDER BY ua.scanned_at DESC
     """)
     return {"items": [dict(r) for r in cur.fetchall()]}    
+
+# ════════════════════════════════════════════════════════════════
+# HQ SESSION MANAGEMENT
+# ════════════════════════════════════════════════════════════════
+
+@app.delete("/hq/sessions/{session_id}")
+def hq_delete_session(session_id: int, db=Depends(get_db), user=Depends(get_current_user)):
+    """HQ ลบ audit session และ scan logs ที่เกี่ยวข้องทั้งหมด"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    cur = db.cursor()
+    # ลบ scan_logs ก่อน (FK constraint)
+    cur.execute("DELETE FROM scan_logs WHERE session_id = %s", (session_id,))
+    cur.execute("DELETE FROM unmatched_assets WHERE session_id = %s", (session_id,))
+    cur.execute("DELETE FROM audit_sessions WHERE id = %s RETURNING id", (session_id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Session not found")
+    db.commit()
+    return {"ok": True, "session_id": session_id}
 
 # ════════════════════════════════════════════════════════════════
 # HEALTH CHECK

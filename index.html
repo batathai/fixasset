@@ -170,6 +170,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .upload-spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite;}
 .upload-txt{font-size:14px;font-weight:600;color:var(--gray1);}
 .upload-sub{font-size:12px;color:var(--gray3);}
+/* ── CLOSE SESSION BUTTON ── */
+.btn-close-session{width:100%;padding:14px;background:var(--gray1);border:none;border-radius:var(--rs);color:var(--white);font-family:var(--cond);font-size:16px;font-weight:700;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s;}
+.btn-close-session:active{background:#333;}
+.btn-close-session.disabled{background:var(--gray4);cursor:not-allowed;}
 /* ── EDIT MODAL ── */
 .edit-modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;display:none;align-items:flex-end;justify-content:center;}
 .edit-modal.show{display:flex;}
@@ -370,6 +374,14 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="sum-stats"></div>
     <div class="sec-t">Session Info</div>
     <div id="sum-info"></div>
+    <div style="margin-top:8px;">
+      <button class="btn-close-session" id="btn-close-sess" onclick="openCloseModal()">
+        🔒 ปิดงาน / Close Session
+      </button>
+      <div style="font-size:11px;color:var(--gray3);text-align:center;margin-top:8px;">
+        เมื่อปิดงานแล้ว HQ จะเห็น Status เป็น Done
+      </div>
+    </div>
   </div>
 </div>
 
@@ -447,6 +459,26 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
     </div>
     <div style="margin-top:12px;text-align:center;">
       <button onclick="deleteEntry(editTarget)" style="background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;text-decoration:underline;">🗑 ลบรายการนี้</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLOSE SESSION MODAL -->
+<div class="modal-overlay" id="close-sess-modal" onclick="if(event.target===this)closeCloseModal()">
+  <div class="modal-box" style="position:relative;">
+    <button class="modal-close" onclick="closeCloseModal()">✕</button>
+    <div style="font-size:36px;text-align:center;margin-bottom:12px;">🔒</div>
+    <div class="modal-title" style="text-align:center;">ปิดงานสาขา</div>
+    <div class="modal-sub" style="text-align:center;" id="close-sess-branch">—</div>
+    <div style="background:var(--offwhite);border:1.5px solid var(--border);border-radius:var(--rs);padding:14px;margin:16px 0;font-size:13px;line-height:1.7;color:var(--gray2);">
+      <div id="close-sess-summary">กำลังโหลด...</div>
+    </div>
+    <div style="font-size:12px;color:var(--red);font-weight:600;text-align:center;margin-bottom:16px;">
+      ⚠️ เมื่อปิดงานแล้วจะไม่สามารถสแกนเพิ่มได้
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <button class="btn-close-session" onclick="doCloseSession()" id="confirm-close-btn">✓ ยืนยันปิดงาน</button>
+      <button onclick="closeCloseModal()" style="width:100%;padding:12px;background:none;border:1.5px solid var(--border);border-radius:var(--rs);font-family:var(--sans);font-size:14px;font-weight:500;cursor:pointer;color:var(--gray2);">ยกเลิก</button>
     </div>
   </div>
 </div>
@@ -1213,6 +1245,46 @@ function submitNoQR() {
   });
   closeNoQR(); updateChecklist(); saveSession();
   toast('Reported — HQ will print and send QR label');
+}
+
+// ── CLOSE SESSION ────────────────────────────────────────────
+function openCloseModal() {
+  if (!S.sid) { toast('ยังไม่มี session'); return; }
+  const total = CHECKLIST.length + noQRList.length;
+  const done  = CHECKLIST.filter(i=>i.status==='done').length + noQRList.length;
+  const unmatched = S.log.filter(l=>l.type==='unmatched').length;
+  const remain = total - done;
+  document.getElementById('close-sess-branch').textContent = S.branchName || S.branch;
+  document.getElementById('close-sess-summary').innerHTML =
+    `✓ สแกนแล้ว: <strong>${done}</strong> / ${total} รายการ<br>` +
+    `🏷 No QR: <strong>${noQRList.length}</strong> รายการ<br>` +
+    `? Unmatched: <strong>${unmatched}</strong> รายการ` +
+    (remain > 0 ? `<br><span style="color:var(--amber);font-weight:600;">⚠️ ยังเหลือ ${remain} รายการที่ยังไม่ได้สแกน</span>` : '<br><span style="color:var(--green);font-weight:600;">✓ สแกนครบทุกรายการแล้ว</span>');
+  document.getElementById('close-sess-modal').classList.add('show');
+}
+function closeCloseModal() {
+  document.getElementById('close-sess-modal').classList.remove('show');
+}
+async function doCloseSession() {
+  const btn = document.getElementById('confirm-close-btn');
+  btn.textContent = 'กำลังปิดงาน...'; btn.disabled = true;
+  try {
+    const res = await fetch(API+'/sessions/'+S.sid+'/close', {
+      method: 'PATCH',
+      headers: {'Authorization':'Bearer '+S.token,'Content-Type':'application/json'}
+    });
+    if (!res.ok) throw new Error('API error '+res.status);
+    closeCloseModal();
+    // แสดง done state
+    document.getElementById('btn-close-sess').textContent = '✓ ปิดงานแล้ว';
+    document.getElementById('btn-close-sess').classList.add('disabled');
+    document.getElementById('btn-close-sess').disabled = true;
+    S.cd = true;
+    toast('ปิดงานสำเร็จ ✓ HQ จะเห็น Status: Done');
+  } catch(e) {
+    toast('เกิดข้อผิดพลาด: '+e.message);
+    btn.textContent = '✓ ยืนยันปิดงาน'; btn.disabled = false;
+  }
 }
 
 // ── TOAST ────────────────────────────────────────────────────

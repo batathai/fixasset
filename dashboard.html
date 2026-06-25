@@ -457,30 +457,20 @@ function renderOverview() {
     const scanned = parseInt(s.scanned_count)||0;
     const pct = total ? Math.round(scanned/total*100) : 0;
     const cls = pct===100?'pb-green':pct>=50?'pb-amber':'pb-red';
-    const status = s.status || 'open';
-    const statusOpts = [
-      {val:'open', label:'Open'},
-      {val:'on_process', label:'On Process'},
-      {val:'done', label:'Done'},
-    ];
-    const opts = statusOpts.map(o=>`<option value="${o.val}"${status===o.val?' selected':''}>${o.label}</option>`).join('');
-    return `<tr id="session-row-${s.id}">
+    const statusBadge = s.status==='done'
+      ? '<span class="badge badge-green">Done</span>'
+      : s.status==='on_process'
+      ? '<span class="badge badge-amber">On Process</span>'
+      : '<span class="badge badge-gray">Open</span>';
+    return `<tr>
       <td><strong>${s.branch_id}</strong><br><span style="font-size:11px;color:var(--text3);">${s.branch_name||''}</span></td>
       <td>${total.toLocaleString()}</td>
       <td><div style="display:flex;align-items:center;gap:8px;"><div class="pb"><div class="pb-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:12px;font-family:var(--mono);">${pct}%</span></div></td>
       <td>${scanned}</td>
       <td>${Math.max(0,total-scanned)}</td>
       <td>${parseInt(s.unmatched_count)||0 ? `<span class="badge badge-red">${s.unmatched_count}</span>` : '<span class="badge badge-gray">0</span>'}</td>
-      <td>
-        <select onchange="updateSessionStatus(${s.id},this.value)"
-          style="padding:4px 8px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;font-family:var(--sans);background:var(--sf2);cursor:pointer;">
-          ${opts}
-        </select>
-      </td>
-      <td>
-        <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);"
-          onclick="deleteSession(${s.id},'${s.branch_id}')">🗑 Delete</button>
-      </td>
+      <td>${statusBadge}</td>
+      <td><button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.id},'${s.branch_id}')">🗑 Delete</button></td>
     </tr>`;
   }).join('');
 }
@@ -713,33 +703,17 @@ function showToast(msg, type='') {
   wrap.appendChild(t);
   setTimeout(()=>t.remove(), 3500);
 }
-async function updateSessionStatus(id, status) {
-  try {
-    const res = await fetch(API + '/hq/sessions/' + id, {
-      method: 'PATCH', headers: authHeader(),
-      body: JSON.stringify({status})
-    });
-    if (!res.ok) throw new Error((await res.json()).detail);
-    const s = allSessions.find(s=>s.id==id);
-    if (s) s.status = status;
-    const labels = {open:'Open',on_process:'On Process',done:'Done'};
-    showToast('Status updated → ' + labels[status], 'success');
-  } catch(e) { showToast('Error: '+e.message,'error'); }
-}
-
+// ── DELETE SESSION ────────────────────────────────────────────
 async function deleteSession(id, branchId) {
-  if (!confirm(`ยืนยันการลบ session ของสาขา ${branchId}?\n\nข้อมูล Scan Logs ทั้งหมดในสาขานี้จะถูกลบ`)) return;
+  if (!confirm(`ยืนยันการลบ Session ของสาขา ${branchId}?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย`)) return;
   try {
     const res = await fetch(API + '/hq/sessions/' + id, {
       method: 'DELETE', headers: authHeader()
     });
-    if (!res.ok) throw new Error((await res.json()).detail);
-    allSessions = allSessions.filter(s=>s.id!=id);
-    const row = document.getElementById('session-row-'+id);
-    if (row) { row.style.opacity='0'; row.style.transition='opacity .3s'; setTimeout(()=>{row.remove();},300); }
-    showToast('ลบ session '+branchId+' แล้ว', 'success');
-  } catch(e) { showToast('Error: '+e.message,'error'); }
+    if (!res.ok) throw new Error((await res.json()).detail || 'Error '+res.status);
+    allSessions = allSessions.filter(s => s.id != id);
+    renderOverview();
+    showToast('ลบ Session ' + branchId + ' เรียบร้อย', 'success');
+  } catch(e) { showToast('Error: ' + e.message, 'error'); }
 }
 </script>
-</body>
-</html>
