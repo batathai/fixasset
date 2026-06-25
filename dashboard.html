@@ -565,14 +565,7 @@ function filterScans() {
   renderPendingScans(branch || (allSessions[0]?.branch_id));
   return;
 }
-  function renderPendingScans(branch, totalAssets, scannedCodes) {
-    const tbody = document.getElementById('scans-tbody');
-    const session = allSessions.find(s => !branch || s.branch_id === branch);
-    if (!session) {
-      tbody.innerHTML = '<tr><td colspan="9" class="loading">ไม่พบข้อมูล session</td></tr>';
-      document.getElementById('scan-count').textContent = '0 รายการ (Pending)';
-      return;
-    }
+
     const pending = Math.max(0, (parseInt(session.total_assets)||0) - (parseInt(session.scanned_count)||0));
     document.getElementById('scan-count').textContent = pending + ' รายการ (Pending ยังไม่สแกน)';
     if (!pending) {
