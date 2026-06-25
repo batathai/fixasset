@@ -3,72 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BATA AUDIT HQ Dashboard v2</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<title>BATA AUDIT HQ — Dashboard v2</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0ede8; color: #1a1a1a; }
-.topbar { background: #fff; border-bottom: 1px solid #e5e2dc; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 48px; }
-.topbar-left { display: flex; align-items: center; gap: 10px; }
-.logo { width: 28px; height: 28px; background: #c0392b; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 13px; }
-.topbar-title { font-size: 13px; font-weight: 600; }
-.topbar-subtitle { font-size: 11px; color: #888; }
-.topbar-right { display: flex; align-items: center; gap: 12px; }
-.updated { font-size: 12px; color: #888; }
-.btn-refresh { display: flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 12px; border: 1px solid #ddd; border-radius: 8px; background: #fff; color: #333; cursor: pointer; }
-.btn-refresh:hover { background: #f5f5f5; }
-.layout { display: flex; min-height: calc(100vh - 48px); }
-.sidebar { width: 180px; background: #fff; border-right: 1px solid #e5e2dc; padding: 12px 0; flex-shrink: 0; }
-.nav-item { display: flex; align-items: center; gap: 8px; padding: 9px 16px; font-size: 13px; color: #666; cursor: pointer; }
-.nav-item.active { background: #fff0f0; color: #c0392b; font-weight: 600; border-right: 2px solid #c0392b; }
-.nav-item i { font-size: 16px; }
-.badge { background: #c0392b; color: white; border-radius: 10px; padding: 1px 6px; font-size: 10px; margin-left: auto; }
-.main { flex: 1; padding: 20px; }
-.page-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
-.stat-card { background: #fff; border: 1px solid #e5e2dc; border-radius: 12px; padding: 16px; }
-.stat-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
-.stat-value { font-size: 28px; font-weight: 600; color: #1a1a1a; }
-.stat-value.green { color: #1D9E75; }
-.stat-value.amber { color: #BA7517; }
-.stat-sub { font-size: 11px; color: #999; margin-top: 4px; }
-.section-card { background: #fff; border: 1px solid #e5e2dc; border-radius: 12px; overflow: hidden; }
-.section-header { padding: 14px 16px; border-bottom: 1px solid #e5e2dc; display: flex; align-items: center; justify-content: space-between; }
-.section-title { font-size: 14px; font-weight: 600; }
-.table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.table th { padding: 8px 16px; text-align: left; font-size: 11px; color: #999; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e5e2dc; }
-.table td { padding: 12px 16px; border-bottom: 1px solid #f0ede8; color: #1a1a1a; vertical-align: middle; }
-.table tr:last-child td { border-bottom: none; }
-.table tr:hover td { background: #fafaf8; }
-.progress-bar { height: 6px; background: #f0ede8; border-radius: 3px; overflow: hidden; width: 100px; }
-.progress-fill { height: 100%; border-radius: 3px; }
-.progress-fill.high { background: #BA7517; }
-.progress-fill.low { background: #c0392b; }
-.progress-fill.done { background: #1D9E75; }
-.progress-row { display: flex; align-items: center; gap: 8px; }
-.badge-unmatched { background: #FAECE7; color: #993C1D; border-radius: 10px; padding: 2px 8px; font-size: 11px; font-weight: 500; }
-.badge-status { border: 1px solid #ddd; border-radius: 10px; padding: 2px 10px; font-size: 11px; color: #888; }
-.badge-closed { background: #EAF3DE; color: #3B6D11; border-radius: 10px; padding: 2px 10px; font-size: 11px; }
-.actions { display: flex; align-items: center; gap: 6px; }
-.btn-close-job { display: flex; align-items: center; gap: 4px; padding: 5px 12px; font-size: 12px; background: #1D9E75; color: white; border: none; border-radius: 8px; cursor: pointer; white-space: nowrap; }
-.btn-close-job:hover { background: #0F6E56; }
-.btn-delete { display: flex; align-items: center; gap: 4px; padding: 5px 10px; font-size: 12px; background: transparent; color: #993C1D; border: 1px solid #F0997B; border-radius: 8px; cursor: pointer; white-space: nowrap; }
-.btn-delete:hover { background: #FAECE7; }
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
-.modal-overlay.show { display: flex; }
-.modal { background: #fff; border-radius: 12px; padding: 24px; width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.12); }
-.modal-title { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-.modal-body { font-size: 13px; color: #666; margin-bottom: 20px; line-height: 1.6; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
-.btn-cancel { padding: 7px 16px; font-size: 13px; background: transparent; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; color: #333; }
-.btn-cancel:hover { background: #f5f5f5; }
-.btn-confirm-close { padding: 7px 16px; font-size: 13px; background: #1D9E75; color: white; border: none; border-radius: 8px; cursor: pointer; }
-.btn-confirm-close:hover { background: #0F6E56; }
-.btn-confirm-delete { padding: 7px 16px; font-size: 13px; background: #c0392b; color: white; border: none; border-radius: 8px; cursor: pointer; }
-.btn-confirm-delete:hover { background: #992d22; }
-.toast { position: fixed; bottom: 24px; right: 24px; padding: 10px 18px; border-radius: 8px; font-size: 13px; color: white; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-.toast.success { background: #0F6E56; }
-.toast.danger { background: #993C1D; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EEECE8;min-height:100vh;}
+.topbar{background:#fff;border-bottom:0.5px solid #E0DDD6;display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:48px;position:sticky;top:0;z-index:10;}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.logo{width:28px;height:28px;background:#c0392b;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px;}
+.topbar-title{font-size:13px;font-weight:500;color:#1a1a1a;}
+.topbar-sub{font-size:11px;color:#888;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.updated{font-size:12px;color:#888;}
+.btn-refresh{display:flex;align-items:center;gap:6px;font-size:12px;padding:5px 12px;border:0.5px solid #CCC;border-radius:8px;background:#fff;color:#333;cursor:pointer;}
+.btn-refresh:hover{background:#f5f5f5;}
+.layout{display:flex;min-height:calc(100vh - 48px);}
+.sidebar{width:180px;background:#fff;border-right:0.5px solid #E0DDD6;padding:12px 0;flex-shrink:0;position:relative;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;font-size:13px;color:#666;cursor:pointer;user-select:none;}
+.nav-item:hover{background:#f9f7f4;}
+.nav-item.active{color:#1a1a1a;background:#FEF3F0;border-right:2px solid #c0392b;font-weight:500;}
+.nav-badge{background:#c0392b;color:#fff;border-radius:10px;padding:1px 7px;font-size:11px;margin-left:auto;}
+.sidebar-footer{position:absolute;bottom:0;left:0;right:0;padding:16px;}
+.user-name{font-size:13px;font-weight:500;color:#1a1a1a;}
+.user-role{font-size:11px;color:#888;margin-bottom:8px;}
+.sign-out{font-size:12px;color:#c0392b;cursor:pointer;background:none;border:none;padding:0;}
+.main{flex:1;padding:20px;}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{background:#fff;border:0.5px solid #E0DDD6;border-radius:12px;padding:16px 18px;}
+.stat-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.stat-value{font-size:26px;font-weight:500;color:#1a1a1a;}
+.stat-sub{font-size:11px;color:#888;margin-top:4px;}
+.section{background:#fff;border:0.5px solid #E0DDD6;border-radius:12px;padding:16px 18px;}
+.section-title{font-size:14px;font-weight:500;color:#1a1a1a;margin-bottom:10px;}
+.legend{display:flex;gap:16px;margin-bottom:14px;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:12px;color:#666;}
+table{width:100%;border-collapse:collapse;}
+th{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;text-align:left;padding:6px 10px;border-bottom:0.5px solid #E0DDD6;white-space:nowrap;}
+td{font-size:13px;color:#1a1a1a;padding:10px 10px;border-bottom:0.5px solid #E0DDD6;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafaf8;}
+.progress-wrap{display:flex;align-items:center;gap:8px;}
+.progress-bar{flex:1;height:6px;background:#EEECE8;border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;}
+.pct{font-size:12px;color:#888;min-width:32px;}
+.badge-un{background:#FAECE7;color:#993C1D;border-radius:10px;padding:2px 8px;font-size:11px;font-weight:500;}
+.s-open{background:#E6F1FB;color:#0C447C;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:4px;}
+.s-process{background:#FAEEDA;color:#633806;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:4px;}
+.s-done{background:#EAF3DE;color:#27500A;border-radius:10px;padding:3px 10px;font-size:11px;font-weight:500;display:inline-flex;align-items:center;gap:4px;}
+.actions{display:flex;gap:6px;align-items:center;}
+.btn-force{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;background:transparent;color:#854F0B;border:0.5px solid #EF9F27;border-radius:8px;cursor:pointer;white-space:nowrap;}
+.btn-force:hover{background:#FAEEDA;}
+.btn-del{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;font-size:12px;background:transparent;color:#993C1D;border:0.5px solid #F0997B;border-radius:8px;cursor:pointer;white-space:nowrap;}
+.btn-del:hover{background:#FAECE7;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:center;justify-content:center;}
+.overlay.show{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:24px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
+.modal-title{font-size:15px;font-weight:500;color:#1a1a1a;margin-bottom:8px;}
+.modal-body{font-size:13px;color:#666;margin-bottom:20px;line-height:1.6;}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;}
+.btn-cancel{padding:7px 16px;font-size:13px;background:transparent;border:0.5px solid #CCC;border-radius:8px;cursor:pointer;color:#333;}
+.btn-cancel:hover{background:#f5f5f5;}
+.btn-ok-force{padding:7px 16px;font-size:13px;background:#BA7517;color:#fff;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.btn-ok-force:hover{background:#854F0B;}
+.btn-ok-del{padding:7px 16px;font-size:13px;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.btn-ok-del:hover{background:#992d22;}
+.toast{position:fixed;bottom:24px;right:24px;padding:10px 16px;border-radius:8px;font-size:13px;color:#fff;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -77,12 +76,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   <div class="topbar-left">
     <div class="logo">B</div>
     <div>
-      <div class="topbar-title">BATA AUDIT HQ</div>
-      <div class="topbar-subtitle">Dashboard v2</div>
+      <div class="topbar-title">BATA AUDIT <span style="font-size:11px;color:#888;font-weight:400;">HQ</span></div>
+      <div class="topbar-sub">Dashboard v2</div>
     </div>
   </div>
   <div class="topbar-right">
-    <span class="updated" id="updated-time">Updated --:--</span>
+    <span class="updated" id="upd">Updated --:--</span>
     <button class="btn-refresh" onclick="refreshTime()"><i class="ti ti-refresh"></i> Refresh</button>
   </div>
 </div>
@@ -90,44 +89,49 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="layout">
   <div class="sidebar">
     <div class="nav-item active"><i class="ti ti-chart-bar"></i> Overview</div>
-    <div class="nav-item"><i class="ti ti-list-search"></i> Scan Logs <span class="badge" id="badge-total">288</span></div>
-    <div class="nav-item"><i class="ti ti-camera"></i> Photos</div>
-    <div class="nav-item"><i class="ti ti-alert-triangle"></i> Unmatched <span class="badge" id="badge-unmatched">6</span></div>
+    <div class="nav-item"><i class="ti ti-list-search"></i> Scan Logs <span class="nav-badge" id="badge-scans">0</span></div>
+    <div class="nav-item"><i class="ti ti-camera"></i> Photos <span class="nav-badge">19</span></div>
+    <div class="nav-item"><i class="ti ti-alert-triangle"></i> Unmatched <span class="nav-badge" id="badge-un">0</span></div>
     <div class="nav-item"><i class="ti ti-download"></i> Export</div>
+    <div class="sidebar-footer">
+      <div class="user-name">ADMIN1</div>
+      <div class="user-role">HQ Administrator</div>
+      <button class="sign-out">Sign out</button>
+    </div>
   </div>
 
   <div class="main">
-    <div class="page-title">Overview</div>
-
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-label">Total Scans</div>
-        <div class="stat-value" id="stat-total">288</div>
+        <div class="stat-value" id="total-scans">0</div>
         <div class="stat-sub">all sessions</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">With Photo</div>
-        <div class="stat-value green">0</div>
+        <div class="stat-value" style="color:#1D9E75;">19</div>
         <div class="stat-sub">รูปถ่ายแนบมา</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Unmatched</div>
-        <div class="stat-value amber" id="stat-unmatched">6</div>
+        <div class="stat-value" style="color:#BA7517;" id="total-un">0</div>
         <div class="stat-sub">pending review</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Serial Mismatch</div>
-        <div class="stat-value">0</div>
+        <div class="stat-value" style="color:#c0392b;">0</div>
         <div class="stat-sub">ไม่ตรงกับ master</div>
       </div>
     </div>
 
-    <div class="section-card">
-      <div class="section-header">
-        <span class="section-title">Branch Sessions</span>
-        <span style="font-size:12px;color:#999" id="active-count">2 active jobs</span>
+    <div class="section">
+      <div class="section-title">Branch Sessions</div>
+      <div class="legend">
+        <div class="leg-item"><span class="s-open"><i class="ti ti-circle" style="font-size:10px;"></i> Open</span> รอเริ่มงาน</div>
+        <div class="leg-item"><span class="s-process"><i class="ti ti-loader" style="font-size:10px;"></i> On Process</span> กำลังสแกน</div>
+        <div class="leg-item"><span class="s-done"><i class="ti ti-circle-check" style="font-size:10px;"></i> Done</span> สแกนเสร็จแล้ว</div>
       </div>
-      <table class="table">
+      <table>
         <thead>
           <tr>
             <th>Branch</th>
@@ -137,22 +141,22 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
             <th>Pending</th>
             <th>Unmatched</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th></th>
           </tr>
         </thead>
-        <tbody id="jobs-body"></tbody>
+        <tbody id="tbody"></tbody>
       </table>
     </div>
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-overlay">
+<div class="overlay" id="overlay">
   <div class="modal">
     <div class="modal-title" id="modal-title"></div>
     <div class="modal-body" id="modal-body"></div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">ยกเลิก</button>
-      <button id="modal-confirm"></button>
+      <button id="modal-confirm-btn"></button>
     </div>
   </div>
 </div>
@@ -160,128 +164,128 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 <div class="toast" id="toast"></div>
 
 <script>
-let jobs = [
-  { id: 1, branch: '0051548', total: 300, scanned: 254, pending: 46, unmatched: 6, status: 'open', pct: 85 },
-  { id: 2, branch: '0051426', total: 359, scanned: 34, pending: 325, unmatched: 1, status: 'open', pct: 9 },
-];
+  // =============================================
+  // ข้อมูล Jobs — แก้ตรงนี้เพื่อเชื่อมกับ API จริง
+  // =============================================
+  let jobs = [
+    { id: 1, branch: '0051548', total: 300, scanned: 254, unmatched: 6, status: 'on_process' },
+    { id: 2, branch: '0051426', total: 359, scanned: 34,  unmatched: 1, status: 'open' },
+    { id: 3, branch: '0051301', total: 200, scanned: 200, unmatched: 0, status: 'done' },
+  ];
+  // =============================================
 
-let pendingAction = null;
+  let pendingAction = null;
 
-function refreshTime() {
-  const now = new Date();
-  const h = String(now.getHours()).padStart(2,'0');
-  const m = String(now.getMinutes()).padStart(2,'0');
-  document.getElementById('updated-time').textContent = `Updated ${h}:${m}`;
-}
+  function pct(j) { return Math.round(j.scanned / j.total * 100); }
+  function barColor(p) { return p >= 80 ? '#1D9E75' : p >= 40 ? '#BA7517' : '#c0392b'; }
 
-function updateStats() {
-  const totalScanned = jobs.reduce((s, j) => s + j.scanned, 0);
-  const totalUnmatched = jobs.reduce((s, j) => s + j.unmatched, 0);
-  const activeJobs = jobs.filter(j => j.status === 'open').length;
-  document.getElementById('stat-total').textContent = totalScanned;
-  document.getElementById('stat-unmatched').textContent = totalUnmatched;
-  document.getElementById('badge-total').textContent = totalScanned;
-  document.getElementById('badge-unmatched').textContent = totalUnmatched;
-  document.getElementById('active-count').textContent = activeJobs + ' active job' + (activeJobs !== 1 ? 's' : '');
-}
+  function statusBadge(s) {
+    if (s === 'open')       return `<span class="s-open"><i class="ti ti-circle" style="font-size:10px;"></i> Open</span>`;
+    if (s === 'on_process') return `<span class="s-process"><i class="ti ti-loader" style="font-size:10px;"></i> On Process</span>`;
+    return `<span class="s-done"><i class="ti ti-circle-check" style="font-size:10px;"></i> Done</span>`;
+  }
 
-function renderJobs() {
-  const tbody = document.getElementById('jobs-body');
-  tbody.innerHTML = '';
-  jobs.forEach(job => {
-    const pctColor = job.status === 'closed' ? 'done' : job.pct >= 50 ? 'high' : 'low';
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td style="font-weight:600">${job.branch}</td>
-      <td>${job.total}</td>
-      <td>
-        <div class="progress-row">
-          <div class="progress-bar"><div class="progress-fill ${pctColor}" style="width:${job.pct}%"></div></div>
-          <span style="font-size:12px;color:#888">${job.pct}%</span>
-        </div>
-      </td>
-      <td>${job.scanned}</td>
-      <td>${job.pending}</td>
-      <td><span class="badge-unmatched">${job.unmatched}</span></td>
-      <td>
-        ${job.status === 'closed'
-          ? `<span class="badge-closed"><i class="ti ti-circle-check"></i> ปิดแล้ว</span>`
-          : `<span class="badge-status">open</span>`}
-      </td>
-      <td>
-        <div class="actions">
-          ${job.status === 'open' ? `
-            <button class="btn-close-job" onclick="confirmClose(${job.id})">
-              <i class="ti ti-circle-check"></i> ปิดจบงาน
-            </button>` : ''}
-          <button class="btn-delete" onclick="confirmDelete(${job.id})">
-            <i class="ti ti-trash"></i> ลบ Job
-          </button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+  function render() {
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
+    let totalScans = 0, totalUn = 0;
+
+    jobs.forEach(j => {
+      totalScans += j.scanned;
+      totalUn += j.unmatched;
+      const p = pct(j);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight:500;">${j.branch}</td>
+        <td>${j.total}</td>
+        <td>
+          <div class="progress-wrap">
+            <div class="progress-bar"><div class="progress-fill" style="width:${p}%;background:${barColor(p)};"></div></div>
+            <span class="pct">${p}%</span>
+          </div>
+        </td>
+        <td>${j.scanned}</td>
+        <td>${j.total - j.scanned}</td>
+        <td><span class="badge-un">${j.unmatched}</span></td>
+        <td>${statusBadge(j.status)}</td>
+        <td>
+          <div class="actions">
+            ${j.status === 'on_process' ? `<button class="btn-force" onclick="confirmForce(${j.id})"><i class="ti ti-lock"></i> Force Close</button>` : ''}
+            <button class="btn-del" onclick="confirmDelete(${j.id})"><i class="ti ti-trash"></i> ลบ</button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('total-scans').textContent = totalScans;
+    document.getElementById('total-un').textContent = totalUn;
+    document.getElementById('badge-scans').textContent = totalScans;
+    document.getElementById('badge-un').textContent = totalUn;
+  }
+
+  function confirmForce(id) {
+    const j = jobs.find(x => x.id === id);
+    pendingAction = { type: 'force', id };
+    document.getElementById('modal-title').textContent = `Force Close — สาขา ${j.branch}`;
+    document.getElementById('modal-body').textContent = `พนักงานยังสแกนไม่เสร็จ (${pct(j)}%) ต้องการปิดงานสาขานี้จาก HQ? สถานะจะเปลี่ยนเป็น Done ทันที`;
+    const btn = document.getElementById('modal-confirm-btn');
+    btn.innerHTML = '<i class="ti ti-lock"></i> Force Close';
+    btn.className = 'btn-ok-force';
+    btn.onclick = doForce;
+    document.getElementById('overlay').classList.add('show');
+  }
+
+  function confirmDelete(id) {
+    const j = jobs.find(x => x.id === id);
+    pendingAction = { type: 'delete', id };
+    document.getElementById('modal-title').textContent = `ลบ Job — สาขา ${j.branch}`;
+    document.getElementById('modal-body').textContent = `ต้องการลบ Job สาขา ${j.branch} (สแกนแล้ว ${j.scanned}/${j.total} รายการ, ${pct(j)}%) ออกจากระบบ? ข้อมูลการสแกนทั้งหมดจะหายไป`;
+    const btn = document.getElementById('modal-confirm-btn');
+    btn.innerHTML = '<i class="ti ti-trash"></i> ลบ Job';
+    btn.className = 'btn-ok-del';
+    btn.onclick = doDelete;
+    document.getElementById('overlay').classList.add('show');
+  }
+
+  function doForce() {
+    jobs = jobs.map(j => j.id === pendingAction.id ? { ...j, status: 'done' } : j);
+    closeModal();
+    showToast('Force Close เรียบร้อยแล้ว', '#854F0B');
+    render();
+  }
+
+  function doDelete() {
+    jobs = jobs.filter(j => j.id !== pendingAction.id);
+    closeModal();
+    showToast('ลบ Job เรียบร้อยแล้ว', '#993C1D');
+    render();
+  }
+
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('show');
+    pendingAction = null;
+  }
+
+  function showToast(msg, bg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.style.background = bg;
+    t.style.opacity = '1';
+    setTimeout(() => t.style.opacity = '0', 2500);
+  }
+
+  function refreshTime() {
+    const n = new Date();
+    document.getElementById('upd').textContent = `Updated ${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`;
+  }
+
+  document.getElementById('overlay').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
   });
-  updateStats();
-}
 
-function confirmClose(id) {
-  const job = jobs.find(j => j.id === id);
-  pendingAction = { type: 'close', id };
-  document.getElementById('modal-title').textContent = `ปิดจบงาน — สาขา ${job.branch}`;
-  document.getElementById('modal-body').textContent = `สแกนแล้ว ${job.scanned} รายการ จาก ${job.total} รายการ (${job.pct}%) ยืนยันปิดงานนี้? หลังจากปิดแล้วจะไม่สามารถสแกนเพิ่มได้`;
-  const btn = document.getElementById('modal-confirm');
-  btn.textContent = 'ปิดจบงาน';
-  btn.className = 'btn-confirm-close';
-  btn.onclick = doClose;
-  document.getElementById('modal-overlay').classList.add('show');
-}
-
-function confirmDelete(id) {
-  const job = jobs.find(j => j.id === id);
-  pendingAction = { type: 'delete', id };
-  document.getElementById('modal-title').textContent = `ลบ Job — สาขา ${job.branch}`;
-  document.getElementById('modal-body').textContent = `ต้องการลบ Job สาขา ${job.branch} (${job.pct}% เสร็จ) ออกจากระบบ? ข้อมูลการสแกนทั้งหมดจะหายไป`;
-  const btn = document.getElementById('modal-confirm');
-  btn.textContent = 'ลบ Job';
-  btn.className = 'btn-confirm-delete';
-  btn.onclick = doDelete;
-  document.getElementById('modal-overlay').classList.add('show');
-}
-
-function doClose() {
-  jobs = jobs.map(j => j.id === pendingAction.id ? {...j, status: 'closed'} : j);
-  closeModal();
-  showToast('ปิดจบงานเรียบร้อย', 'success');
-  renderJobs();
-}
-
-function doDelete() {
-  jobs = jobs.filter(j => j.id !== pendingAction.id);
-  closeModal();
-  showToast('ลบ Job เรียบร้อยแล้ว', 'danger');
-  renderJobs();
-}
-
-function closeModal() {
-  document.getElementById('modal-overlay').classList.remove('show');
-  pendingAction = null;
-}
-
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `toast ${type}`;
-  t.style.opacity = '1';
-  setTimeout(() => { t.style.opacity = '0'; }, 2500);
-}
-
-document.getElementById('modal-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-
-refreshTime();
-renderJobs();
+  refreshTime();
+  render();
 </script>
 </body>
 </html>
