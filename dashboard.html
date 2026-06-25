@@ -263,16 +263,16 @@ tbody tr:hover{background:var(--sf2);}
           </div>
           <select id="scan-branch" onchange="filterScans()"><option value="">ทุกสาขา</option></select>
           <select id="scan-condition" onchange="filterScans()">
-            <option value="">ทุกสภาพ</option>
+            <option value="">📋 ทุกสภาพ</option>
             <option value="pending">⏳ Pending (ยังไม่สแกน)</option>
-            <option value="good">Good</option>
-            <option value="damaged">Damaged</option>
-            <option value="missing">Missing</option>
+            <option value="good">✅ Good</option>
+            <option value="damaged">⚠️ Damaged</option>
+            <option value="missing">❌ Missing</option>
           </select>
           <select id="scan-photo" onchange="filterScans()">
-            <option value="">ทุกรายการ</option>
-            <option value="yes">มีรูปถ่าย</option>
-            <option value="no">ไม่มีรูป</option>
+            <option value="">🖼️ ทุกรายการ</option>
+            <option value="yes">📷 มีรูปถ่าย</option>
+            <option value="no">🚫 ไม่มีรูป</option>
           </select>
           <button class="btn btn-outline btn-sm" onclick="clearSearch()">✕ ล้าง</button>
         </div>
