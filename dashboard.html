@@ -263,16 +263,16 @@ tbody tr:hover{background:var(--sf2);}
           </div>
           <select id="scan-branch" onchange="filterScans()"><option value="">ทุกสาขา</option></select>
           <select id="scan-condition" onchange="filterScans()">
-            <option value="">📋 ทุกสภาพ</option>
+            <option value="">ทุกสภาพ</option>
             <option value="pending">⏳ Pending (ยังไม่สแกน)</option>
-            <option value="good">✅ Good</option>
-            <option value="damaged">⚠️ Damaged</option>
-            <option value="missing">❌ Missing</option>
+            <option value="good">Good</option>
+            <option value="damaged">Damaged</option>
+            <option value="missing">Missing</option>
           </select>
           <select id="scan-photo" onchange="filterScans()">
-            <option value="">🖼️ ทุกรายการ</option>
-            <option value="yes">📷 มีรูปถ่าย</option>
-            <option value="no">🚫 ไม่มีรูป</option>
+            <option value="">ทุกรายการ</option>
+            <option value="yes">มีรูปถ่าย</option>
+            <option value="no">ไม่มีรูป</option>
           </select>
           <button class="btn btn-outline btn-sm" onclick="clearSearch()">✕ ล้าง</button>
         </div>
@@ -324,11 +324,13 @@ tbody tr:hover{background:var(--sf2);}
       <div class="section">
         <div class="section-head"><div class="section-title">📥 Export Audit Report</div></div>
         <div style="padding:24px 18px;display:flex;flex-direction:column;gap:12px;max-width:480px;">
-          <button class="btn btn-red" onclick="exportFullReport()">📊 Export Full Report — ทุกรายการ (Scanned + Pending)</button>
+          <button class="btn btn-red" onclick="exportPDF()" style="font-size:14px;padding:10px 18px;">🖨️ Export PDF — Full Report พร้อมรูปถ่าย</button>
+          <button class="btn btn-outline" onclick="exportFullReport()">📊 Export Excel — Full Report (Scanned + Pending)</button>
           <button class="btn btn-outline" onclick="exportScans()">🔍 Export Scan Logs (.xlsx)</button>
           <button class="btn btn-outline" onclick="exportUnmatchedXlsx()">⚠️ Export Unmatched (.xlsx)</button>
           <div style="background:var(--sf2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--text3);line-height:1.7;margin-top:8px;">
-            Full Report จะมีทุกรายการ 300 รายการ แยก Status: Scanned / Pending ชัดเจนครับ
+            📄 <strong>PDF</strong> — เปิดหน้าใหม่ใน Browser กด Ctrl+P แล้วเลือก Save as PDF ได้เลยครับ<br>
+            📊 <strong>Excel</strong> — ดาวน์โหลดเป็น .xlsx ครบ 300 รายการ แยก Scanned / Pending
           </div>
         </div>
       </div>
@@ -894,6 +896,139 @@ function showToast(msg,type=''){
   t.className='toast '+type;t.textContent=msg;
   wrap.appendChild(t);
   setTimeout(()=>t.remove(),3500);
+}
+
+// ── EXPORT PDF ────────────────────────────────────────
+async function exportPDF(branchId) {
+  const session = allSessions.find(s => s.branch_id === (branchId || allSessions[0]?.branch_id));
+  if (!session) { showToast('ไม่พบ session', 'error'); return; }
+  showToast('กำลังเตรียม PDF...', '');
+  const masterAssets = await loadMasterAssets(session.branch_id);
+  const scannedMap = {};
+  allScans.filter(s => s.branch_id === session.branch_id).forEach(s => {
+    if (!scannedMap[s.asset_code]) scannedMap[s.asset_code] = s;
+  });
+
+  const scannedCount = masterAssets.filter(a => scannedMap[a.asset_code]).length;
+  const pendingCount = masterAssets.filter(a => !scannedMap[a.asset_code]).length;
+
+  const rows = masterAssets.map((a, i) => {
+    const scan = scannedMap[a.asset_code];
+    const isPending = !scan;
+    const rowBg = isPending ? '#fff8f0' : '#fff';
+    const statusBadge = isPending
+      ? `<span style="background:#fff8f0;color:#b85c00;border:1px solid #ffd4a0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;">⏳ PENDING</span>`
+      : `<span style="background:#f0faf3;color:#1a7a3c;border:1px solid #b3dfc0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;">✓ Scanned</span>`;
+    const condBadge = scan?.condition
+      ? scan.condition === 'good'
+        ? `<span style="background:#f0faf3;color:#1a7a3c;border:1px solid #b3dfc0;padding:1px 6px;border-radius:20px;font-size:10px;">Good</span>`
+        : `<span style="background:#fff0f0;color:#CC0000;border:1px solid #ffcccc;padding:1px 6px;border-radius:20px;font-size:10px;">${scan.condition}</span>`
+      : '—';
+    const photo = scan?.photo_url
+      ? `<img src="${scan.photo_url}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #e0ddd6;" onerror="this.style.display='none'">`
+      : `<div style="width:48px;height:48px;background:#f4f2ef;border-radius:4px;border:1.5px dashed #e0ddd6;display:flex;align-items:center;justify-content:center;font-size:18px;">${isPending ? '⏳' : '📷'}</div>`;
+
+    return `<tr style="background:${rowBg};page-break-inside:avoid;">
+      <td style="padding:6px 8px;text-align:center;font-size:11px;color:#999;">${i+1}</td>
+      <td style="padding:6px 8px;">${photo}</td>
+      <td style="padding:6px 8px;font-family:monospace;font-size:10px;color:#555;">${a.asset_code||'—'}</td>
+      <td style="padding:6px 8px;font-size:11px;font-weight:500;max-width:180px;">${a.name||'—'}</td>
+      <td style="padding:6px 8px;text-align:center;">${statusBadge}</td>
+      <td style="padding:6px 8px;text-align:center;">${condBadge}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#555;">${scan?.auditor||'—'}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#555;">${scan?.scanned_at ? new Date(scan.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Bata Audit Report — ${session.branch_id}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Barlow', sans-serif; font-size: 12px; color: #1a1a1a; background: #fff; }
+  .header { padding: 20px 24px 16px; border-bottom: 2px solid #CC0000; display: flex; align-items: center; justify-content: space-between; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 36px; height: 36px; background: #CC0000; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; }
+  .brand { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; }
+  .brand span { display: block; font-size: 11px; font-weight: 400; color: #999; }
+  .report-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: #CC0000; }
+  .report-sub { font-size: 11px; color: #999; margin-top: 2px; text-align: right; }
+  .summary { display: flex; gap: 12px; padding: 14px 24px; background: #f9f8f5; border-bottom: 1px solid #e0ddd6; }
+  .sum-card { background: #fff; border: 1px solid #e0ddd6; border-radius: 8px; padding: 10px 16px; flex: 1; text-align: center; }
+  .sum-val { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; }
+  .sum-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+  .sum-card.blue .sum-val { color: #1a56db; }
+  .sum-card.green .sum-val { color: #1a7a3c; }
+  .sum-card.amber .sum-val { color: #b85c00; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { padding: 8px 8px; text-align: left; font-size: 10px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: .5px; background: #f9f8f5; border-bottom: 2px solid #e0ddd6; white-space: nowrap; }
+  tbody tr { border-bottom: 1px solid #f0ede8; }
+  tbody tr:hover { background: #f9f8f5; }
+  .footer { padding: 12px 24px; border-top: 1px solid #e0ddd6; font-size: 10px; color: #999; display: flex; justify-content: space-between; }
+  @media print {
+    body { font-size: 11px; }
+    .no-print { display: none !important; }
+    .header { padding: 12px 16px 10px; }
+    thead th { background: #f0ede8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    tbody tr { page-break-inside: avoid; }
+    tr[style*="fff8f0"] { background: #fff8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <div class="logo">B</div>
+    <div class="brand">BATA AUDIT<span>THAILAND · HQ</span></div>
+  </div>
+  <div>
+    <div class="report-title">Full Audit Report</div>
+    <div class="report-sub">สาขา ${session.branch_id} — ${session.branch_name||''}<br>พิมพ์วันที่ ${new Date().toLocaleString('th-TH',{dateStyle:'long',timeStyle:'short'})}</div>
+  </div>
+</div>
+
+<div class="summary">
+  <div class="sum-card blue"><div class="sum-val">${masterAssets.length}</div><div class="sum-label">Total Assets</div></div>
+  <div class="sum-card green"><div class="sum-val">${scannedCount}</div><div class="sum-label">Scanned ✓</div></div>
+  <div class="sum-card amber"><div class="sum-val">${pendingCount}</div><div class="sum-label">Pending ⏳</div></div>
+  <div class="sum-card" style="border-color:#e0ddd6;"><div class="sum-val" style="color:#CC0000;">${Math.round(scannedCount/masterAssets.length*100)}%</div><div class="sum-label">Progress</div></div>
+</div>
+
+<div style="padding:0 0 80px;">
+  <div class="no-print" style="padding:12px 24px;background:#eff4ff;border-bottom:1px solid #c3d4fc;display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:13px;color:#1a56db;">📄 กด <strong>Ctrl+P</strong> หรือ <strong>⌘+P</strong> แล้วเลือก "Save as PDF" เพื่อบันทึกครับ</span>
+    <button onclick="window.print()" style="background:#CC0000;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">🖨️ Print / Save PDF</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:32px;">#</th>
+        <th style="width:60px;">รูป</th>
+        <th style="width:130px;">Asset Code</th>
+        <th>ชื่อ Asset</th>
+        <th style="width:100px;text-align:center;">Status</th>
+        <th style="width:70px;text-align:center;">สภาพ</th>
+        <th style="width:90px;">ผู้สแกน</th>
+        <th style="width:110px;">เวลา</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+</div>
+
+<div class="footer no-print">
+  <span>BATA HQ Dashboard v2 — Full Audit Report</span>
+  <span>สาขา ${session.branch_id} · ${masterAssets.length} รายการ · ${new Date().toLocaleDateString('th-TH')}</span>
+</div>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
 }
 
 async function deleteSession(id,branchId){
