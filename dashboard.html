@@ -376,7 +376,14 @@ tbody tr:hover{background:var(--sf2);}
       <button class="modal-close" onclick="closeEditModal()">✕</button>
     </div>
     <div class="modal-body">
-      <img id="modal-img" src="" alt="" style="display:none">
+      <div style="position:relative;margin-bottom:4px;">
+        <img id="modal-img" src="" alt="" style="display:none;width:100%;border-radius:8px;max-height:300px;object-fit:contain;background:var(--sf2);">
+        <button id="btn-delete-photo"
+          style="display:none;margin-top:6px;width:100%;padding:6px;background:var(--sf2);border:1px dashed var(--red-bd);border-radius:var(--rs);color:var(--red);font-size:12px;cursor:pointer;"
+          onclick="deletePhoto(document.getElementById('m-scan-id').value)">
+          🗑️ ลบรูปถ่ายนี้
+        </button>
+      </div>
       <div class="field-row">
         <div class="field"><label>Asset Code</label><input id="m-code" type="text" readonly style="background:#f0f0f0;"></div>
         <div class="field"><label>Asset Name</label><input id="m-name" type="text" readonly style="background:#f0f0f0;"></div>
@@ -395,9 +402,15 @@ tbody tr:hover{background:var(--sf2);}
       <div class="field"><label>หมายเหตุ HQ</label><textarea id="m-note" placeholder="หมายเหตุเพิ่มเติม..."></textarea></div>
       <input type="hidden" id="m-scan-id">
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-outline" onclick="closeEditModal()">ยกเลิก</button>
-      <button class="btn btn-red" onclick="saveScanEdit()">💾 บันทึก</button>
+    <div class="modal-foot" style="justify-content:space-between;">
+      <button class="btn btn-outline" style="color:var(--red);border-color:var(--red-bd);"
+        onclick="deleteScanLog(document.getElementById('m-scan-id').value)">
+        🗑️ ลบรายการนี้
+      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" onclick="closeEditModal()">ยกเลิก</button>
+        <button class="btn btn-red" onclick="saveScanEdit()">💾 บันทึก</button>
+      </div>
     </div>
   </div>
 </div>
@@ -801,7 +814,13 @@ function openEditModal(id){
   document.getElementById('m-note').value=s.hq_note||'';
   const img=document.getElementById('modal-img');
   if(s.photo_url){img.src=s.photo_url;img.style.display='block';}else img.style.display='none';
-  document.getElementById('edit-modal').style.display='flex';
+  const btnDelPhoto = document.getElementById('btn-delete-photo');
+    if (s.photo_url) {
+      img.src = s.photo_url; img.style.display = 'block';
+      btnDelPhoto.style.display = 'block';   // ← เพิ่ม
+    } else {
+      img.style.display = 'none';
+      btnDelPhoto.style.display = 'none';    // ← เพิ่ม
 }
 function closeEditModal(){document.getElementById('edit-modal').style.display='none';}
 async function saveScanEdit(){
@@ -1029,6 +1048,41 @@ async function exportPDF(branchId) {
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
+}
+async function deletePhoto(id) {
+  if (!confirm('ลบรูปถ่ายของรายการนี้?\nข้อมูล Scan Log ยังคงอยู่')) return;
+  try {
+    const res = await fetch(API+'/hq/scans/'+id, {
+      method: 'PATCH',
+      headers: authHeader(),
+      body: JSON.stringify({ photo_url: null })
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
+    const s = allScans.find(r => r.id == id);
+    if (s) s.photo_url = null;
+    // ซ่อนรูปใน modal
+    document.getElementById('modal-img').style.display = 'none';
+    document.getElementById('btn-delete-photo').style.display = 'none';
+    renderScans(); renderPhotos();
+    showToast('ลบรูปเรียบร้อย ✓', 'success');
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+}
+
+async function deleteScanLog(id) {
+  const s = allScans.find(r => r.id == id);
+  if (!confirm('ลบรายการ ' + (s?.asset_code||'') + ' ทั้งหมด?\nไม่สามารถกู้คืนได้')) return;
+  try {
+    const res = await fetch(API+'/hq/scans/'+id, {
+      method: 'DELETE',
+      headers: authHeader()
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
+    allScans = allScans.filter(r => r.id != id);
+    filteredScans = filteredScans.filter(r => r.id != id);
+    closeEditModal();
+    renderScans(); renderPhotos(); updateBadges();
+    showToast('ลบรายการเรียบร้อย ✓', 'success');
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
 }
 
 async function deleteSession(id,branchId){
