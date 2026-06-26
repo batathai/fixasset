@@ -241,10 +241,10 @@ tbody tr:hover{background:var(--sf2);}
           <div class="stat-sub">สแกนแล้ว</div>
           <div class="click-hint">คลิกเพื่อดูรายการ →</div>
         </div>
-        <div class="stat-card amber" onclick="goToPendingOverview()" title="คลิกดูรายการ Pending">
-          <div class="stat-label">Pending</div>
+        <div class="stat-card amber" onclick="goToPendingOverview()" title="นับจาก Session: total_assets − scanned_count (อาจรวมทุกสาขา)">
+          <div class="stat-label">Pending <span style="font-size:10px;font-weight:400;opacity:0.7;">(จาก Session)</span></div>
           <div class="stat-val" id="s-pending">—</div>
-          <div class="stat-sub">ยังไม่ได้สแกน</div>
+          <div class="stat-sub" id="s-pending-sub">ยังไม่ได้สแกน (รวมทุกสาขา)</div>
           <div class="click-hint">คลิกเพื่อดูรายการ →</div>
         </div>
         <div class="stat-card red">
@@ -297,8 +297,8 @@ tbody tr:hover{background:var(--sf2);}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th style="width:68px;">รูป</th><th>Asset Code</th><th>ชื่อ Asset</th><th>สภาพ</th><th>Serial Match</th><th>Serial Found</th><th>สาขา</th><th>เวลา</th><th>Actions</th></tr></thead>
-            <tbody id="scans-tbody"><tr><td colspan="9" class="loading">Loading...</td></tr></tbody>
+            <thead><tr><th style="width:68px;">รูป</th><th>Asset Code</th><th>ชื่อ Asset</th><th style="width:80px;text-align:center;">SEQ</th><th>สภาพ</th><th>Serial Match</th><th>Serial Found</th><th>สาขา</th><th>เวลา</th><th>Actions</th></tr></thead>
+            <tbody id="scans-tbody"><tr><td colspan="10" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -566,6 +566,24 @@ let filteredScans = [], unmatchedFilter = 'pending';
 let currentScanMode = 'normal';
 let pendingMergeBranch = null; // สำหรับ merge modal
 
+// ── HELPER: รวม asset_code + SEQ จาก allAssets ──────────
+// ใช้ทุกที่แทนการแสดง asset_code เปล่า ๆ
+function getFullCode(assetCode) {
+  if (!assetCode) return '—';
+  // ถ้าใน allAssets มี qr_key ที่ขึ้นต้นด้วย assetCode → ดึง SEQ suffix มาต่อท้าย
+  if (typeof allAssets !== 'undefined' && allAssets.length) {
+    const match = allAssets.find(a => (a.asset_code||'') === assetCode);
+    if (match && match.qr_key) {
+      const seqPart = match.qr_key.match(/SEQ\d+$/i);
+      if (seqPart) return assetCode + seqPart[0].toUpperCase();
+    }
+    // fallback: หา qr_key ที่ขึ้นต้นด้วย assetCode
+    const fallback = allAssets.find(a => (a.qr_key||'').startsWith(assetCode));
+    if (fallback && fallback.qr_key) return fallback.qr_key.toUpperCase();
+  }
+  return assetCode;
+}
+
 // ── AUTH ────────────────────────────────────────────────
 function saveSession(t, user) { sessionStorage.setItem('bata_hq_v2', JSON.stringify({token:t,user})); }
 function restoreSession() {
@@ -615,10 +633,22 @@ async function loadAll() {
   if (!token) return;
   document.getElementById('last-updated').textContent = 'Loading...';
   try {
-    await Promise.all([loadScans(), loadUnmatched(), loadSummary()]);
+    await Promise.all([loadScans(), loadUnmatched(), loadSummary(), loadAssetsBackground()]);
     renderOverview(); renderScans(); renderPhotos(); renderUnmatched(unmatchedFilter); updateBadges();
     document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
   } catch(e) { console.error(e); showToast('Error: '+e.message,'error'); document.getElementById('last-updated').textContent='Error'; }
+}
+
+// โหลด allAssets เงียบ ๆ ตอน init เพื่อให้ getFullCode() ใช้งานได้ทุกหน้า
+async function loadAssetsBackground() {
+  try {
+    const res = await fetch(API + '/hq/assets', {headers: authHeader()});
+    if (!res.ok) return; // ถ้า fail ก็ไม่เป็นไร แค่ SEQ จะไม่แสดง
+    const data = await res.json();
+    allAssets = data.assets || [];
+    // re-render scans หลังได้ assets แล้ว
+    if (allScans.length) renderScans();
+  } catch(e) { /* silent */ }
 }
 
 async function loadScans() {
@@ -798,10 +828,13 @@ async function confirmMerge() {
 function renderOverview() {
   const totalScanned = allScans.length;
   const totalPending = allSessions.reduce((sum,s)=>sum+Math.max(0,(parseInt(s.total_assets)||0)-(parseInt(s.scanned_count)||0)),0);
+  const sessionCount = allSessions.length;
   const totalAssets = allSessions.reduce((sum,s)=>sum+(parseInt(s.total_assets)||0),0);
   document.getElementById('s-total-assets').textContent = totalAssets.toLocaleString();
   document.getElementById('s-total').textContent = totalScanned.toLocaleString();
   document.getElementById('s-pending').textContent = totalPending.toLocaleString();
+  const subEl = document.getElementById('s-pending-sub');
+  if (subEl) subEl.textContent = `รวม ${sessionCount} session (คลิกดูแยกสาขา)`;
   document.getElementById('s-unmatched').textContent = allUnmatched.filter(u=>u.status==='pending').length.toLocaleString();
 
   const tbody = document.getElementById('sessions-tbody');
@@ -889,22 +922,30 @@ function hideScanBanner() { document.getElementById('scan-banner').style.display
 function renderScans() {
   document.getElementById('scan-count').textContent = filteredScans.length + ' รายการ';
   const tbody = document.getElementById('scans-tbody');
-  if (!filteredScans.length) { tbody.innerHTML='<tr><td colspan="9" class="loading">ไม่พบข้อมูล</td></tr>'; return; }
-  tbody.innerHTML = filteredScans.map(s => `<tr>
+  if (!filteredScans.length) { tbody.innerHTML='<tr><td colspan="10" class="loading">ไม่พบข้อมูล</td></tr>'; return; }
+  tbody.innerHTML = filteredScans.map(s => {
+    const seqMatch = (s.qr_key||s.asset_code||'').match(/SEQ(\d+)$/i);
+    const seqDisplay = seqMatch
+      ? `<span style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-bg,#e8f0fe);padding:2px 6px;border-radius:4px;">SEQ${seqMatch[1]}</span>`
+      : `<span style="color:var(--text3);font-size:11px;">—</span>`;
+    const fullCode = getFullCode(s.asset_code);
+    return `<tr>
     <td style="padding:8px 10px;">
       ${s.photo_url
         ? `<img class="scan-thumb" src="${s.photo_url}" alt="" onclick="openLightbox('${s.photo_url}')" title="คลิกเพื่อขยาย">`
         : `<div class="scan-no-photo" title="ไม่มีรูปถ่าย">📷</div>`}
     </td>
-    <td style="font-family:var(--mono);font-size:11px;">${s.asset_code||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px;">${fullCode}</td>
     <td><div style="font-weight:500;">${s.asset_name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
+    <td style="text-align:center;">${seqDisplay}</td>
     <td><span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span></td>
     <td>${s.serial_match===true?'<span class="badge badge-green">✓ Match</span>':s.serial_match===false?'<span class="badge badge-red">✗ Mismatch</span>':'<span class="badge badge-gray">N/A</span>'}</td>
     <td style="font-family:var(--mono);font-size:11px;">${s.serial_found||'—'}</td>
     <td style="font-size:12px;">${s.branch_id||'—'}</td>
     <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</td>
     <td><button class="btn btn-outline btn-sm" onclick="openEditModal(${s.id})">✏️ Edit</button></td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 
 function doSearch() { currentScanMode='normal'; hideScanBanner(); filterScans(); }
@@ -936,18 +977,19 @@ function filterScans() {
 async function renderPendingScans(branchId) {
   const tbody = document.getElementById('scans-tbody');
   const session = allSessions.find(s => !branchId || s.branch_id === branchId);
-  if (!session) { tbody.innerHTML='<tr><td colspan="9" class="loading">ไม่พบข้อมูล session</td></tr>'; return; }
-  tbody.innerHTML = '<tr><td colspan="9" class="loading">⏳ กำลังโหลด Master List...</td></tr>';
+  if (!session) { tbody.innerHTML='<tr><td colspan="10" class="loading">ไม่พบข้อมูล session</td></tr>'; return; }
+  tbody.innerHTML = '<tr><td colspan="10" class="loading">⏳ กำลังโหลด Master List...</td></tr>';
   const masterAssets = await loadMasterAssets(session.branch_id);
   const scannedCodes = new Set(allScans.filter(s=>s.branch_id===session.branch_id).map(s=>s.asset_code));
   const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
   document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending)';
   showScanBanner('amber', `⏳ Pending ${pendingAssets.length} รายการ — ยังไม่ได้สแกน สาขา ${session.branch_id}`);
-  if (!pendingAssets.length) { tbody.innerHTML='<tr><td colspan="9" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>'; return; }
+  if (!pendingAssets.length) { tbody.innerHTML='<tr><td colspan="10" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>'; return; }
   tbody.innerHTML = pendingAssets.map(a => `<tr style="background:var(--amber-bg);">
     <td style="padding:8px 10px;"><div class="scan-no-photo" title="ยังไม่สแกน">⏳</div></td>
-    <td style="font-family:var(--mono);font-size:11px;font-weight:600;">${a.asset_code||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px;font-weight:600;">${getFullCode(a.asset_code)||'—'}</td>
     <td><div style="font-weight:500;">${a.name||'—'}</div><div style="font-size:11px;color:var(--text3);">ยังไม่มีผู้สแกน</div></td>
+    <td style="text-align:center;"><span style="color:var(--text3);font-size:11px;">—</span></td>
     <td><span class="badge badge-amber">Pending</span></td>
     <td><span class="badge badge-gray">—</span></td>
     <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${a.serial_no||'—'}</td>
@@ -969,7 +1011,7 @@ function renderPhotos() {
     <div class="photo-card">
       <img src="${s.photo_url}" alt="${s.asset_name||''}" onclick="openLightbox('${s.photo_url}')">
       <div class="photo-body">
-        <div class="photo-code">${s.asset_code||'—'}</div>
+        <div class="photo-code">${getFullCode(s.asset_code)||'—'}</div>
         <div class="photo-name">${s.asset_name||'—'}</div>
         <div class="photo-meta">สาขา: ${s.branch_id||'—'} · ${s.auditor||'—'}</div>
         <div class="photo-meta">${s.scanned_at?new Date(s.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</div>
@@ -1070,7 +1112,7 @@ function openEditModal(id){
   const s = allScans.find(r => r.id == id);
   if (!s) return;
   document.getElementById('m-scan-id').value = id;
-  document.getElementById('m-code').value = s.asset_code || '';
+  document.getElementById('m-code').value = getFullCode(s.asset_code);  // แสดง full code พร้อม SEQ
   document.getElementById('m-name').value = s.asset_name || '';
   document.getElementById('m-condition').value = s.condition || 'good';
   document.getElementById('m-serial').value = s.serial_found || '';
@@ -1269,7 +1311,7 @@ async function uploadPhoto(input) {
 // ── ลบ Scan Log ────────────────────────────────────────
 async function deleteScanLog(id) {
   const s = allScans.find(r => r.id == id);
-  if (!confirm('ลบรายการ '+(s?.asset_code||'')+' ทั้งหมด?\nไม่สามารถกู้คืนได้')) return;
+  if (!confirm('ลบรายการ '+(getFullCode(s?.asset_code)||'')+' ทั้งหมด?\nไม่สามารถกู้คืนได้')) return;
   try {
     const res = await fetch(API+'/hq/scans/'+id, {method:'DELETE',headers:authHeader()});
     if (!res.ok) throw new Error((await res.json()).detail || 'Error');
@@ -1331,13 +1373,13 @@ async function exportFullReport(branchId) {
   allScans.filter(s=>s.branch_id===session.branch_id).forEach(s=>{ if(!scannedMap[s.asset_code]) scannedMap[s.asset_code]=s; });
   const data = masterAssets.map(a => {
     const scan = scannedMap[a.asset_code];
-    return scan ? {'Asset Code':a.asset_code,'Asset Name':a.name||'','Status':'Scanned ✓','สภาพ':scan.condition||'','ผู้สแกน':scan.auditor||'','เวลาสแกน':scan.scanned_at||'','Serial Found':scan.serial_found||'','มีรูปถ่าย':scan.photo_url?'Yes':'No','HQ Note':scan.hq_note||''}
-    : {'Asset Code':a.asset_code,'Asset Name':a.name||'','Status':'⚠️ PENDING - ยังไม่สแกน','สภาพ':'','ผู้สแกน':'','เวลาสแกน':'','Serial Found':a.serial_no||'','มีรูปถ่าย':'','HQ Note':''};
+    return scan ? {'Asset Code':getFullCode(a.asset_code),'Asset Name':a.name||'','Status':'Scanned ✓','สภาพ':scan.condition||'','ผู้สแกน':scan.auditor||'','เวลาสแกน':scan.scanned_at||'','Serial Found':scan.serial_found||'','มีรูปถ่าย':scan.photo_url?'Yes':'No','HQ Note':scan.hq_note||''}
+    : {'Asset Code':getFullCode(a.asset_code),'Asset Name':a.name||'','Status':'⚠️ PENDING - ยังไม่สแกน','สภาพ':'','ผู้สแกน':'','เวลาสแกน':'','Serial Found':a.serial_no||'','มีรูปถ่าย':'','HQ Note':''};
   });
   toXlsx({'Full Audit Report':data},`bata_full_report_${session.branch_id}_${today()}.xlsx`);
 }
 function exportScans(){
-  toXlsx({'Scan Logs':allScans.map(s=>({'Asset Code':s.asset_code,'Asset Name':s.asset_name,'Condition':s.condition,'Serial Match':s.serial_match,'Serial Found':s.serial_found||'','Branch':s.branch_id,'Auditor':s.auditor,'Scanned At':s.scanned_at,'Photo':s.photo_url?'Yes':'No','HQ Note':s.hq_note||''}))},`bata_scan_logs_${today()}.xlsx`);
+  toXlsx({'Scan Logs':allScans.map(s=>({'Asset Code':getFullCode(s.asset_code),'Asset Name':s.asset_name,'Condition':s.condition,'Serial Match':s.serial_match,'Serial Found':s.serial_found||'','Branch':s.branch_id,'Auditor':s.auditor,'Scanned At':s.scanned_at,'Photo':s.photo_url?'Yes':'No','HQ Note':s.hq_note||''}))},`bata_scan_logs_${today()}.xlsx`);
 }
 function exportUnmatchedXlsx(){
   toXlsx({'Unmatched':allUnmatched.map(u=>({'QR Scanned':u.scanned_qr,'Name Guess':u.name_guess,'Serial':u.serial_no||'','Branch':u.branch_id,'Auditor':u.auditor,'Status':u.status,'HQ Note':u.hq_note||'','Matched Code':u.matched_asset_code||'','Scanned At':u.scanned_at}))},`bata_unmatched_${today()}.xlsx`);
