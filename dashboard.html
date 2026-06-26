@@ -55,8 +55,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .refresh-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);transition:all .15s;}
 .refresh-btn:hover{border-color:var(--red);color:var(--red);}
 .page{padding:24px 28px;display:flex;flex-direction:column;gap:20px;}
-
-/* ── STAT CARDS (clickable) ── */
 .stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
 .stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .15s;position:relative;}
 .stat-card:hover{border-color:var(--red);box-shadow:0 4px 16px rgba(204,0,0,0.08);transform:translateY(-1px);}
@@ -72,7 +70,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .stat-card.red .stat-val{color:var(--red);}
 .stat-card.blue .stat-val{color:var(--blue);}
 .stat-card.blue:hover{border-color:var(--blue);}
-
 .section{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
 .section-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .section-title{font-family:var(--cond);font-size:16px;font-weight:700;}
@@ -109,8 +106,6 @@ tbody tr:hover{background:var(--sf2);}
 .tab-bar{display:flex;border-bottom:1px solid var(--border);padding:0 18px;}
 .tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
 .tab.active{color:var(--red);border-bottom-color:var(--red);}
-
-/* ── SEARCH BAR ── */
 .filter-bar{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
 .filter-bar select{padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-family:var(--sans);background:var(--sf2);outline:none;}
 .filter-bar select:focus{border-color:var(--red);}
@@ -118,7 +113,6 @@ tbody tr:hover{background:var(--sf2);}
 .search-wrap input{border:none;background:transparent;padding:7px 10px;font-size:13px;font-family:var(--sans);outline:none;min-width:200px;}
 .search-btn{padding:7px 12px;background:var(--red);border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;transition:background .15s;}
 .search-btn:hover{background:var(--red-d);}
-
 .pb{background:#e8e5e0;border-radius:99px;height:7px;overflow:hidden;width:100px;}
 .pb-fill{height:100%;border-radius:99px;}
 .pb-green{background:var(--green);}
@@ -130,7 +124,6 @@ tbody tr:hover{background:var(--sf2);}
 .modal-title{font-family:var(--cond);font-size:18px;font-weight:700;}
 .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:4px;}
 .modal-body{padding:20px;}
-.modal-body img{width:100%;border-radius:var(--rs);margin-bottom:16px;max-height:300px;object-fit:contain;background:var(--sf2);}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
 .field{display:flex;flex-direction:column;gap:4px;}
 .field label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
@@ -149,11 +142,12 @@ tbody tr:hover{background:var(--sf2);}
 .scan-thumb{width:52px;height:52px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);display:block;transition:transform .15s;}
 .scan-thumb:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.15);}
 .scan-no-photo{width:52px;height:52px;border-radius:6px;border:1.5px dashed var(--border);background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:20px;}
-
-/* page-banner */
 .page-banner{padding:10px 18px;background:var(--blue-bg);border-bottom:1px solid var(--blue-bd);font-size:13px;color:var(--blue);display:flex;align-items:center;gap:8px;}
 .page-banner.amber{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber);}
 .page-banner.green{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
+/* upload zone */
+.upload-zone{width:100%;min-height:110px;border:2px dashed var(--border);border-radius:var(--rs);background:var(--sf2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:8px;}
+.upload-zone:hover{border-color:var(--red);background:var(--red-l);}
 </style>
 </head>
 <body>
@@ -376,13 +370,30 @@ tbody tr:hover{background:var(--sf2);}
       <button class="modal-close" onclick="closeEditModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div style="position:relative;margin-bottom:4px;">
-      <img id="modal-img" src="" alt="" 
-        style="display:none;width:100%;border-radius:8px;max-height:300px;object-fit:contain;background:var(--sf2);cursor:zoom-in;"
-        onclick="openLightbox(this.src)">
+
+      <!-- ── รูปภาพ + ปุ่มลบ/อัปโหลด ── -->
+      <div style="margin-bottom:12px;">
+        <!-- รูปปัจจุบัน -->
+        <img id="modal-img" src="" alt=""
+          style="display:none;width:100%;border-radius:8px;max-height:280px;object-fit:contain;background:var(--sf2);cursor:zoom-in;margin-bottom:6px;"
+          onclick="openLightbox(this.src)">
+
+        <!-- ปุ่มลบรูป (แสดงเมื่อมีรูป) -->
+        <button id="btn-delete-photo"
+          style="display:none;width:100%;padding:7px;background:var(--sf2);border:1px dashed var(--red-bd);border-radius:var(--rs);color:var(--red);font-size:12px;cursor:pointer;margin-bottom:8px;"
+          onclick="deletePhoto(document.getElementById('m-scan-id').value)">
           🗑️ ลบรูปถ่ายนี้
         </button>
+
+        <!-- Zone อัปโหลด (แสดงเมื่อไม่มีรูป) -->
+        <label id="upload-zone" for="photo-file-input" class="upload-zone" style="display:none;">
+          <span style="font-size:28px;">📷</span>
+          <span style="font-size:13px;font-weight:500;color:var(--text2);">คลิกเพื่ออัปโหลดรูปใหม่</span>
+          <span style="font-size:11px;color:var(--text3);">JPG, PNG ขนาดไม่เกิน 5MB</span>
+        </label>
+        <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="uploadPhoto(this)">
       </div>
+
       <div class="field-row">
         <div class="field"><label>Asset Code</label><input id="m-code" type="text" readonly style="background:#f0f0f0;"></div>
         <div class="field"><label>Asset Name</label><input id="m-name" type="text" readonly style="background:#f0f0f0;"></div>
@@ -424,7 +435,7 @@ const API = 'https://bata-asset-api-production.up.railway.app';
 let token = null, currentUser = null;
 let allScans = [], allUnmatched = [], allSessions = [];
 let filteredScans = [], unmatchedFilter = 'pending';
-let currentScanMode = 'normal'; // 'normal' | 'pending' | 'all'
+let currentScanMode = 'normal';
 
 function saveSession(t, user) { sessionStorage.setItem('bata_hq_v2', JSON.stringify({token:t,user})); }
 function restoreSession() {
@@ -516,17 +527,15 @@ function populateBranchFilter(selectId, rows) {
   sel.value = cur;
 }
 
-// ── OVERVIEW ─────────────────────────────────────────
+// ── OVERVIEW ──────────────────────────────────────────
 function renderOverview() {
   const totalScanned = allScans.length;
   const totalPending = allSessions.reduce((sum,s)=>sum+Math.max(0,(parseInt(s.total_assets)||0)-(parseInt(s.scanned_count)||0)),0);
   const totalAssets = allSessions.reduce((sum,s)=>sum+(parseInt(s.total_assets)||0),0);
-
   document.getElementById('s-total-assets').textContent = totalAssets.toLocaleString();
   document.getElementById('s-total').textContent = totalScanned.toLocaleString();
   document.getElementById('s-pending').textContent = totalPending.toLocaleString();
   document.getElementById('s-unmatched').textContent = allUnmatched.filter(u=>u.status==='pending').length.toLocaleString();
-
   const tbody = document.getElementById('sessions-tbody');
   if (!allSessions.length) { tbody.innerHTML='<tr><td colspan="8" class="loading">No sessions</td></tr>'; return; }
   tbody.innerHTML = allSessions.map(s => {
@@ -553,11 +562,7 @@ function renderOverview() {
   }).join('');
 }
 
-// ── OVERVIEW CLICK ACTIONS ────────────────────────────
-function goToAllAssets() {
-  const branchId = allSessions[0]?.branch_id || '';
-  goToAllAssetsBranch(branchId);
-}
+function goToAllAssets() { goToAllAssetsBranch(allSessions[0]?.branch_id||''); }
 async function goToAllAssetsBranch(branchId) {
   showPage('scans');
   document.getElementById('scan-branch').value = branchId;
@@ -569,10 +574,7 @@ async function goToAllAssetsBranch(branchId) {
   filteredScans = allScans.filter(s => !branchId || s.branch_id === branchId);
   renderScans();
 }
-function goToScanned() {
-  const branchId = allSessions[0]?.branch_id || '';
-  goToScannedBranch(branchId);
-}
+function goToScanned() { goToScannedBranch(allSessions[0]?.branch_id||''); }
 function goToScannedBranch(branchId) {
   showPage('scans');
   document.getElementById('scan-branch').value = branchId;
@@ -584,10 +586,7 @@ function goToScannedBranch(branchId) {
   filteredScans = allScans.filter(s => !branchId || s.branch_id === branchId);
   renderScans();
 }
-function goToPendingOverview() {
-  const branchId = allSessions[0]?.branch_id || '';
-  goToPending(branchId);
-}
+function goToPendingOverview() { goToPending(allSessions[0]?.branch_id||''); }
 function goToPending(branchId) {
   showPage('scans');
   document.getElementById('scan-branch').value = branchId;
@@ -596,16 +595,13 @@ function goToPending(branchId) {
   document.getElementById('scan-search').value = '';
   filterScans();
 }
-
 function showScanBanner(type, msg) {
   const b = document.getElementById('scan-banner');
   b.className = 'page-banner' + (type !== 'blue' ? ' '+type : '');
   b.textContent = msg;
   b.style.display = 'flex';
 }
-function hideScanBanner() {
-  document.getElementById('scan-banner').style.display = 'none';
-}
+function hideScanBanner() { document.getElementById('scan-banner').style.display = 'none'; }
 
 // ── SCAN LOGS ─────────────────────────────────────────
 function renderScans() {
@@ -629,11 +625,7 @@ function renderScans() {
   </tr>`).join('');
 }
 
-function doSearch() {
-  currentScanMode = 'normal';
-  hideScanBanner();
-  filterScans();
-}
+function doSearch() { currentScanMode='normal'; hideScanBanner(); filterScans(); }
 function clearSearch() {
   document.getElementById('scan-search').value = '';
   document.getElementById('scan-branch').value = '';
@@ -644,25 +636,17 @@ function clearSearch() {
   filteredScans = allScans;
   renderScans();
 }
-
 function filterScans() {
   const q = document.getElementById('scan-search').value.toLowerCase();
   const branch = document.getElementById('scan-branch').value;
   const cond = document.getElementById('scan-condition').value;
   const photo = document.getElementById('scan-photo').value;
-
-  if (cond === 'pending') {
-    filteredScans = [];
-    renderPendingScans(branch || allSessions[0]?.branch_id);
-    return;
-  }
-
+  if (cond === 'pending') { filteredScans=[]; renderPendingScans(branch||allSessions[0]?.branch_id); return; }
   hideScanBanner();
   filteredScans = allScans.filter(s =>
-    (!q || (s.asset_code||'').toLowerCase().includes(q) || (s.asset_name||'').toLowerCase().includes(q) || (s.qr_key||'').toLowerCase().includes(q)) &&
-    (!branch || s.branch_id===branch) &&
-    (!cond || s.condition===cond) &&
-    (!photo || (photo==='yes' ? !!s.photo_url : !s.photo_url))
+    (!q||(s.asset_code||'').toLowerCase().includes(q)||(s.asset_name||'').toLowerCase().includes(q)||(s.qr_key||'').toLowerCase().includes(q)) &&
+    (!branch||s.branch_id===branch) && (!cond||s.condition===cond) &&
+    (!photo||(photo==='yes'?!!s.photo_url:!s.photo_url))
   );
   renderScans();
 }
@@ -677,10 +661,7 @@ async function renderPendingScans(branchId) {
   const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
   document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending)';
   showScanBanner('amber', `⏳ Pending ${pendingAssets.length} รายการ — ยังไม่ได้สแกน สาขา ${session.branch_id}`);
-  if (!pendingAssets.length) {
-    tbody.innerHTML='<tr><td colspan="9" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>';
-    return;
-  }
+  if (!pendingAssets.length) { tbody.innerHTML='<tr><td colspan="9" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>'; return; }
   tbody.innerHTML = pendingAssets.map(a => `<tr style="background:var(--amber-bg);">
     <td style="padding:8px 10px;"><div class="scan-no-photo" title="ยังไม่สแกน">⏳</div></td>
     <td style="font-family:var(--mono);font-size:11px;font-weight:600;">${a.asset_code||'—'}</td>
@@ -812,29 +793,153 @@ function openEditModal(id){
   document.getElementById('m-condition').value = s.condition || 'good';
   document.getElementById('m-serial').value = s.serial_found || '';
   document.getElementById('m-note').value = s.hq_note || '';
+
   const img = document.getElementById('modal-img');
-  const btnDelPhoto = document.getElementById('btn-delete-photo');
+  const btnDel = document.getElementById('btn-delete-photo');
+  const zone = document.getElementById('upload-zone');
+  const fileInput = document.getElementById('photo-file-input');
+  fileInput.value = ''; // reset file input
+
   if (s.photo_url) {
     img.src = s.photo_url;
     img.style.display = 'block';
-    btnDelPhoto.style.display = 'block';
+    btnDel.style.display = 'block';
+    zone.style.display = 'none';
   } else {
     img.style.display = 'none';
-    btnDelPhoto.style.display = 'none';
+    btnDel.style.display = 'none';
+    zone.style.display = 'flex';
   }
   document.getElementById('edit-modal').style.display = 'flex';
 }
-function closeEditModal(){document.getElementById('edit-modal').style.display='none';}
+
+function closeEditModal(){ document.getElementById('edit-modal').style.display='none'; }
+
 async function saveScanEdit(){
-  const id=document.getElementById('m-scan-id').value;
-  const body={condition:document.getElementById('m-condition').value,serial_found:document.getElementById('m-serial').value.trim()||null,hq_note:document.getElementById('m-note').value.trim()||null};
+  const id = document.getElementById('m-scan-id').value;
+  const body = {
+    condition: document.getElementById('m-condition').value,
+    serial_found: document.getElementById('m-serial').value.trim() || null,
+    hq_note: document.getElementById('m-note').value.trim() || null
+  };
   try{
-    const res=await fetch(API+'/hq/scans/'+id,{method:'PATCH',headers:authHeader(),body:JSON.stringify(body)});
-    if(!res.ok)throw new Error((await res.json()).detail);
-    const s=allScans.find(r=>r.id==id);
+    const res = await fetch(API+'/hq/scans/'+id, {method:'PATCH',headers:authHeader(),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error((await res.json()).detail);
+    const s = allScans.find(r=>r.id==id);
     if(s){s.condition=body.condition;s.serial_found=body.serial_found;s.hq_note=body.hq_note;}
-    closeEditModal();renderScans();renderPhotos();
+    closeEditModal(); renderScans(); renderPhotos();
     showToast('บันทึกสำเร็จ ✓','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ── ลบรูป — เรียก DELETE /hq/scans/{id}/photo ──────────
+async function deletePhoto(id) {
+  if (!confirm('ลบรูปถ่ายของรายการนี้?\nข้อมูล Scan Log ยังคงอยู่')) return;
+  try {
+    // ลองเรียก endpoint ลบรูปโดยเฉพาะก่อน
+    let res = await fetch(API+'/hq/scans/'+id+'/photo', {
+      method: 'DELETE',
+      headers: authHeader()
+    });
+
+    // ถ้า endpoint นั้นไม่มี (404) ให้ fallback ใช้ PATCH remove_photo=true
+    if (res.status === 404 || res.status === 405) {
+      res = await fetch(API+'/hq/scans/'+id, {
+        method: 'PATCH',
+        headers: authHeader(),
+        body: JSON.stringify({ remove_photo: true })
+      });
+    }
+
+    if (!res.ok) {
+      const errData = await res.json().catch(()=>({}));
+      throw new Error(errData.detail || 'ลบรูปไม่สำเร็จ ('+res.status+')');
+    }
+
+    const s = allScans.find(r => r.id == id);
+    if (s) s.photo_url = null;
+
+    document.getElementById('modal-img').style.display = 'none';
+    document.getElementById('btn-delete-photo').style.display = 'none';
+    document.getElementById('upload-zone').style.display = 'flex';
+
+    renderScans(); renderPhotos();
+    showToast('ลบรูปเรียบร้อย ✓', 'success');
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+}
+
+// ── อัปโหลดรูปใหม่ ──────────────────────────────────
+async function uploadPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { showToast('ไฟล์ใหญ่เกิน 5MB', 'error'); return; }
+
+  const id = document.getElementById('m-scan-id').value;
+  showToast('กำลังอัปโหลดรูป...', '');
+
+  // Preview ก่อน
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById('modal-img');
+    img.src = e.target.result;
+    img.style.display = 'block';
+  };
+  reader.readAsDataURL(file);
+
+  try {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    const res = await fetch(API+'/hq/scans/'+id+'/photo', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer '+token },
+      body: formData
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Upload failed');
+    const data = await res.json();
+
+    const photoUrl = data.photo_url || data.url || data.photo;
+    const s = allScans.find(r => r.id == id);
+    if (s && photoUrl) s.photo_url = photoUrl;
+
+    document.getElementById('upload-zone').style.display = 'none';
+    document.getElementById('btn-delete-photo').style.display = 'block';
+    renderScans(); renderPhotos();
+    showToast('อัปโหลดรูปสำเร็จ ✓', 'success');
+  } catch(e) {
+    showToast('Error: '+e.message, 'error');
+    // ถ้า upload fail ให้ reset preview
+    const s = allScans.find(r => r.id == id);
+    if (!s?.photo_url) {
+      document.getElementById('modal-img').style.display = 'none';
+    }
+  }
+}
+
+// ── ลบ Scan Log ────────────────────────────────────
+async function deleteScanLog(id) {
+  const s = allScans.find(r => r.id == id);
+  if (!confirm('ลบรายการ '+(s?.asset_code||'')+' ทั้งหมด?\nไม่สามารถกู้คืนได้')) return;
+  try {
+    const res = await fetch(API+'/hq/scans/'+id, {method:'DELETE',headers:authHeader()});
+    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
+    allScans = allScans.filter(r => r.id != id);
+    filteredScans = filteredScans.filter(r => r.id != id);
+    closeEditModal();
+    renderScans(); renderPhotos(); updateBadges();
+    showToast('ลบรายการเรียบร้อย ✓', 'success');
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+}
+
+// ── ลบ Session ─────────────────────────────────────
+async function deleteSession(id, branchId){
+  if(!confirm('ยืนยันการลบ Session ของสาขา '+branchId+'?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย'))return;
+  try{
+    const res=await fetch(API+'/hq/sessions/'+id,{method:'DELETE',headers:authHeader()});
+    if(!res.ok){let msg='Error '+res.status;try{const j=await res.json();msg=j.detail||msg;}catch(e){}throw new Error(msg);}
+    allSessions=allSessions.filter(s=>String(s.session_id||s.id)!==String(id));
+    renderOverview();
+    showToast('ลบ Session '+branchId+' เรียบร้อย','success');
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 
@@ -866,32 +971,20 @@ function toXlsx(sheets,filename){
   XLSX.writeFile(wb,filename);
   showToast('Exported: '+filename,'success');
 }
-
 async function exportFullReport(branchId) {
   const session = allSessions.find(s => s.branch_id === (branchId || allSessions[0]?.branch_id));
   if (!session) { showToast('ไม่พบ session', 'error'); return; }
   showToast('กำลังโหลด Master List...', '');
   const masterAssets = await loadMasterAssets(session.branch_id);
   const scannedMap = {};
-  allScans.filter(s=>s.branch_id===session.branch_id).forEach(s=>{
-    if (!scannedMap[s.asset_code]) scannedMap[s.asset_code] = s;
-  });
+  allScans.filter(s=>s.branch_id===session.branch_id).forEach(s=>{ if(!scannedMap[s.asset_code]) scannedMap[s.asset_code]=s; });
   const data = masterAssets.map(a => {
     const scan = scannedMap[a.asset_code];
-    return scan ? {
-      'Asset Code': a.asset_code, 'Asset Name': a.name||'', 'Status': 'Scanned ✓',
-      'สภาพ': scan.condition||'', 'ผู้สแกน': scan.auditor||'',
-      'เวลาสแกน': scan.scanned_at||'', 'Serial Found': scan.serial_found||'',
-      'มีรูปถ่าย': scan.photo_url?'Yes':'No', 'HQ Note': scan.hq_note||''
-    } : {
-      'Asset Code': a.asset_code, 'Asset Name': a.name||'', 'Status': '⚠️ PENDING - ยังไม่สแกน',
-      'สภาพ': '', 'ผู้สแกน': '', 'เวลาสแกน': '', 'Serial Found': a.serial_no||'',
-      'มีรูปถ่าย': '', 'HQ Note': ''
-    };
+    return scan ? {'Asset Code':a.asset_code,'Asset Name':a.name||'','Status':'Scanned ✓','สภาพ':scan.condition||'','ผู้สแกน':scan.auditor||'','เวลาสแกน':scan.scanned_at||'','Serial Found':scan.serial_found||'','มีรูปถ่าย':scan.photo_url?'Yes':'No','HQ Note':scan.hq_note||''}
+    : {'Asset Code':a.asset_code,'Asset Name':a.name||'','Status':'⚠️ PENDING - ยังไม่สแกน','สภาพ':'','ผู้สแกน':'','เวลาสแกน':'','Serial Found':a.serial_no||'','มีรูปถ่าย':'','HQ Note':''};
   });
-  toXlsx({'Full Audit Report': data}, `bata_full_report_${session.branch_id}_${today()}.xlsx`);
+  toXlsx({'Full Audit Report':data},`bata_full_report_${session.branch_id}_${today()}.xlsx`);
 }
-
 function exportScans(){
   toXlsx({'Scan Logs':allScans.map(s=>({'Asset Code':s.asset_code,'Asset Name':s.asset_name,'Condition':s.condition,'Serial Match':s.serial_match,'Serial Found':s.serial_found||'','Branch':s.branch_id,'Auditor':s.auditor,'Scanned At':s.scanned_at,'Photo':s.photo_url?'Yes':'No','HQ Note':s.hq_note||''}))},`bata_scan_logs_${today()}.xlsx`);
 }
@@ -910,7 +1003,6 @@ function showPage(name){
   });
   document.getElementById('page-title').textContent=titles[name];
 }
-
 function showToast(msg,type=''){
   const wrap=document.getElementById('toast-wrap');
   const t=document.createElement('div');
@@ -926,13 +1018,9 @@ async function exportPDF(branchId) {
   showToast('กำลังเตรียม PDF...', '');
   const masterAssets = await loadMasterAssets(session.branch_id);
   const scannedMap = {};
-  allScans.filter(s => s.branch_id === session.branch_id).forEach(s => {
-    if (!scannedMap[s.asset_code]) scannedMap[s.asset_code] = s;
-  });
-
+  allScans.filter(s => s.branch_id === session.branch_id).forEach(s => { if (!scannedMap[s.asset_code]) scannedMap[s.asset_code] = s; });
   const scannedCount = masterAssets.filter(a => scannedMap[a.asset_code]).length;
   const pendingCount = masterAssets.filter(a => !scannedMap[a.asset_code]).length;
-
   const rows = masterAssets.map((a, i) => {
     const scan = scannedMap[a.asset_code];
     const isPending = !scan;
@@ -940,15 +1028,8 @@ async function exportPDF(branchId) {
     const statusBadge = isPending
       ? `<span style="background:#fff8f0;color:#b85c00;border:1px solid #ffd4a0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;">⏳ PENDING</span>`
       : `<span style="background:#f0faf3;color:#1a7a3c;border:1px solid #b3dfc0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;">✓ Scanned</span>`;
-    const condBadge = scan?.condition
-      ? scan.condition === 'good'
-        ? `<span style="background:#f0faf3;color:#1a7a3c;border:1px solid #b3dfc0;padding:1px 6px;border-radius:20px;font-size:10px;">Good</span>`
-        : `<span style="background:#fff0f0;color:#CC0000;border:1px solid #ffcccc;padding:1px 6px;border-radius:20px;font-size:10px;">${scan.condition}</span>`
-      : '—';
-    const photo = scan?.photo_url
-      ? `<img src="${scan.photo_url}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #e0ddd6;" onerror="this.style.display='none'">`
-      : `<div style="width:48px;height:48px;background:#f4f2ef;border-radius:4px;border:1.5px dashed #e0ddd6;display:flex;align-items:center;justify-content:center;font-size:18px;">${isPending ? '⏳' : '📷'}</div>`;
-
+    const condBadge = scan?.condition ? (scan.condition==='good' ? `<span style="background:#f0faf3;color:#1a7a3c;border:1px solid #b3dfc0;padding:1px 6px;border-radius:20px;font-size:10px;">Good</span>` : `<span style="background:#fff0f0;color:#CC0000;border:1px solid #ffcccc;padding:1px 6px;border-radius:20px;font-size:10px;">${scan.condition}</span>`) : '—';
+    const photo = scan?.photo_url ? `<img src="${scan.photo_url}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #e0ddd6;" onerror="this.style.display='none'">` : `<div style="width:48px;height:48px;background:#f4f2ef;border-radius:4px;border:1.5px dashed #e0ddd6;display:flex;align-items:center;justify-content:center;font-size:18px;">${isPending?'⏳':'📷'}</div>`;
     return `<tr style="background:${rowBg};page-break-inside:avoid;">
       <td style="padding:6px 8px;text-align:center;font-size:11px;color:#999;">${i+1}</td>
       <td style="padding:6px 8px;">${photo}</td>
@@ -957,145 +1038,18 @@ async function exportPDF(branchId) {
       <td style="padding:6px 8px;text-align:center;">${statusBadge}</td>
       <td style="padding:6px 8px;text-align:center;">${condBadge}</td>
       <td style="padding:6px 8px;font-size:10px;color:#555;">${scan?.auditor||'—'}</td>
-      <td style="padding:6px 8px;font-size:10px;color:#555;">${scan?.scanned_at ? new Date(scan.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : '—'}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#555;">${scan?.scanned_at?new Date(scan.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</td>
     </tr>`;
   }).join('');
-
-  const html = `<!DOCTYPE html>
-<html lang="th">
-<head>
-<meta charset="UTF-8">
-<title>Bata Audit Report — ${session.branch_id}</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Barlow', sans-serif; font-size: 12px; color: #1a1a1a; background: #fff; }
-  .header { padding: 20px 24px 16px; border-bottom: 2px solid #CC0000; display: flex; align-items: center; justify-content: space-between; }
-  .header-left { display: flex; align-items: center; gap: 12px; }
-  .logo { width: 36px; height: 36px; background: #CC0000; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; }
-  .brand { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; }
-  .brand span { display: block; font-size: 11px; font-weight: 400; color: #999; }
-  .report-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: #CC0000; }
-  .report-sub { font-size: 11px; color: #999; margin-top: 2px; text-align: right; }
-  .summary { display: flex; gap: 12px; padding: 14px 24px; background: #f9f8f5; border-bottom: 1px solid #e0ddd6; }
-  .sum-card { background: #fff; border: 1px solid #e0ddd6; border-radius: 8px; padding: 10px 16px; flex: 1; text-align: center; }
-  .sum-val { font-family: 'Barlow Condensed', sans-serif; font-size: 24px; font-weight: 700; }
-  .sum-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
-  .sum-card.blue .sum-val { color: #1a56db; }
-  .sum-card.green .sum-val { color: #1a7a3c; }
-  .sum-card.amber .sum-val { color: #b85c00; }
-  table { width: 100%; border-collapse: collapse; }
-  thead th { padding: 8px 8px; text-align: left; font-size: 10px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: .5px; background: #f9f8f5; border-bottom: 2px solid #e0ddd6; white-space: nowrap; }
-  tbody tr { border-bottom: 1px solid #f0ede8; }
-  tbody tr:hover { background: #f9f8f5; }
-  .footer { padding: 12px 24px; border-top: 1px solid #e0ddd6; font-size: 10px; color: #999; display: flex; justify-content: space-between; }
-  @media print {
-    body { font-size: 11px; }
-    .no-print { display: none !important; }
-    .header { padding: 12px 16px 10px; }
-    thead th { background: #f0ede8 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-    tbody tr { page-break-inside: avoid; }
-    tr[style*="fff8f0"] { background: #fff8f0 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  }
-</style>
-</head>
-<body>
-<div class="header">
-  <div class="header-left">
-    <div class="logo">B</div>
-    <div class="brand">BATA AUDIT<span>THAILAND · HQ</span></div>
-  </div>
-  <div>
-    <div class="report-title">Full Audit Report</div>
-    <div class="report-sub">สาขา ${session.branch_id} — ${session.branch_name||''}<br>พิมพ์วันที่ ${new Date().toLocaleString('th-TH',{dateStyle:'long',timeStyle:'short'})}</div>
-  </div>
-</div>
-
-<div class="summary">
-  <div class="sum-card blue"><div class="sum-val">${masterAssets.length}</div><div class="sum-label">Total Assets</div></div>
-  <div class="sum-card green"><div class="sum-val">${scannedCount}</div><div class="sum-label">Scanned ✓</div></div>
-  <div class="sum-card amber"><div class="sum-val">${pendingCount}</div><div class="sum-label">Pending ⏳</div></div>
-  <div class="sum-card" style="border-color:#e0ddd6;"><div class="sum-val" style="color:#CC0000;">${Math.round(scannedCount/masterAssets.length*100)}%</div><div class="sum-label">Progress</div></div>
-</div>
-
-<div style="padding:0 0 80px;">
-  <div class="no-print" style="padding:12px 24px;background:#eff4ff;border-bottom:1px solid #c3d4fc;display:flex;align-items:center;justify-content:space-between;">
-    <span style="font-size:13px;color:#1a56db;">📄 กด <strong>Ctrl+P</strong> หรือ <strong>⌘+P</strong> แล้วเลือก "Save as PDF" เพื่อบันทึกครับ</span>
-    <button onclick="window.print()" style="background:#CC0000;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">🖨️ Print / Save PDF</button>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th style="width:32px;">#</th>
-        <th style="width:60px;">รูป</th>
-        <th style="width:130px;">Asset Code</th>
-        <th>ชื่อ Asset</th>
-        <th style="width:100px;text-align:center;">Status</th>
-        <th style="width:70px;text-align:center;">สภาพ</th>
-        <th style="width:90px;">ผู้สแกน</th>
-        <th style="width:110px;">เวลา</th>
-      </tr>
-    </thead>
-    <tbody>${rows}</tbody>
-  </table>
-</div>
-
-<div class="footer no-print">
-  <span>BATA HQ Dashboard v2 — Full Audit Report</span>
-  <span>สาขา ${session.branch_id} · ${masterAssets.length} รายการ · ${new Date().toLocaleDateString('th-TH')}</span>
-</div>
-</body>
-</html>`;
-
+  const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Bata Audit Report — ${session.branch_id}</title><style>@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Barlow',sans-serif;font-size:12px;color:#1a1a1a;background:#fff;}.header{padding:20px 24px 16px;border-bottom:2px solid #CC0000;display:flex;align-items:center;justify-content:space-between;}.header-left{display:flex;align-items:center;gap:12px;}.logo{width:36px;height:36px;background:#CC0000;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;}.brand{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;}.brand span{display:block;font-size:11px;font-weight:400;color:#999;}.report-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:#CC0000;}.report-sub{font-size:11px;color:#999;margin-top:2px;text-align:right;}.summary{display:flex;gap:12px;padding:14px 24px;background:#f9f8f5;border-bottom:1px solid #e0ddd6;}.sum-card{background:#fff;border:1px solid #e0ddd6;border-radius:8px;padding:10px 16px;flex:1;text-align:center;}.sum-val{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;}.sum-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}table{width:100%;border-collapse:collapse;}thead th{padding:8px;text-align:left;font-size:10px;font-weight:600;color:#999;text-transform:uppercase;background:#f9f8f5;border-bottom:2px solid #e0ddd6;white-space:nowrap;}tbody tr{border-bottom:1px solid #f0ede8;}.footer{padding:12px 24px;border-top:1px solid #e0ddd6;font-size:10px;color:#999;display:flex;justify-content:space-between;}@media print{.no-print{display:none!important;}thead th{background:#f0ede8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}tbody tr{page-break-inside:avoid;}}</style></head><body>
+<div class="header"><div class="header-left"><div class="logo">B</div><div class="brand">BATA AUDIT<span>THAILAND · HQ</span></div></div><div><div class="report-title">Full Audit Report</div><div class="report-sub">สาขา ${session.branch_id} — ${session.branch_name||''}<br>พิมพ์วันที่ ${new Date().toLocaleString('th-TH',{dateStyle:'long',timeStyle:'short'})}</div></div></div>
+<div class="summary"><div class="sum-card" style="border-color:#c3d4fc;"><div class="sum-val" style="color:#1a56db;">${masterAssets.length}</div><div class="sum-label">Total Assets</div></div><div class="sum-card" style="border-color:#b3dfc0;"><div class="sum-val" style="color:#1a7a3c;">${scannedCount}</div><div class="sum-label">Scanned ✓</div></div><div class="sum-card" style="border-color:#ffd4a0;"><div class="sum-val" style="color:#b85c00;">${pendingCount}</div><div class="sum-label">Pending ⏳</div></div><div class="sum-card"><div class="sum-val" style="color:#CC0000;">${Math.round(scannedCount/masterAssets.length*100)}%</div><div class="sum-label">Progress</div></div></div>
+<div style="padding:0 0 80px;"><div class="no-print" style="padding:12px 24px;background:#eff4ff;border-bottom:1px solid #c3d4fc;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:13px;color:#1a56db;">📄 กด <strong>Ctrl+P</strong> หรือ <strong>⌘+P</strong> แล้วเลือก "Save as PDF"</span><button onclick="window.print()" style="background:#CC0000;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">🖨️ Print / Save PDF</button></div>
+<table><thead><tr><th style="width:32px;">#</th><th style="width:60px;">รูป</th><th style="width:130px;">Asset Code</th><th>ชื่อ Asset</th><th style="width:100px;text-align:center;">Status</th><th style="width:70px;text-align:center;">สภาพ</th><th style="width:90px;">ผู้สแกน</th><th style="width:110px;">เวลา</th></tr></thead><tbody>${rows}</tbody></table></div>
+<div class="footer no-print"><span>BATA HQ Dashboard v2 — Full Audit Report</span><span>สาขา ${session.branch_id} · ${masterAssets.length} รายการ · ${new Date().toLocaleDateString('th-TH')}</span></div></body></html>`;
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
-}
-async function deletePhoto(id) {
-  if (!confirm('ลบรูปถ่ายของรายการนี้?\nข้อมูล Scan Log ยังคงอยู่')) return;
-  try {
-    const res = await fetch(API+'/hq/scans/'+id, {
-      method: 'PATCH',
-      headers: authHeader(),
-      body: JSON.stringify({ photo_url: null })
-    });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
-    const s = allScans.find(r => r.id == id);
-    if (s) s.photo_url = null;
-    // ซ่อนรูปใน modal
-    document.getElementById('modal-img').style.display = 'none';
-    document.getElementById('btn-delete-photo').style.display = 'none';
-    renderScans(); renderPhotos();
-    showToast('ลบรูปเรียบร้อย ✓', 'success');
-  } catch(e) { showToast('Error: '+e.message, 'error'); }
-}
-
-async function deleteScanLog(id) {
-  const s = allScans.find(r => r.id == id);
-  if (!confirm('ลบรายการ ' + (s?.asset_code||'') + ' ทั้งหมด?\nไม่สามารถกู้คืนได้')) return;
-  try {
-    const res = await fetch(API+'/hq/scans/'+id, {
-      method: 'DELETE',
-      headers: authHeader()
-    });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
-    allScans = allScans.filter(r => r.id != id);
-    filteredScans = filteredScans.filter(r => r.id != id);
-    closeEditModal();
-    renderScans(); renderPhotos(); updateBadges();
-    showToast('ลบรายการเรียบร้อย ✓', 'success');
-  } catch(e) { showToast('Error: '+e.message, 'error'); }
-}
-
-async function deleteSession(id,branchId){
-  if(!confirm('ยืนยันการลบ Session ของสาขา '+branchId+'?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย'))return;
-  try{
-    const res=await fetch(API+'/hq/sessions/'+id,{method:'DELETE',headers:authHeader()});
-    if(!res.ok){let msg='Error '+res.status;try{const j=await res.json();msg=j.detail||msg;}catch(e){}throw new Error(msg);}
-    allSessions=allSessions.filter(s=>String(s.session_id||s.id)!==String(id));
-    renderOverview();
-    showToast('ลบ Session '+branchId+' เรียบร้อย','success');
-  }catch(e){showToast('Error: '+e.message,'error');}
 }
 </script>
 </body>
