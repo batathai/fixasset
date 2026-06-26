@@ -805,14 +805,14 @@ async function rejectUnmatched(id){
 
 // ── EDIT MODAL ────────────────────────────────────────
 function openEditModal(id){
-  const s = allScans.find(r => r.id == id); if (!s) return;
+  const s = allScans.find(r => r.id == id);
+  if (!s) return;
   document.getElementById('m-scan-id').value = id;
   document.getElementById('m-code').value = s.asset_code || '';
   document.getElementById('m-name').value = s.asset_name || '';
   document.getElementById('m-condition').value = s.condition || 'good';
   document.getElementById('m-serial').value = s.serial_found || '';
   document.getElementById('m-note').value = s.hq_note || '';
-
   const img = document.getElementById('modal-img');
   const btnDelPhoto = document.getElementById('btn-delete-photo');
   if (s.photo_url) {
