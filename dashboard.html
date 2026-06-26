@@ -377,10 +377,9 @@ tbody tr:hover{background:var(--sf2);}
     </div>
     <div class="modal-body">
       <div style="position:relative;margin-bottom:4px;">
-        <img id="modal-img" src="" alt="" style="display:none;width:100%;border-radius:8px;max-height:300px;object-fit:contain;background:var(--sf2);">
-        <button id="btn-delete-photo"
-          style="display:none;margin-top:6px;width:100%;padding:6px;background:var(--sf2);border:1px dashed var(--red-bd);border-radius:var(--rs);color:var(--red);font-size:12px;cursor:pointer;"
-          onclick="deletePhoto(document.getElementById('m-scan-id').value)">
+      <img id="modal-img" src="" alt="" 
+        style="display:none;width:100%;border-radius:8px;max-height:300px;object-fit:contain;background:var(--sf2);cursor:zoom-in;"
+        onclick="openLightbox(this.src)">
           🗑️ ลบรูปถ่ายนี้
         </button>
       </div>
