@@ -1,18 +1,46 @@
-# ── เพิ่ม 2 endpoints นี้ใน main.py ──
-# วางต่อจาก @app.delete("/hq/sessions/{session_id}") ได้เลย
+# ══════════════════════════════════════════════════════════════
+# วาง code นี้ต่อท้าย main.py — ก่อน @app.get("/") และ @app.get("/health")
+# ══════════════════════════════════════════════════════════════
 
 from fastapi import UploadFile, File
-import httpx, urllib.parse
+from typing import List
+import httpx, hashlib, time
+
+# ── helper: ดึง public_id จาก Cloudinary URL ──────────────────
+def _cloudinary_public_id(url: str) -> str:
+    url = url.split("?")[0]
+    if "/upload/" not in url:
+        return ""
+    after_upload = url.split("/upload/", 1)[1]
+    parts = after_upload.split("/")
+    if parts[0].startswith("v") and parts[0][1:].isdigit():
+        parts = parts[1:]
+    path = "/".join(parts)
+    if "." in path.rsplit("/", 1)[-1]:
+        path = path.rsplit(".", 1)[0]
+    return path  # เช่น "bata-audit/0051548/bvkzg2di6itorxnehhmw"
+
+# ── helper: สร้าง Cloudinary signature ────────────────────────
+def _cloudinary_sign(params: dict, api_secret: str) -> str:
+    sorted_params = "&".join(
+        f"{k}={v}" for k, v in sorted(params.items())
+        if k not in ("file", "api_key", "resource_type")
+    )
+    return hashlib.sha1(f"{sorted_params}{api_secret}".encode()).hexdigest()
+
 
 # ── 1. DELETE รูปถ่าย ─────────────────────────────────────────
 @app.delete("/hq/scans/{scan_id}/photo", status_code=204)
-def hq_delete_scan_photo(scan_id: int, db=Depends(get_db), user=Depends(get_current_user)):
+async def hq_delete_scan_photo(
+    scan_id: int,
+    db=Depends(get_db),
+    user=Depends(get_current_user)
+):
     """ลบเฉพาะรูปถ่าย — ข้อมูล scan log ยังอยู่"""
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
-    cur = db.cursor()
 
-    # ดึง photo_url เดิม
+    cur = db.cursor()
     cur.execute("SELECT photo_url FROM scan_logs WHERE id = %s", (scan_id,))
     row = cur.fetchone()
     if not row:
@@ -20,32 +48,40 @@ def hq_delete_scan_photo(scan_id: int, db=Depends(get_db), user=Depends(get_curr
 
     old_url = row["photo_url"]
 
-    # ลบไฟล์จาก Supabase Storage (ถ้ามี)
-    if old_url and "supabase" in old_url:
+    # ลบจาก Cloudinary ถ้ามี URL
+    if old_url and "cloudinary.com" in old_url:
         try:
-            # URL pattern: .../storage/v1/object/public/BUCKET/path/file.jpg
-            after_public = old_url.split("/public/")[-1]   # เช่น "photos/abc123.jpg"
-            bucket       = after_public.split("/")[0]       # เช่น "photos"
-            file_path    = "/".join(after_public.split("/")[1:])  # เช่น "abc123.jpg"
-
-            supabase_url = os.getenv("SUPABASE_URL")
-            supabase_key = os.getenv("SUPABASE_SERVICE_KEY")  # ใช้ service key ไม่ใช่ anon key
-            if supabase_url and supabase_key:
-                import httpx as _httpx
-                _httpx.delete(
-                    f"{supabase_url}/storage/v1/object/{bucket}/{urllib.parse.quote(file_path)}",
-                    headers={"Authorization": f"Bearer {supabase_key}", "apikey": supabase_key},
-                    timeout=10
-                )
+            cloud  = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+            key    = os.getenv("CLOUDINARY_API_KEY", "")
+            secret = os.getenv("CLOUDINARY_API_SECRET", "")
+            if cloud and key and secret:
+                public_id = _cloudinary_public_id(old_url)
+                if public_id:
+                    ts     = int(time.time())
+                    params = {"public_id": public_id, "timestamp": ts}
+                    sig    = _cloudinary_sign(params, secret)
+                    async with httpx.AsyncClient() as client:
+                        await client.post(
+                            f"https://api.cloudinary.com/v1_1/{cloud}/image/destroy",
+                            data={
+                                "public_id": public_id,
+                                "timestamp": ts,
+                                "api_key":   key,
+                                "signature": sig,
+                            },
+                            timeout=15,
+                        )
         except Exception as e:
-            print(f"[WARN] Storage delete failed (continuing): {e}")
-            # ไม่ raise — ลบ URL ใน DB ต่อได้เลย
+            print(f"[WARN] Cloudinary delete failed (continuing): {e}")
 
     # เคลียร์ photo_url ใน DB
-    cur.execute("UPDATE scan_logs SET photo_url = NULL, updated_at = NOW() WHERE id = %s", (scan_id,))
+    cur.execute(
+        "UPDATE scan_logs SET photo_url = NULL, updated_at = NOW() WHERE id = %s",
+        (scan_id,)
+    )
     db.commit()
     cur.close()
-    # return 204 No Content (FastAPI จัดการให้อัตโนมัติเพราะ status_code=204)
+    # 204 No Content
 
 
 # ── 2. POST อัปโหลดรูปใหม่ ────────────────────────────────────
@@ -60,7 +96,6 @@ async def hq_upload_scan_photo(
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
 
-    # Validate
     if not photo.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="รองรับเฉพาะไฟล์รูปภาพ")
     content = await photo.read()
@@ -68,39 +103,50 @@ async def hq_upload_scan_photo(
         raise HTTPException(status_code=400, detail="ไฟล์ใหญ่เกิน 5MB")
 
     cur = db.cursor()
-    cur.execute("SELECT id FROM scan_logs WHERE id = %s", (scan_id,))
-    if not cur.fetchone():
+    cur.execute("""
+        SELECT b.id as branch_id
+        FROM scan_logs sl
+        LEFT JOIN audit_sessions s ON s.id = sl.session_id
+        LEFT JOIN branches b ON b.id = s.branch_id
+        WHERE sl.id = %s
+    """, (scan_id,))
+    row = cur.fetchone()
+    if not row:
         raise HTTPException(status_code=404, detail="Scan not found")
 
-    # Upload ไป Supabase Storage
-    supabase_url = os.getenv("SUPABASE_URL")
-    supabase_key = os.getenv("SUPABASE_SERVICE_KEY")
-    bucket = os.getenv("SUPABASE_BUCKET", "photos")
+    branch_id = row["branch_id"] or "unknown"
+    cloud  = os.getenv("CLOUDINARY_CLOUD_NAME", "")
+    key    = os.getenv("CLOUDINARY_API_KEY", "")
+    secret = os.getenv("CLOUDINARY_API_SECRET", "")
 
-    if not supabase_url or not supabase_key:
-        raise HTTPException(status_code=500, detail="Storage ยังไม่ได้ตั้งค่า SUPABASE_URL / SUPABASE_SERVICE_KEY")
+    if not (cloud and key and secret):
+        raise HTTPException(status_code=500, detail="Cloudinary ยังไม่ได้ตั้งค่า ENV")
 
-    ext      = photo.filename.rsplit(".", 1)[-1].lower() if "." in (photo.filename or "") else "jpg"
-    filename = f"scan_{scan_id}_{int(datetime.now().timestamp())}.{ext}"
+    public_id = f"bata-audit/{branch_id}/scan_{scan_id}_{int(time.time())}"
+    ts        = int(time.time())
+    params    = {"public_id": public_id, "timestamp": ts}
+    sig       = _cloudinary_sign(params, secret)
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            f"{supabase_url}/storage/v1/object/{bucket}/{filename}",
-            headers={
-                "Authorization": f"Bearer {supabase_key}",
-                "apikey":        supabase_key,
-                "Content-Type":  photo.content_type,
-                "x-upsert":      "true",
+            f"https://api.cloudinary.com/v1_1/{cloud}/image/upload",
+            data={
+                "api_key":   key,
+                "timestamp": ts,
+                "signature": sig,
+                "public_id": public_id,
             },
-            content=content,
+            files={"file": (photo.filename, content, photo.content_type)},
             timeout=30,
         )
-    if resp.status_code not in (200, 201):
-        raise HTTPException(status_code=500, detail=f"Upload ไม่สำเร็จ: {resp.text}")
 
-    photo_url = f"{supabase_url}/storage/v1/object/public/{bucket}/{filename}"
+    if resp.status_code != 200:
+        raise HTTPException(status_code=500, detail=f"Upload ไม่สำเร็จ: {resp.text[:200]}")
 
-    # อัปเดต DB
+    photo_url = resp.json().get("secure_url", "")
+    if not photo_url:
+        raise HTTPException(status_code=500, detail="ไม่ได้รับ URL จาก Cloudinary")
+
     cur.execute(
         "UPDATE scan_logs SET photo_url = %s, updated_at = NOW() WHERE id = %s",
         (photo_url, scan_id)
@@ -113,73 +159,55 @@ async def hq_upload_scan_photo(
 # ── 3. MERGE Sessions ─────────────────────────────────────────
 class MergeSessionsRequest(BaseModel):
     primary_session_id: int
-    from typing import List
     merge_session_ids: List[int]
     branch_id: str
 
 @app.post("/hq/sessions/merge")
-def hq_merge_sessions(req: MergeSessionsRequest, db=Depends(get_db), user=Depends(get_current_user)):
-    """
-    Merge sessions ซ้ำ — ย้าย scan_logs และ unmatched_assets
-    เข้า primary_session แล้วลบ sessions ซ้ำออก
-    """
+def hq_merge_sessions(
+    req: MergeSessionsRequest,
+    db=Depends(get_db),
+    user=Depends(get_current_user)
+):
+    """Merge sessions ซ้ำ — ย้าย scan_logs เข้า primary แล้วลบซ้ำออก"""
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     if not req.merge_session_ids:
         raise HTTPException(status_code=400, detail="ไม่มี session ที่ต้อง merge")
 
     cur = db.cursor()
-
-    # ตรวจว่า primary session มีอยู่จริง
     cur.execute("SELECT id FROM audit_sessions WHERE id = %s", (req.primary_session_id,))
     if not cur.fetchone():
         raise HTTPException(status_code=404, detail=f"Primary session #{req.primary_session_id} ไม่พบ")
 
-    moved_scans      = 0
-    moved_unmatched  = 0
-    deleted_sessions = 0
+    moved_scans = moved_unmatched = deleted_sessions = 0
 
     for sid in req.merge_session_ids:
         if sid == req.primary_session_id:
             continue
-
-        # ย้าย scan_logs — ถ้า asset_id ซ้ำใน primary ให้ข้าม (ON CONFLICT DO NOTHING)
         cur.execute("""
-            UPDATE scan_logs
-            SET session_id = %s
+            UPDATE scan_logs SET session_id = %s
             WHERE session_id = %s
               AND asset_id NOT IN (
                   SELECT asset_id FROM scan_logs WHERE session_id = %s
               )
         """, (req.primary_session_id, sid, req.primary_session_id))
         moved_scans += cur.rowcount
-
-        # ลบ scan_logs ซ้ำที่ย้ายไม่ได้
         cur.execute("DELETE FROM scan_logs WHERE session_id = %s", (sid,))
-
-        # ย้าย unmatched_assets
         cur.execute("""
-            UPDATE unmatched_assets
-            SET session_id = %s
-            WHERE session_id = %s
+            UPDATE unmatched_assets SET session_id = %s WHERE session_id = %s
         """, (req.primary_session_id, sid))
         moved_unmatched += cur.rowcount
-
-        # ลบ session ซ้ำ
         cur.execute("DELETE FROM audit_sessions WHERE id = %s", (sid,))
         deleted_sessions += cur.rowcount
 
-    # อัปเดต status primary session เป็น on_process ถ้ามี scan
     cur.execute("""
-        UPDATE audit_sessions
-        SET status = 'on_process'
+        UPDATE audit_sessions SET status = 'on_process'
         WHERE id = %s AND status = 'open'
           AND EXISTS (SELECT 1 FROM scan_logs WHERE session_id = %s)
     """, (req.primary_session_id, req.primary_session_id))
 
     db.commit()
     cur.close()
-
     return {
         "ok": True,
         "primary_session_id": req.primary_session_id,
