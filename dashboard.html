@@ -14,6 +14,7 @@
   --green:#1a7a3c;--green-bg:#f0faf3;--green-bd:#b3dfc0;
   --amber:#b85c00;--amber-bg:#fff8f0;--amber-bd:#ffd4a0;
   --blue:#1a56db;--blue-bg:#eff4ff;--blue-bd:#c3d4fc;
+  --purple:#6b21a8;--purple-bg:#faf5ff;--purple-bd:#d8b4fe;
   --sans:'Barlow',sans-serif;--cond:'Barlow Condensed',sans-serif;--mono:'DM Mono',monospace;
   --r:10px;--rs:6px;--sidebar:220px;
 }
@@ -46,6 +47,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .nav-item.active{background:var(--red-l);color:var(--red);}
 .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;display:none;}
 .nav-badge.amber{background:var(--amber);}
+.nav-badge.purple{background:var(--purple);}
 .sidebar-foot{padding:14px 18px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);}
 .sidebar-foot strong{display:block;color:var(--text);font-size:13px;}
 .main-content{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
@@ -81,6 +83,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .btn-red:hover{background:var(--red-d);}
 .btn-green{background:var(--green);border-color:var(--green);color:#fff;}
 .btn-blue{background:var(--blue);border-color:var(--blue);color:#fff;}
+.btn-purple{background:var(--purple);border-color:var(--purple);color:#fff;}
 .btn-sm{padding:5px 10px;font-size:12px;}
 .tbl-wrap{overflow-x:auto;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
@@ -94,6 +97,7 @@ tbody tr:hover{background:var(--sf2);}
 .badge-red{background:var(--red-l);color:var(--red);border-color:var(--red-bd);}
 .badge-gray{background:var(--sf2);color:var(--text3);border-color:var(--border);}
 .badge-blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd);}
+.badge-purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd);}
 .photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:16px 18px;}
 .photo-card{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--white);}
 .photo-card img{width:100%;height:160px;object-fit:cover;display:block;cursor:pointer;}
@@ -136,6 +140,7 @@ tbody tr:hover{background:var(--sf2);}
 .toast{background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--rs);font-size:13px;font-weight:500;animation:fadeIn .2s ease;max-width:320px;}
 .toast.success{background:var(--green);}
 .toast.error{background:var(--red);}
+.toast.info{background:var(--blue);}
 @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
 .lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;}
@@ -145,9 +150,22 @@ tbody tr:hover{background:var(--sf2);}
 .page-banner{padding:10px 18px;background:var(--blue-bg);border-bottom:1px solid var(--blue-bd);font-size:13px;color:var(--blue);display:flex;align-items:center;gap:8px;}
 .page-banner.amber{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber);}
 .page-banner.green{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
+.page-banner.purple{background:var(--purple-bg);border-color:var(--purple-bd);color:var(--purple);}
 /* upload zone */
 .upload-zone{width:100%;min-height:110px;border:2px dashed var(--border);border-radius:var(--rs);background:var(--sf2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:8px;}
 .upload-zone:hover{border-color:var(--red);background:var(--red-l);}
+/* upload progress */
+.upload-progress{width:100%;height:4px;background:var(--border);border-radius:99px;overflow:hidden;display:none;margin-bottom:8px;}
+.upload-progress-fill{height:100%;background:var(--red);border-radius:99px;transition:width .3s ease;width:0%;}
+/* duplicate session warning */
+.dup-warning{background:var(--purple-bg);border:1px solid var(--purple-bd);border-radius:var(--r);padding:14px 18px;display:flex;align-items:flex-start;gap:12px;}
+.dup-warning-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.dup-warning-body{flex:1;}
+.dup-warning-title{font-weight:700;color:var(--purple);margin-bottom:4px;font-family:var(--cond);font-size:15px;}
+.dup-warning-text{font-size:12px;color:var(--text2);line-height:1.5;}
+.dup-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+/* photo upload state */
+.photo-uploading{opacity:.6;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -203,6 +221,10 @@ tbody tr:hover{background:var(--sf2);}
 
     <!-- OVERVIEW -->
     <div class="page" id="page-overview">
+
+      <!-- Duplicate session warning (hidden by default) -->
+      <div id="dup-session-warning" style="display:none"></div>
+
       <div class="stat-grid">
         <div class="stat-card blue" onclick="goToAllAssets()" title="คลิกดูรายการทั้งหมด">
           <div class="stat-label">Total Assets</div>
@@ -371,27 +393,32 @@ tbody tr:hover{background:var(--sf2);}
     </div>
     <div class="modal-body">
 
-      <!-- ── รูปภาพ + ปุ่มลบ/อัปโหลด ── -->
-      <div style="margin-bottom:12px;">
-        <!-- รูปปัจจุบัน -->
-        <img id="modal-img" src="" alt=""
-          style="display:none;width:100%;border-radius:8px;max-height:280px;object-fit:contain;background:var(--sf2);cursor:zoom-in;margin-bottom:6px;"
-          onclick="openLightbox(this.src)">
+      <!-- ── รูปภาพ section ── -->
+      <div id="photo-section" style="margin-bottom:12px;">
 
-        <!-- ปุ่มลบรูป (แสดงเมื่อมีรูป) -->
-        <button id="btn-delete-photo"
-          style="display:none;width:100%;padding:7px;background:var(--sf2);border:1px dashed var(--red-bd);border-radius:var(--rs);color:var(--red);font-size:12px;cursor:pointer;margin-bottom:8px;"
-          onclick="deletePhoto(document.getElementById('m-scan-id').value)">
-          🗑️ ลบรูปถ่ายนี้
-        </button>
+        <!-- รูปปัจจุบัน + zoom hint -->
+        <div id="photo-current-wrap" style="display:none;position:relative;margin-bottom:6px;">
+          <img id="modal-img" src="" alt=""
+            style="width:100%;border-radius:8px;max-height:280px;object-fit:contain;background:var(--sf2);cursor:zoom-in;display:block;"
+            onclick="openLightbox(this.src)">
+          <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:#fff;padding:3px 8px;border-radius:20px;font-size:10px;pointer-events:none;">🔍 คลิกขยาย</div>
+        </div>
+
+        <!-- Progress bar (upload) -->
+        <div class="upload-progress" id="upload-progress">
+          <div class="upload-progress-fill" id="upload-progress-fill"></div>
+        </div>
+
+        <!-- แถวปุ่มจัดการรูป -->
+        <div id="photo-action-row" style="display:flex;gap:8px;margin-bottom:8px;"></div>
 
         <!-- Zone อัปโหลด (แสดงเมื่อไม่มีรูป) -->
         <label id="upload-zone" for="photo-file-input" class="upload-zone" style="display:none;">
           <span style="font-size:28px;">📷</span>
-          <span style="font-size:13px;font-weight:500;color:var(--text2);">คลิกเพื่ออัปโหลดรูปใหม่</span>
+          <span style="font-size:13px;font-weight:500;color:var(--text2);">คลิกหรือลากไฟล์เพื่ออัปโหลดรูป</span>
           <span style="font-size:11px;color:var(--text3);">JPG, PNG ขนาดไม่เกิน 5MB</span>
         </label>
-        <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="uploadPhoto(this)">
+        <input type="file" id="photo-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadPhoto(this)">
       </div>
 
       <div class="field-row">
@@ -425,6 +452,30 @@ tbody tr:hover{background:var(--sf2);}
   </div>
 </div>
 
+<!-- MERGE SESSION MODAL -->
+<div class="modal-overlay" id="merge-modal" style="display:none" onclick="if(event.target===this)closeMergeModal()">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <div class="modal-title">🔀 Merge Sessions — <span id="merge-branch-name"></span></div>
+      <button class="modal-close" onclick="closeMergeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--purple-bg);border:1px solid var(--purple-bd);border-radius:var(--rs);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--purple);">
+        ⚠️ พบ Sessions ซ้ำของสาขานี้ — การ Merge จะรวม Scan Logs เข้า Session เดิมและลบ Session ซ้ำออก
+      </div>
+      <div id="merge-sessions-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+      <div class="field">
+        <label>เก็บ Session ID นี้ไว้ (Primary)</label>
+        <select id="merge-primary-id" style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;"></select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeMergeModal()">ยกเลิก</button>
+      <button class="btn btn-purple" onclick="confirmMerge()">🔀 Merge Sessions</button>
+    </div>
+  </div>
+</div>
+
 <div class="lightbox" id="lightbox" style="display:none" onclick="closeLightbox()">
   <img id="lightbox-img" src="" alt="">
 </div>
@@ -436,7 +487,9 @@ let token = null, currentUser = null;
 let allScans = [], allUnmatched = [], allSessions = [];
 let filteredScans = [], unmatchedFilter = 'pending';
 let currentScanMode = 'normal';
+let pendingMergeBranch = null; // สำหรับ merge modal
 
+// ── AUTH ────────────────────────────────────────────────
 function saveSession(t, user) { sessionStorage.setItem('bata_hq_v2', JSON.stringify({token:t,user})); }
 function restoreSession() {
   try {
@@ -480,6 +533,7 @@ function doLogout() {
 }
 function authHeader() { return {'Authorization':'Bearer '+token,'Content-Type':'application/json'}; }
 
+// ── LOAD ALL ────────────────────────────────────────────
 async function loadAll() {
   if (!token) return;
   document.getElementById('last-updated').textContent = 'Loading...';
@@ -527,6 +581,142 @@ function populateBranchFilter(selectId, rows) {
   sel.value = cur;
 }
 
+// ── DUPLICATE SESSION DETECTION ─────────────────────────
+function detectDuplicateSessions() {
+  // จับกลุ่ม session ที่มี branch_id เดียวกัน
+  const groups = {};
+  allSessions.forEach(s => {
+    const bid = s.branch_id;
+    if (!groups[bid]) groups[bid] = [];
+    groups[bid].push(s);
+  });
+  return Object.entries(groups).filter(([, list]) => list.length > 1);
+}
+
+function renderDuplicateWarnings() {
+  const dups = detectDuplicateSessions();
+  const container = document.getElementById('dup-session-warning');
+  if (!dups.length) { container.style.display = 'none'; return; }
+
+  const html = dups.map(([branchId, sessions]) => `
+    <div class="dup-warning">
+      <div class="dup-warning-icon">🔀</div>
+      <div class="dup-warning-body">
+        <div class="dup-warning-title">พบ Sessions ซ้ำ — สาขา ${branchId}</div>
+        <div class="dup-warning-text">
+          มี ${sessions.length} sessions สำหรับสาขา <strong>${branchId}</strong> — อาจเกิดจากการเปิด scan ใหม่โดยไม่ได้ใช้ session เดิม<br>
+          Session IDs: ${sessions.map(s=>`<code style="background:var(--purple-bg);padding:1px 5px;border-radius:3px;">#${s.session_id||s.id}</code>`).join(', ')}
+        </div>
+        <div class="dup-actions">
+          <button class="btn btn-purple btn-sm" onclick="openMergeModal('${branchId}')">🔀 Merge Sessions</button>
+          <button class="btn btn-outline btn-sm" onclick="this.closest('.dup-warning').style.display='none'">ไม่สนใจตอนนี้</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.gap = '10px';
+
+  // Badge warning บน nav
+  const navBadge = document.getElementById('nav-overview');
+  // แสดง badge ซ้ำ
+}
+
+// ── MERGE SESSIONS ──────────────────────────────────────
+function openMergeModal(branchId) {
+  pendingMergeBranch = branchId;
+  const sessions = allSessions.filter(s => s.branch_id === branchId);
+  document.getElementById('merge-branch-name').textContent = branchId;
+
+  // แสดงรายการ sessions
+  const listEl = document.getElementById('merge-sessions-list');
+  listEl.innerHTML = sessions.map(s => {
+    const scanned = parseInt(s.scanned_count)||0;
+    const total = parseInt(s.total_assets)||0;
+    const created = s.created_at ? new Date(s.created_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : '—';
+    return `<div style="background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;font-size:13px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:var(--mono);font-size:12px;color:var(--text3);">Session #${s.session_id||s.id}</span>
+        <span class="badge badge-${s.status==='done'?'green':s.status==='on_process'?'amber':'gray'}">${s.status||'open'}</span>
+      </div>
+      <div style="margin-top:4px;font-size:12px;color:var(--text2);">สแกนแล้ว <strong>${scanned}</strong> / ${total} รายการ · สร้างเมื่อ ${created}</div>
+    </div>`;
+  }).join('');
+
+  // Dropdown เลือก primary
+  const sel = document.getElementById('merge-primary-id');
+  sel.innerHTML = sessions.map(s =>
+    `<option value="${s.session_id||s.id}">Session #${s.session_id||s.id} (สร้าง: ${s.created_at?new Date(s.created_at).toLocaleDateString('th-TH'):'?'}, สแกน: ${s.scanned_count||0})</option>`
+  ).join('');
+  // แนะนำ session ที่มี scan มากที่สุด
+  const best = sessions.reduce((a,b) => (parseInt(a.scanned_count)||0) >= (parseInt(b.scanned_count)||0) ? a : b);
+  sel.value = best.session_id||best.id;
+
+  document.getElementById('merge-modal').style.display = 'flex';
+}
+
+function closeMergeModal() {
+  document.getElementById('merge-modal').style.display = 'none';
+  pendingMergeBranch = null;
+}
+
+async function confirmMerge() {
+  const primaryId = document.getElementById('merge-primary-id').value;
+  const sessions = allSessions.filter(s => s.branch_id === pendingMergeBranch);
+  const toDelete = sessions.filter(s => String(s.session_id||s.id) !== String(primaryId));
+
+  if (!toDelete.length) { showToast('ไม่มี session ที่ต้องลบ', ''); closeMergeModal(); return; }
+
+  const btn = document.querySelector('#merge-modal .btn-purple');
+  btn.textContent = 'กำลัง Merge...'; btn.disabled = true;
+
+  try {
+    // ลอง API merge endpoint ก่อน
+    let mergeOk = false;
+    try {
+      const res = await fetch(API+'/hq/sessions/merge', {
+        method: 'POST',
+        headers: authHeader(),
+        body: JSON.stringify({
+          primary_session_id: parseInt(primaryId),
+          merge_session_ids: toDelete.map(s => parseInt(s.session_id||s.id)),
+          branch_id: pendingMergeBranch
+        })
+      });
+      if (res.ok) mergeOk = true;
+    } catch(e) { /* ไม่มี endpoint นี้ */ }
+
+    if (!mergeOk) {
+      // Fallback: ลบ sessions ซ้ำทีละอัน (scan logs จะยังอยู่ในฐานข้อมูล)
+      for (const s of toDelete) {
+        const sid = s.session_id||s.id;
+        const res = await fetch(API+'/hq/sessions/'+sid, {method:'DELETE',headers:authHeader()});
+        if (!res.ok) {
+          const j = await res.json().catch(()=>({}));
+          throw new Error('ลบ Session #'+sid+' ไม่สำเร็จ: '+(j.detail||res.status));
+        }
+      }
+    }
+
+    // อัปเดต allSessions client-side
+    allSessions = allSessions.filter(s =>
+      s.branch_id !== pendingMergeBranch || String(s.session_id||s.id) === String(primaryId)
+    );
+    // Reload scan data
+    await loadScans();
+    renderOverview(); renderScans(); renderDuplicateWarnings();
+    showToast(`Merge สำเร็จ — เหลือ Session #${primaryId} สำหรับสาขา ${pendingMergeBranch}`, 'success');
+    closeMergeModal();
+  } catch(e) {
+    showToast('Error: '+e.message, 'error');
+  } finally {
+    btn.textContent = '🔀 Merge Sessions'; btn.disabled = false;
+  }
+}
+
 // ── OVERVIEW ──────────────────────────────────────────
 function renderOverview() {
   const totalScanned = allScans.length;
@@ -536,30 +726,45 @@ function renderOverview() {
   document.getElementById('s-total').textContent = totalScanned.toLocaleString();
   document.getElementById('s-pending').textContent = totalPending.toLocaleString();
   document.getElementById('s-unmatched').textContent = allUnmatched.filter(u=>u.status==='pending').length.toLocaleString();
+
   const tbody = document.getElementById('sessions-tbody');
   if (!allSessions.length) { tbody.innerHTML='<tr><td colspan="8" class="loading">No sessions</td></tr>'; return; }
+
+  // ตรวจ dup เพื่อ highlight
+  const dupBranches = new Set(detectDuplicateSessions().map(([b])=>b));
+
   tbody.innerHTML = allSessions.map(s => {
     const total = parseInt(s.total_assets)||0;
     const scanned = parseInt(s.scanned_count)||0;
     const pending = Math.max(0,total-scanned);
     const pct = total ? Math.round(scanned/total*100) : 0;
     const cls = pct===100?'pb-green':pct>=50?'pb-amber':'pb-red';
+    const isDup = dupBranches.has(s.branch_id);
     const statusBadge = s.status==='done'
       ? '<span class="badge badge-green">✓ Done</span>'
       : s.status==='on_process'
       ? '<span class="badge badge-amber">⟳ On Process</span>'
       : '<span class="badge badge-gray">○ Open</span>';
-    return `<tr>
-      <td><strong>${s.branch_id}</strong><br><span style="font-size:11px;color:var(--text3);">${s.branch_name||''}</span></td>
+    return `<tr style="${isDup?'background:var(--purple-bg);':''}" title="${isDup?'⚠️ มี session ซ้ำ':''}">
+      <td>
+        <strong>${s.branch_id}</strong>${isDup?'<span class="badge badge-purple" style="margin-left:6px;font-size:10px;">ซ้ำ</span>':''}
+        <br><span style="font-size:11px;color:var(--text3);">${s.branch_name||''}</span>
+        <br><span style="font-size:10px;font-family:var(--mono);color:var(--text3);">#${s.session_id||s.id}</span>
+      </td>
       <td><span style="cursor:pointer;color:var(--blue);font-weight:600;text-decoration:underline;" onclick="goToAllAssetsBranch('${s.branch_id}')">${total.toLocaleString()}</span></td>
       <td><div style="display:flex;align-items:center;gap:8px;"><div class="pb"><div class="pb-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:12px;font-family:var(--mono);">${pct}%</span></div></td>
       <td><span style="cursor:pointer;color:var(--green);font-weight:600;text-decoration:underline;" onclick="goToScannedBranch('${s.branch_id}')">${scanned}</span></td>
       <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${pending}</span></td>
       <td>${parseInt(s.unmatched_count)||0?`<span class="badge badge-red">${s.unmatched_count}</span>`:'<span class="badge badge-gray">0</span>'}</td>
       <td>${statusBadge}</td>
-      <td><button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.session_id||s.id},'${s.branch_id}')">🗑 Delete</button></td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${isDup?`<button class="btn btn-purple btn-sm" onclick="openMergeModal('${s.branch_id}')">🔀 Merge</button>`:''}
+        <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.session_id||s.id},'${s.branch_id}')">🗑 Delete</button>
+      </td>
     </tr>`;
   }).join('');
+
+  renderDuplicateWarnings();
 }
 
 function goToAllAssets() { goToAllAssetsBranch(allSessions[0]?.branch_id||''); }
@@ -794,23 +999,43 @@ function openEditModal(id){
   document.getElementById('m-serial').value = s.serial_found || '';
   document.getElementById('m-note').value = s.hq_note || '';
 
-  const img = document.getElementById('modal-img');
-  const btnDel = document.getElementById('btn-delete-photo');
-  const zone = document.getElementById('upload-zone');
+  // รีเซ็ต file input เสมอ
   const fileInput = document.getElementById('photo-file-input');
-  fileInput.value = ''; // reset file input
+  fileInput.value = '';
 
-  if (s.photo_url) {
-    img.src = s.photo_url;
-    img.style.display = 'block';
-    btnDel.style.display = 'block';
-    zone.style.display = 'none';
-  } else {
-    img.style.display = 'none';
-    btnDel.style.display = 'none';
-    zone.style.display = 'flex';
-  }
+  refreshPhotoUI(s.photo_url);
   document.getElementById('edit-modal').style.display = 'flex';
+}
+
+// อัปเดต UI รูปภาพตาม state
+function refreshPhotoUI(photoUrl) {
+  const img = document.getElementById('modal-img');
+  const wrap = document.getElementById('photo-current-wrap');
+  const zone = document.getElementById('upload-zone');
+  const actionRow = document.getElementById('photo-action-row');
+  const progress = document.getElementById('upload-progress');
+
+  progress.style.display = 'none';
+  document.getElementById('upload-progress-fill').style.width = '0%';
+
+  if (photoUrl) {
+    img.src = photoUrl;
+    wrap.style.display = 'block';
+    zone.style.display = 'none';
+    actionRow.innerHTML = `
+      <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);flex:1;"
+        onclick="deletePhoto(document.getElementById('m-scan-id').value)">
+        🗑️ ลบรูปถ่าย
+      </button>
+      <label for="photo-file-input" class="btn btn-outline btn-sm" style="cursor:pointer;flex:1;">
+        🔄 เปลี่ยนรูป
+      </label>`;
+  } else {
+    img.src = '';
+    wrap.style.display = 'none';
+    zone.style.display = 'flex';
+    actionRow.innerHTML = '';
+  }
 }
 
 function closeEditModal(){ document.getElementById('edit-modal').style.display='none'; }
@@ -832,91 +1057,139 @@ async function saveScanEdit(){
   }catch(e){showToast('Error: '+e.message,'error');}
 }
 
-// ── ลบรูป — เรียก DELETE /hq/scans/{id}/photo ──────────
+// ── ลบรูปภาพ ────────────────────────────────────────────
+// ลบรูปภาพ — ใช้ DELETE /hq/scans/{id}/photo เท่านั้น
+// ถ้า API ไม่รองรับจะบอกให้ contact backend dev แทนการ fallback ผิดพลาด
 async function deletePhoto(id) {
   if (!confirm('ลบรูปถ่ายของรายการนี้?\nข้อมูล Scan Log ยังคงอยู่')) return;
+
+  const actionRow = document.getElementById('photo-action-row');
+  const origHTML = actionRow.innerHTML;
+  actionRow.innerHTML = '<span style="font-size:12px;color:var(--text3);">⏳ กำลังลบรูป...</span>';
+
   try {
-    // ลองเรียก endpoint ลบรูปโดยเฉพาะก่อน
-    let res = await fetch(API+'/hq/scans/'+id+'/photo', {
+    const res = await fetch(API+'/hq/scans/'+id+'/photo', {
       method: 'DELETE',
-      headers: authHeader()
+      headers: { 'Authorization': 'Bearer '+token }
+      // ไม่ส่ง Content-Type เพราะ DELETE ไม่มี body
     });
 
-    // ถ้า endpoint นั้นไม่มี (404) ให้ fallback ใช้ PATCH remove_photo=true
-    if (res.status === 404 || res.status === 405) {
-      res = await fetch(API+'/hq/scans/'+id, {
-        method: 'PATCH',
-        headers: authHeader(),
-        body: JSON.stringify({ remove_photo: true })
-      });
+    if (res.ok || res.status === 204) {
+      // สำเร็จ
+      const s = allScans.find(r => r.id == id);
+      if (s) s.photo_url = null;
+      refreshPhotoUI(null);
+      renderScans(); renderPhotos();
+      showToast('ลบรูปเรียบร้อย ✓', 'success');
+      return;
     }
 
-    if (!res.ok) {
-      const errData = await res.json().catch(()=>({}));
-      throw new Error(errData.detail || 'ลบรูปไม่สำเร็จ ('+res.status+')');
+    // อ่าน error จาก body
+    let errMsg = 'ลบรูปไม่สำเร็จ (HTTP '+res.status+')';
+    try {
+      const j = await res.json();
+      if (j.detail) errMsg = j.detail;
+    } catch(e) {}
+
+    // ถ้า 404 = ไม่มีรูปอยู่แล้ว → ถือว่าสำเร็จ (idempotent)
+    if (res.status === 404) {
+      const s = allScans.find(r => r.id == id);
+      if (s) s.photo_url = null;
+      refreshPhotoUI(null);
+      renderScans(); renderPhotos();
+      showToast('รูปถูกลบแล้ว ✓', 'success');
+      return;
     }
 
-    const s = allScans.find(r => r.id == id);
-    if (s) s.photo_url = null;
+    // 405 Method Not Allowed = endpoint ไม่มีใน backend
+    if (res.status === 405) {
+      throw new Error('Backend ยังไม่รองรับการลบรูป — กรุณาเพิ่ม endpoint DELETE /hq/scans/{id}/photo');
+    }
 
-    document.getElementById('modal-img').style.display = 'none';
-    document.getElementById('btn-delete-photo').style.display = 'none';
-    document.getElementById('upload-zone').style.display = 'flex';
+    throw new Error(errMsg);
 
-    renderScans(); renderPhotos();
-    showToast('ลบรูปเรียบร้อย ✓', 'success');
-  } catch(e) { showToast('Error: '+e.message, 'error'); }
+  } catch(e) {
+    showToast('Error: '+e.message, 'error');
+    actionRow.innerHTML = origHTML; // คืน button เดิม
+  }
 }
 
-// ── อัปโหลดรูปใหม่ ──────────────────────────────────
+// ── อัปโหลดรูปใหม่ ──────────────────────────────────────
 async function uploadPhoto(input) {
   const file = input.files[0];
   if (!file) return;
+
+  // Validate
   if (file.size > 5 * 1024 * 1024) { showToast('ไฟล์ใหญ่เกิน 5MB', 'error'); return; }
+  if (!file.type.startsWith('image/')) { showToast('รองรับเฉพาะไฟล์รูปภาพ', 'error'); return; }
 
   const id = document.getElementById('m-scan-id').value;
-  showToast('กำลังอัปโหลดรูป...', '');
 
-  // Preview ก่อน
+  // แสดง preview ทันที
   const reader = new FileReader();
   reader.onload = e => {
-    const img = document.getElementById('modal-img');
-    img.src = e.target.result;
-    img.style.display = 'block';
+    document.getElementById('modal-img').src = e.target.result;
+    document.getElementById('photo-current-wrap').style.display = 'block';
+    document.getElementById('upload-zone').style.display = 'none';
+    document.getElementById('photo-action-row').innerHTML = '<span style="font-size:12px;color:var(--text3);">⏳ กำลังอัปโหลด...</span>';
   };
   reader.readAsDataURL(file);
+
+  // Progress bar
+  const progress = document.getElementById('upload-progress');
+  const fill = document.getElementById('upload-progress-fill');
+  progress.style.display = 'block';
+  let pct = 0;
+  const ticker = setInterval(() => { pct = Math.min(pct+5, 85); fill.style.width = pct+'%'; }, 150);
 
   try {
     const formData = new FormData();
     formData.append('photo', file);
 
+    // *** critical fix: ไม่ส่ง Content-Type header เพราะ browser ต้องใส่ boundary เอง ***
     const res = await fetch(API+'/hq/scans/'+id+'/photo', {
       method: 'POST',
       headers: { 'Authorization': 'Bearer '+token },
       body: formData
     });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Upload failed');
+
+    clearInterval(ticker);
+    fill.style.width = '100%';
+
+    if (!res.ok) {
+      const j = await res.json().catch(()=>({}));
+      throw new Error(j.detail || 'Upload failed: '+res.status);
+    }
+
     const data = await res.json();
-
     const photoUrl = data.photo_url || data.url || data.photo;
-    const s = allScans.find(r => r.id == id);
-    if (s && photoUrl) s.photo_url = photoUrl;
 
-    document.getElementById('upload-zone').style.display = 'none';
-    document.getElementById('btn-delete-photo').style.display = 'block';
+    // อัปเดต state
+    const s = allScans.find(r => r.id == id);
+    if (s && photoUrl) {
+      s.photo_url = photoUrl;
+      document.getElementById('modal-img').src = photoUrl; // แทน blob URL ด้วย real URL
+    }
+
+    setTimeout(() => { progress.style.display = 'none'; fill.style.width = '0%'; }, 500);
+    refreshPhotoUI(photoUrl || (allScans.find(r=>r.id==id)?.photo_url));
     renderScans(); renderPhotos();
     showToast('อัปโหลดรูปสำเร็จ ✓', 'success');
+
   } catch(e) {
+    clearInterval(ticker);
+    progress.style.display = 'none';
+    fill.style.width = '0%';
     showToast('Error: '+e.message, 'error');
-    // ถ้า upload fail ให้ reset preview
+    // คืน UI เป็นก่อนอัปโหลด
     const s = allScans.find(r => r.id == id);
-    if (!s?.photo_url) {
-      document.getElementById('modal-img').style.display = 'none';
-    }
+    refreshPhotoUI(s?.photo_url || null);
+    // reset input
+    input.value = '';
   }
 }
 
-// ── ลบ Scan Log ────────────────────────────────────
+// ── ลบ Scan Log ────────────────────────────────────────
 async function deleteScanLog(id) {
   const s = allScans.find(r => r.id == id);
   if (!confirm('ลบรายการ '+(s?.asset_code||'')+' ทั้งหมด?\nไม่สามารถกู้คืนได้')) return;
@@ -931,7 +1204,7 @@ async function deleteScanLog(id) {
   } catch(e) { showToast('Error: '+e.message, 'error'); }
 }
 
-// ── ลบ Session ─────────────────────────────────────
+// ── ลบ Session ─────────────────────────────────────────
 async function deleteSession(id, branchId){
   if(!confirm('ยืนยันการลบ Session ของสาขา '+branchId+'?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย'))return;
   try{
@@ -946,6 +1219,7 @@ async function deleteSession(id, branchId){
 // ── LIGHTBOX ──────────────────────────────────────────
 function openLightbox(url){document.getElementById('lightbox-img').src=url;document.getElementById('lightbox').style.display='flex';}
 function closeLightbox(){document.getElementById('lightbox').style.display='none';}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLightbox(); closeEditModal(); closeUnmatchedEdit(); closeMergeModal(); }});
 
 // ── BADGES ────────────────────────────────────────────
 function updateBadges(){
@@ -1006,9 +1280,9 @@ function showPage(name){
 function showToast(msg,type=''){
   const wrap=document.getElementById('toast-wrap');
   const t=document.createElement('div');
-  t.className='toast '+type;t.textContent=msg;
+  t.className='toast '+(type||'');t.textContent=msg;
   wrap.appendChild(t);
-  setTimeout(()=>t.remove(),3500);
+  setTimeout(()=>t.remove(),type==='error'?4000:3000);
 }
 
 // ── EXPORT PDF ────────────────────────────────────────
