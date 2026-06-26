@@ -1676,9 +1676,7 @@ function assetsNext() {
 
 // ── ACKNOWLEDGE SESSION ──────────────────────────────────────
 async function acknowledgeSession(sessionId, branchId) {
-  if (!confirm('รับงานสาขา ' + branchId + ' ?
-
-HQ ยืนยันว่าตรวจสอบข้อมูลครบถ้วนแล้ว')) return;
+  if (!confirm('รับงานสาขา ' + branchId + ' ?\n\nHQ ยืนยันว่าตรวจสอบข้อมูลครบถ้วนแล้ว')) return;
   try {
     const res = await fetch(API+'/hq/sessions/'+sessionId+'/acknowledge', {
       method: 'PATCH',
