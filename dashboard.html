@@ -271,6 +271,7 @@ tbody tr:hover{background:var(--sf2);}
           <div class="section-title">Scan Logs</div>
           <div class="section-actions">
             <span id="scan-count" style="font-size:12px;color:var(--text3);">—</span>
+            <button class="btn btn-outline btn-sm" onclick="openAddAssetModal()">➕ เพิ่มรายการ</button>
             <button class="btn btn-red btn-sm" onclick="exportScans()">📥 Export</button>
           </div>
         </div>
@@ -1582,6 +1583,174 @@ async function exportPDF(branchId) {
   win.document.write(html);
   win.document.close();
 }
+
+// ── ADD ASSET MODAL ───────────────────────────────────────────────────────────
+let aaFetchTimer = null;
+let aaImageFile  = null;
+
+function openAddAssetModal() {
+  document.getElementById('add-asset-overlay').style.display = 'flex';
+  // reset form
+  document.getElementById('aa-code').value      = '';
+  document.getElementById('aa-name').value      = '';
+  document.getElementById('aa-condition').value = '';
+  document.getElementById('aa-serial').value    = '';
+  document.getElementById('aa-remark').value    = '';
+  aaRemoveImage();
+  aaResetBadges();
+}
+
+function closeAddAssetModal() {
+  document.getElementById('add-asset-overlay').style.display = 'none';
+}
+
+function aaResetBadges() {
+  document.getElementById('aa-found-badge').style.display    = 'none';
+  document.getElementById('aa-notfound-badge').style.display = 'none';
+  document.getElementById('aa-name').style.color             = 'var(--text3)';
+}
+
+function aaHandleImage(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  aaImageFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('aa-preview-img').src   = url;
+  document.getElementById('aa-preview-wrap').style.display = 'block';
+  document.getElementById('aa-upload-zone').style.display  = 'none';
+}
+
+function aaRemoveImage() {
+  aaImageFile = null;
+  document.getElementById('aa-file-input').value          = '';
+  document.getElementById('aa-preview-wrap').style.display = 'none';
+  document.getElementById('aa-upload-zone').style.display  = 'flex';
+}
+
+function aaCodeInput() {
+  clearTimeout(aaFetchTimer);
+  aaResetBadges();
+  document.getElementById('aa-name').value       = '';
+  document.getElementById('aa-name').placeholder = '— รอดึงข้อมูล —';
+
+  const code = document.getElementById('aa-code').value.trim();
+  if (!code) return;
+
+  document.getElementById('aa-name').placeholder = 'กำลังดึงข้อมูล...';
+
+  aaFetchTimer = setTimeout(() => {
+    // ─── เชื่อมต่อ API จริงตรงนี้ ───────────────────────────────
+    // ตัวอย่าง: fetch(`/api/assets?code=${encodeURIComponent(code)}`)
+    //   .then(r => r.json()).then(data => { ... })
+    //
+    // ตอนนี้ใช้ mock data (แทนที่ด้วย API call จริง):
+    const MOCK = {
+      'SFU012024020093SE0001': 'Relax Comfy Sandals Wall (Change Sneaker BR 4.)',
+      'SFU012024020093SE0002': 'Classic Running Shoe White BR 5.',
+      'SFU012024020093SE0003': 'Sport Sneaker Black Edition BR 6.',
+      'BTA2024010001SE0010':   'Canvas Slip-On Navy',
+    };
+    const found = MOCK[code];
+    if (found) {
+      document.getElementById('aa-name').value               = found;
+      document.getElementById('aa-name').style.color         = 'var(--text)';
+      document.getElementById('aa-name').placeholder         = '';
+      document.getElementById('aa-found-badge').style.display = 'inline';
+    } else {
+      document.getElementById('aa-name').placeholder          = '— ไม่พบข้อมูล —';
+      document.getElementById('aa-notfound-badge').style.display = 'inline';
+    }
+  }, 700);
+}
+
+function aaSubmit() {
+  const code  = document.getElementById('aa-code').value.trim();
+  const name  = document.getElementById('aa-name').value.trim();
+  const cond  = document.getElementById('aa-condition').value;
+  const serial= document.getElementById('aa-serial').value.trim();
+  const remark= document.getElementById('aa-remark').value.trim();
+
+  if (!code) { showToast('กรุณาระบุ Asset Code', 'error'); return; }
+  if (!name) { showToast('ไม่พบ Asset Name — กรุณาตรวจสอบ Asset Code', 'error'); return; }
+
+  // ─── ส่งข้อมูลไป API จริงตรงนี้ ──────────────────────────────
+  // const payload = { asset_code: code, asset_name: name, condition: cond,
+  //                   serial_found: serial, remark, image: aaImageFile };
+  // fetch('/api/scan-logs', { method:'POST', body: formData }).then(...)
+
+  console.log('Add Asset:', { code, name, cond, serial, remark, image: aaImageFile });
+  showToast('เพิ่มรายการเรียบร้อย', 'success');
+  closeAddAssetModal();
+  // refresh scan log table หลัง save
+  if (typeof loadAll === 'function') loadAll();
+}
 </script>
+
+<!-- ADD ASSET MODAL -->
+<div class="modal-overlay" id="add-asset-overlay" style="display:none;" onclick="if(event.target===this)closeAddAssetModal()">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-head">
+      <div class="modal-title">➕ เพิ่มรายการ Asset</div>
+      <button class="modal-close" onclick="closeAddAssetModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div id="aa-preview-wrap" style="display:none;margin-bottom:8px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border);">
+        <img id="aa-preview-img" src="" alt="preview" style="width:100%;max-height:200px;object-fit:cover;display:block;">
+      </div>
+      <div class="upload-zone" id="aa-upload-zone" onclick="document.getElementById('aa-file-input').click()">
+        <div style="font-size:28px;">📷</div>
+        <div style="font-size:13px;color:var(--text3);">แตะเพื่อถ่ายรูปหรืออัปโหลด</div>
+      </div>
+      <input type="file" id="aa-file-input" accept="image/*" style="display:none;" onchange="aaHandleImage(event)">
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn btn-outline btn-sm" style="flex:1;color:var(--red);border-color:var(--red-bd);" onclick="aaRemoveImage()">🗑 ลบรูปถ่าย</button>
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="document.getElementById('aa-file-input').click()">🔄 เปลี่ยนรูป</button>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Asset Code</label>
+          <input type="text" id="aa-code" placeholder="พิมพ์ Asset Code..." autocomplete="off" oninput="aaCodeInput()">
+          <span style="font-size:11px;color:var(--text3);margin-top:2px;">ระบุ code แล้วระบบจะดึงชื่อให้อัตโนมัติ</span>
+        </div>
+        <div class="field">
+          <label>Asset Name</label>
+          <input type="text" id="aa-name" placeholder="— รอดึงข้อมูล —" readonly style="background:var(--sf2);color:var(--text3);">
+          <span id="aa-found-badge"    style="display:none;margin-top:3px;font-size:11px;font-weight:600;color:var(--green);">✓ พบข้อมูล</span>
+          <span id="aa-notfound-badge" style="display:none;margin-top:3px;font-size:11px;font-weight:600;color:var(--red);">✕ ไม่พบข้อมูล</span>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>สภาพ (Condition)</label>
+          <select id="aa-condition">
+            <option value="">— เลือกสภาพ —</option>
+            <option value="good">Good – ดี</option>
+            <option value="fair">Fair – พอใช้</option>
+            <option value="poor">Poor – ไม่ดี</option>
+            <option value="damaged">Damaged – เสียหาย</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Serial Found (ที่พบจริง)</label>
+          <input type="text" id="aa-serial" placeholder="ใส่ serial ที่พบจริง">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>หมายเหตุ HO</label>
+        <textarea id="aa-remark" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeAddAssetModal()">ยกเลิก</button>
+      <button class="btn btn-red" onclick="aaSubmit()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
