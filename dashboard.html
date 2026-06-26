@@ -202,6 +202,9 @@ tbody tr:hover{background:var(--sf2);}
       <button class="nav-item" id="nav-unmatched" onclick="showPage('unmatched')">
         ⚠️ Unmatched <span class="nav-badge" id="badge-unmatched"></span>
       </button>
+      <button class="nav-item" id="nav-assets" onclick="showPage('assets')">
+        🗂️ Assets / SEQ <span class="nav-badge" id="badge-assets" style="background:var(--blue);display:none;"></span>
+      </button>
       <button class="nav-item" id="nav-export" onclick="showPage('export')">📥 Export</button>
     </div>
     <div class="sidebar-foot">
@@ -332,6 +335,80 @@ tbody tr:hover{background:var(--sf2);}
           <div class="tab" onclick="filterUnmatched('all',this)">All</div>
         </div>
         <div class="photo-grid" id="unmatched-grid"><div class="loading" style="grid-column:1/-1">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- ASSETS / SEQ -->
+    <div class="page" id="page-assets" style="display:none">
+      <div id="assets-banner" style="display:none;padding:10px 18px;font-size:13px;align-items:center;gap:8px;"></div>
+
+      <!-- Summary cards -->
+      <div class="stat-grid" style="padding:16px 18px 0;">
+        <div class="stat-card blue" style="cursor:default;">
+          <div class="stat-label">SEQ ทั้งหมด</div>
+          <div class="stat-val" id="seq-total">—</div>
+          <div class="stat-sub">รายการในระบบ</div>
+        </div>
+        <div class="stat-card green" style="cursor:default;">
+          <div class="stat-label">สแกนแล้ว</div>
+          <div class="stat-val" id="seq-scanned">—</div>
+          <div class="stat-sub">พบในระบบสแกน</div>
+        </div>
+        <div class="stat-card amber" style="cursor:default;">
+          <div class="stat-label">ยังไม่สแกน</div>
+          <div class="stat-val" id="seq-pending">—</div>
+          <div class="stat-sub">รอการตรวจสอบ</div>
+        </div>
+        <div class="stat-card" style="cursor:default;">
+          <div class="stat-label">สาขา</div>
+          <div class="stat-val" id="seq-branches">—</div>
+          <div class="stat-sub">ที่มีข้อมูล SEQ</div>
+        </div>
+      </div>
+
+      <div class="section" style="margin-top:16px;">
+        <div class="section-head">
+          <div class="section-title">รายการ SEQ ทั้งหมด</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input id="assets-search" type="text" placeholder="🔍 ค้นหา QR / ชื่อ / Serial..." style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;width:220px;" oninput="filterAssets()">
+            <select id="assets-branch-filter" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;" onchange="filterAssets()">
+              <option value="">ทุกสาขา</option>
+            </select>
+            <select id="assets-status-filter" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;" onchange="filterAssets()">
+              <option value="">ทุกสถานะ</option>
+              <option value="scanned">✅ สแกนแล้ว</option>
+              <option value="pending">⏳ ยังไม่สแกน</option>
+            </select>
+            <button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="loadAssetsPage()">🔄 Refresh</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:36px;">#</th>
+                <th>QR Key</th>
+                <th>ชื่อ Asset</th>
+                <th style="width:70px;text-align:center;">SEQ</th>
+                <th style="width:85px;">สาขา</th>
+                <th>Serial No.</th>
+                <th style="width:110px;text-align:center;">สถานะ</th>
+                <th style="width:110px;">เวลาสแกน</th>
+              </tr>
+            </thead>
+            <tbody id="assets-tbody">
+              <tr><td colspan="8" class="loading">กด Refresh เพื่อโหลดข้อมูล SEQ</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 18px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text3);">
+          <span id="assets-count-label"></span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn btn-outline" style="font-size:12px;padding:4px 10px;" onclick="assetsPrev()">◀ ก่อนหน้า</button>
+            <span id="assets-page-info" style="padding:4px 10px;color:var(--text2);font-weight:500;"></span>
+            <button class="btn btn-outline" style="font-size:12px;padding:4px 10px;" onclick="assetsNext()">ถัดไป ▶</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1268,15 +1345,153 @@ function exportUnmatchedXlsx(){
 function today(){return new Date().toISOString().slice(0,10);}
 
 // ── NAV ───────────────────────────────────────────────
-const pages=['overview','scans','photos','unmatched','export'];
-const titles={overview:'Overview',scans:'Scan Logs',photos:'Photos',unmatched:'Unmatched Assets',export:'Export'};
+const pages=['overview','scans','photos','unmatched','assets','export'];
+const titles={overview:'Overview',scans:'Scan Logs',photos:'Photos',unmatched:'Unmatched Assets',assets:'Assets / SEQ',export:'Export'};
 function showPage(name){
   pages.forEach(p=>{
     document.getElementById('page-'+p).style.display=p===name?'flex':'none';
     document.getElementById('nav-'+p).classList.toggle('active',p===name);
   });
   document.getElementById('page-title').textContent=titles[name];
+  if(name==='assets' && allAssets.length===0) loadAssetsPage();
 }
+// ── ASSETS / SEQ ────────────────────────────────────────
+let allAssets = [], assetsFiltered = [], assetsPageIdx = 0;
+const ASSETS_PER_PAGE = 100;
+
+async function loadAssetsPage() {
+  const banner = document.getElementById('assets-banner');
+  const tbody  = document.getElementById('assets-tbody');
+  banner.className = 'page-banner blue';
+  banner.style.display = 'flex';
+  banner.textContent = '⏳ กำลังโหลดข้อมูล Assets / SEQ...';
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading...</td></tr>';
+
+  try {
+    const res = await fetch(API + '/hq/assets', {headers: authHeader()});
+    if (!res.ok) throw new Error('API ยังไม่มี /hq/assets (status ' + res.status + ') — ดูวิธีเพิ่มใน backend ด้านล่าง');
+    const data = await res.json();
+    allAssets = data.assets || [];
+
+    // map scan status จาก allScans ที่โหลดไว้แล้ว
+    const scannedMap = {};
+    allScans.forEach(s => { scannedMap[s.asset_code] = s; });
+
+    allAssets = allAssets.map(a => {
+      const scanMatch = scannedMap[a.asset_code];
+      return {...a, is_scanned: !!scanMatch, scan_info: scanMatch || null};
+    });
+
+    // สร้าง branch filter
+    const branches = [...new Set(allAssets.map(a => a.location_code || '').filter(Boolean))].sort();
+    const sel = document.getElementById('assets-branch-filter');
+    sel.innerHTML = '<option value="">ทุกสาขา</option>' + branches.map(b=>`<option value="${b}">${b}</option>`).join('');
+
+    // badge
+    const badge = document.getElementById('badge-assets');
+    badge.textContent = allAssets.length.toLocaleString();
+    badge.style.display = 'inline';
+
+    banner.style.display = 'none';
+    filterAssets();
+    showToast('โหลด SEQ ' + allAssets.length.toLocaleString() + ' รายการสำเร็จ', 'success');
+  } catch(e) {
+    banner.className = 'page-banner amber';
+    banner.style.display = 'flex';
+    banner.textContent = '⚠️ ' + e.message;
+    tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color:var(--amber);">${e.message}</td></tr>`;
+  }
+}
+
+function filterAssets() {
+  const q  = document.getElementById('assets-search').value.toLowerCase().trim();
+  const br = document.getElementById('assets-branch-filter').value;
+  const st = document.getElementById('assets-status-filter').value;
+
+  assetsFiltered = allAssets.filter(a => {
+    const key    = (a.qr_key||'').toLowerCase();
+    const name   = (a.name||'').toLowerCase();
+    const serial = (a.serial_no||'').toLowerCase();
+    if (q && !key.includes(q) && !name.includes(q) && !serial.includes(q)) return false;
+    if (br && (a.location_code||'') !== br) return false;
+    if (st === 'scanned' && !a.is_scanned) return false;
+    if (st === 'pending' && a.is_scanned)  return false;
+    return true;
+  });
+
+  // update stat cards
+  const total    = allAssets.length;
+  const scanned  = allAssets.filter(a=>a.is_scanned).length;
+  const branches = new Set(allAssets.map(a=>a.location_code||'').filter(Boolean)).size;
+  document.getElementById('seq-total').textContent    = total.toLocaleString();
+  document.getElementById('seq-scanned').textContent  = scanned.toLocaleString();
+  document.getElementById('seq-pending').textContent  = (total-scanned).toLocaleString();
+  document.getElementById('seq-branches').textContent = branches.toLocaleString();
+
+  assetsPageIdx = 0;
+  renderAssetsTable();
+}
+
+function renderAssetsTable() {
+  const start = assetsPageIdx * ASSETS_PER_PAGE;
+  const slice = assetsFiltered.slice(start, start + ASSETS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(assetsFiltered.length / ASSETS_PER_PAGE));
+
+  document.getElementById('assets-count-label').textContent =
+    `แสดง ${assetsFiltered.length ? (start+1).toLocaleString() : 0}–${Math.min(start+ASSETS_PER_PAGE, assetsFiltered.length).toLocaleString()} จาก ${assetsFiltered.length.toLocaleString()} รายการ`;
+  document.getElementById('assets-page-info').textContent =
+    `หน้า ${assetsPageIdx+1} / ${totalPages}`;
+
+  if (!slice.length) {
+    document.getElementById('assets-tbody').innerHTML = '<tr><td colspan="8" class="loading">ไม่พบรายการ</td></tr>';
+    return;
+  }
+
+  const rows = slice.map((a, i) => {
+    const qr      = a.qr_key || (a.asset_code + 'SEQ' + String(a.seq||0).padStart(3,'0'));
+    const seqNum  = String(a.seq||'').padStart(3,'0');
+    const name    = a.name || '—';
+    const serial  = a.serial_no || '—';
+    const branch  = a.location_code || '—';
+    const scanned = a.is_scanned;
+    const scanAt  = a.scan_info?.scanned_at
+      ? new Date(a.scan_info.scanned_at).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+      : '—';
+
+    const badge = scanned
+      ? `<span style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">✅ สแกนแล้ว</span>`
+      : `<span style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">⏳ รอสแกน</span>`;
+
+    // แสดง asset_code + SEQ แยกกันให้อ่านง่าย
+    const assetCodePart = qr.replace(/SEQ\d+$/i, '');
+    const seqPart = (qr.match(/SEQ(\d+)$/i)||['',''])[0];
+
+    return `<tr style="background:${scanned?'rgba(26,122,60,0.03)':''}">
+      <td style="color:var(--text3);font-size:11px;">${start+i+1}</td>
+      <td>
+        <span style="font-family:var(--mono);font-size:11px;background:var(--sf2);padding:2px 6px;border-radius:4px;border:1px solid var(--border);letter-spacing:.3px;">
+          ${assetCodePart}<strong style="color:var(--blue);">${seqPart}</strong>
+        </span>
+      </td>
+      <td style="font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${name}">${name}</td>
+      <td style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue);">${seqNum}</td>
+      <td style="font-size:12px;font-weight:600;">${branch}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2);">${serial}</td>
+      <td style="text-align:center;">${badge}</td>
+      <td style="font-size:11px;color:var(--text3);">${scanAt}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('assets-tbody').innerHTML = rows;
+}
+
+function assetsPrev() {
+  if (assetsPageIdx > 0) { assetsPageIdx--; renderAssetsTable(); }
+}
+function assetsNext() {
+  if (assetsPageIdx < Math.ceil(assetsFiltered.length/ASSETS_PER_PAGE)-1) { assetsPageIdx++; renderAssetsTable(); }
+}
+
 function showToast(msg,type=''){
   const wrap=document.getElementById('toast-wrap');
   const t=document.createElement('div');
