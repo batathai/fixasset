@@ -253,11 +253,20 @@ tbody tr:hover{background:var(--sf2);}
           <div class="stat-sub">pending review</div>
         </div>
       </div>
+      <!-- Daily Summary Banner -->
+      <div id="daily-summary-banner" style="background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="font-size:13px;font-weight:600;color:var(--blue);" id="daily-date-label">📅 วันนี้</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;" id="daily-stats">
+          <span style="font-size:13px;color:var(--text2);">โหลดข้อมูล...</span>
+        </div>
+        <button class="btn btn-outline btn-sm" style="margin-left:auto;" onclick="showPage('scans');applyDatePresetValue('today')">ดู Scan Logs วันนี้ →</button>
+      </div>
+
       <div class="section">
         <div class="section-head"><div class="section-title">Branch Sessions</div></div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Branch</th><th>Total Assets</th><th>Progress</th><th>Scanned</th><th>Pending</th><th>Unmatched</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Branch</th><th>Total Assets</th><th>Progress</th><th>Scanned</th><th>Pending</th><th>Unmatched</th><th>Status</th><th style="width:100px;">วันที่นัดสแกน</th><th>Actions</th></tr></thead>
             <tbody id="sessions-tbody"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -276,7 +285,7 @@ tbody tr:hover{background:var(--sf2);}
           </div>
         </div>
         <div id="scan-banner" style="display:none"></div>
-        <div class="filter-bar">
+        <div class="filter-bar" style="flex-wrap:wrap;">
           <div class="search-wrap">
             <input id="scan-search" type="text" placeholder="ค้นหา asset code / ชื่อ..." onkeydown="if(event.key==='Enter')doSearch()">
             <button class="search-btn" onclick="doSearch()" title="ค้นหา">🔍</button>
@@ -294,11 +303,27 @@ tbody tr:hover{background:var(--sf2);}
             <option value="yes">มีรูปถ่าย</option>
             <option value="no">ไม่มีรูป</option>
           </select>
+          <div style="display:flex;align-items:center;gap:6px;background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);padding:4px 10px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text3);">📅 วันที่</span>
+            <select id="scan-date-preset" onchange="applyDatePreset()" style="border:none;background:transparent;font-size:13px;font-family:var(--sans);outline:none;color:var(--text);cursor:pointer;">
+              <option value="">ทุกวัน</option>
+              <option value="today">วันนี้</option>
+              <option value="yesterday">เมื่อวาน</option>
+              <option value="7d">7 วันล่าสุด</option>
+              <option value="30d">30 วันล่าสุด</option>
+              <option value="custom">กำหนดเอง</option>
+            </select>
+          </div>
+          <div id="date-custom-wrap" style="display:none;align-items:center;gap:4px;">
+            <input type="date" id="scan-date-from" onchange="filterScans()" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;font-family:var(--sans);background:var(--sf2);">
+            <span style="font-size:12px;color:var(--text3);">ถึง</span>
+            <input type="date" id="scan-date-to" onchange="filterScans()" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;font-family:var(--sans);background:var(--sf2);">
+          </div>
           <button class="btn btn-outline btn-sm" onclick="clearSearch()">✕ ล้าง</button>
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th style="width:68px;">รูป</th><th>Asset Code</th><th>ชื่อ Asset</th><th style="width:80px;text-align:center;">SEQ</th><th>สภาพ</th><th>Serial Match</th><th>Serial Found</th><th>สาขา</th><th>เวลา</th><th>Actions</th></tr></thead>
+            <thead><tr><th style="width:68px;">รูป</th><th>Asset Code</th><th>ชื่อ Asset</th><th style="width:80px;text-align:center;">SEQ</th><th>สภาพ</th><th>Serial Match</th><th>Serial Found</th><th>สาขา</th><th style="width:90px;">วันที่สแกน</th><th>เวลา</th><th>Actions</th></tr></thead>
             <tbody id="scans-tbody"><tr><td colspan="10" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -598,7 +623,13 @@ function restoreSession() {
     return true;
   } catch(e) { return false; }
 }
-window.addEventListener('load', () => { if (restoreSession()) loadAll(); });
+window.addEventListener('load', () => {
+  if (restoreSession()) {
+    loadAll();
+    // Auto-refresh every 60 seconds
+    setInterval(() => { if (token) loadAll(); }, 60000);
+  }
+});
 document.addEventListener('keypress', e => { if (e.key==='Enter' && document.getElementById('login-screen').style.display!=='none') doLogin(); });
 
 async function doLogin() {
@@ -826,7 +857,37 @@ async function confirmMerge() {
 }
 
 // ── OVERVIEW ──────────────────────────────────────────
+function renderDailySummary() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+  const todayScans = allScans.filter(s => {
+    const d = s.scanned_at ? new Date(s.scanned_at) : null;
+    return d && d >= today && d < tomorrow;
+  });
+  const todayBranches = [...new Set(todayScans.map(s=>s.branch_id).filter(Boolean))];
+  const label = document.getElementById('daily-date-label');
+  const stats = document.getElementById('daily-stats');
+  if (!label || !stats) return;
+  const dateStr = today.toLocaleDateString('th-TH', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  label.textContent = '📅 ' + dateStr;
+  if (!todayScans.length) {
+    stats.innerHTML = '<span style="font-size:13px;color:var(--text3);">ยังไม่มีข้อมูลการสแกนวันนี้</span>';
+    return;
+  }
+  const goodCount = todayScans.filter(s=>s.condition==='good').length;
+  const badCount = todayScans.filter(s=>s.condition==='damaged'||s.condition==='missing').length;
+  const branchPills = todayBranches.map(b=>'<span style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;">'+b+'</span>').join(' ');
+  const parts = [
+    '<span style="font-size:13px;color:var(--text2);">' + todayBranches.length + ' สาขาวันนี้: </span>' + branchPills,
+    '<span style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;">✓ สแกนแล้ว ' + todayScans.length + ' รายการ</span>',
+    goodCount ? '<span style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);border-radius:20px;padding:3px 10px;font-size:12px;">Good ' + goodCount + '</span>' : '',
+    badCount ? '<span style="background:var(--red-l);color:var(--red);border:1px solid var(--red-bd);border-radius:20px;padding:3px 10px;font-size:12px;">⚠️ ผิดปกติ ' + badCount + '</span>' : '',
+  ].filter(Boolean);
+  stats.innerHTML = parts.join(' ');
+}
+
 function renderOverview() {
+  renderDailySummary();
   const totalScanned = allScans.length;
   const totalPending = allSessions.reduce((sum,s)=>sum+Math.max(0,(parseInt(s.total_assets)||0)-(parseInt(s.scanned_count)||0)),0);
   const sessionCount = allSessions.length;
@@ -868,6 +929,7 @@ function renderOverview() {
       <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${pending}</span></td>
       <td>${parseInt(s.unmatched_count)||0?`<span class="badge badge-red">${s.unmatched_count}</span>`:'<span class="badge badge-gray">0</span>'}</td>
       <td>${statusBadge}</td>
+      <td style="font-size:12px;color:var(--text3);">${s.scheduled_date?new Date(s.scheduled_date).toLocaleDateString('th-TH',{dateStyle:'short'}):'<span style="color:var(--border);">—</span>'}</td>
       <td style="display:flex;gap:6px;flex-wrap:wrap;">
         ${isDup?`<button class="btn btn-purple btn-sm" onclick="openMergeModal('${s.branch_id}')">🔀 Merge</button>`:''}
         <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.session_id||s.id},'${s.branch_id}')">🗑 Delete</button>
@@ -943,7 +1005,8 @@ function renderScans() {
     <td>${s.serial_match===true?'<span class="badge badge-green">✓ Match</span>':s.serial_match===false?'<span class="badge badge-red">✗ Mismatch</span>':'<span class="badge badge-gray">N/A</span>'}</td>
     <td style="font-family:var(--mono);font-size:11px;">${s.serial_found||'—'}</td>
     <td style="font-size:12px;">${s.branch_id||'—'}</td>
-    <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</td>
+    <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleDateString('th-TH',{dateStyle:'short'}):'—'}</td>
+    <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleTimeString('th-TH',{timeStyle:'short'}):'—'}</td>
     <td><button class="btn btn-outline btn-sm" onclick="openEditModal(${s.id})">✏️ Edit</button></td>
   </tr>`;
   }).join('');
@@ -955,6 +1018,13 @@ function clearSearch() {
   document.getElementById('scan-branch').value = '';
   document.getElementById('scan-condition').value = '';
   document.getElementById('scan-photo').value = '';
+  const dp = document.getElementById('scan-date-preset');
+  if (dp) dp.value = '';
+  const cw = document.getElementById('date-custom-wrap');
+  if (cw) cw.style.display = 'none';
+  const df = document.getElementById('scan-date-from');
+  const dt = document.getElementById('scan-date-to');
+  if (df) df.value = ''; if (dt) dt.value = '';
   currentScanMode = 'normal';
   hideScanBanner();
   filteredScans = allScans;
@@ -967,12 +1037,41 @@ function filterScans() {
   const photo = document.getElementById('scan-photo').value;
   if (cond === 'pending') { filteredScans=[]; renderPendingScans(branch||allSessions[0]?.branch_id); return; }
   hideScanBanner();
-  filteredScans = allScans.filter(s =>
-    (!q||(s.asset_code||'').toLowerCase().includes(q)||(s.asset_name||'').toLowerCase().includes(q)||(s.qr_key||'').toLowerCase().includes(q)) &&
-    (!branch||s.branch_id===branch) && (!cond||s.condition===cond) &&
-    (!photo||(photo==='yes'?!!s.photo_url:!s.photo_url))
-  );
+  // Date filter
+  const preset = document.getElementById('scan-date-preset')?.value || '';
+  let dateFrom = null, dateTo = null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (preset === 'today') { dateFrom = new Date(today); dateTo = new Date(today); dateTo.setHours(23,59,59,999); }
+  else if (preset === 'yesterday') { const y=new Date(today); y.setDate(y.getDate()-1); dateFrom=y; dateTo=new Date(y); dateTo.setHours(23,59,59,999); }
+  else if (preset === '7d') { dateFrom=new Date(today); dateFrom.setDate(dateFrom.getDate()-6); dateTo=new Date(today); dateTo.setHours(23,59,59,999); }
+  else if (preset === '30d') { dateFrom=new Date(today); dateFrom.setDate(dateFrom.getDate()-29); dateTo=new Date(today); dateTo.setHours(23,59,59,999); }
+  else if (preset === 'custom') {
+    const df = document.getElementById('scan-date-from').value;
+    const dt = document.getElementById('scan-date-to').value;
+    if (df) { dateFrom=new Date(df); dateFrom.setHours(0,0,0,0); }
+    if (dt) { dateTo=new Date(dt); dateTo.setHours(23,59,59,999); }
+  }
+  filteredScans = allScans.filter(s => {
+    const scanDate = s.scanned_at ? new Date(s.scanned_at) : null;
+    const matchDate = !preset || !scanDate ? true :
+      ((!dateFrom || scanDate >= dateFrom) && (!dateTo || scanDate <= dateTo));
+    return (!q||(s.asset_code||'').toLowerCase().includes(q)||(s.asset_name||'').toLowerCase().includes(q)||(s.qr_key||'').toLowerCase().includes(q)) &&
+      (!branch||s.branch_id===branch) && (!cond||s.condition===cond) &&
+      (!photo||(photo==='yes'?!!s.photo_url:!s.photo_url)) && matchDate;
+  });
   renderScans();
+}
+
+function applyDatePreset() {
+  const preset = document.getElementById('scan-date-preset').value;
+  const customWrap = document.getElementById('date-custom-wrap');
+  customWrap.style.display = preset === 'custom' ? 'flex' : 'none';
+  filterScans();
+}
+
+function applyDatePresetValue(val) {
+  const sel = document.getElementById('scan-date-preset');
+  if (sel) { sel.value = val; applyDatePreset(); }
 }
 
 async function renderPendingScans(branchId) {
