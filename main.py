@@ -488,6 +488,56 @@ def hq_get_unmatched(db=Depends(get_db), user=Depends(get_current_user)):
     return {"items": [dict(r) for r in cur.fetchall()]}    
 
 # ════════════════════════════════════════════════════════════════
+# เพิ่ม endpoint นี้ใน main.py
+# วางต่อจาก @app.get("/hq/unmatched") ได้เลย
+# ════════════════════════════════════════════════════════════════
+
+@app.get("/hq/assets")
+def hq_get_all_assets(db=Depends(get_db), user=Depends(get_current_user)):
+    """
+    HQ ดู assets ทั้งหมดในระบบ พร้อมสถานะว่าสแกนแล้วหรือยัง
+    ใช้แสดงใน Dashboard หน้า Assets / SEQ
+    """
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+
+    cur = db.cursor()
+    cur.execute("""
+        SELECT
+            a.id,
+            a.qr_key,
+            a.asset_code,
+            a.seq,
+            a.name,
+            a.serial_no,
+            a.location_code,
+            a.purchase_date,
+            a.status,
+            -- ตรวจสอบว่าสแกนแล้วหรือยัง (มี scan_log อยู่หรือเปล่า)
+            CASE WHEN sl.id IS NOT NULL THEN true ELSE false END AS is_scanned,
+            sl.scanned_at,
+            u.email AS scanned_by,
+            s.branch_id
+        FROM assets a
+        LEFT JOIN scan_logs sl ON sl.asset_id = a.id
+        LEFT JOIN users u ON u.id = sl.scanned_by
+        LEFT JOIN audit_sessions s ON s.id = sl.session_id
+        WHERE a.status = 'active'
+        ORDER BY a.location_code, a.asset_code, a.seq
+    """)
+    assets = [dict(r) for r in cur.fetchall()]
+
+    # summary สำหรับ response
+    total   = len(assets)
+    scanned = sum(1 for a in assets if a["is_scanned"])
+
+    return {
+        "total":    total,
+        "scanned":  scanned,
+        "pending":  total - scanned,
+        "assets":   assets,
+    }
+# ════════════════════════════════════════════════════════════════
 # HQ SESSION MANAGEMENT
 # ════════════════════════════════════════════════════════════════
 
