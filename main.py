@@ -113,7 +113,8 @@ async def hq_upload_scan_photo(
 # ── 3. MERGE Sessions ─────────────────────────────────────────
 class MergeSessionsRequest(BaseModel):
     primary_session_id: int
-    merge_session_ids: list[int]
+    from typing import List
+    merge_session_ids: List[int]
     branch_id: str
 
 @app.post("/hq/sessions/merge")
