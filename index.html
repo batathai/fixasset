@@ -55,6 +55,10 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .hdr-info{font-size:11px;color:rgba(255,255,255,.75);font-family:var(--mono);text-align:right;}
 .out-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--white);cursor:pointer;}
 
+/* ── VOICE TOGGLE BUTTON ── */
+.voice-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 10px;font-size:12px;color:var(--white);cursor:pointer;display:flex;align-items:center;gap:4px;}
+.voice-btn.muted{background:rgba(0,0,0,.2);border-color:rgba(255,255,255,.1);opacity:.6;}
+
 /* ── PROGRESS ── */
 .prog{background:var(--red-d);padding:8px 16px;display:flex;align-items:center;gap:12px;}
 .pb-bg{flex:1;height:5px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden;}
@@ -228,7 +232,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
         </div>
       </div>
     </div>
-    <button class="btn-login" onclick="doLogin()">SIGN IN</button>
+    <button class="btn-login" onclick="initVoice();doLogin()">SIGN IN</button>
     <div class="err" id="lerr">Please fill in all fields</div>
   </div>
 </div>
@@ -244,6 +248,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
     </div>
     <div class="hdr-r">
       <div class="hdr-info" id="hinfo">—</div>
+      <button class="voice-btn" id="voice-toggle-btn" onclick="toggleVoice()" title="เปิด/ปิดเสียง">🔊</button>
       <button class="out-btn" onclick="doLogout()">Sign out</button>
     </div>
   </div>
@@ -386,7 +391,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 </div>
 
 <!-- ════════════════════════════════════════
-     NO QR MODAL  ← เพิ่มใหม่ (ของเดิมหายไป)
+     NO QR MODAL
 ════════════════════════════════════════ -->
 <div class="modal-overlay" id="noqr-modal" onclick="if(event.target===this)closeNoQR()">
   <div class="modal-box" style="position:relative;">
@@ -407,7 +412,6 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
       <input class="fi" id="noqr-location" placeholder="e.g. หน้าเคาน์เตอร์, ห้องสต็อก..."/>
     </div>
 
-    <!-- Photo -->
     <div class="fg" style="margin-bottom:20px;">
       <div class="fl">Photo</div>
       <div class="ph-area" style="padding:16px;" onclick="document.getElementById('noqr-photo-input').click()">
@@ -494,10 +498,94 @@ let S = { user:null, branch:null, branchName:null, sid:null, token:null,
           scanned:new Set(), log:[], total:0, cd:false };
 const assetCache = new Map();
 let scanQueue = [], isSyncing = false;
-const photoBlobs = {};  // เก็บ blob รูปก่อน upload
-let pendingUpload = false; // กำลัง upload รูปอยู่ — บล็อกสแกนถัดไป
+const photoBlobs = {};
+let pendingUpload = false;
 let CHECKLIST = [], noQRList = [], clVisible = false;
 let autoRefreshInterval = null;
+
+// ════════════════════════════════════════════════════════════
+// 🔊 VOICE SYSTEM
+// ════════════════════════════════════════════════════════════
+let voiceEnabled = true;
+let voiceReady   = false;
+let selectedVoice = null;
+
+// โหลด voice list และเลือกเสียงผู้หญิงภาษาไทย
+function loadVoices() {
+  if (!('speechSynthesis' in window)) return;
+  const voices = speechSynthesis.getVoices();
+  if (!voices.length) return;
+
+  // ลำดับความสำคัญ: เสียงไทยผู้หญิง → เสียงไทยใดก็ได้ → เสียงผู้หญิง en
+  selectedVoice =
+    voices.find(v => v.lang.startsWith('th') && /female|woman|ying|นภา|สาว/i.test(v.name)) ||
+    voices.find(v => v.lang === 'th-TH') ||
+    voices.find(v => v.lang.startsWith('th')) ||
+    voices.find(v => /female|zira|samantha|karen|moira|fiona|victoria/i.test(v.name)) ||
+    null;
+}
+
+// init voice — ต้องเรียกจาก user gesture (กดปุ่ม Login)
+function initVoice() {
+  if (!('speechSynthesis' in window)) return;
+  if (voiceReady) return;
+
+  // warmup ด้วย utterance เงียบๆ
+  const u = new SpeechSynthesisUtterance(' ');
+  u.volume = 0;
+  speechSynthesis.speak(u);
+  voiceReady = true;
+
+  // โหลด voices (บางเครื่องต้องรอ event)
+  loadVoices();
+  speechSynthesis.addEventListener('voiceschanged', loadVoices);
+}
+
+// พูดออกเสียง
+function speak(text) {
+  if (!voiceEnabled) return;
+  if (!('speechSynthesis' in window)) return;
+
+  speechSynthesis.cancel(); // หยุดเสียงค้างก่อน
+
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang  = 'th-TH';
+  u.rate  = 1.05;   // ความเร็วปกติ
+  u.pitch = 1.2;    // เสียงสูงขึ้นนิด (ผู้หญิง)
+  u.volume = 1.0;
+
+  if (selectedVoice) u.voice = selectedVoice;
+
+  speechSynthesis.speak(u);
+}
+
+// toggle เปิด/ปิดเสียง
+function toggleVoice() {
+  voiceEnabled = !voiceEnabled;
+  const btn = document.getElementById('voice-toggle-btn');
+  if (btn) {
+    btn.textContent = voiceEnabled ? '🔊' : '🔇';
+    btn.classList.toggle('muted', !voiceEnabled);
+  }
+  toast(voiceEnabled ? '🔊 เปิดเสียงแล้ว' : '🔇 ปิดเสียงแล้ว');
+  if (voiceEnabled) speak('เปิดเสียงแล้ว');
+}
+
+// ── ข้อความเสียงทุก scenario ──────────────────────────────
+const VOICE = {
+  matched:      'สแกนสำเร็จ',
+  serialCheck:  'กรุณาตรวจสอบซีเรียลนัมเบอร์',
+  serialOk:     'ซีเรียลนัมเบอร์ตรงกัน',
+  serialFail:   'ซีเรียลนัมเบอร์ไม่ตรง แจ้งเอชคิวแล้ว',
+  notFound:     'ไม่พบข้อมูลในระบบ',
+  duplicate:    'รายการนี้สแกนไปแล้ว',
+  uploading:    'กำลังอัปโหลดรูปภาพ กรุณารอสักครู่',
+  saved:        'บันทึกเรียบร้อย',
+  noqr:         'แจ้งเอชคิวแล้ว',
+  sessionClose: 'ปิดงานสำเร็จ',
+  error:        'เกิดข้อผิดพลาด',
+};
+// ════════════════════════════════════════════════════════════
 
 // ── BRANCHES ─────────────────────────────────────────────────
 const BRANCHES = [{"code":"0051132","name":"Big C Lopburi"},{"code":"0051403","name":"Future Park Rangsit"},{"code":"0051404","name":"Fashion Island"},{"code":"0051407","name":"The Mall 6 Ngamwongwan"},{"code":"0051409","name":"IT Laksi Plaza"},{"code":"0051410","name":"Central Bangna"},{"code":"0051415","name":"Central Ramindra"},{"code":"0051416","name":"The Mall 8 Bangkapi"},{"code":"0051418","name":"Lotus Rangsit Klong 7"},{"code":"0051419","name":"Lotus Navanakorn"},{"code":"0051425","name":"Central Jeangwattana"},{"code":"0051426","name":"Big C Rajdamri"},{"code":"0051427","name":"Paradise Park"},{"code":"0051428","name":"Maboonkrong 2"},{"code":"0051430","name":"Central Rama 9"},{"code":"0051431","name":"Mega Bangna"},{"code":"0051433","name":"Central Salaya"},{"code":"0051434","name":"Sukhumvit 15"},{"code":"0051435","name":"Homepro Sunvannabhumi"},{"code":"0051436","name":"Central Westgate"},{"code":"0051438","name":"Central Pinklow"},{"code":"0051439","name":"Robinson Ladkabang"},{"code":"0051446","name":"Lotus Rangsit Klong 4"},{"code":"0051450","name":"Central Westville"},{"code":"0051498","name":"Minburi Outlet"},{"code":"0051506","name":"Imperial Samrong"},{"code":"0051508","name":"Taprachan"},{"code":"0051510","name":"Yaowaraj"},{"code":"0051511","name":"The Mall 7 Bangkae"},{"code":"0051512","name":"Seacon Square 1"},{"code":"0051514","name":"Big C Rama 4"},{"code":"0051517","name":"Lotus Salaya"},{"code":"0051518","name":"Central Rama 3"},{"code":"0051520","name":"Robinsan Srisamarn"},{"code":"0051521","name":"Lotus Bangpakok"},{"code":"0051524","name":"Lotus Charansanitwong"},{"code":"0051530","name":"Big C Petkasem"},{"code":"0051532","name":"Big C Omyai"},{"code":"0051533","name":"Lotus Lumlookka"},{"code":"0051534","name":"Big C Bangpakok"},{"code":"0051535","name":"Big C Suwinthavong"},{"code":"0051540","name":"Big C Ramindra"},{"code":"0051542","name":"Supreme Samsen"},{"code":"0051545","name":"Robinson Samuthprakarn"},{"code":"0051546","name":"Lotus Bangyai"},{"code":"0051548","name":"Big C Bangplee"},{"code":"0051549","name":"Big C Bangyai"},{"code":"0051550","name":"Big C Suksawas"},{"code":"0051903","name":"Imperial Ladplaow"},{"code":"0051905","name":"Central Rama 2"},{"code":"0051906","name":"Seacon Bangkae"},{"code":"0051938","name":"Lotus Ladplaow"},{"code":"0051939","name":"Lotus Chaengwattana"},{"code":"0051944","name":"Maboonkrong"},{"code":"0051946","name":"Big C Rangsit"},{"code":"0051948","name":"Lotus Laksi"},{"code":"0051960","name":"Big C Rama 2"},{"code":"0051965","name":"Lotus Bangkapi"},{"code":"0051968","name":"Lotus Rama 4"},{"code":"0052002","name":"Central Chiengrai"},{"code":"0052003","name":"Ayutthaya Park"},{"code":"0052005","name":"Big C Chiengmai"},{"code":"0052007","name":"Lotus Kamteing"},{"code":"0052008","name":"Central Airport"},{"code":"0052010","name":"Central Pitsanuloke"},{"code":"0052017","name":"Lotus Maesot"},{"code":"0052018","name":"Robinson Kamphaengphet"},{"code":"0052019","name":"Lotus Payao"},{"code":"0052023","name":"Prae"},{"code":"0052025","name":"Maya Chiengmai"},{"code":"0052026","name":"Central Nakornsawan"},{"code":"0052031","name":"Central Lampang"},{"code":"0052032","name":"Lotus Pitsanuloke 2"},{"code":"0052033","name":"Happy Pichit"},{"code":"0052036","name":"Lotus Ruomchok"},{"code":"0052037","name":"Central Cheingmai"},{"code":"0052040","name":"Big C Pitsanulok"},{"code":"0052042","name":"Uttaradit"},{"code":"0052043","name":"Big C Petchaboon"},{"code":"0052048","name":"Lotus Nan"},{"code":"0052098","name":"Chiangmai Outlet"},{"code":"0052901","name":"Big C Kampengpech"},{"code":"0052902","name":"Big C Chiangmai 2"},{"code":"0052942","name":"Big C Chiangrai"},{"code":"0052943","name":"Big C Lampang"},{"code":"0053002","name":"Big C Udornthani"},{"code":"0053003","name":"Thaweekit Buriram 2"},{"code":"0053006","name":"Lotus Thabor"},{"code":"0053008","name":"Lotus Det Udom"},{"code":"0053009","name":"The Mall Koraj"},{"code":"0053010","name":"Surin Plaza"},{"code":"0053011","name":"Kalasin Plaza"},{"code":"0053012","name":"Central Udonthani"},{"code":"0053018","name":"Big C Warin Ubol"},{"code":"0053020","name":"Big C Srisakate"},{"code":"0053021","name":"Lotus Udonthani 2"},{"code":"0053022","name":"Central Khonkaen"},{"code":"0053023","name":"Top Phol Plaza"},{"code":"0053024","name":"Big C Pakchong"},{"code":"0053026","name":"Fairy Khonkean"},{"code":"0053029","name":"Sermthai Complex"},{"code":"0053030","name":"Big C Roi-et"},{"code":"0053031","name":"Central Ubolratchathani"},{"code":"0053032","name":"Robinson Sakonnakorn"},{"code":"0053035","name":"Robinson Roi-et"},{"code":"0053036","name":"Robinson Mukdahan"},{"code":"0053037","name":"Assawan 2 Nongkai"},{"code":"0053038","name":"Lotus Khonkean"},{"code":"0053040","name":"Big C Nakhonratchasima2"},{"code":"0053041","name":"Central Nakhonratchasima"},{"code":"0053043","name":"Big C Amnatcharoen"},{"code":"0053045","name":"Lotus Nangrong"},{"code":"0053046","name":"Lotus Khonkeaen 2"},{"code":"0053047","name":"Lotus Ubonratchathani"},{"code":"0053048","name":"Lotus Chumpaer"},{"code":"0053049","name":"Robinson Chaiyaphoom"},{"code":"0053905","name":"Big C Loei"},{"code":"0053947","name":"Big C Rayong"},{"code":"0053948","name":"Big C Nakhonratchasima"},{"code":"0053953","name":"Big C Ubolratchathani"},{"code":"0053955","name":"Lotus Nongkai"},{"code":"0053958","name":"Big C Khonkaen"},{"code":"0054001","name":"Petchburi"},{"code":"0054004","name":"Big C Pattaya"},{"code":"0054005","name":"Central Sriracha"},{"code":"0054007","name":"Lotus Pattaya"},{"code":"0054011","name":"Central Ayuthaya"},{"code":"0054012","name":"Big C Petchaburi"},{"code":"0054013","name":"Big C Chacheungsao 2"},{"code":"0054014","name":"Lotus Banpong"},{"code":"0054016","name":"Big C Cholburi (2)"},{"code":"0054017","name":"Robinson Kanchanaburi"},{"code":"0054018","name":"Big C Ayutthaya"},{"code":"0054019","name":"Big C Sakaew"},{"code":"0054021","name":"Central Pattaya Beach"},{"code":"0054022","name":"Central Mahachai"},{"code":"0054023","name":"Central Cholburi"},{"code":"0054026","name":"Big C Pattaya 2"},{"code":"0054027","name":"Big C Mahachai"},{"code":"0054029","name":"Harbor Mall"},{"code":"0054030","name":"Big C Chonburi"},{"code":"0054032","name":"Sukanan Park"},{"code":"0054035","name":"Robinson Saraburi"},{"code":"0054038","name":"Big C Srimahaphot"},{"code":"0054039","name":"Lotus Nakhonnayok"},{"code":"0054040","name":"Robinson Supanburi"},{"code":"0054042","name":"Nakhonpathom"},{"code":"0054044","name":"Robinson Chachuengsao"},{"code":"0054045","name":"Robinson Prachinburi"},{"code":"0054046","name":"Central Rayong"},{"code":"0054048","name":"Central Marina Pattaya"},{"code":"0054094","name":"Central Nakornpathom"},{"code":"0054095","name":"Lotus Saraburi"},{"code":"0054945","name":"Lotus Suphanburi"},{"code":"0054960","name":"Lotus Rajburi"},{"code":"0055001","name":"Hua Hin Market Village"},{"code":"0055005","name":"Lotus Suratthani"},{"code":"0055008","name":"Jungceylon Phuket"},{"code":"0055009","name":"Big C Hadyai 2"},{"code":"0055010","name":"Lotus Krabi"},{"code":"0055012","name":"Central Phuket"},{"code":"0055018","name":"Lotus Pattalung"},{"code":"0055019","name":"Lotus Samui Lamai"},{"code":"0055023","name":"Pattanee 1"},{"code":"0055024","name":"Lotus Hadyai 2"},{"code":"0055030","name":"Central Suratthani"},{"code":"0055031","name":"Big C Phuket"},{"code":"0055033","name":"Lotus Vengsa"},{"code":"0055035","name":"Central Hadyai"},{"code":"0055036","name":"Big C Trang"},{"code":"0055038","name":"Central Samui"},{"code":"0055040","name":"Lotus Jana"},{"code":"0055041","name":"Lotus Hadyai"},{"code":"0055042","name":"Lotus Songkla"},{"code":"0055043","name":"Central Nakornsrithammarat"},{"code":"0055044","name":"Bluport Huahin"},{"code":"0055046","name":"Big C Phang-nga"},{"code":"0055049","name":"Lotus Yala"},{"code":"0055901","name":"Robinson Trung"},{"code":"0055902","name":"Big C Nakhonsrithammarat"},{"code":"0055906","name":"Big C Satun"},{"code":"0055949","name":"Big C Suratthani"},{"code":"0055950","name":"Lotus Phuket"},{"code":"0055951","name":"Big C Hadyai"},{"code":"0068000","name":"Warehouse"},{"code":"0071205","name":"Infinic (Samut Prakan)"},{"code":"0072007","name":"Chaiyapong Pichit"},{"code":"0072011","name":"Chareonphan Payao"},{"code":"0073005","name":"Roi-et Plaza"},{"code":"0073015","name":"Suenheng Srisakate"},{"code":"0074023","name":"Kanockkarn Kanchanaburi"},{"code":"0075011","name":"Siribun Trang"},{"code":"0075012","name":"Vouge Krabi"},{"code":"0075014","name":"Ocean Chumporn"},{"code":"0099993","name":"IT Hold"},{"code":"0099994","name":"IT"},{"code":"0099995","name":"IT Tem"},{"code":"0099999","name":"Office"}];
@@ -539,10 +627,9 @@ async function doLogin() {
   const id = document.getElementById('li').value.trim();
   const pw = document.getElementById('lp').value;
 
-  // ★ FIX: รองรับทั้งเลือกจาก dropdown และพิมพ์รหัสตรงๆ
   let br = document.getElementById('lb').value.trim();
   if (!br) {
-    const typed = document.getElementById('lb-search').value.trim().split(' ')[0]; // เอาแค่รหัส
+    const typed = document.getElementById('lb-search').value.trim().split(' ')[0];
     const found = BRANCHES.find(b => b.code === typed || b.code === typed.padStart(7,'0'));
     if (found) { br = found.code; document.getElementById('lb').value = br; }
   }
@@ -725,17 +812,19 @@ async function scan(raw) {
 
   // ❌ บล็อกถ้ายังมีรูปที่ค้าง upload อยู่
   if (pendingUpload) {
-    area.style.display = 'block';
     area.innerHTML = `<div style="background:var(--amber-bg);border:1.5px solid var(--amber-bd);border-radius:var(--r);padding:20px 16px;text-align:center;">
       <div style="font-size:24px;margin-bottom:8px;">📤</div>
       <div style="font-size:14px;font-weight:700;color:var(--amber);">กำลัง Upload รูปอยู่</div>
       <div style="font-size:12px;color:var(--gray3);margin-top:4px;">กรุณารอให้ upload สำเร็จก่อนสแกนตัวถัดไป</div>
     </div>`;
+    speak(VOICE.uploading);
     area.scrollIntoView({behavior:'smooth',block:'nearest'});
     return;
   }
+
   if (S.scanned.has(key)) {
     area.innerHTML = rDup(key);
+    speak(VOICE.duplicate);
     toast('Already scanned');
     area.scrollIntoView({behavior:'smooth',block:'nearest'});
     return;
@@ -770,7 +859,9 @@ async function scan(raw) {
     const data = await res.json();
 
     if (!data.found) {
-      area.innerHTML = rUnmatch(key); toast('Not found in system');
+      area.innerHTML = rUnmatch(key);
+      speak(VOICE.notFound);
+      toast('Not found in system');
     } else {
       assetCache.set(key, data.asset);
       showAssetResult(key, data.asset, area);
@@ -780,7 +871,9 @@ async function scan(raw) {
       toast('Slow connection — retrying...');
       setTimeout(() => scan(key), 1000); area.style.display='none';
     } else {
-      area.innerHTML = rUnmatch(key); toast('Error: '+e.message);
+      area.innerHTML = rUnmatch(key);
+      speak(VOICE.error);
+      toast('Error: '+e.message);
     }
   }
   area.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -799,10 +892,12 @@ function showAssetResult(key, asset, area) {
   };
   if (isComputer && a.serial) {
     area.innerHTML = rSerial(key, a);
+    speak(VOICE.serialCheck);   // 🔊 "กรุณาตรวจสอบซีเรียลนัมเบอร์"
   } else {
     area.innerHTML = rMatch(key, a);
     commit(key, a.name, 'matched');
     queueScanLog(key, 'matched', {});
+    speak(VOICE.matched);       // 🔊 "สแกนสำเร็จ"
   }
 }
 
@@ -882,7 +977,6 @@ function rUnmatch(k){ return `
     <div class="fg"><div class="fl">Serial no. (from device)</div><input class="fi" id="us-${k}" placeholder="e.g. 7TK4B63"/></div>
     <div class="fg"><div class="fl">Device description</div><input class="fi" id="un-${k}" placeholder="e.g. Dell Monitor 24 inch"/></div>
     <div class="fg">
-      <div class="fl">Photo</div>
       <div class="ph-area"><input type="file" accept="image/*" capture="environment" onchange="prevPhoto(this,'${k}')"><img id="pv-${k}" class="ph-prev"><div id="pp-${k}"><div class="ph-ico">📷</div><div class="ph-txt">Tap to take photo</div></div></div>
     </div>
     <div class="fg"><div class="fl">Remark</div><input class="fi" id="ur-${k}" placeholder="Notes for HQ..."/></div>
@@ -907,14 +1001,16 @@ async function saveRemark(k,n) {
   if (file) {
     pendingUpload = true;
     showUploadOverlay(true);
+    speak(VOICE.uploading);   // 🔊 "กำลังอัปโหลดรูปภาพ กรุณารอสักครู่"
     try {
       const url = await uploadToCloudinary(file, S.branch||'unknown');
       commit(k, n, 'matched', {remark:r, photo_url:url});
       await saveScanLog(k, 'matched', {remark:r, photo_url:url});
+      speak(VOICE.saved);     // 🔊 "บันทึกเรียบร้อย"
     } catch(e) {
-      // upload fail — save without photo
       commit(k, n, 'matched', {remark:r});
       await saveScanLog(k, 'matched', {remark:r});
+      speak(VOICE.saved);
       toast('⚠ Upload รูปล้มเหลว — บันทึกโดยไม่มีรูป');
     } finally {
       pendingUpload = false;
@@ -923,9 +1019,11 @@ async function saveRemark(k,n) {
   } else {
     commit(k,n,'matched',{remark:r});
     await saveScanLog(k,'matched',{remark:r});
+    speak(VOICE.saved);       // 🔊 "บันทึกเรียบร้อย"
   }
   hideR();
 }
+
 async function doSerial(k,n,exp,match) {
   const found  = document.getElementById('sr-'+k)?.value||'';
   const remark = document.getElementById('rm-'+k)?.value||'';
@@ -934,6 +1032,7 @@ async function doSerial(k,n,exp,match) {
   if (file) {
     pendingUpload = true;
     showUploadOverlay(true);
+    speak(VOICE.uploading);
     try {
       const url = await uploadToCloudinary(file, S.branch||'unknown');
       commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,photo_url:url});
@@ -950,18 +1049,25 @@ async function doSerial(k,n,exp,match) {
     commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark});
     queueScanLog(k,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark});
   }
+  // 🔊 เสียงตาม serial match/mismatch
+  speak(match ? VOICE.serialOk : VOICE.serialFail);
   toast(match ? 'Serial verified ✓' : 'Serial mismatch — flagged to HQ');
   hideR();
 }
+
 async function doUnmatch(k) {
   const n = document.getElementById('un-'+k)?.value||'Unknown device';
   const s = document.getElementById('us-'+k)?.value||'';
   const r = document.getElementById('ur-'+k)?.value||'';
   commit(k,n,'unmatched',{serial_no:s,remark:r});
   await saveUnmatched(k,{serial_no:s,name:n,remark:r});
-  toast('Sent to HQ for review'); hideR();
+  speak(VOICE.notFound);    // 🔊 "ไม่พบข้อมูลในระบบ"
+  toast('Sent to HQ for review');
+  hideR();
 }
+
 function hideR() { document.getElementById('ra').style.display='none'; }
+
 function prevMatchPhoto(inp,k) {
   if (!inp.files[0]) return;
   const fr=new FileReader(); fr.onload=e=>{
@@ -993,6 +1099,7 @@ function prevPhoto(inp,k) {
     if(ph)ph.style.display='none';
   }; fr.readAsDataURL(inp.files[0]);
 }
+
 function commit(k,n,type,extra={}) {
   S.scanned.add(k);
   const now=new Date();
@@ -1244,6 +1351,7 @@ function submitNoQR() {
     branch_id:S.branch, status:'need_label', qr_key:'NOQR-'+Date.now()
   });
   closeNoQR(); updateChecklist(); saveSession();
+  speak(VOICE.noqr);   // 🔊 "แจ้งเอชคิวแล้ว"
   toast('Reported — HQ will print and send QR label');
 }
 
@@ -1275,19 +1383,19 @@ async function doCloseSession() {
     });
     if (!res.ok) throw new Error('API error '+res.status);
     closeCloseModal();
-    // แสดง done state
     document.getElementById('btn-close-sess').textContent = '✓ ปิดงานแล้ว';
     document.getElementById('btn-close-sess').classList.add('disabled');
     document.getElementById('btn-close-sess').disabled = true;
     S.cd = true;
+    speak(VOICE.sessionClose);  // 🔊 "ปิดงานสำเร็จ"
     toast('ปิดงานสำเร็จ ✓ HQ จะเห็น Status: Done');
   } catch(e) {
+    speak(VOICE.error);
     toast('เกิดข้อผิดพลาด: '+e.message);
     btn.textContent = '✓ ยืนยันปิดงาน'; btn.disabled = false;
   }
 }
 
-// ── TOAST ────────────────────────────────────────────────────
 // ── CLOUDINARY UPLOAD ────────────────────────────────────────
 const CLOUDINARY_CLOUD = 'dhpwh4io1';
 const CLOUDINARY_PRESET = 'bata_audit';
@@ -1330,9 +1438,9 @@ function saveEdit() {
   item.remark = document.getElementById('edit-remark').value;
   item.type   = document.getElementById('edit-type').value;
   saveSession();
+  speak(VOICE.saved);   // 🔊 "บันทึกเรียบร้อย"
   toast('แก้ไขแล้ว ✓');
   closeEditModal();
-  // re-render หน้าที่กำลังแสดงอยู่
   if (document.getElementById('slog')?.classList.contains('active')) showLog();
   if (document.getElementById('ssum')?.classList.contains('active')) showSum();
 }
@@ -1347,6 +1455,7 @@ function deleteEntry(idx) {
   if (document.getElementById('ssum')?.classList.contains('active')) showSum();
 }
 
+// ── TOAST ────────────────────────────────────────────────────
 function toast(m) {
   const t=document.getElementById('toast');
   t.textContent=m; t.classList.add('show');
