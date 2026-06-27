@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bata HQ Dashboard v2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600&family=Barlow+Condensed:wght@500;600;700&family=DM+Mono:wght@400;500&display=swap');
+:root {
+  --red:#CC0000;--red-d:#A30000;--red-l:#fff0f0;--red-bd:#ffcccc;
+  --white:#fff;--bg:#f4f2ef;--sf:#fff;--sf2:#f9f8f5;
+  --border:#e0ddd6;--text:#1a1a1a;--text2:#555;--text3:#999;
+  --green:#1a7a3c;--green-bg:#f0faf3;--green-bd:#b3dfc0;
+  --amber:#b85c00;--amber-bg:#fff8f0;--amber-bd:#ffd4a0;
+  --blue:#1a56db;--blue-bg:#eff4ff;--blue-bd:#c3d4fc;
+  --purple:#6b21a8;--purple-bg:#faf5ff;--purple-bd:#d8b4fe;
+  --sans:'Barlow',sans-serif;--cond:'Barlow Condensed',sans-serif;--mono:'DM Mono',monospace;
+  --r:10px;--rs:6px;--sidebar:220px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;display:flex;}
+#login-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200;}
+.login-box{background:var(--white);border:1px solid var(--border);border-radius:16px;padding:40px 36px;width:360px;}
+.login-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px;}
+.login-b{width:40px;height:40px;background:var(--red);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--cond);font-size:22px;font-weight:700;color:#fff;}
+.login-brand{font-family:var(--cond);font-size:18px;font-weight:700;}
+.login-brand span{display:block;font-size:11px;font-weight:400;color:var(--text3);letter-spacing:1.5px;}
+.login-title{font-family:var(--cond);font-size:22px;font-weight:700;margin-bottom:4px;}
+.login-sub{color:var(--text3);font-size:13px;margin-bottom:28px;}
+.lf{display:flex;flex-direction:column;gap:5px;margin-bottom:16px;}
+.lf label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.lf input{background:var(--sf2);border:1.5px solid var(--border);border-radius:var(--rs);padding:10px 12px;font-family:var(--sans);font-size:14px;outline:none;transition:border-color .2s;}
+.lf input:focus{border-color:var(--red);}
+.btn-login{width:100%;padding:12px;background:var(--red);color:#fff;border:none;border-radius:var(--rs);font-family:var(--cond);font-size:16px;font-weight:700;cursor:pointer;margin-top:4px;}
+.login-err{color:var(--red);font-size:12px;margin-top:10px;display:none;}
+.login-err.show{display:block;}
+#app{display:none;width:100%;min-height:100vh;}
+.sidebar{width:var(--sidebar);background:var(--white);border-right:1px solid var(--border);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:50;}
+.sidebar-logo{padding:20px 18px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.sb-b{width:32px;height:32px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--cond);font-size:18px;font-weight:700;color:#fff;flex-shrink:0;}
+.sb-name{font-family:var(--cond);font-size:14px;font-weight:700;line-height:1.2;}
+.sb-sub{font-size:10px;color:var(--text3);}
+.sidebar-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:var(--rs);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all .15s;}
+.nav-item:hover{background:var(--sf2);color:var(--text);}
+.nav-item.active{background:var(--red-l);color:var(--red);}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:10px;padding:1px 6px;border-radius:99px;display:none;}
+.nav-badge.amber{background:var(--amber);}
+.nav-badge.purple{background:var(--purple);}
+.sidebar-foot{padding:14px 18px;border-top:1px solid var(--border);font-size:12px;color:var(--text3);}
+.sidebar-foot strong{display:block;color:var(--text);font-size:13px;}
+.main-content{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column;min-height:100vh;}
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;}
+.topbar-title{font-family:var(--cond);font-size:20px;font-weight:700;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.refresh-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);transition:all .15s;}
+.refresh-btn:hover{border-color:var(--red);color:var(--red);}
+.page{padding:24px 28px;display:flex;flex-direction:column;gap:20px;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;cursor:pointer;transition:all .15s;position:relative;}
+.stat-card:hover{border-color:var(--red);box-shadow:0 4px 16px rgba(204,0,0,0.08);transform:translateY(-1px);}
+.stat-card .click-hint{position:absolute;bottom:10px;right:12px;font-size:10px;color:var(--text3);opacity:0;}
+.stat-card:hover .click-hint{opacity:1;}
+.stat-label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.stat-val{font-family:var(--cond);font-size:30px;font-weight:700;line-height:1;}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:4px;}
+.stat-card.green .stat-val{color:var(--green);}
+.stat-card.green:hover{border-color:var(--green);}
+.stat-card.amber .stat-val{color:var(--amber);}
+.stat-card.amber:hover{border-color:var(--amber);}
+.stat-card.red .stat-val{color:var(--red);}
+.stat-card.blue .stat-val{color:var(--blue);}
+.stat-card.blue:hover{border-color:var(--blue);}
+.section{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.section-head{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.section-title{font-family:var(--cond);font-size:16px;font-weight:700;}
+.section-actions{display:flex;gap:8px;align-items:center;}
+.btn{padding:7px 14px;border-radius:var(--rs);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+.btn-outline{background:var(--white);border-color:var(--border);color:var(--text2);}
+.btn-outline:hover{border-color:var(--red);color:var(--red);}
+.btn-red{background:var(--red);border-color:var(--red);color:#fff;}
+.btn-red:hover{background:var(--red-d);}
+.btn-green{background:var(--green);border-color:var(--green);color:#fff;}
+.btn-blue{background:var(--blue);border-color:var(--blue);color:#fff;}
+.btn-purple{background:var(--purple);border-color:var(--purple);color:#fff;}
+.btn-sm{padding:5px 10px;font-size:12px;}
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;background:var(--sf2);border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:var(--sf2);}
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;border:1px solid;}
+.badge-green{background:var(--green-bg);color:var(--green);border-color:var(--green-bd);}
+.badge-amber{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-bd);}
+.badge-red{background:var(--red-l);color:var(--red);border-color:var(--red-bd);}
+.badge-gray{background:var(--sf2);color:var(--text3);border-color:var(--border);}
+.badge-blue{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-bd);}
+.badge-purple{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-bd);}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;padding:16px 18px;}
+.photo-card{border:1px solid var(--border);border-radius:var(--r);overflow:hidden;background:var(--white);}
+.photo-card img{width:100%;height:160px;object-fit:cover;display:block;cursor:pointer;}
+.photo-no-img{width:100%;height:160px;background:var(--sf2);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3);font-size:12px;}
+.photo-body{padding:12px 14px;display:flex;flex-direction:column;gap:5px;}
+.photo-code{font-family:var(--mono);font-size:11px;color:var(--text3);}
+.photo-name{font-size:13px;font-weight:600;}
+.photo-meta{font-size:11px;color:var(--text3);}
+.photo-actions{display:flex;gap:6px;margin-top:6px;}
+.tab-bar{display:flex;border-bottom:1px solid var(--border);padding:0 18px;}
+.tab{padding:10px 16px;font-size:13px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;}
+.tab.active{color:var(--red);border-bottom-color:var(--red);}
+.filter-bar{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.filter-bar select{padding:7px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-family:var(--sans);background:var(--sf2);outline:none;}
+.filter-bar select:focus{border-color:var(--red);}
+.search-wrap{display:flex;align-items:center;gap:0;border:1px solid var(--border);border-radius:var(--rs);overflow:hidden;background:var(--sf2);}
+.search-wrap input{border:none;background:transparent;padding:7px 10px;font-size:13px;font-family:var(--sans);outline:none;min-width:200px;}
+.search-btn{padding:7px 12px;background:var(--red);border:none;color:#fff;cursor:pointer;font-size:14px;display:flex;align-items:center;transition:background .15s;}
+.search-btn:hover{background:var(--red-d);}
+.pb{background:#e8e5e0;border-radius:99px;height:7px;overflow:hidden;width:100px;}
+.pb-fill{height:100%;border-radius:99px;}
+.pb-green{background:var(--green);}
+.pb-amber{background:var(--amber);}
+.pb-red{background:var(--red);}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--white);border-radius:var(--r);max-width:640px;width:100%;max-height:90vh;overflow-y:auto;}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-title{font-family:var(--cond);font-size:18px;font-weight:700;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:4px;}
+.modal-body{padding:20px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
+.field input,.field select,.field textarea{padding:8px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;font-family:var(--sans);background:var(--sf2);outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--red);}
+.field textarea{resize:vertical;min-height:70px;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.loading{text-align:center;padding:40px;color:var(--text3);font-size:13px;}
+.toast-wrap{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:8px;z-index:300;}
+.toast{background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--rs);font-size:13px;font-weight:500;animation:fadeIn .2s ease;max-width:320px;}
+.toast.success{background:var(--green);}
+.toast.error{background:var(--red);}
+.toast.info{background:var(--blue);}
+.badge-overdue{background:#f5e0fe;color:#6b21a8;border-color:#d8b4fe;}
+.btn-ack{padding:6px 12px;background:var(--green);border:none;border-radius:var(--rs);color:#fff;font-size:12px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;}
+.btn-ack:hover{background:var(--green-d,#145e2f);}
+.btn-ack.done{background:var(--sf2);color:var(--text3);border:1px solid var(--border);cursor:default;}
+.btn-needs-fix{padding:6px 12px;background:var(--red-l);border:1.5px solid var(--red-bd);border-radius:var(--rs);color:var(--red);font-size:12px;font-weight:600;cursor:pointer;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:200;display:flex;align-items:center;justify-content:center;cursor:zoom-out;}
+.lightbox img{max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;}
+.scan-thumb{width:52px;height:52px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:1px solid var(--border);display:block;transition:transform .15s;}
+.scan-thumb:hover{transform:scale(1.1);box-shadow:0 4px 12px rgba(0,0,0,0.15);}
+.scan-no-photo{width:52px;height:52px;border-radius:6px;border:1.5px dashed var(--border);background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:20px;}
+.page-banner{padding:10px 18px;background:var(--blue-bg);border-bottom:1px solid var(--blue-bd);font-size:13px;color:var(--blue);display:flex;align-items:center;gap:8px;}
+.page-banner.amber{background:var(--amber-bg);border-color:var(--amber-bd);color:var(--amber);}
+.page-banner.green{background:var(--green-bg);border-color:var(--green-bd);color:var(--green);}
+.page-banner.purple{background:var(--purple-bg);border-color:var(--purple-bd);color:var(--purple);}
+/* upload zone */
+.upload-zone{width:100%;min-height:110px;border:2px dashed var(--border);border-radius:var(--rs);background:var(--sf2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:8px;}
+.upload-zone:hover{border-color:var(--red);background:var(--red-l);}
+/* upload progress */
+.upload-progress{width:100%;height:4px;background:var(--border);border-radius:99px;overflow:hidden;display:none;margin-bottom:8px;}
+.upload-progress-fill{height:100%;background:var(--red);border-radius:99px;transition:width .3s ease;width:0%;}
+/* duplicate session warning */
+.dup-warning{background:var(--purple-bg);border:1px solid var(--purple-bd);border-radius:var(--r);padding:14px 18px;display:flex;align-items:flex-start;gap:12px;}
+.dup-warning-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.dup-warning-body{flex:1;}
+.dup-warning-title{font-weight:700;color:var(--purple);margin-bottom:4px;font-family:var(--cond);font-size:15px;}
+.dup-warning-text{font-size:12px;color:var(--text2);line-height:1.5;}
+.dup-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+/* photo upload state */
+.photo-uploading{opacity:.6;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-b">B</div>
+      <div class="login-brand">BATA<span>THAILAND · HQ</span></div>
+    </div>
+    <div class="login-title">HQ Dashboard v2</div>
+    <div class="login-sub">Fixed Asset Audit Management</div>
+    <div class="lf"><label>Employee ID</label><input id="l-id" type="text" placeholder="ADMIN01"/></div>
+    <div class="lf"><label>Password</label><input id="l-pw" type="password" placeholder="••••••••"/></div>
+    <button class="btn-login" onclick="doLogin()">SIGN IN</button>
+    <div class="login-err" id="l-err">Invalid credentials</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sb-b">B</div>
+      <div><div class="sb-name">BATA AUDIT<span class="sb-sub">HQ Dashboard v2</span></div></div>
+    </div>
+    <div class="sidebar-nav">
+      <button class="nav-item active" id="nav-overview" onclick="showPage('overview')">📊 Overview</button>
+      <button class="nav-item" id="nav-scans" onclick="showPage('scans')">
+        🔍 Scan Logs <span class="nav-badge" id="badge-scans"></span>
+      </button>
+      <button class="nav-item" id="nav-photos" onclick="showPage('photos')">
+        📷 Photos <span class="nav-badge amber" id="badge-photos"></span>
+      </button>
+      <button class="nav-item" id="nav-unmatched" onclick="showPage('unmatched')">
+        ⚠️ Unmatched <span class="nav-badge" id="badge-unmatched"></span>
+      </button>
+      <button class="nav-item" id="nav-assets" onclick="showPage('assets')">
+        🗂️ Assets / SEQ <span class="nav-badge" id="badge-assets" style="background:var(--blue);display:none;"></span>
+      </button>
+      <button class="nav-item" id="nav-export" onclick="showPage('export')">📥 Export</button>
+    </div>
+    <div class="sidebar-foot">
+      <strong id="sb-user">ADMIN01</strong>HQ Administrator<br><br>
+      <span style="cursor:pointer;color:var(--red);" onclick="doLogout()">Sign out</span>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Overview</div>
+      <div class="topbar-right">
+        <span style="font-size:12px;color:var(--text3);font-family:var(--mono);" id="last-updated">—</span>
+        <button class="refresh-btn" onclick="loadAll()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- OVERVIEW -->
+    <div class="page" id="page-overview">
+
+      <!-- Duplicate session warning (hidden by default) -->
+      <div id="dup-session-warning" style="display:none"></div>
+
+      <div class="stat-grid">
+        <div class="stat-card blue" onclick="goToAllAssets()" title="คลิกดูรายการทั้งหมด">
+          <div class="stat-label">Total Assets</div>
+          <div class="stat-val" id="s-total-assets">—</div>
+          <div class="stat-sub">ทรัพย์สินทั้งหมด</div>
+          <div class="click-hint">คลิกเพื่อดูรายการ →</div>
+        </div>
+        <div class="stat-card green" onclick="goToScanned()" title="คลิกดูรายการที่สแกนแล้ว">
+          <div class="stat-label">Scanned</div>
+          <div class="stat-val" id="s-total">—</div>
+          <div class="stat-sub">สแกนแล้ว</div>
+          <div class="click-hint">คลิกเพื่อดูรายการ →</div>
+        </div>
+        <div class="stat-card amber" onclick="goToPendingOverview()" title="นับจาก Session: total_assets − scanned_count (อาจรวมทุกสาขา)">
+          <div class="stat-label">Pending <span style="font-size:10px;font-weight:400;opacity:0.7;">(จาก Session)</span></div>
+          <div class="stat-val" id="s-pending">—</div>
+          <div class="stat-sub" id="s-pending-sub">ยังไม่ได้สแกน (รวมทุกสาขา)</div>
+          <div class="click-hint">คลิกเพื่อดูรายการ →</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Unmatched</div>
+          <div class="stat-val" id="s-unmatched">—</div>
+          <div class="stat-sub">pending review</div>
+        </div>
+      </div>
+      <!-- Daily Summary Banner -->
+      <div id="daily-summary-banner" style="background:var(--blue-bg);border:1px solid var(--blue-bd);border-radius:var(--r);padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+        <div style="font-size:13px;font-weight:600;color:var(--blue);" id="daily-date-label">📅 วันนี้</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;" id="daily-stats">
+          <span style="font-size:13px;color:var(--text2);">โหลดข้อมูล...</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+          <span id="daily-pending-ack" style="display:none;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;"></span>
+          <button class="btn btn-outline btn-sm" onclick="showPage('scans');applyDatePresetValue('today')">ดู Scan Logs วันนี้ →</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">Branch Sessions</div>
+          <button class="btn btn-red btn-sm" onclick="openCreateSessionModal()">➕ สร้าง Session</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Branch</th><th>Total Assets</th><th>Progress</th><th>Scanned</th><th>Pending</th><th>Unmatched</th><th>Status</th><th style="width:100px;">วันที่นัดสแกน</th><th style="width:80px;">🟢 Active</th><th style="width:110px;">HQ รับงาน</th><th>Actions</th></tr></thead>
+            <tbody id="sessions-tbody"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SCAN LOGS -->
+    <div class="page" id="page-scans" style="display:none">
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">Scan Logs</div>
+          <div class="section-actions">
+            <span id="scan-count" style="font-size:12px;color:var(--text3);">—</span>
+            <button class="btn btn-outline btn-sm" onclick="openAddAssetModal()">➕ เพิ่มรายการ</button>
+            <button class="btn btn-red btn-sm" onclick="exportScans()">📥 Export</button>
+          </div>
+        </div>
+        <div id="scan-banner" style="display:none"></div>
+        <div class="filter-bar" style="flex-wrap:wrap;">
+          <div class="search-wrap">
+            <input id="scan-search" type="text" placeholder="ค้นหา asset code / ชื่อ..." onkeydown="if(event.key==='Enter')doSearch()">
+            <button class="search-btn" onclick="doSearch()" title="ค้นหา">🔍</button>
+          </div>
+          <select id="scan-branch" onchange="filterScans()"><option value="">ทุกสาขา</option></select>
+          <select id="scan-condition" onchange="filterScans()">
+            <option value="">ทุกสภาพ</option>
+            <option value="pending">⏳ Pending (ยังไม่สแกน)</option>
+            <option value="good">Good</option>
+            <option value="damaged">Damaged</option>
+            <option value="missing">Missing</option>
+          </select>
+          <select id="scan-photo" onchange="filterScans()">
+            <option value="">ทุกรายการ</option>
+            <option value="yes">มีรูปถ่าย</option>
+            <option value="no">ไม่มีรูป</option>
+          </select>
+          <div style="display:flex;align-items:center;gap:6px;background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);padding:4px 10px;">
+            <span style="font-size:11px;font-weight:600;color:var(--text3);">📅 วันที่</span>
+            <select id="scan-date-preset" onchange="applyDatePreset()" style="border:none;background:transparent;font-size:13px;font-family:var(--sans);outline:none;color:var(--text);cursor:pointer;">
+              <option value="">ทุกวัน</option>
+              <option value="today">วันนี้</option>
+              <option value="yesterday">เมื่อวาน</option>
+              <option value="7d">7 วันล่าสุด</option>
+              <option value="30d">30 วันล่าสุด</option>
+              <option value="custom">กำหนดเอง</option>
+            </select>
+          </div>
+          <div id="date-custom-wrap" style="display:none;align-items:center;gap:4px;">
+            <input type="date" id="scan-date-from" onchange="filterScans()" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;font-family:var(--sans);background:var(--sf2);">
+            <span style="font-size:12px;color:var(--text3);">ถึง</span>
+            <input type="date" id="scan-date-to" onchange="filterScans()" style="padding:5px 8px;border:1px solid var(--border);border-radius:var(--rs);font-size:12px;font-family:var(--sans);background:var(--sf2);">
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="clearSearch()">✕ ล้าง</button>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th style="width:68px;">รูป</th><th>Asset Code</th><th>ชื่อ Asset</th><th style="width:80px;text-align:center;">SEQ</th><th>สภาพ</th><th>Serial Match</th><th>Serial Found</th><th>สาขา</th><th style="width:90px;">วันที่สแกน</th><th>เวลา</th><th>Actions</th></tr></thead>
+            <tbody id="scans-tbody"><tr><td colspan="10" class="loading">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHOTOS -->
+    <div class="page" id="page-photos" style="display:none">
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">📷 รูปถ่ายจากสาขา</div>
+          <div class="section-actions"><span id="photo-count" style="font-size:12px;color:var(--text3);">—</span></div>
+        </div>
+        <div class="filter-bar">
+          <div class="search-wrap">
+            <input id="photo-search" type="text" placeholder="ค้นหา..." onkeydown="if(event.key==='Enter')renderPhotos()">
+            <button class="search-btn" onclick="renderPhotos()" title="ค้นหา">🔍</button>
+          </div>
+          <select id="photo-branch" onchange="renderPhotos()"><option value="">ทุกสาขา</option></select>
+        </div>
+        <div class="photo-grid" id="photo-grid"><div class="loading" style="grid-column:1/-1">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- UNMATCHED -->
+    <div class="page" id="page-unmatched" style="display:none">
+      <div class="section">
+        <div class="section-head">
+          <div class="section-title">⚠️ Unmatched Assets</div>
+          <div class="section-actions"><span id="unmatched-count" style="font-size:12px;color:var(--text3);">—</span></div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab active" onclick="filterUnmatched('pending',this)">Pending</div>
+          <div class="tab" onclick="filterUnmatched('matched',this)">Matched</div>
+          <div class="tab" onclick="filterUnmatched('all',this)">All</div>
+        </div>
+        <div class="photo-grid" id="unmatched-grid"><div class="loading" style="grid-column:1/-1">Loading...</div></div>
+      </div>
+    </div>
+
+    <!-- ASSETS / SEQ -->
+    <div class="page" id="page-assets" style="display:none">
+      <div id="assets-banner" style="display:none;padding:10px 18px;font-size:13px;align-items:center;gap:8px;"></div>
+
+      <!-- Summary cards -->
+      <div class="stat-grid" style="padding:16px 18px 0;">
+        <div class="stat-card blue" style="cursor:default;">
+          <div class="stat-label">SEQ ทั้งหมด</div>
+          <div class="stat-val" id="seq-total">—</div>
+          <div class="stat-sub">รายการในระบบ</div>
+        </div>
+        <div class="stat-card green" style="cursor:default;">
+          <div class="stat-label">สแกนแล้ว</div>
+          <div class="stat-val" id="seq-scanned">—</div>
+          <div class="stat-sub">พบในระบบสแกน</div>
+        </div>
+        <div class="stat-card amber" style="cursor:default;">
+          <div class="stat-label">ยังไม่สแกน</div>
+          <div class="stat-val" id="seq-pending">—</div>
+          <div class="stat-sub">รอการตรวจสอบ</div>
+        </div>
+        <div class="stat-card" style="cursor:default;">
+          <div class="stat-label">สาขา</div>
+          <div class="stat-val" id="seq-branches">—</div>
+          <div class="stat-sub">ที่มีข้อมูล SEQ</div>
+        </div>
+      </div>
+
+      <div class="section" style="margin-top:16px;">
+        <div class="section-head">
+          <div class="section-title">รายการ SEQ ทั้งหมด</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input id="assets-search" type="text" placeholder="🔍 ค้นหา QR / ชื่อ / Serial..." style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;width:220px;" oninput="filterAssets()">
+            <select id="assets-branch-filter" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;" onchange="filterAssets()">
+              <option value="">ทุกสาขา</option>
+            </select>
+            <select id="assets-status-filter" style="padding:6px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;" onchange="filterAssets()">
+              <option value="">ทุกสถานะ</option>
+              <option value="scanned">✅ สแกนแล้ว</option>
+              <option value="pending">⏳ ยังไม่สแกน</option>
+            </select>
+            <button class="btn btn-outline" style="font-size:12px;padding:6px 12px;" onclick="loadAssetsPage()">🔄 Refresh</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:36px;">#</th>
+                <th>QR Key</th>
+                <th>ชื่อ Asset</th>
+                <th style="width:70px;text-align:center;">SEQ</th>
+                <th style="width:85px;">สาขา</th>
+                <th>Serial No.</th>
+                <th style="width:110px;text-align:center;">สถานะ</th>
+                <th style="width:110px;">เวลาสแกน</th>
+              </tr>
+            </thead>
+            <tbody id="assets-tbody">
+              <tr><td colspan="8" class="loading">กด Refresh เพื่อโหลดข้อมูล SEQ</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:10px 18px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--text3);">
+          <span id="assets-count-label"></span>
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button class="btn btn-outline" style="font-size:12px;padding:4px 10px;" onclick="assetsPrev()">◀ ก่อนหน้า</button>
+            <span id="assets-page-info" style="padding:4px 10px;color:var(--text2);font-weight:500;"></span>
+            <button class="btn btn-outline" style="font-size:12px;padding:4px 10px;" onclick="assetsNext()">ถัดไป ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="page" id="page-export" style="display:none">
+      <div class="section">
+        <div class="section-head"><div class="section-title">📥 Export Audit Report</div></div>
+        <div style="padding:24px 18px;display:flex;flex-direction:column;gap:12px;max-width:480px;">
+          <button class="btn btn-red" onclick="exportPDF()" style="font-size:14px;padding:10px 18px;">🖨️ Export PDF — Full Report พร้อมรูปถ่าย</button>
+          <button class="btn btn-outline" onclick="exportFullReport()">📊 Export Excel — Full Report (Scanned + Pending)</button>
+          <button class="btn btn-outline" onclick="exportScans()">🔍 Export Scan Logs (.xlsx)</button>
+          <button class="btn btn-outline" onclick="exportUnmatchedXlsx()">⚠️ Export Unmatched (.xlsx)</button>
+          <div style="background:var(--sf2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--text3);line-height:1.7;margin-top:8px;">
+            📄 <strong>PDF</strong> — เปิดหน้าใหม่ใน Browser กด Ctrl+P แล้วเลือก Save as PDF ได้เลยครับ<br>
+            📊 <strong>Excel</strong> — ดาวน์โหลดเป็น .xlsx ครบ 300 รายการ แยก Scanned / Pending
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UNMATCHED EDIT MODAL -->
+<div class="modal-overlay" id="unmatched-edit-modal" style="display:none" onclick="if(event.target===this)closeUnmatchedEdit()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">✏️ Edit & Match — Unmatched Asset</div>
+      <button class="modal-close" onclick="closeUnmatchedEdit()">✕</button>
+    </div>
+    <div class="modal-body">
+      <img id="um-modal-img" src="" alt="" style="display:none;width:100%;border-radius:8px;margin-bottom:16px;max-height:260px;object-fit:cover;cursor:zoom-in;" onclick="openLightbox(this.src)">
+      <div style="background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;margin-bottom:16px;font-size:13px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);margin-bottom:4px;">QR ที่สแกนได้</div>
+        <div style="font-family:var(--mono);font-size:12px;" id="um-qr">—</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px;" id="um-meta">—</div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Asset Code ที่ถูกต้อง</label><input id="um-asset-code" type="text" placeholder="เช่น SFU01202402009"></div>
+        <div class="field"><label>ชื่อ Asset</label><input id="um-asset-name" type="text" placeholder="ชื่อครุภัณฑ์"></div>
+      </div>
+      <div class="field"><label>Serial Number (ถ้ามี)</label><input id="um-serial" type="text" placeholder="Serial ที่พบจริง"></div>
+      <div class="field" style="margin-top:10px;"><label>หมายเหตุ HQ</label><textarea id="um-note" placeholder="อธิบายเพิ่มเติม..."></textarea></div>
+      <input type="hidden" id="um-edit-id">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeUnmatchedEdit()">ยกเลิก</button>
+      <button class="btn btn-outline" style="color:var(--red);" onclick="saveAndReject()">✕ Reject</button>
+      <button class="btn btn-green" onclick="saveAndMatch()">✓ บันทึก & Matched</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT SCAN MODAL -->
+<div class="modal-overlay" id="edit-modal" style="display:none" onclick="if(event.target===this)closeEditModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title">✏️ แก้ไข Scan Log</div>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- ── รูปภาพ section ── -->
+      <div id="photo-section" style="margin-bottom:12px;">
+
+        <!-- รูปปัจจุบัน + zoom hint -->
+        <div id="photo-current-wrap" style="display:none;position:relative;margin-bottom:6px;">
+          <img id="modal-img" src="" alt=""
+            style="width:100%;border-radius:8px;max-height:280px;object-fit:contain;background:var(--sf2);cursor:zoom-in;display:block;"
+            onclick="openLightbox(this.src)">
+          <div style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:#fff;padding:3px 8px;border-radius:20px;font-size:10px;pointer-events:none;">🔍 คลิกขยาย</div>
+        </div>
+
+        <!-- Progress bar (upload) -->
+        <div class="upload-progress" id="upload-progress">
+          <div class="upload-progress-fill" id="upload-progress-fill"></div>
+        </div>
+
+        <!-- แถวปุ่มจัดการรูป -->
+        <div id="photo-action-row" style="display:flex;gap:8px;margin-bottom:8px;"></div>
+
+        <!-- Zone อัปโหลด (แสดงเมื่อไม่มีรูป) -->
+        <label id="upload-zone" for="photo-file-input" class="upload-zone" style="display:none;">
+          <span style="font-size:28px;">📷</span>
+          <span style="font-size:13px;font-weight:500;color:var(--text2);">คลิกหรือลากไฟล์เพื่ออัปโหลดรูป</span>
+          <span style="font-size:11px;color:var(--text3);">JPG, PNG ขนาดไม่เกิน 5MB</span>
+        </label>
+        <input type="file" id="photo-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadPhoto(this)">
+      </div>
+
+      <div class="field-row">
+        <div class="field"><label>Asset Code</label><input id="m-code" type="text" readonly style="background:#f0f0f0;"></div>
+        <div class="field"><label>Asset Name</label><input id="m-name" type="text" readonly style="background:#f0f0f0;"></div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>สภาพ (Condition)</label>
+          <select id="m-condition">
+            <option value="good">Good — ดี</option>
+            <option value="damaged">Damaged — ชำรุด</option>
+            <option value="missing">Missing — หาย</option>
+          </select>
+        </div>
+        <div class="field"><label>Serial Found (ที่พบจริง)</label><input id="m-serial" type="text" placeholder="ใส่ serial ที่พบจริง"></div>
+      </div>
+      <div class="field"><label>หมายเหตุ HQ</label><textarea id="m-note" placeholder="หมายเหตุเพิ่มเติม..."></textarea></div>
+      <input type="hidden" id="m-scan-id">
+    </div>
+    <div class="modal-foot" style="justify-content:space-between;">
+      <button class="btn btn-outline" style="color:var(--red);border-color:var(--red-bd);"
+        onclick="deleteScanLog(document.getElementById('m-scan-id').value)">
+        🗑️ ลบรายการนี้
+      </button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-outline" onclick="closeEditModal()">ยกเลิก</button>
+        <button class="btn btn-red" onclick="saveScanEdit()">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MERGE SESSION MODAL -->
+<div class="modal-overlay" id="merge-modal" style="display:none" onclick="if(event.target===this)closeMergeModal()">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <div class="modal-title">🔀 Merge Sessions — <span id="merge-branch-name"></span></div>
+      <button class="modal-close" onclick="closeMergeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--purple-bg);border:1px solid var(--purple-bd);border-radius:var(--rs);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--purple);">
+        ⚠️ พบ Sessions ซ้ำของสาขานี้ — การ Merge จะรวม Scan Logs เข้า Session เดิมและลบ Session ซ้ำออก
+      </div>
+      <div id="merge-sessions-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+      <div class="field">
+        <label>เก็บ Session ID นี้ไว้ (Primary)</label>
+        <select id="merge-primary-id" style="padding:8px 10px;border:1px solid var(--border);border-radius:var(--rs);font-size:13px;"></select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeMergeModal()">ยกเลิก</button>
+      <button class="btn btn-purple" onclick="confirmMerge()">🔀 Merge Sessions</button>
+    </div>
+  </div>
+</div>
+
+<div class="lightbox" id="lightbox" style="display:none" onclick="closeLightbox()">
+  <img id="lightbox-img" src="" alt="">
+</div>
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+const API = 'https://bata-asset-api-production.up.railway.app';
+let token = null, currentUser = null;
+let allScans = [], allUnmatched = [], allSessions = [];
+let filteredScans = [], unmatchedFilter = 'pending';
+let currentScanMode = 'normal';
+let pendingMergeBranch = null; // สำหรับ merge modal
+
+// ── HELPER: รวม asset_code + SEQ จาก allAssets ──────────
+// ใช้ทุกที่แทนการแสดง asset_code เปล่า ๆ
+function getFullCode(assetCode) {
+  if (!assetCode) return '—';
+  // ถ้าใน allAssets มี qr_key ที่ขึ้นต้นด้วย assetCode → ดึง SEQ suffix มาต่อท้าย
+  if (typeof allAssets !== 'undefined' && allAssets.length) {
+    const match = allAssets.find(a => (a.asset_code||'') === assetCode);
+    if (match && match.qr_key) {
+      const seqPart = match.qr_key.match(/SEQ\d+$/i);
+      if (seqPart) return assetCode + seqPart[0].toUpperCase();
+    }
+    // fallback: หา qr_key ที่ขึ้นต้นด้วย assetCode
+    const fallback = allAssets.find(a => (a.qr_key||'').startsWith(assetCode));
+    if (fallback && fallback.qr_key) return fallback.qr_key.toUpperCase();
+  }
+  return assetCode;
+}
+
+// ── AUTH ────────────────────────────────────────────────
+function saveSession(t, user) { sessionStorage.setItem('bata_hq_v2', JSON.stringify({token:t,user})); }
+function restoreSession() {
+  try {
+    const s = JSON.parse(sessionStorage.getItem('bata_hq_v2'));
+    if (!s?.token) return false;
+    token = s.token; currentUser = s.user;
+    document.getElementById('sb-user').textContent = s.user;
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    return true;
+  } catch(e) { return false; }
+}
+window.addEventListener('load', () => {
+  if (restoreSession()) {
+    loadAll();
+    // Auto-refresh every 60 seconds
+    setInterval(() => { if (token) loadAll(); }, 60000);
+  }
+});
+document.addEventListener('keypress', e => { if (e.key==='Enter' && document.getElementById('login-screen').style.display!=='none') doLogin(); });
+
+async function doLogin() {
+  const id = document.getElementById('l-id').value.trim();
+  const pw = document.getElementById('l-pw').value;
+  const err = document.getElementById('l-err');
+  err.classList.remove('show');
+  const btn = document.querySelector('.btn-login');
+  btn.textContent = 'Signing in...'; btn.disabled = true;
+  try {
+    const res = await fetch(API + '/auth/login', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({employee_id:id,password:pw,branch_id:'HQ'})});
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || 'Login failed');
+    if (data.role !== 'hq_admin') throw new Error('HQ admin access required');
+    token = data.token; currentUser = id;
+    document.getElementById('sb-user').textContent = id;
+    saveSession(token, id);
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    loadAll();
+  } catch(e) { err.textContent = e.message; err.classList.add('show'); }
+  finally { btn.textContent = 'SIGN IN'; btn.disabled = false; }
+}
+function doLogout() {
+  token = null; sessionStorage.removeItem('bata_hq_v2');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+}
+function authHeader() { return {'Authorization':'Bearer '+token,'Content-Type':'application/json'}; }
+
+// ── LOAD ALL ────────────────────────────────────────────
+async function loadAll() {
+  if (!token) return;
+  document.getElementById('last-updated').textContent = 'Loading...';
+  try {
+    await Promise.all([loadScans(), loadUnmatched(), loadSummary(), loadAssetsBackground()]);
+    renderOverview(); renderScans(); renderPhotos(); renderUnmatched(unmatchedFilter); updateBadges();
+    document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  } catch(e) { console.error(e); showToast('Error: '+e.message,'error'); document.getElementById('last-updated').textContent='Error'; }
+}
+
+// โหลด allAssets เงียบ ๆ ตอน init เพื่อให้ getFullCode() ใช้งานได้ทุกหน้า
+async function loadAssetsBackground() {
+  try {
+    const res = await fetch(API + '/hq/assets', {headers: authHeader()});
+    if (!res.ok) return; // ถ้า fail ก็ไม่เป็นไร แค่ SEQ จะไม่แสดง
+    const data = await res.json();
+    allAssets = data.assets || [];
+    // re-render scans หลังได้ assets แล้ว
+    if (allScans.length) renderScans();
+  } catch(e) { /* silent */ }
+}
+
+async function loadScans() {
+  const res = await fetch(API+'/hq/scans',{headers:authHeader()});
+  if (!res.ok) throw new Error('Cannot load scans: '+res.status);
+  const data = await res.json();
+  allScans = data.scans || [];
+  filteredScans = allScans;
+  populateBranchFilter('scan-branch', allScans);
+  populateBranchFilter('photo-branch', allScans);
+}
+async function loadUnmatched() {
+  const res = await fetch(API+'/hq/unmatched',{headers:authHeader()});
+  if (!res.ok) throw new Error('Cannot load unmatched: '+res.status);
+  const data = await res.json();
+  allUnmatched = data.items || [];
+}
+async function loadSummary() {
+  const res = await fetch(API+'/dashboard/summary',{headers:authHeader()});
+  if (!res.ok) throw new Error('Cannot load summary: '+res.status);
+  const data = await res.json();
+  allSessions = data.sessions || [];
+}
+async function loadMasterAssets(branchId) {
+  if (!branchId) return [];
+  const res = await fetch(API+'/assets/branch/'+branchId,{headers:authHeader()});
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.assets || data || [];
+}
+
+function populateBranchFilter(selectId, rows) {
+  const sel = document.getElementById(selectId);
+  const cur = sel.value;
+  const branches = [...new Set(rows.map(r=>r.branch_id).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">ทุกสาขา</option>' + branches.map(b=>`<option value="${b}">${b}</option>`).join('');
+  sel.value = cur;
+}
+
+// ── DUPLICATE SESSION DETECTION ─────────────────────────
+function detectDuplicateSessions() {
+  // จับกลุ่ม session ที่มี branch_id เดียวกัน
+  const groups = {};
+  allSessions.forEach(s => {
+    const bid = s.branch_id;
+    if (!groups[bid]) groups[bid] = [];
+    groups[bid].push(s);
+  });
+  return Object.entries(groups).filter(([, list]) => list.length > 1);
+}
+
+function renderDuplicateWarnings() {
+  const dups = detectDuplicateSessions();
+  const container = document.getElementById('dup-session-warning');
+  if (!dups.length) { container.style.display = 'none'; return; }
+
+  const html = dups.map(([branchId, sessions]) => `
+    <div class="dup-warning">
+      <div class="dup-warning-icon">🔀</div>
+      <div class="dup-warning-body">
+        <div class="dup-warning-title">พบ Sessions ซ้ำ — สาขา ${branchId}</div>
+        <div class="dup-warning-text">
+          มี ${sessions.length} sessions สำหรับสาขา <strong>${branchId}</strong> — อาจเกิดจากการเปิด scan ใหม่โดยไม่ได้ใช้ session เดิม<br>
+          Session IDs: ${sessions.map(s=>`<code style="background:var(--purple-bg);padding:1px 5px;border-radius:3px;">#${s.session_id||s.id}</code>`).join(', ')}
+        </div>
+        <div class="dup-actions">
+          <button class="btn btn-purple btn-sm" onclick="openMergeModal('${branchId}')">🔀 Merge Sessions</button>
+          <button class="btn btn-outline btn-sm" onclick="this.closest('.dup-warning').style.display='none'">ไม่สนใจตอนนี้</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  container.innerHTML = html;
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.gap = '10px';
+
+  // Badge warning บน nav
+  const navBadge = document.getElementById('nav-overview');
+  // แสดง badge ซ้ำ
+}
+
+// ── MERGE SESSIONS ──────────────────────────────────────
+function openMergeModal(branchId) {
+  pendingMergeBranch = branchId;
+  const sessions = allSessions.filter(s => s.branch_id === branchId);
+  document.getElementById('merge-branch-name').textContent = branchId;
+
+  // แสดงรายการ sessions
+  const listEl = document.getElementById('merge-sessions-list');
+  listEl.innerHTML = sessions.map(s => {
+    const scanned = parseInt(s.scanned_count)||0;
+    const total = parseInt(s.total_assets)||0;
+    const created = s.created_at ? new Date(s.created_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}) : '—';
+    return `<div style="background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);padding:10px 14px;font-size:13px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-family:var(--mono);font-size:12px;color:var(--text3);">Session #${s.session_id||s.id}</span>
+        <span class="badge badge-${s.status==='done'?'green':s.status==='on_process'?'amber':'gray'}">${s.status||'open'}</span>
+      </div>
+      <div style="margin-top:4px;font-size:12px;color:var(--text2);">สแกนแล้ว <strong>${scanned}</strong> / ${total} รายการ · สร้างเมื่อ ${created}</div>
+    </div>`;
+  }).join('');
+
+  // Dropdown เลือก primary
+  const sel = document.getElementById('merge-primary-id');
+  sel.innerHTML = sessions.map(s =>
+    `<option value="${s.session_id||s.id}">Session #${s.session_id||s.id} (สร้าง: ${s.created_at?new Date(s.created_at).toLocaleDateString('th-TH'):'?'}, สแกน: ${s.scanned_count||0})</option>`
+  ).join('');
+  // แนะนำ session ที่มี scan มากที่สุด
+  const best = sessions.reduce((a,b) => (parseInt(a.scanned_count)||0) >= (parseInt(b.scanned_count)||0) ? a : b);
+  sel.value = best.session_id||best.id;
+
+  document.getElementById('merge-modal').style.display = 'flex';
+}
+
+function closeMergeModal() {
+  document.getElementById('merge-modal').style.display = 'none';
+  pendingMergeBranch = null;
+}
+
+async function confirmMerge() {
+  const primaryId = document.getElementById('merge-primary-id').value;
+  const sessions = allSessions.filter(s => s.branch_id === pendingMergeBranch);
+  const toDelete = sessions.filter(s => String(s.session_id||s.id) !== String(primaryId));
+
+  if (!toDelete.length) { showToast('ไม่มี session ที่ต้องลบ', ''); closeMergeModal(); return; }
+
+  const btn = document.querySelector('#merge-modal .btn-purple');
+  btn.textContent = 'กำลัง Merge...'; btn.disabled = true;
+
+  try {
+    // ลอง API merge endpoint ก่อน
+    let mergeOk = false;
+    try {
+      const res = await fetch(API+'/hq/sessions/merge', {
+        method: 'POST',
+        headers: authHeader(),
+        body: JSON.stringify({
+          primary_session_id: parseInt(primaryId),
+          merge_session_ids: toDelete.map(s => parseInt(s.session_id||s.id)),
+          branch_id: pendingMergeBranch
+        })
+      });
+      if (res.ok) mergeOk = true;
+    } catch(e) { /* ไม่มี endpoint นี้ */ }
+
+    if (!mergeOk) {
+      // Fallback: ลบ sessions ซ้ำทีละอัน (scan logs จะยังอยู่ในฐานข้อมูล)
+      for (const s of toDelete) {
+        const sid = s.session_id||s.id;
+        const res = await fetch(API+'/hq/sessions/'+sid, {method:'DELETE',headers:authHeader()});
+        if (!res.ok) {
+          const j = await res.json().catch(()=>({}));
+          throw new Error('ลบ Session #'+sid+' ไม่สำเร็จ: '+(j.detail||res.status));
+        }
+      }
+    }
+
+    // อัปเดต allSessions client-side
+    allSessions = allSessions.filter(s =>
+      s.branch_id !== pendingMergeBranch || String(s.session_id||s.id) === String(primaryId)
+    );
+    // Reload scan data
+    await loadScans();
+    renderOverview(); renderScans(); renderDuplicateWarnings();
+    showToast(`Merge สำเร็จ — เหลือ Session #${primaryId} สำหรับสาขา ${pendingMergeBranch}`, 'success');
+    closeMergeModal();
+  } catch(e) {
+    showToast('Error: '+e.message, 'error');
+  } finally {
+    btn.textContent = '🔀 Merge Sessions'; btn.disabled = false;
+  }
+}
+
+// ── OVERVIEW ──────────────────────────────────────────
+function renderDailySummary() {
+  // pending ack badge
+  const pendingAck = allSessions.filter(s => (s.status==='done'||s.status==='done_reviewed') && !s.hq_ack).length;
+  const ackEl = document.getElementById('daily-pending-ack');
+  if (ackEl) {
+    if (pendingAck > 0) {
+      ackEl.style.display = 'inline';
+      ackEl.textContent = '⏳ รอรับงาน ' + pendingAck + ' สาขา';
+    } else {
+      ackEl.style.display = 'none';
+    }
+  }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate()+1);
+  const todayScans = allScans.filter(s => {
+    const d = s.scanned_at ? new Date(s.scanned_at) : null;
+    return d && d >= today && d < tomorrow;
+  });
+  const todayBranches = [...new Set(todayScans.map(s=>s.branch_id).filter(Boolean))];
+  const label = document.getElementById('daily-date-label');
+  const stats = document.getElementById('daily-stats');
+  if (!label || !stats) return;
+  const dateStr = today.toLocaleDateString('th-TH', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  label.textContent = '📅 ' + dateStr;
+  if (!todayScans.length) {
+    stats.innerHTML = '<span style="font-size:13px;color:var(--text3);">ยังไม่มีข้อมูลการสแกนวันนี้</span>';
+    return;
+  }
+  const goodCount = todayScans.filter(s=>s.condition==='good').length;
+  const badCount = todayScans.filter(s=>s.condition==='damaged'||s.condition==='missing').length;
+  const branchPills = todayBranches.map(b=>'<span style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-bd);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600;">'+b+'</span>').join(' ');
+  const parts = [
+    '<span style="font-size:13px;color:var(--text2);">' + todayBranches.length + ' สาขาวันนี้: </span>' + branchPills,
+    '<span style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600;">✓ สแกนแล้ว ' + todayScans.length + ' รายการ</span>',
+    goodCount ? '<span style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);border-radius:20px;padding:3px 10px;font-size:12px;">Good ' + goodCount + '</span>' : '',
+    badCount ? '<span style="background:var(--red-l);color:var(--red);border:1px solid var(--red-bd);border-radius:20px;padding:3px 10px;font-size:12px;">⚠️ ผิดปกติ ' + badCount + '</span>' : '',
+  ].filter(Boolean);
+  stats.innerHTML = parts.join(' ');
+}
+
+function renderOverview() {
+  renderDailySummary();
+  const totalScanned = allScans.length;
+  const totalPending = allSessions.reduce((sum,s)=>sum+Math.max(0,(parseInt(s.total_assets)||0)-(parseInt(s.scanned_count)||0)),0);
+  const sessionCount = allSessions.length;
+  const totalAssets = allSessions.reduce((sum,s)=>sum+(parseInt(s.total_assets)||0),0);
+  document.getElementById('s-total-assets').textContent = totalAssets.toLocaleString();
+  document.getElementById('s-total').textContent = totalScanned.toLocaleString();
+  document.getElementById('s-pending').textContent = totalPending.toLocaleString();
+  const subEl = document.getElementById('s-pending-sub');
+  if (subEl) subEl.textContent = `รวม ${sessionCount} session (คลิกดูแยกสาขา)`;
+  document.getElementById('s-unmatched').textContent = allUnmatched.filter(u=>u.status==='pending').length.toLocaleString();
+
+  const tbody = document.getElementById('sessions-tbody');
+  if (!allSessions.length) { tbody.innerHTML='<tr><td colspan="11" class="loading">No sessions</td></tr>'; return; }
+
+  // ตรวจ dup เพื่อ highlight
+  const dupBranches = new Set(detectDuplicateSessions().map(([b])=>b));
+
+  tbody.innerHTML = allSessions.map(s => {
+    const total = parseInt(s.total_assets)||0;
+    const scanned = parseInt(s.scanned_count)||0;
+    const pending = Math.max(0,total-scanned);
+    const pct = total ? Math.round(scanned/total*100) : 0;
+    const cls = pct===100?'pb-green':pct>=50?'pb-amber':'pb-red';
+    const isDup = dupBranches.has(s.branch_id);
+    // overdue check
+    const today = new Date(); today.setHours(0,0,0,0);
+    const isOverdue = s.scheduled_date && new Date(s.scheduled_date) < today && s.status !== 'done';
+    const isDoneStatus = s.status === 'done' || s.status === 'done_reviewed' || s.status === 'reviewed';
+    const isReviewed = s.status === 'done_reviewed' || s.status === 'reviewed' || s.hq_ack;
+    const isPendingReview = isDoneStatus && !isReviewed;
+
+    const statusBadge = isReviewed
+      ? '<span class="badge badge-green">✅ Done · Reviewed</span>'
+      : isPendingReview
+      ? '<span class="badge badge-amber">🔒 Done · รอรับงาน</span>'
+      : s.status==='on_process'
+      ? '<span class="badge badge-amber">⟳ On Process</span>'
+      : '<span class="badge badge-gray">○ Open</span>';
+
+    const ackCell = isDoneStatus
+      ? isReviewed
+        ? '<span class="btn-ack done">✓ รับแล้ว</span>'
+        : `<button class="btn-ack" onclick="acknowledgeSession(${s.session_id||s.id},'${s.branch_id}')">✓ รับงาน</button>
+           <button class="btn-needs-fix" onclick="openNeedsFixModal(${s.session_id||s.id},'${s.branch_id}')" style="margin-top:4px;display:block;width:100%;text-align:center;">❗ ส่งกลับแก้</button>`
+      : '<span style="font-size:11px;color:var(--text3);">—</span>';
+
+    return `<tr style="${isDup?'background:var(--purple-bg);':''}${isOverdue?'outline:2px solid var(--amber);outline-offset:-2px;':''}" title="${isDup?'⚠️ มี session ซ้ำ':''}${isOverdue?' ⏰ เกินกำหนด':''}">
+      <td>
+        <strong>${s.branch_id}</strong>
+        ${isDup?'<span class="badge badge-purple" style="margin-left:6px;font-size:10px;">ซ้ำ</span>':''}
+        ${isOverdue?'<span class="badge badge-overdue" style="margin-left:6px;font-size:10px;">⏰ เกินกำหนด</span>':''}
+        <br><span style="font-size:11px;color:var(--text3);">${s.branch_name||''}</span>
+        <br><span style="font-size:10px;font-family:var(--mono);color:var(--text3);">#${s.session_id||s.id}</span>
+      </td>
+      <td><span style="cursor:pointer;color:var(--blue);font-weight:600;text-decoration:underline;" onclick="goToAllAssetsBranch('${s.branch_id}')">${total.toLocaleString()}</span></td>
+      <td><div style="display:flex;align-items:center;gap:8px;"><div class="pb"><div class="pb-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:12px;font-family:var(--mono);">${pct}%</span></div></td>
+      <td><span style="cursor:pointer;color:var(--green);font-weight:600;text-decoration:underline;" onclick="goToScannedBranch('${s.branch_id}')">${scanned}</span></td>
+      <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${pending}</span></td>
+      <td>${parseInt(s.unmatched_count)||0?`<span class="badge badge-red">${s.unmatched_count}</span>`:'<span class="badge badge-gray">0</span>'}</td>
+      <td>${statusBadge}</td>
+      <td style="font-size:12px;color:var(--text3);${isOverdue?'color:var(--amber);font-weight:700;':''}">${s.scheduled_date?new Date(s.scheduled_date).toLocaleDateString('th-TH',{dateStyle:'short'}):'<span style="color:var(--border);">—</span>'}</td>
+      <td style="text-align:center;">
+        ${s.active_scanners > 0
+          ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#DCFCE7;color:#15803D;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:600;">🟢 '+s.active_scanners+'</span>'
+          : '<span style="color:var(--text3);font-size:12px;">—</span>'}
+      </td>
+      <td>${ackCell}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap;">
+        ${isDup?`<button class="btn btn-purple btn-sm" onclick="openMergeModal('${s.branch_id}')">🔀 Merge</button>`:''}
+        <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.session_id||s.id},'${s.branch_id}')">🗑 Delete</button>
+      </td>
+    </tr>`;
+  }).join('');
+
+  renderDuplicateWarnings();
+  updateOverdueBadge();
+}
+
+function goToAllAssets() { goToAllAssetsBranch(allSessions[0]?.branch_id||''); }
+async function goToAllAssetsBranch(branchId) {
+  showPage('scans');
+  document.getElementById('scan-branch').value = branchId;
+  document.getElementById('scan-condition').value = '';
+  document.getElementById('scan-photo').value = '';
+  document.getElementById('scan-search').value = '';
+  currentScanMode = 'all';
+  showScanBanner('blue', `📋 แสดงทุกรายการที่สแกนแล้ว — สาขา ${branchId}`);
+  filteredScans = allScans.filter(s => !branchId || s.branch_id === branchId);
+  renderScans();
+}
+function goToScanned() { goToScannedBranch(allSessions[0]?.branch_id||''); }
+function goToScannedBranch(branchId) {
+  showPage('scans');
+  document.getElementById('scan-branch').value = branchId;
+  document.getElementById('scan-condition').value = '';
+  document.getElementById('scan-photo').value = '';
+  document.getElementById('scan-search').value = '';
+  currentScanMode = 'normal';
+  showScanBanner('green', `✓ แสดงรายการที่สแกนแล้ว — สาขา ${branchId}`);
+  filteredScans = allScans.filter(s => !branchId || s.branch_id === branchId);
+  renderScans();
+}
+function goToPendingOverview() { goToPending(allSessions[0]?.branch_id||''); }
+function goToPending(branchId) {
+  showPage('scans');
+  document.getElementById('scan-branch').value = branchId;
+  document.getElementById('scan-condition').value = 'pending';
+  document.getElementById('scan-photo').value = '';
+  document.getElementById('scan-search').value = '';
+  filterScans();
+}
+function showScanBanner(type, msg) {
+  const b = document.getElementById('scan-banner');
+  b.className = 'page-banner' + (type !== 'blue' ? ' '+type : '');
+  b.textContent = msg;
+  b.style.display = 'flex';
+}
+function hideScanBanner() { document.getElementById('scan-banner').style.display = 'none'; }
+
+// ── SCAN LOGS ─────────────────────────────────────────
+function renderScans() {
+  document.getElementById('scan-count').textContent = filteredScans.length + ' รายการ';
+  const tbody = document.getElementById('scans-tbody');
+  if (!filteredScans.length) { tbody.innerHTML='<tr><td colspan="10" class="loading">ไม่พบข้อมูล</td></tr>'; return; }
+  tbody.innerHTML = filteredScans.map(s => {
+    // ใช้ s.seq จาก API โดยตรง (ถ้าไม่มีให้ fallback parse จาก qr_key)
+    const seqNum = s.seq != null
+      ? String(s.seq).padStart(3, '0')
+      : ((s.qr_key||'').match(/SEQ(\d+)$/i)||[,''])[1];
+    const seqDisplay = seqNum
+      ? `<span style="font-family:var(--mono);font-size:12px;">SEQ${seqNum}</span>`
+      : `<span style="color:var(--text3);font-size:11px;">—</span>`;
+    const fullCode = s.asset_code || '—';  // แสดงแค่ asset_code ไม่ต่อ SEQ
+    return `<tr>
+    <td style="padding:8px 10px;">
+      ${s.photo_url
+        ? `<img class="scan-thumb" src="${s.photo_url}" alt="" onclick="openLightbox('${s.photo_url}')" title="คลิกเพื่อขยาย">`
+        : `<div class="scan-no-photo" title="ไม่มีรูปถ่าย">📷</div>`}
+    </td>
+    <td style="font-family:var(--mono);font-size:11px;">${fullCode}</td>
+    <td><div style="font-weight:500;">${s.asset_name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
+    <td style="text-align:center;">${seqDisplay}</td>
+    <td><span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span></td>
+    <td>${s.serial_match===true?'<span class="badge badge-green">✓ Match</span>':s.serial_match===false?'<span class="badge badge-red">✗ Mismatch</span>':'<span class="badge badge-gray">N/A</span>'}</td>
+    <td style="font-family:var(--mono);font-size:11px;">${s.serial_found||'—'}</td>
+    <td style="font-size:12px;">${s.branch_id||'—'}</td>
+    <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleDateString('th-TH',{dateStyle:'short'}):'—'}</td>
+    <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleTimeString('th-TH',{timeStyle:'short'}):'—'}</td>
+    <td><button class="btn btn-outline btn-sm" onclick="openEditModal(${s.id})">✏️ Edit</button></td>
+  </tr>`;
+  }).join('');
+}
+
+function doSearch() { currentScanMode='normal'; hideScanBanner(); filterScans(); }
+function clearSearch() {
+  document.getElementById('scan-search').value = '';
+  document.getElementById('scan-branch').value = '';
+  document.getElementById('scan-condition').value = '';
+  document.getElementById('scan-photo').value = '';
+  const dp = document.getElementById('scan-date-preset');
+  if (dp) dp.value = '';
+  const cw = document.getElementById('date-custom-wrap');
+  if (cw) cw.style.display = 'none';
+  const df = document.getElementById('scan-date-from');
+  const dt = document.getElementById('scan-date-to');
+  if (df) df.value = ''; if (dt) dt.value = '';
+  currentScanMode = 'normal';
+  hideScanBanner();
+  filteredScans = allScans;
+  renderScans();
+}
+function filterScans() {
+  const q = document.getElementById('scan-search').value.toLowerCase();
+  const branch = document.getElementById('scan-branch').value;
+  const cond = document.getElementById('scan-condition').value;
+  const photo = document.getElementById('scan-photo').value;
+  if (cond === 'pending') { filteredScans=[]; renderPendingScans(branch||allSessions[0]?.branch_id); return; }
+  hideScanBanner();
+  // Date filter
+  const preset = document.getElementById('scan-date-preset')?.value || '';
+  let dateFrom = null, dateTo = null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  if (preset === 'today') { dateFrom = new Date(today); dateTo = new Date(today); dateTo.setHours(23,59,59,999); }
+  else if (preset === 'yesterday') { const y=new Date(today); y.setDate(y.getDate()-1); dateFrom=y; dateTo=new Date(y); dateTo.setHours(23,59,59,999); }
+  else if (preset === '7d') { dateFrom=new Date(today); dateFrom.setDate(dateFrom.getDate()-6); dateTo=new Date(today); dateTo.setHours(23,59,59,999); }
+  else if (preset === '30d') { dateFrom=new Date(today); dateFrom.setDate(dateFrom.getDate()-29); dateTo=new Date(today); dateTo.setHours(23,59,59,999); }
+  else if (preset === 'custom') {
+    const df = document.getElementById('scan-date-from').value;
+    const dt = document.getElementById('scan-date-to').value;
+    if (df) { dateFrom=new Date(df); dateFrom.setHours(0,0,0,0); }
+    if (dt) { dateTo=new Date(dt); dateTo.setHours(23,59,59,999); }
+  }
+  filteredScans = allScans.filter(s => {
+    const scanDate = s.scanned_at ? new Date(s.scanned_at) : null;
+    const matchDate = !preset || !scanDate ? true :
+      ((!dateFrom || scanDate >= dateFrom) && (!dateTo || scanDate <= dateTo));
+    const fullQr = (s.qr_key || ((s.asset_code||'') + (s.seq != null ? 'SEQ'+String(s.seq).padStart(3,'0') : ''))).toLowerCase();
+    return (!q||(s.asset_code||'').toLowerCase().includes(q)||(s.asset_name||'').toLowerCase().includes(q)||fullQr.includes(q)) &&
+      (!branch||s.branch_id===branch) && (!cond||s.condition===cond) &&
+      (!photo||(photo==='yes'?!!s.photo_url:!s.photo_url)) && matchDate;
+  });
+  renderScans();
+}
+
+function applyDatePreset() {
+  const preset = document.getElementById('scan-date-preset').value;
+  const customWrap = document.getElementById('date-custom-wrap');
+  customWrap.style.display = preset === 'custom' ? 'flex' : 'none';
+  filterScans();
+}
+
+function applyDatePresetValue(val) {
+  const sel = document.getElementById('scan-date-preset');
+  if (sel) { sel.value = val; applyDatePreset(); }
+}
+
+async function renderPendingScans(branchId) {
+  const tbody = document.getElementById('scans-tbody');
+  const session = allSessions.find(s => !branchId || s.branch_id === branchId);
+  if (!session) { tbody.innerHTML='<tr><td colspan="10" class="loading">ไม่พบข้อมูล session</td></tr>'; return; }
+  tbody.innerHTML = '<tr><td colspan="10" class="loading">⏳ กำลังโหลด Master List...</td></tr>';
+  const masterAssets = await loadMasterAssets(session.branch_id);
+  const scannedCodes = new Set(allScans.filter(s=>s.branch_id===session.branch_id).map(s=>s.asset_code));
+  const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
+  document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending)';
+  showScanBanner('amber', `⏳ Pending ${pendingAssets.length} รายการ — ยังไม่ได้สแกน สาขา ${session.branch_id}`);
+  if (!pendingAssets.length) { tbody.innerHTML='<tr><td colspan="10" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>'; return; }
+  tbody.innerHTML = pendingAssets.map(a => `<tr style="background:var(--amber-bg);">
+    <td style="padding:8px 10px;"><div class="scan-no-photo" title="ยังไม่สแกน">⏳</div></td>
+    <td style="font-family:var(--mono);font-size:11px;font-weight:600;">${getFullCode(a.asset_code)||'—'}</td>
+    <td><div style="font-weight:500;">${a.name||'—'}</div><div style="font-size:11px;color:var(--text3);">ยังไม่มีผู้สแกน</div></td>
+    <td style="text-align:center;"><span style="color:var(--text3);font-size:11px;">—</span></td>
+    <td><span class="badge badge-amber">Pending</span></td>
+    <td><span class="badge badge-gray">—</span></td>
+    <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${a.serial_no||'—'}</td>
+    <td style="font-size:12px;">${session.branch_id}</td>
+    <td style="font-size:11px;color:var(--text3);">—</td>
+    <td><button class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber-bd);" onclick="exportFullReport('${session.branch_id}')">📥</button></td>
+  </tr>`).join('');
+}
+
+// ── PHOTOS ────────────────────────────────────────────
+function renderPhotos() {
+  const q = document.getElementById('photo-search').value.toLowerCase();
+  const branch = document.getElementById('photo-branch').value;
+  const items = allScans.filter(s => s.photo_url && (!q||(s.asset_code||'').toLowerCase().includes(q)||(s.asset_name||'').toLowerCase().includes(q)) && (!branch||s.branch_id===branch));
+  document.getElementById('photo-count').textContent = items.length + ' รูป';
+  const grid = document.getElementById('photo-grid');
+  if (!items.length) { grid.innerHTML='<div class="loading" style="grid-column:1/-1">ไม่มีรูปถ่าย</div>'; return; }
+  grid.innerHTML = items.map(s => `
+    <div class="photo-card">
+      <img src="${s.photo_url}" alt="${s.asset_name||''}" onclick="openLightbox('${s.photo_url}')">
+      <div class="photo-body">
+        <div class="photo-code">${getFullCode(s.asset_code)||'—'}</div>
+        <div class="photo-name">${s.asset_name||'—'}</div>
+        <div class="photo-meta">สาขา: ${s.branch_id||'—'} · ${s.auditor||'—'}</div>
+        <div class="photo-meta">${s.scanned_at?new Date(s.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</div>
+        <span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span>
+        ${s.hq_note?`<div style="font-size:11px;color:var(--text3);margin-top:2px;">📝 ${s.hq_note}</div>`:''}
+        <div class="photo-actions"><button class="btn btn-outline btn-sm" style="flex:1;" onclick="openEditModal(${s.id})">✏️ Edit</button></div>
+      </div>
+    </div>`).join('');
+}
+
+// ── UNMATCHED ─────────────────────────────────────────
+function renderUnmatched(filter) {
+  unmatchedFilter = filter;
+  const items = filter==='all' ? allUnmatched : allUnmatched.filter(u=>u.status===filter);
+  document.getElementById('unmatched-count').textContent = items.length + ' รายการ';
+  const grid = document.getElementById('unmatched-grid');
+  if (!items.length) { grid.innerHTML='<div class="loading" style="grid-column:1/-1">ไม่มีรายการ</div>'; return; }
+  grid.innerHTML = items.map(u => `
+    <div class="photo-card">
+      ${u.photo_url?`<img src="${u.photo_url}" alt="${u.name_guess||''}" onclick="openLightbox('${u.photo_url}')">`:`<div class="photo-no-img"><span style="font-size:28px;">📷</span><span>ไม่มีรูป</span></div>`}
+      <div class="photo-body">
+        <div class="photo-code">QR: ${u.scanned_qr||'—'}</div>
+        <div class="photo-name">${u.name_guess||'Unknown device'}</div>
+        <div class="photo-meta">สาขา: ${u.branch_id||'—'} · ${u.auditor||'—'}</div>
+        ${u.serial_no?`<div class="photo-meta">Serial: <strong>${u.serial_no}</strong></div>`:''}
+        <div class="photo-meta">${u.scanned_at?new Date(u.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</div>
+        <span class="badge ${u.status==='matched'?'badge-green':u.status==='pending'?'badge-amber':'badge-gray'}">${u.status}</span>
+        ${u.hq_note?`<div style="font-size:11px;color:var(--text3);margin-top:4px;">📝 ${u.hq_note}</div>`:''}
+        ${u.matched_asset_code?`<div style="font-size:11px;color:var(--green);margin-top:2px;">✓ Matched: ${u.matched_asset_code}</div>`:''}
+        ${u.status==='pending'?`<div class="photo-actions">
+          <button class="btn btn-outline btn-sm" style="flex:1;" onclick="openUnmatchedEdit(${u.id})">✏️ Edit & Match</button>
+          <button class="btn btn-outline btn-sm" style="flex:1;color:var(--red);border-color:var(--red-bd);" onclick="rejectUnmatched(${u.id})">✕ Reject</button>
+        </div>`:''}
+      </div>
+    </div>`).join('');
+}
+function filterUnmatched(filter, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderUnmatched(filter);
+}
+
+// ── UNMATCHED MODAL ───────────────────────────────────
+function openUnmatchedEdit(id) {
+  const u = allUnmatched.find(r=>r.id==id); if (!u) return;
+  document.getElementById('um-edit-id').value = id;
+  document.getElementById('um-qr').textContent = u.scanned_qr||'—';
+  document.getElementById('um-meta').textContent = 'สาขา: '+(u.branch_id||'—')+'  ·  '+(u.auditor||'—')+'  ·  '+(u.scanned_at?new Date(u.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—');
+  document.getElementById('um-asset-code').value = u.matched_asset_code||'';
+  document.getElementById('um-asset-name').value = u.name_guess||'';
+  document.getElementById('um-serial').value = u.serial_no||'';
+  document.getElementById('um-note').value = u.hq_note||'';
+  const img = document.getElementById('um-modal-img');
+  if (u.photo_url){img.src=u.photo_url;img.style.display='block';}else img.style.display='none';
+  document.getElementById('unmatched-edit-modal').style.display='flex';
+}
+function closeUnmatchedEdit(){document.getElementById('unmatched-edit-modal').style.display='none';}
+async function saveAndMatch(){
+  const id=document.getElementById('um-edit-id').value;
+  const assetCode=document.getElementById('um-asset-code').value.trim();
+  const note=document.getElementById('um-note').value.trim();
+  const serial=document.getElementById('um-serial').value.trim();
+  if(!assetCode){showToast('กรุณาใส่ Asset Code ก่อน','error');return;}
+  try{
+    const res=await fetch(API+'/hq/unmatched/'+id,{method:'PATCH',headers:authHeader(),body:JSON.stringify({status:'matched',matched_asset_code:assetCode,hq_note:note||'Matched by HQ - '+currentUser,serial_no:serial||undefined})});
+    if(!res.ok)throw new Error((await res.json()).detail||'Error');
+    const u=allUnmatched.find(r=>r.id==id);
+    if(u){u.status='matched';u.matched_asset_code=assetCode;u.hq_note=note||'Matched by HQ - '+currentUser;u.serial_no=serial;}
+    closeUnmatchedEdit();renderUnmatched(unmatchedFilter);updateBadges();
+    showToast('Matched เรียบร้อย ✓','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+async function saveAndReject(){
+  const id=document.getElementById('um-edit-id').value;
+  const note=document.getElementById('um-note').value.trim();
+  try{
+    const res=await fetch(API+'/hq/unmatched/'+id,{method:'PATCH',headers:authHeader(),body:JSON.stringify({status:'rejected',hq_note:note||'Rejected by HQ - '+currentUser})});
+    if(!res.ok)throw new Error((await res.json()).detail||'Error');
+    const u=allUnmatched.find(r=>r.id==id);
+    if(u){u.status='rejected';u.hq_note=note;}
+    closeUnmatchedEdit();renderUnmatched(unmatchedFilter);updateBadges();
+    showToast('Rejected','error');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+async function rejectUnmatched(id){
+  try{
+    const res=await fetch(API+'/hq/unmatched/'+id,{method:'PATCH',headers:authHeader(),body:JSON.stringify({status:'rejected'})});
+    if(!res.ok)throw new Error((await res.json()).detail);
+    const item=allUnmatched.find(u=>u.id==id);
+    if(item)item.status='rejected';
+    renderUnmatched(unmatchedFilter);updateBadges();
+    showToast('Rejected','error');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ── EDIT MODAL ────────────────────────────────────────
+function openEditModal(id){
+  const s = allScans.find(r => r.id == id);
+  if (!s) return;
+  document.getElementById('m-scan-id').value = id;
+  document.getElementById('m-code').value = getFullCode(s.asset_code);  // แสดง full code พร้อม SEQ
+  document.getElementById('m-name').value = s.asset_name || '';
+  document.getElementById('m-condition').value = s.condition || 'good';
+  document.getElementById('m-serial').value = s.serial_found || '';
+  document.getElementById('m-note').value = s.hq_note || '';
+
+  // รีเซ็ต file input เสมอ
+  const fileInput = document.getElementById('photo-file-input');
+  fileInput.value = '';
+
+  refreshPhotoUI(s.photo_url);
+  document.getElementById('edit-modal').style.display = 'flex';
+}
+
+// อัปเดต UI รูปภาพตาม state
+function refreshPhotoUI(photoUrl) {
+  const img = document.getElementById('modal-img');
+  const wrap = document.getElementById('photo-current-wrap');
+  const zone = document.getElementById('upload-zone');
+  const actionRow = document.getElementById('photo-action-row');
+  const progress = document.getElementById('upload-progress');
+
+  progress.style.display = 'none';
+  document.getElementById('upload-progress-fill').style.width = '0%';
+
+  if (photoUrl) {
+    img.src = photoUrl;
+    wrap.style.display = 'block';
+    zone.style.display = 'none';
+    actionRow.innerHTML = `
+      <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);flex:1;"
+        onclick="deletePhoto(document.getElementById('m-scan-id').value)">
+        🗑️ ลบรูปถ่าย
+      </button>
+      <label for="photo-file-input" class="btn btn-outline btn-sm" style="cursor:pointer;flex:1;">
+        🔄 เปลี่ยนรูป
+      </label>`;
+  } else {
+    img.src = '';
+    wrap.style.display = 'none';
+    zone.style.display = 'flex';
+    actionRow.innerHTML = '';
+  }
+}
+
+function closeEditModal(){ document.getElementById('edit-modal').style.display='none'; }
+
+async function saveScanEdit(){
+  const id = document.getElementById('m-scan-id').value;
+  const body = {
+    condition: document.getElementById('m-condition').value,
+    serial_found: document.getElementById('m-serial').value.trim() || null,
+    hq_note: document.getElementById('m-note').value.trim() || null
+  };
+  try{
+    const res = await fetch(API+'/hq/scans/'+id, {method:'PATCH',headers:authHeader(),body:JSON.stringify(body)});
+    if(!res.ok) throw new Error((await res.json()).detail);
+    const s = allScans.find(r=>r.id==id);
+    if(s){s.condition=body.condition;s.serial_found=body.serial_found;s.hq_note=body.hq_note;}
+    closeEditModal(); renderScans(); renderPhotos();
+    showToast('บันทึกสำเร็จ ✓','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ── ลบรูปภาพ ────────────────────────────────────────────
+// ลบรูปภาพ — ใช้ DELETE /hq/scans/{id}/photo เท่านั้น
+// ถ้า API ไม่รองรับจะบอกให้ contact backend dev แทนการ fallback ผิดพลาด
+async function deletePhoto(id) {
+  if (!confirm('ลบรูปถ่ายของรายการนี้?\nข้อมูล Scan Log ยังคงอยู่')) return;
+
+  const actionRow = document.getElementById('photo-action-row');
+  const origHTML = actionRow.innerHTML;
+  actionRow.innerHTML = '<span style="font-size:12px;color:var(--text3);">⏳ กำลังลบรูป...</span>';
+
+  try {
+    const res = await fetch(API+'/hq/scans/'+id+'/photo', {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer '+token }
+      // ไม่ส่ง Content-Type เพราะ DELETE ไม่มี body
+    });
+
+    if (res.ok || res.status === 204) {
+      // สำเร็จ
+      const s = allScans.find(r => r.id == id);
+      if (s) s.photo_url = null;
+      refreshPhotoUI(null);
+      renderScans(); renderPhotos();
+      showToast('ลบรูปเรียบร้อย ✓', 'success');
+      return;
+    }
+
+    // อ่าน error จาก body
+    let errMsg = 'ลบรูปไม่สำเร็จ (HTTP '+res.status+')';
+    try {
+      const j = await res.json();
+      if (j.detail) errMsg = j.detail;
+    } catch(e) {}
+
+    // ถ้า 404 = ไม่มีรูปอยู่แล้ว → ถือว่าสำเร็จ (idempotent)
+    if (res.status === 404) {
+      const s = allScans.find(r => r.id == id);
+      if (s) s.photo_url = null;
+      refreshPhotoUI(null);
+      renderScans(); renderPhotos();
+      showToast('รูปถูกลบแล้ว ✓', 'success');
+      return;
+    }
+
+    // 405 Method Not Allowed = endpoint ไม่มีใน backend
+    if (res.status === 405) {
+      throw new Error('Backend ยังไม่รองรับการลบรูป — กรุณาเพิ่ม endpoint DELETE /hq/scans/{id}/photo');
+    }
+
+    throw new Error(errMsg);
+
+  } catch(e) {
+    showToast('Error: '+e.message, 'error');
+    actionRow.innerHTML = origHTML; // คืน button เดิม
+  }
+}
+
+// ── อัปโหลดรูปใหม่ ──────────────────────────────────────
+async function uploadPhoto(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Validate
+  if (file.size > 5 * 1024 * 1024) { showToast('ไฟล์ใหญ่เกิน 5MB', 'error'); return; }
+  if (!file.type.startsWith('image/')) { showToast('รองรับเฉพาะไฟล์รูปภาพ', 'error'); return; }
+
+  const id = document.getElementById('m-scan-id').value;
+
+  // แสดง preview ทันที
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('modal-img').src = e.target.result;
+    document.getElementById('photo-current-wrap').style.display = 'block';
+    document.getElementById('upload-zone').style.display = 'none';
+    document.getElementById('photo-action-row').innerHTML = '<span style="font-size:12px;color:var(--text3);">⏳ กำลังอัปโหลด...</span>';
+  };
+  reader.readAsDataURL(file);
+
+  // Progress bar
+  const progress = document.getElementById('upload-progress');
+  const fill = document.getElementById('upload-progress-fill');
+  progress.style.display = 'block';
+  let pct = 0;
+  const ticker = setInterval(() => { pct = Math.min(pct+5, 85); fill.style.width = pct+'%'; }, 150);
+
+  try {
+    const formData = new FormData();
+    formData.append('photo', file);
+
+    // *** critical fix: ไม่ส่ง Content-Type header เพราะ browser ต้องใส่ boundary เอง ***
+    const res = await fetch(API+'/hq/scans/'+id+'/photo', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer '+token },
+      body: formData
+    });
+
+    clearInterval(ticker);
+    fill.style.width = '100%';
+
+    if (!res.ok) {
+      const j = await res.json().catch(()=>({}));
+      throw new Error(j.detail || 'Upload failed: '+res.status);
+    }
+
+    const data = await res.json();
+    const photoUrl = data.photo_url || data.url || data.photo;
+
+    // อัปเดต state
+    const s = allScans.find(r => r.id == id);
+    if (s && photoUrl) {
+      s.photo_url = photoUrl;
+      document.getElementById('modal-img').src = photoUrl; // แทน blob URL ด้วย real URL
+    }
+
+    setTimeout(() => { progress.style.display = 'none'; fill.style.width = '0%'; }, 500);
+    refreshPhotoUI(photoUrl || (allScans.find(r=>r.id==id)?.photo_url));
+    renderScans(); renderPhotos();
+    showToast('อัปโหลดรูปสำเร็จ ✓', 'success');
+
+  } catch(e) {
+    clearInterval(ticker);
+    progress.style.display = 'none';
+    fill.style.width = '0%';
+    showToast('Error: '+e.message, 'error');
+    // คืน UI เป็นก่อนอัปโหลด
+    const s = allScans.find(r => r.id == id);
+    refreshPhotoUI(s?.photo_url || null);
+    // reset input
+    input.value = '';
+  }
+}
+
+// ── ลบ Scan Log ────────────────────────────────────────
+async function deleteScanLog(id) {
+  const s = allScans.find(r => r.id == id);
+  if (!confirm('ลบรายการ '+(getFullCode(s?.asset_code)||'')+' ทั้งหมด?\nไม่สามารถกู้คืนได้')) return;
+  try {
+    const res = await fetch(API+'/hq/scans/'+id, {method:'DELETE',headers:authHeader()});
+    if (!res.ok) throw new Error((await res.json()).detail || 'Error');
+    allScans = allScans.filter(r => r.id != id);
+    filteredScans = filteredScans.filter(r => r.id != id);
+    closeEditModal();
+    renderScans(); renderPhotos(); updateBadges();
+    showToast('ลบรายการเรียบร้อย ✓', 'success');
+  } catch(e) { showToast('Error: '+e.message, 'error'); }
+}
+
+// ── ลบ Session ─────────────────────────────────────────
+async function deleteSession(id, branchId){
+  if(!confirm('ยืนยันการลบ Session ของสาขา '+branchId+'?\n\nScan logs และ Unmatched assets ทั้งหมดในสาขานี้จะถูกลบด้วย'))return;
+  try{
+    const res=await fetch(API+'/hq/sessions/'+id,{method:'DELETE',headers:authHeader()});
+    if(!res.ok){let msg='Error '+res.status;try{const j=await res.json();msg=j.detail||msg;}catch(e){}throw new Error(msg);}
+    allSessions=allSessions.filter(s=>String(s.session_id||s.id)!==String(id));
+    renderOverview();
+    showToast('ลบ Session '+branchId+' เรียบร้อย','success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+}
+
+// ── LIGHTBOX ──────────────────────────────────────────
+function openLightbox(url){document.getElementById('lightbox-img').src=url;document.getElementById('lightbox').style.display='flex';}
+function closeLightbox(){document.getElementById('lightbox').style.display='none';}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeLightbox(); closeEditModal(); closeUnmatchedEdit(); closeMergeModal(); }});
+
+// ── BADGES ────────────────────────────────────────────
+function updateBadges(){
+  const sb=document.getElementById('badge-scans');
+  sb.textContent=allScans.length;sb.style.display=allScans.length?'inline':'none';
+  const pb=document.getElementById('badge-photos');
+  const pc=allScans.filter(s=>s.photo_url).length;
+  pb.textContent=pc;pb.style.display=pc?'inline':'none';
+  const ub=document.getElementById('badge-unmatched');
+  const uc=allUnmatched.filter(u=>u.status==='pending').length;
+  ub.textContent=uc;ub.style.display=uc?'inline':'none';
+}
+
+// ── EXPORT ────────────────────────────────────────────
+function toXlsx(sheets,filename){
+  const wb=XLSX.utils.book_new();
+  Object.entries(sheets).forEach(([name,data])=>{
+    if(!data.length)return;
+    const ws=XLSX.utils.json_to_sheet(data);
+    ws['!cols']=Object.keys(data[0]).map(()=>({wch:22}));
+    XLSX.utils.book_append_sheet(wb,ws,name);
+  });
+  XLSX.writeFile(wb,filename);
+  showToast('Exported: '+filename,'success');
+}
+async function exportFullReport(branchId) {
+  const session = allSessions.find(s => s.branch_id === (branchId || allSessions[0]?.branch_id));
+  if (!session) { showToast('ไม่พบ session', 'error'); return; }
+  showToast('กำลังโหลด Master List...', '');
+  const masterAssets = await loadMasterAssets(session.branch_id);
+  const scannedMap = {};
+  allScans.filter(s=>s.branch_id===session.branch_id).forEach(s=>{ if(!scannedMap[s.asset_code]) scannedMap[s.asset_code]=s; });
+  const data = masterAssets.map(a => {
+    const scan = scannedMap[a.asset_code];
+    return scan ? {'Asset Code':getFullCode(a.asset_code),'Asset Name':a.name||'','Status':'Scanned ✓','สภาพ':scan.condition||'','ผู้สแกน':scan.auditor||'','เวลาสแกน':scan.scanned_at||'','Serial Found':scan.serial_found||'','มีรูปถ่าย':scan.photo_url?'Yes':'No','HQ Note':scan.hq_note||''}
+    : {'Asset Code':getFullCode(a.asset_code),'Asset Name':a.name||'','Status':'⚠️ PENDING - ยังไม่สแกน','สภาพ':'','ผู้สแกน':'','เวลาสแกน':'','Serial Found':a.serial_no||'','มีรูปถ่าย':'','HQ Note':''};
+  });
+  toXlsx({'Full Audit Report':data},`bata_full_report_${session.branch_id}_${today()}.xlsx`);
+}
+function exportScans(){
+  toXlsx({'Scan Logs':allScans.map(s=>({'Asset Code':getFullCode(s.asset_code),'Asset Name':s.asset_name,'Condition':s.condition,'Serial Match':s.serial_match,'Serial Found':s.serial_found||'','Branch':s.branch_id,'Auditor':s.auditor,'Scanned At':s.scanned_at,'Photo':s.photo_url?'Yes':'No','HQ Note':s.hq_note||''}))},`bata_scan_logs_${today()}.xlsx`);
+}
+function exportUnmatchedXlsx(){
+  toXlsx({'Unmatched':allUnmatched.map(u=>({'QR Scanned':u.scanned_qr,'Name Guess':u.name_guess,'Serial':u.serial_no||'','Branch':u.branch_id,'Auditor':u.auditor,'Status':u.status,'HQ Note':u.hq_note||'','Matched Code':u.matched_asset_code||'','Scanned At':u.scanned_at}))},`bata_unmatched_${today()}.xlsx`);
+}
+function today(){return new Date().toISOString().slice(0,10);}
+
+// ── NAV ───────────────────────────────────────────────
+const pages=['overview','scans','photos','unmatched','assets','export'];
+const titles={overview:'Overview',scans:'Scan Logs',photos:'Photos',unmatched:'Unmatched Assets',assets:'Assets / SEQ',export:'Export'};
+function showPage(name){
+  pages.forEach(p=>{
+    document.getElementById('page-'+p).style.display=p===name?'flex':'none';
+    document.getElementById('nav-'+p).classList.toggle('active',p===name);
+  });
+  document.getElementById('page-title').textContent=titles[name];
+  if(name==='assets' && allAssets.length===0) loadAssetsPage();
+}
+// ── ASSETS / SEQ ────────────────────────────────────────
+let allAssets = [], assetsFiltered = [], assetsPageIdx = 0;
+const ASSETS_PER_PAGE = 100;
+
+async function loadAssetsPage() {
+  const banner = document.getElementById('assets-banner');
+  const tbody  = document.getElementById('assets-tbody');
+  banner.className = 'page-banner blue';
+  banner.style.display = 'flex';
+  banner.textContent = '⏳ กำลังโหลดข้อมูล Assets / SEQ...';
+  tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading...</td></tr>';
+
+  try {
+    const res = await fetch(API + '/hq/assets', {headers: authHeader()});
+    if (!res.ok) throw new Error('API ยังไม่มี /hq/assets (status ' + res.status + ') — ดูวิธีเพิ่มใน backend ด้านล่าง');
+    const data = await res.json();
+    allAssets = data.assets || [];
+
+    // map scan status จาก allScans ที่โหลดไว้แล้ว
+    const scannedMap = {};
+    allScans.forEach(s => { scannedMap[s.asset_code] = s; });
+
+    allAssets = allAssets.map(a => {
+      const scanMatch = scannedMap[a.asset_code];
+      return {...a, is_scanned: !!scanMatch, scan_info: scanMatch || null};
+    });
+
+    // สร้าง branch filter
+    const branches = [...new Set(allAssets.map(a => a.location_code || '').filter(Boolean))].sort();
+    const sel = document.getElementById('assets-branch-filter');
+    sel.innerHTML = '<option value="">ทุกสาขา</option>' + branches.map(b=>`<option value="${b}">${b}</option>`).join('');
+
+    // badge
+    const badge = document.getElementById('badge-assets');
+    badge.textContent = allAssets.length.toLocaleString();
+    badge.style.display = 'inline';
+
+    banner.style.display = 'none';
+    filterAssets();
+    showToast('โหลด SEQ ' + allAssets.length.toLocaleString() + ' รายการสำเร็จ', 'success');
+  } catch(e) {
+    banner.className = 'page-banner amber';
+    banner.style.display = 'flex';
+    banner.textContent = '⚠️ ' + e.message;
+    tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color:var(--amber);">${e.message}</td></tr>`;
+  }
+}
+
+function filterAssets() {
+  const q  = document.getElementById('assets-search').value.toLowerCase().trim();
+  const br = document.getElementById('assets-branch-filter').value;
+  const st = document.getElementById('assets-status-filter').value;
+
+  assetsFiltered = allAssets.filter(a => {
+    const key    = (a.qr_key||'').toLowerCase();
+    const name   = (a.name||'').toLowerCase();
+    const serial = (a.serial_no||'').toLowerCase();
+    if (q && !key.includes(q) && !name.includes(q) && !serial.includes(q)) return false;
+    if (br && (a.location_code||'') !== br) return false;
+    if (st === 'scanned' && !a.is_scanned) return false;
+    if (st === 'pending' && a.is_scanned)  return false;
+    return true;
+  });
+
+  // update stat cards
+  const total    = allAssets.length;
+  const scanned  = allAssets.filter(a=>a.is_scanned).length;
+  const branches = new Set(allAssets.map(a=>a.location_code||'').filter(Boolean)).size;
+  document.getElementById('seq-total').textContent    = total.toLocaleString();
+  document.getElementById('seq-scanned').textContent  = scanned.toLocaleString();
+  document.getElementById('seq-pending').textContent  = (total-scanned).toLocaleString();
+  document.getElementById('seq-branches').textContent = branches.toLocaleString();
+
+  assetsPageIdx = 0;
+  renderAssetsTable();
+}
+
+function renderAssetsTable() {
+  const start = assetsPageIdx * ASSETS_PER_PAGE;
+  const slice = assetsFiltered.slice(start, start + ASSETS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(assetsFiltered.length / ASSETS_PER_PAGE));
+
+  document.getElementById('assets-count-label').textContent =
+    `แสดง ${assetsFiltered.length ? (start+1).toLocaleString() : 0}–${Math.min(start+ASSETS_PER_PAGE, assetsFiltered.length).toLocaleString()} จาก ${assetsFiltered.length.toLocaleString()} รายการ`;
+  document.getElementById('assets-page-info').textContent =
+    `หน้า ${assetsPageIdx+1} / ${totalPages}`;
+
+  if (!slice.length) {
+    document.getElementById('assets-tbody').innerHTML = '<tr><td colspan="8" class="loading">ไม่พบรายการ</td></tr>';
+    return;
+  }
+
+  const rows = slice.map((a, i) => {
+    const qr      = a.qr_key || (a.asset_code + 'SEQ' + String(a.seq||0).padStart(3,'0'));
+    const seqNum  = String(a.seq||'').padStart(3,'0');
+    const name    = a.name || '—';
+    const serial  = a.serial_no || '—';
+    const branch  = a.location_code || '—';
+    const scanned = a.is_scanned;
+    const scanAt  = a.scan_info?.scanned_at
+      ? new Date(a.scan_info.scanned_at).toLocaleString('th-TH',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})
+      : '—';
+
+    const badge = scanned
+      ? `<span style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">✅ สแกนแล้ว</span>`
+      : `<span style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">⏳ รอสแกน</span>`;
+
+    // แสดง asset_code + SEQ แยกกันให้อ่านง่าย
+    const assetCodePart = qr.replace(/SEQ\d+$/i, '');
+    const seqPart = (qr.match(/SEQ(\d+)$/i)||['',''])[0];
+
+    return `<tr style="background:${scanned?'rgba(26,122,60,0.03)':''}">
+      <td style="color:var(--text3);font-size:11px;">${start+i+1}</td>
+      <td>
+        <span style="font-family:var(--mono);font-size:11px;background:var(--sf2);padding:2px 6px;border-radius:4px;border:1px solid var(--border);letter-spacing:.3px;">
+          ${assetCodePart}<strong style="color:var(--blue);">${seqPart}</strong>
+        </span>
+      </td>
+      <td style="font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${name}">${name}</td>
+      <td style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue);">${seqNum}</td>
+      <td style="font-size:12px;font-weight:600;">${branch}</td>
+      <td style="font-family:var(--mono);font-size:11px;color:var(--text2);">${serial}</td>
+      <td style="text-align:center;">${badge}</td>
+      <td style="font-size:11px;color:var(--text3);">${scanAt}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('assets-tbody').innerHTML = rows;
+}
+
+function assetsPrev() {
+  if (assetsPageIdx > 0) { assetsPageIdx--; renderAssetsTable(); }
+}
+function assetsNext() {
+  if (assetsPageIdx < Math.ceil(assetsFiltered.length/ASSETS_PER_PAGE)-1) { assetsPageIdx++; renderAssetsTable(); }
+}
+
+// ── CREATE SESSION + PIN ─────────────────────────────────────
+let createdPIN = '';
+function openCreateSessionModal() {
+  // populate branch dropdown from allSessions หรือ list แยก
+  const sel = document.getElementById('cs-branch');
+  sel.innerHTML = '<option value="">— เลือกสาขา —</option>';
+  // ใช้ branch list จาก allSessions ที่มีอยู่
+  const branches = [...new Map(allSessions.map(s=>[s.branch_id, s])).values()];
+  branches.forEach(s => {
+    sel.innerHTML += '<option value="'+s.branch_id+'">'+s.branch_id+' — '+(s.branch_name||'')+' </option>';
+  });
+  document.getElementById('cs-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('create-sess-form').style.display = 'block';
+  document.getElementById('create-sess-result').style.display = 'none';
+  document.getElementById('create-sess-foot').style.display = 'flex';
+  document.getElementById('create-session-modal').style.display = 'flex';
+}
+function closeCreateSessionModal() {
+  document.getElementById('create-session-modal').style.display = 'none';
+  if (createdPIN) { loadAll(); createdPIN = ''; }
+}
+async function submitCreateSession() {
+  const branch = document.getElementById('cs-branch').value;
+  const date   = document.getElementById('cs-date').value;
+  if (!branch) { showToast('กรุณาเลือกสาขา', 'error'); return; }
+  try {
+    const res = await fetch(API+'/sessions', {
+      method: 'POST', headers: authHeader(),
+      body: JSON.stringify({ branch_id: branch, scheduled_date: date })
+    });
+    if (!res.ok) throw new Error('สร้าง Session ไม่สำเร็จ');
+    const data = await res.json();
+    createdPIN = data.pin || '----';
+    document.getElementById('cs-pin-display').textContent = createdPIN;
+    document.getElementById('create-sess-form').style.display = 'none';
+    document.getElementById('create-sess-result').style.display = 'block';
+    document.getElementById('create-sess-foot').style.display = 'none';
+    showToast('สร้าง Session สาขา ' + branch + ' สำเร็จ — PIN: ' + createdPIN, 'success');
+  } catch(e) {
+    showToast('Error: '+e.message, 'error');
+  }
+}
+function copyPIN() {
+  navigator.clipboard?.writeText(createdPIN).then(()=>showToast('Copy PIN แล้ว ✓','success'));
+}
+
+// ── ACKNOWLEDGE SESSION ──────────────────────────────────────
+async function acknowledgeSession(sessionId, branchId) {
+  if (!confirm('รับงานสาขา ' + branchId + ' ?\n\nHQ ยืนยันว่าตรวจสอบข้อมูลครบถ้วนแล้ว')) return;
+  try {
+    const res = await fetch(API+'/hq/sessions/'+sessionId+'/acknowledge', {
+      method: 'PATCH',
+      headers: authHeader(),
+      body: JSON.stringify({ ack_by: currentUser, ack_at: new Date().toISOString() })
+    });
+    // อัปเดต client-side ทันที (ถ้า API ยังไม่รองรับ endpoint นี้ก็ยัง update UI ได้)
+    const s = allSessions.find(x => (x.session_id||x.id) == sessionId);
+    if (s) { s.hq_ack = true; s.status = 'done_reviewed'; }
+    renderOverview();
+    showToast('รับงานสาขา ' + branchId + ' เรียบร้อย ✓', 'success');
+  } catch(e) {
+    // Fallback: update UI แม้ API fail
+    const s = allSessions.find(x => (x.session_id||x.id) == sessionId);
+    if (s) { s.hq_ack = true; s.status = 'done_reviewed'; }
+    renderOverview();
+    showToast('รับงานแล้ว (offline mode)', 'success');
+  }
+}
+
+// ── NEEDS FIX MODAL ──────────────────────────────────────────
+let needsFixSessionId = null, needsFixBranchId = null;
+function openNeedsFixModal(sessionId, branchId) {
+  needsFixSessionId = sessionId;
+  needsFixBranchId  = branchId;
+  document.getElementById('needs-fix-branch').textContent = branchId;
+  document.getElementById('needs-fix-comment').value = '';
+  document.getElementById('needs-fix-modal').style.display = 'flex';
+}
+function closeNeedsFixModal() {
+  document.getElementById('needs-fix-modal').style.display = 'none';
+}
+async function submitNeedsFix() {
+  const comment = document.getElementById('needs-fix-comment').value.trim();
+  if (!comment) { showToast('กรุณาระบุสิ่งที่ต้องแก้ไข', 'error'); return; }
+  try {
+    await fetch(API+'/hq/sessions/'+needsFixSessionId+'/needs-correction', {
+      method: 'PATCH',
+      headers: authHeader(),
+      body: JSON.stringify({ comment, reviewer: currentUser })
+    });
+    const s = allSessions.find(x => (x.session_id||x.id) == needsFixSessionId);
+    if (s) { s.status = 'needs_correction'; s.hq_comment = comment; }
+    renderOverview();
+    closeNeedsFixModal();
+    showToast('ส่ง comment กลับสาขา ' + needsFixBranchId + ' แล้ว', 'info');
+  } catch(e) {
+    showToast('Error: '+e.message, 'error');
+  }
+}
+
+// ── OVERDUE BADGE in nav ──────────────────────────────────────
+function updateOverdueBadge() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const overdueCount = allSessions.filter(s =>
+    s.scheduled_date && new Date(s.scheduled_date) < today &&
+    s.status !== 'done' && s.status !== 'done_reviewed' && s.status !== 'reviewed'
+  ).length;
+  const pendingAckCount = allSessions.filter(s =>
+    (s.status === 'done' && !s.hq_ack)
+  ).length;
+  const navOverview = document.getElementById('nav-overview');
+  const existing = navOverview?.querySelector('.nav-overdue-dot');
+  if (existing) existing.remove();
+  if (overdueCount > 0 || pendingAckCount > 0) {
+    const dot = document.createElement('span');
+    dot.className = 'nav-badge amber nav-overdue-dot';
+    dot.style.display = 'inline';
+    dot.textContent = (overdueCount + pendingAckCount);
+    navOverview?.appendChild(dot);
+  }
+}
+
+function showToast(msg,type=''){
+  const wrap=document.getElementById('toast-wrap');
+  const t=document.createElement('div');
+  t.className='toast '+(type||'');t.textContent=msg;
+  wrap.appendChild(t);
+  setTimeout(()=>t.remove(),type==='error'?4000:3000);
+}
+
+// ── EXPORT PDF ────────────────────────────────────────
+async function exportPDF(branchId) {
+  const session = allSessions.find(s => s.branch_id === (branchId || allSessions[0]?.branch_id));
+  if (!session) { showToast('ไม่พบ session', 'error'); return; }
+  showToast('กำลังเตรียม PDF...', '');
+  const masterAssets = await loadMasterAssets(session.branch_id);
+  const scannedMap = {};
+  allScans.filter(s => s.branch_id === session.branch_id).forEach(s => { if (!scannedMap[s.asset_code]) scannedMap[s.asset_code] = s; });
+  const scannedCount = masterAssets.filter(a => scannedMap[a.asset_code]).length;
+  const pendingCount = masterAssets.filter(a => !scannedMap[a.asset_code]).length;
+  const rows = masterAssets.map((a, i) => {
+    const scan = scannedMap[a.asset_code];
+    const isPending = !scan;
+    const rowBg = isPending ? '#fff8f0' : '#fff';
+    const statusBadge = isPending
+      ? `<span style="background:#fff8f0;color:#b85c00;border:1px solid #ffd4a0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;">⏳ PENDING</span>`
+      : `<span style="background:#f0faf3;color:#1a7a3c;border:1px solid #b3dfc0;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;">✓ Scanned</span>`;
+    const condBadge = scan?.condition ? (scan.condition==='good' ? `<span style="background:#f0faf3;color:#1a7a3c;border:1px solid #b3dfc0;padding:1px 6px;border-radius:20px;font-size:10px;">Good</span>` : `<span style="background:#fff0f0;color:#CC0000;border:1px solid #ffcccc;padding:1px 6px;border-radius:20px;font-size:10px;">${scan.condition}</span>`) : '—';
+    const photo = scan?.photo_url ? `<img src="${scan.photo_url}" style="width:48px;height:48px;object-fit:cover;border-radius:4px;border:1px solid #e0ddd6;" onerror="this.style.display='none'">` : `<div style="width:48px;height:48px;background:#f4f2ef;border-radius:4px;border:1.5px dashed #e0ddd6;display:flex;align-items:center;justify-content:center;font-size:18px;">${isPending?'⏳':'📷'}</div>`;
+    return `<tr style="background:${rowBg};page-break-inside:avoid;">
+      <td style="padding:6px 8px;text-align:center;font-size:11px;color:#999;">${i+1}</td>
+      <td style="padding:6px 8px;">${photo}</td>
+      <td style="padding:6px 8px;font-family:monospace;font-size:10px;color:#555;">${a.asset_code||'—'}</td>
+      <td style="padding:6px 8px;font-size:11px;font-weight:500;max-width:180px;">${a.name||'—'}</td>
+      <td style="padding:6px 8px;text-align:center;">${statusBadge}</td>
+      <td style="padding:6px 8px;text-align:center;">${condBadge}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#555;">${scan?.auditor||'—'}</td>
+      <td style="padding:6px 8px;font-size:10px;color:#555;">${scan?.scanned_at?new Date(scan.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</td>
+    </tr>`;
+  }).join('');
+  const html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><title>Bata Audit Report — ${session.branch_id}</title><style>@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap');*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Barlow',sans-serif;font-size:12px;color:#1a1a1a;background:#fff;}.header{padding:20px 24px 16px;border-bottom:2px solid #CC0000;display:flex;align-items:center;justify-content:space-between;}.header-left{display:flex;align-items:center;gap:12px;}.logo{width:36px;height:36px;background:#CC0000;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;}.brand{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;}.brand span{display:block;font-size:11px;font-weight:400;color:#999;}.report-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:700;color:#CC0000;}.report-sub{font-size:11px;color:#999;margin-top:2px;text-align:right;}.summary{display:flex;gap:12px;padding:14px 24px;background:#f9f8f5;border-bottom:1px solid #e0ddd6;}.sum-card{background:#fff;border:1px solid #e0ddd6;border-radius:8px;padding:10px 16px;flex:1;text-align:center;}.sum-val{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:700;}.sum-label{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}table{width:100%;border-collapse:collapse;}thead th{padding:8px;text-align:left;font-size:10px;font-weight:600;color:#999;text-transform:uppercase;background:#f9f8f5;border-bottom:2px solid #e0ddd6;white-space:nowrap;}tbody tr{border-bottom:1px solid #f0ede8;}.footer{padding:12px 24px;border-top:1px solid #e0ddd6;font-size:10px;color:#999;display:flex;justify-content:space-between;}@media print{.no-print{display:none!important;}thead th{background:#f0ede8!important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}tbody tr{page-break-inside:avoid;}}</style></head><body>
+<div class="header"><div class="header-left"><div class="logo">B</div><div class="brand">BATA AUDIT<span>THAILAND · HQ</span></div></div><div><div class="report-title">Full Audit Report</div><div class="report-sub">สาขา ${session.branch_id} — ${session.branch_name||''}<br>พิมพ์วันที่ ${new Date().toLocaleString('th-TH',{dateStyle:'long',timeStyle:'short'})}</div></div></div>
+<div class="summary"><div class="sum-card" style="border-color:#c3d4fc;"><div class="sum-val" style="color:#1a56db;">${masterAssets.length}</div><div class="sum-label">Total Assets</div></div><div class="sum-card" style="border-color:#b3dfc0;"><div class="sum-val" style="color:#1a7a3c;">${scannedCount}</div><div class="sum-label">Scanned ✓</div></div><div class="sum-card" style="border-color:#ffd4a0;"><div class="sum-val" style="color:#b85c00;">${pendingCount}</div><div class="sum-label">Pending ⏳</div></div><div class="sum-card"><div class="sum-val" style="color:#CC0000;">${Math.round(scannedCount/masterAssets.length*100)}%</div><div class="sum-label">Progress</div></div></div>
+<div style="padding:0 0 80px;"><div class="no-print" style="padding:12px 24px;background:#eff4ff;border-bottom:1px solid #c3d4fc;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:13px;color:#1a56db;">📄 กด <strong>Ctrl+P</strong> หรือ <strong>⌘+P</strong> แล้วเลือก "Save as PDF"</span><button onclick="window.print()" style="background:#CC0000;color:#fff;border:none;padding:8px 18px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;">🖨️ Print / Save PDF</button></div>
+<table><thead><tr><th style="width:32px;">#</th><th style="width:60px;">รูป</th><th style="width:130px;">Asset Code</th><th>ชื่อ Asset</th><th style="width:100px;text-align:center;">Status</th><th style="width:70px;text-align:center;">สภาพ</th><th style="width:90px;">ผู้สแกน</th><th style="width:110px;">เวลา</th></tr></thead><tbody>${rows}</tbody></table></div>
+<div class="footer no-print"><span>BATA HQ Dashboard v2 — Full Audit Report</span><span>สาขา ${session.branch_id} · ${masterAssets.length} รายการ · ${new Date().toLocaleDateString('th-TH')}</span></div></body></html>`;
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+// ── ADD ASSET MODAL ───────────────────────────────────────────────────────────
+let aaFetchTimer = null;
+let aaImageFile  = null;
+
+function openAddAssetModal() {
+  document.getElementById('add-asset-overlay').style.display = 'flex';
+  // reset form
+  document.getElementById('aa-code').value      = '';
+  document.getElementById('aa-name').value      = '';
+  document.getElementById('aa-condition').value = '';
+  document.getElementById('aa-serial').value    = '';
+  document.getElementById('aa-remark').value    = '';
+  aaRemoveImage();
+  aaResetBadges();
+}
+
+function closeAddAssetModal() {
+  document.getElementById('add-asset-overlay').style.display = 'none';
+}
+
+function aaResetBadges() {
+  document.getElementById('aa-found-badge').style.display    = 'none';
+  document.getElementById('aa-notfound-badge').style.display = 'none';
+  document.getElementById('aa-name').style.color             = 'var(--text3)';
+}
+
+function aaHandleImage(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  aaImageFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('aa-preview-img').src   = url;
+  document.getElementById('aa-preview-wrap').style.display = 'block';
+  document.getElementById('aa-upload-zone').style.display  = 'none';
+}
+
+function aaRemoveImage() {
+  aaImageFile = null;
+  document.getElementById('aa-file-input').value          = '';
+  document.getElementById('aa-preview-wrap').style.display = 'none';
+  document.getElementById('aa-upload-zone').style.display  = 'flex';
+}
+
+function aaCodeInput() {
+  clearTimeout(aaFetchTimer);
+  aaResetBadges();
+  document.getElementById('aa-name').value       = '';
+  document.getElementById('aa-name').placeholder = '— รอดึงข้อมูล —';
+
+  const code = document.getElementById('aa-code').value.trim();
+  if (!code) return;
+
+  document.getElementById('aa-name').placeholder = 'กำลังดึงข้อมูล...';
+
+  aaFetchTimer = setTimeout(() => {
+    // ─── เชื่อมต่อ API จริงตรงนี้ ───────────────────────────────
+    // ตัวอย่าง: fetch(`/api/assets?code=${encodeURIComponent(code)}`)
+    //   .then(r => r.json()).then(data => { ... })
+    //
+    // ตอนนี้ใช้ mock data (แทนที่ด้วย API call จริง):
+    const MOCK = {
+      'SFU012024020093SE0001': 'Relax Comfy Sandals Wall (Change Sneaker BR 4.)',
+      'SFU012024020093SE0002': 'Classic Running Shoe White BR 5.',
+      'SFU012024020093SE0003': 'Sport Sneaker Black Edition BR 6.',
+      'BTA2024010001SE0010':   'Canvas Slip-On Navy',
+    };
+    const found = MOCK[code];
+    if (found) {
+      document.getElementById('aa-name').value               = found;
+      document.getElementById('aa-name').style.color         = 'var(--text)';
+      document.getElementById('aa-name').placeholder         = '';
+      document.getElementById('aa-found-badge').style.display = 'inline';
+    } else {
+      document.getElementById('aa-name').placeholder          = '— ไม่พบข้อมูล —';
+      document.getElementById('aa-notfound-badge').style.display = 'inline';
+    }
+  }, 700);
+}
+
+function aaSubmit() {
+  const code  = document.getElementById('aa-code').value.trim();
+  const name  = document.getElementById('aa-name').value.trim();
+  const cond  = document.getElementById('aa-condition').value;
+  const serial= document.getElementById('aa-serial').value.trim();
+  const remark= document.getElementById('aa-remark').value.trim();
+
+  if (!code) { showToast('กรุณาระบุ Asset Code', 'error'); return; }
+  if (!name) { showToast('ไม่พบ Asset Name — กรุณาตรวจสอบ Asset Code', 'error'); return; }
+
+  // ─── ส่งข้อมูลไป API จริงตรงนี้ ──────────────────────────────
+  // const payload = { asset_code: code, asset_name: name, condition: cond,
+  //                   serial_found: serial, remark, image: aaImageFile };
+  // fetch('/api/scan-logs', { method:'POST', body: formData }).then(...)
+
+  console.log('Add Asset:', { code, name, cond, serial, remark, image: aaImageFile });
+  showToast('เพิ่มรายการเรียบร้อย', 'success');
+  closeAddAssetModal();
+  // refresh scan log table หลัง save
+  if (typeof loadAll === 'function') loadAll();
+}
+</script>
+
+<!-- CREATE SESSION MODAL -->
+<div class="modal-overlay" id="create-session-modal" style="display:none;" onclick="if(event.target===this)closeCreateSessionModal()">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-head">
+      <div class="modal-title">➕ สร้าง Session สาขา</div>
+      <button class="modal-close" onclick="closeCreateSessionModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="create-sess-form">
+        <div class="field">
+          <label>สาขา</label>
+          <select id="cs-branch" class="field input" style="padding:8px 10px;border:0.5px solid var(--border-strong);border-radius:var(--rs);background:var(--sf2);font-size:14px;">
+            <option value="">— เลือกสาขา —</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>วันที่นัดสแกน</label>
+          <input type="date" id="cs-date" style="padding:8px 10px;border:0.5px solid var(--border-strong);border-radius:var(--rs);background:var(--sf2);font-size:14px;width:100%;">
+        </div>
+      </div>
+
+      <!-- PIN Result (แสดงหลังสร้างสำเร็จ) -->
+      <div id="create-sess-result" style="display:none;text-align:center;padding:8px 0;">
+        <div style="font-size:14px;color:var(--text2);margin-bottom:12px;">Session สร้างสำเร็จ! แจก PIN นี้ให้ Scanner ทุกเครื่อง</div>
+        <div id="cs-pin-display" style="font-size:52px;font-weight:800;letter-spacing:16px;color:var(--red);font-family:var(--mono);background:var(--sf2);border:2px dashed var(--border-strong);border-radius:var(--r);padding:24px 16px;margin-bottom:12px;">—</div>
+        <div style="font-size:12px;color:var(--text3);">PIN หมดอายุใน 24 ชั่วโมง</div>
+        <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
+          <button class="btn btn-outline btn-sm" onclick="copyPIN()">📋 Copy PIN</button>
+          <button class="btn btn-outline btn-sm" onclick="closeCreateSessionModal()">ปิด</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot" id="create-sess-foot">
+      <button class="btn btn-outline" onclick="closeCreateSessionModal()">ยกเลิก</button>
+      <button class="btn btn-red" onclick="submitCreateSession()">➕ สร้าง Session</button>
+    </div>
+  </div>
+</div>
+
+<!-- NEEDS FIX MODAL -->
+<div class="modal-overlay" id="needs-fix-modal" style="display:none;" onclick="if(event.target===this)closeNeedsFixModal()">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-head">
+      <div class="modal-title">❗ ส่งกลับให้สาขาแก้ไข</div>
+      <button class="modal-close" onclick="closeNeedsFixModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--red-l);border:1px solid var(--red-bd);border-radius:var(--rs);padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--red);">
+        สาขา <strong id="needs-fix-branch">—</strong> จะได้รับแจ้งว่าต้องดำเนินการแก้ไข
+      </div>
+      <div class="field">
+        <label>สิ่งที่ต้องแก้ไข (บังคับระบุ) *</label>
+        <textarea id="needs-fix-comment" placeholder="เช่น: พบรายการที่ condition ไม่ถูกต้อง กรุณาตรวจสอบและอัปเดตใหม่&#10;หรือ: Serial number ไม่ตรงกับ Master data 3 รายการ..." style="min-height:100px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeNeedsFixModal()">ยกเลิก</button>
+      <button class="btn btn-red" onclick="submitNeedsFix()">❗ ส่ง Comment กลับสาขา</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD ASSET MODAL -->
+<div class="modal-overlay" id="add-asset-overlay" style="display:none;" onclick="if(event.target===this)closeAddAssetModal()">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-head">
+      <div class="modal-title">➕ เพิ่มรายการ Asset</div>
+      <button class="modal-close" onclick="closeAddAssetModal()">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <div id="aa-preview-wrap" style="display:none;margin-bottom:8px;border-radius:var(--rs);overflow:hidden;border:1px solid var(--border);">
+        <img id="aa-preview-img" src="" alt="preview" style="width:100%;max-height:200px;object-fit:cover;display:block;">
+      </div>
+      <div class="upload-zone" id="aa-upload-zone" onclick="document.getElementById('aa-file-input').click()">
+        <div style="font-size:28px;">📷</div>
+        <div style="font-size:13px;color:var(--text3);">แตะเพื่อถ่ายรูปหรืออัปโหลด</div>
+      </div>
+      <input type="file" id="aa-file-input" accept="image/*" style="display:none;" onchange="aaHandleImage(event)">
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="btn btn-outline btn-sm" style="flex:1;color:var(--red);border-color:var(--red-bd);" onclick="aaRemoveImage()">🗑 ลบรูปถ่าย</button>
+        <button class="btn btn-outline btn-sm" style="flex:1;" onclick="document.getElementById('aa-file-input').click()">🔄 เปลี่ยนรูป</button>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Asset Code</label>
+          <input type="text" id="aa-code" placeholder="พิมพ์ Asset Code..." autocomplete="off" oninput="aaCodeInput()">
+          <span style="font-size:11px;color:var(--text3);margin-top:2px;">ระบุ code แล้วระบบจะดึงชื่อให้อัตโนมัติ</span>
+        </div>
+        <div class="field">
+          <label>Asset Name</label>
+          <input type="text" id="aa-name" placeholder="— รอดึงข้อมูล —" readonly style="background:var(--sf2);color:var(--text3);">
+          <span id="aa-found-badge"    style="display:none;margin-top:3px;font-size:11px;font-weight:600;color:var(--green);">✓ พบข้อมูล</span>
+          <span id="aa-notfound-badge" style="display:none;margin-top:3px;font-size:11px;font-weight:600;color:var(--red);">✕ ไม่พบข้อมูล</span>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>สภาพ (Condition)</label>
+          <select id="aa-condition">
+            <option value="">— เลือกสภาพ —</option>
+            <option value="good">Good – ดี</option>
+            <option value="fair">Fair – พอใช้</option>
+            <option value="poor">Poor – ไม่ดี</option>
+            <option value="damaged">Damaged – เสียหาย</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Serial Found (ที่พบจริง)</label>
+          <input type="text" id="aa-serial" placeholder="ใส่ serial ที่พบจริง">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>หมายเหตุ HO</label>
+        <textarea id="aa-remark" placeholder="หมายเหตุเพิ่มเติม..."></textarea>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeAddAssetModal()">ยกเลิก</button>
+      <button class="btn btn-red" onclick="aaSubmit()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
