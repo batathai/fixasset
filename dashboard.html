@@ -678,8 +678,9 @@ async function loadAll() {
   document.getElementById('last-updated').textContent = 'Loading...';
   cachedMasterAssets = {};
   try {
-    await Promise.all([loadScans(), loadUnmatched(), loadSummary(), loadAssetsBackground()]);
+    await Promise.all([loadScans(), loadUnmatched(), loadSummary()]);
     renderOverview(); renderScans(); renderPhotos(); renderUnmatched(unmatchedFilter); updateBadges();
+    loadAssetsBackground(); // โหลด assets เงียบๆ หลัง render เสร็จ ไม่ block UI
     document.getElementById('last-updated').textContent = 'Updated ' + new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
   } catch(e) { console.error(e); showToast('Error: '+e.message,'error'); document.getElementById('last-updated').textContent='Error'; }
 }
@@ -980,7 +981,7 @@ function renderOverview() {
       <td><div style="display:flex;align-items:center;gap:8px;"><div class="pb"><div class="pb-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:12px;font-family:var(--mono);">${pct}%</span></div></td>
       <td><span style="cursor:pointer;color:var(--green);font-weight:600;text-decoration:underline;" onclick="goToScannedBranch('${s.branch_id}')">${scanned}</span></td>
       <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${pending}</span></td>
-      <td>${parseInt(s.unmatched_count)||0?`<span class="badge badge-red">${s.unmatched_count}</span>`:'<span class="badge badge-gray">0</span>'}</td>
+      <td>${parseInt(s.unmatched_count)||0?`<span class="badge badge-red" style="cursor:pointer;" onclick="showPage('unmatched');setTimeout(()=>{const t=document.querySelector('#page-unmatched .tab');if(t)filterUnmatched('pending',t);},50)">${s.unmatched_count}</span>`:'<span class="badge badge-gray">0</span>'}</td>
       <td>${statusBadge}</td>
       <td style="font-size:12px;color:var(--text3);"><span style="color:var(--border);">—</span></td>
       <td style="text-align:center;">
