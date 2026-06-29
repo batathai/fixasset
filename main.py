@@ -2,14 +2,14 @@ from fastapi import FastAPI, HTTPException, Depends, Header, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
-import psycopg2, psycopg2.extras, os, hashlib, secrets, json, time
+import psycopg2, psycopg2.extras, os, hashlib, secrets, time
 from datetime import datetime
 from dotenv import load_dotenv
 import httpx
 
 load_dotenv()
 
-app = FastAPI(title="Bata Asset Audit API", version="1.0.0")
+app = FastAPI(title="Bata Asset Audit API", version="1.2.0")
 
 app.add_middleware(
     CORSMiddleware,
@@ -143,42 +143,33 @@ def lookup_asset(qr_key: str, db=Depends(get_db), user=Depends(get_current_user)
         return {"found": False, "qr_key": qr_key}
     return {"found": True, "asset": dict(asset)}
 
-# ════════════════════════════════════════════════════════════════
-# FIX: /assets/branch/{branch_id}
-# เดิม: SELECT ... WHERE location_code = %s
-#   → ดึงได้แค่ asset ที่มี location_code ตรง (บางตัวอาจ NULL หรือไม่ match)
-# ใหม่: JOIN audit_sessions เพื่อดึง master list จาก session ของ branch นั้น
-#        ถ้าไม่มี session ก็ fallback กลับ WHERE location_code = %s
-# ════════════════════════════════════════════════════════════════
 @app.get("/assets/branch/{branch_id}")
 def assets_by_branch(branch_id: str, db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
-    # ดึง master list จาก session ล่าสุดของ branch นี้
-    # (assets ที่เคยถูก scan หรืออยู่ใน master ของ session นั้น)
+    # ดึง master list ทั้งหมดของ branch (ใช้ location_code)
     cur.execute("""
-        SELECT DISTINCT a.id, a.qr_key, a.asset_code, a.seq, a.name, a.serial_no,
-               a.purchase_date, a.status, a.location_code
-        FROM assets a
-        WHERE a.location_code = %s
-        ORDER BY a.asset_code, a.seq
+        SELECT id, qr_key, asset_code, seq, name, serial_no,
+               purchase_date, status, location_code
+        FROM assets
+        WHERE location_code = %s AND status = 'active'
+        ORDER BY asset_code, seq
     """, (branch_id,))
     rows = cur.fetchall()
 
-    # ถ้าดึงได้น้อยกว่า 10 รายการ แสดงว่า location_code ไม่ match
-    # ให้ fallback ดึงจาก session ที่ branch_id นี้เคยสร้าง
+    # Fallback: ถ้าได้น้อยกว่า 10 ให้ดึงจาก scan_logs ที่ branch นี้เคย scan
     if len(rows) < 10:
         cur.execute("""
-            SELECT DISTINCT a.id, a.qr_key, a.asset_code, a.seq, a.name, a.serial_no,
-                   a.purchase_date, a.status, a.location_code
+            SELECT DISTINCT a.id, a.qr_key, a.asset_code, a.seq, a.name,
+                   a.serial_no, a.purchase_date, a.status, a.location_code
             FROM assets a
             JOIN scan_logs sl ON sl.asset_id = a.id
             JOIN audit_sessions s ON s.id = sl.session_id
             WHERE s.branch_id = %s
             UNION
-            SELECT DISTINCT a.id, a.qr_key, a.asset_code, a.seq, a.name, a.serial_no,
-                   a.purchase_date, a.status, a.location_code
-            FROM assets a
-            WHERE a.location_code = %s
+            SELECT id, qr_key, asset_code, seq, name, serial_no,
+                   purchase_date, status, location_code
+            FROM assets
+            WHERE location_code = %s
             ORDER BY asset_code, seq
         """, (branch_id, branch_id))
         rows = cur.fetchall()
@@ -187,6 +178,8 @@ def assets_by_branch(branch_id: str, db=Depends(get_db), user=Depends(get_curren
 
 # ════════════════════════════════════════════════════════════════
 # AUDIT SESSIONS
+# audit_sessions columns: id, name, branch_id, audit_date,
+#                         started_by, status, created_at, closed_at
 # ════════════════════════════════════════════════════════════════
 @app.post("/sessions")
 def create_session(req: SessionCreate, db=Depends(get_db), user=Depends(get_current_user)):
@@ -196,7 +189,8 @@ def create_session(req: SessionCreate, db=Depends(get_db), user=Depends(get_curr
     existing = cur.fetchone()
     if existing:
         return {"session_id": existing["id"], "reused": True}
-    cur.execute("INSERT INTO audit_sessions (name, branch_id, audit_date, started_by, status) VALUES (%s,%s,%s,%s,'open') RETURNING id", (name, req.branch_id, req.audit_date, user["user_id"]))
+    cur.execute("INSERT INTO audit_sessions (name, branch_id, audit_date, started_by, status) VALUES (%s,%s,%s,%s,'open') RETURNING id",
+                (name, req.branch_id, req.audit_date, user["user_id"]))
     session_id = cur.fetchone()["id"]
     db.commit()
     return {"session_id": session_id, "reused": False}
@@ -204,7 +198,18 @@ def create_session(req: SessionCreate, db=Depends(get_db), user=Depends(get_curr
 @app.get("/sessions/{session_id}/progress")
 def session_progress(session_id: int, db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
-    cur.execute("SELECT * FROM v_session_progress WHERE session_id = %s", (session_id,))
+    cur.execute("""
+        SELECT
+            s.id AS session_id, s.branch_id, s.name, s.status, s.audit_date,
+            s.created_at, s.closed_at,
+            COUNT(sl.id) AS scanned_count,
+            (SELECT COUNT(*) FROM assets a
+             WHERE a.location_code = s.branch_id AND a.status = 'active') AS total_assets
+        FROM audit_sessions s
+        LEFT JOIN scan_logs sl ON sl.session_id = s.id
+        WHERE s.id = %s
+        GROUP BY s.id, s.branch_id, s.name, s.status, s.audit_date, s.created_at, s.closed_at
+    """, (session_id,))
     row = cur.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Session not found")
@@ -221,6 +226,9 @@ def close_session(session_id: int, db=Depends(get_db), user=Depends(get_current_
 
 # ════════════════════════════════════════════════════════════════
 # SCAN LOGS
+# scan_logs columns: id, session_id, asset_id, scanned_by,
+#   scanned_at, serial_verified, serial_match, serial_found,
+#   condition, remark, photo_url, hq_note, updated_at
 # ════════════════════════════════════════════════════════════════
 @app.post("/scans")
 def create_scan(req: ScanLogCreate, db=Depends(get_db), user=Depends(get_current_user)):
@@ -229,6 +237,7 @@ def create_scan(req: ScanLogCreate, db=Depends(get_db), user=Depends(get_current
     asset = cur.fetchone()
     if not asset:
         raise HTTPException(status_code=404, detail="Asset not found")
+    # เช็คซ้ำข้าม session ในวันเดียวกัน branch เดียวกัน
     cur.execute("""
         SELECT sl.id FROM scan_logs sl
         JOIN audit_sessions s ON s.id = sl.session_id
@@ -241,25 +250,46 @@ def create_scan(req: ScanLogCreate, db=Depends(get_db), user=Depends(get_current
     cur.execute("SELECT id FROM scan_logs WHERE session_id = %s AND asset_id = %s", (req.session_id, asset["id"]))
     if cur.fetchone():
         raise HTTPException(status_code=409, detail="Already scanned in this session")
-    cur.execute("INSERT INTO scan_logs (session_id, asset_id, scanned_by, serial_found, serial_match, condition, remark, photo_url) VALUES (%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id", (req.session_id, asset["id"], user["user_id"], req.serial_found, req.serial_match, req.condition, req.remark, req.photo_url))
-    cur.execute("UPDATE audit_sessions SET status = 'on_process' WHERE id = %s AND status = 'open'", (req.session_id,))
+    cur.execute("""
+        INSERT INTO scan_logs
+            (session_id, asset_id, scanned_by, serial_found, serial_match, condition, remark, photo_url)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id
+    """, (req.session_id, asset["id"], user["user_id"], req.serial_found,
+          req.serial_match, req.condition, req.remark, req.photo_url))
     scan_id = cur.fetchone()["id"]
+    cur.execute("UPDATE audit_sessions SET status = 'on_process' WHERE id = %s AND status = 'open'", (req.session_id,))
     db.commit()
     return {"scan_id": scan_id, "asset_id": asset["id"]}
 
 @app.get("/sessions/{session_id}/scans")
 def get_scans(session_id: int, db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
-    cur.execute("SELECT sl.id, sl.scanned_at, sl.serial_match, sl.condition, sl.remark, a.qr_key, a.name, a.serial_no FROM scan_logs sl JOIN assets a ON a.id = sl.asset_id WHERE sl.session_id = %s ORDER BY sl.scanned_at DESC", (session_id,))
+    cur.execute("""
+        SELECT sl.id, sl.scanned_at, sl.serial_match, sl.condition, sl.remark,
+               a.qr_key, a.name, a.serial_no
+        FROM scan_logs sl
+        JOIN assets a ON a.id = sl.asset_id
+        WHERE sl.session_id = %s
+        ORDER BY sl.scanned_at DESC
+    """, (session_id,))
     return {"scans": [dict(r) for r in cur.fetchall()]}
 
 # ════════════════════════════════════════════════════════════════
 # UNMATCHED ASSETS
+# unmatched_assets columns: id, session_id, scanned_qr, serial_no,
+#   name_guess, photo_url, scanned_by, branch_id, scanned_at,
+#   status, hq_note, reviewed_at, matched_asset_code,
+#   reviewed_by, updated_at
 # ════════════════════════════════════════════════════════════════
 @app.post("/unmatched")
 def create_unmatched(req: UnmatchedCreate, db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
-    cur.execute("INSERT INTO unmatched_assets (session_id, scanned_qr, serial_no, name_guess, photo_url, scanned_by, branch_id) VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id", (req.session_id, req.scanned_qr, req.serial_no, req.name_guess, req.photo_url, user["user_id"], user["branch_id"]))
+    cur.execute("""
+        INSERT INTO unmatched_assets
+            (session_id, scanned_qr, serial_no, name_guess, photo_url, scanned_by, branch_id)
+        VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id
+    """, (req.session_id, req.scanned_qr, req.serial_no, req.name_guess,
+          req.photo_url, user["user_id"], user["branch_id"]))
     uid = cur.fetchone()["id"]
     db.commit()
     return {"unmatched_id": uid}
@@ -269,59 +299,48 @@ def pending_unmatched(db=Depends(get_db), user=Depends(get_current_user)):
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     cur = db.cursor()
-    cur.execute("SELECT ua.*, u.email as auditor FROM unmatched_assets ua LEFT JOIN users u ON u.id = ua.scanned_by WHERE ua.status = 'pending' ORDER BY ua.scanned_at DESC")
+    cur.execute("""
+        SELECT ua.*, u.email as auditor FROM unmatched_assets ua
+        LEFT JOIN users u ON u.id = ua.scanned_by
+        WHERE ua.status = 'pending' ORDER BY ua.scanned_at DESC
+    """)
     return {"items": [dict(r) for r in cur.fetchall()]}
 
 # ════════════════════════════════════════════════════════════════
-# DASHBOARD
+# DASHBOARD — คำนวณจาก scan_logs จริง ไม่ใช้ v_session_progress
 # ════════════════════════════════════════════════════════════════
 @app.get("/dashboard/summary")
 def dashboard_summary(db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
-
-    # ════════════════════════════════════════════════════════
-    # FIX: คำนวณ scanned_count จาก scan_logs จริง ไม่ใช่จาก view
-    # v_session_progress อาจมี scanned_count ที่ไม่ sync
-    # ════════════════════════════════════════════════════════
     cur.execute("""
         SELECT
-            s.id                AS session_id,
+            s.id          AS session_id,
             s.branch_id,
             s.name,
             s.status,
             s.audit_date,
             s.created_at,
             s.closed_at,
-            s.hq_ack,
             s.started_by,
-            -- นับจาก scan_logs จริง (source of truth)
-            COUNT(sl.id)        AS scanned_count,
-            -- total_assets จาก assets table โดยตรง
+            COUNT(sl.id)  AS scanned_count,
             (SELECT COUNT(*) FROM assets a
              WHERE a.location_code = s.branch_id
                AND a.status = 'active') AS total_assets
         FROM audit_sessions s
         LEFT JOIN scan_logs sl ON sl.session_id = s.id
-        GROUP BY s.id, s.branch_id, s.name, s.status, s.audit_date,
-                 s.created_at, s.closed_at, s.hq_ack, s.started_by
+        GROUP BY s.id, s.branch_id, s.name, s.status,
+                 s.audit_date, s.created_at, s.closed_at, s.started_by
         ORDER BY s.audit_date DESC
     """)
     sessions_data = [dict(r) for r in cur.fetchall()]
 
-    # ถ้า total_assets = 0 สำหรับ session ไหน แสดงว่า location_code ไม่ match
-    # ให้ fallback นับจาก scan_logs ที่มีจริง
+    # Fallback: ถ้า total_assets = 0 ให้ใช้จำนวน distinct asset ที่ scan ไปแล้ว
     for s in sessions_data:
-        if s["total_assets"] == 0:
+        if not s["total_assets"]:
             cur.execute("""
-                SELECT COUNT(DISTINCT sl.asset_id) AS cnt
-                FROM scan_logs sl
-                WHERE sl.session_id = %s
+                SELECT COUNT(DISTINCT asset_id) AS cnt FROM scan_logs WHERE session_id = %s
             """, (s["session_id"],))
-            row = cur.fetchone()
-            # ใช้ค่าจาก v_session_progress เป็น fallback
-            cur.execute("SELECT total_assets FROM v_session_progress WHERE session_id = %s", (s["session_id"],))
-            vrow = cur.fetchone()
-            s["total_assets"] = vrow["total_assets"] if vrow and vrow["total_assets"] else row["cnt"]
+            s["total_assets"] = cur.fetchone()["cnt"] or 0
 
     cur.execute("SELECT COUNT(*) as total FROM assets WHERE status='active'")
     total_assets = cur.fetchone()["total"]
@@ -345,8 +364,8 @@ def hq_get_scans(db=Depends(get_db), user=Depends(get_current_user)):
     cur.execute("""
         SELECT sl.id, sl.condition, sl.serial_found, sl.serial_match, sl.photo_url,
                sl.scanned_at, sl.hq_note, a.asset_code, a.seq, a.qr_key,
-               a.name AS asset_name,
-               a.serial_no AS serial_master, u.email AS auditor,
+               a.name AS asset_name, a.serial_no AS serial_master,
+               u.email AS auditor,
                s.id AS session_id, b.id AS branch_id, b.name AS branch_name
         FROM scan_logs sl
         LEFT JOIN assets a ON a.id = sl.asset_id
@@ -411,8 +430,10 @@ async def hq_delete_scan_photo(scan_id: int, db=Depends(get_db), user=Depends(ge
                     ts  = int(time.time())
                     sig = _cloudinary_sign({"public_id": public_id, "timestamp": ts}, secret)
                     async with httpx.AsyncClient() as client:
-                        await client.post(f"https://api.cloudinary.com/v1_1/{cloud}/image/destroy",
-                            data={"public_id": public_id, "timestamp": ts, "api_key": key, "signature": sig}, timeout=15)
+                        await client.post(
+                            f"https://api.cloudinary.com/v1_1/{cloud}/image/destroy",
+                            data={"public_id": public_id, "timestamp": ts,
+                                  "api_key": key, "signature": sig}, timeout=15)
         except Exception as e:
             print(f"[WARN] Cloudinary delete failed: {e}")
     cur.execute("UPDATE scan_logs SET photo_url = NULL, updated_at = NOW() WHERE id = %s", (scan_id,))
@@ -429,7 +450,12 @@ async def hq_upload_scan_photo(scan_id: int, photo: UploadFile = File(...), db=D
     if len(content) > 5 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="ไฟล์ใหญ่เกิน 5MB")
     cur = db.cursor()
-    cur.execute("SELECT b.id as branch_id FROM scan_logs sl LEFT JOIN audit_sessions s ON s.id = sl.session_id LEFT JOIN branches b ON b.id = s.branch_id WHERE sl.id = %s", (scan_id,))
+    cur.execute("""
+        SELECT b.id as branch_id FROM scan_logs sl
+        LEFT JOIN audit_sessions s ON s.id = sl.session_id
+        LEFT JOIN branches b ON b.id = s.branch_id
+        WHERE sl.id = %s
+    """, (scan_id,))
     row = cur.fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Scan not found")
@@ -443,7 +469,8 @@ async def hq_upload_scan_photo(scan_id: int, photo: UploadFile = File(...), db=D
     public_id = f"bata-audit/{branch_id}/scan_{scan_id}_{ts}"
     sig       = _cloudinary_sign({"public_id": public_id, "timestamp": ts}, secret)
     async with httpx.AsyncClient() as client:
-        resp = await client.post(f"https://api.cloudinary.com/v1_1/{cloud}/image/upload",
+        resp = await client.post(
+            f"https://api.cloudinary.com/v1_1/{cloud}/image/upload",
             data={"api_key": key, "timestamp": ts, "signature": sig, "public_id": public_id},
             files={"file": (photo.filename, content, photo.content_type)}, timeout=30)
     if resp.status_code != 200:
@@ -463,19 +490,37 @@ def hq_update_unmatched(unmatched_id: int, req: UnmatchedUpdate, db=Depends(get_
     if req.status not in ("matched", "rejected"):
         raise HTTPException(status_code=400, detail="status must be 'matched' or 'rejected'")
     cur = db.cursor()
-    cur.execute("SELECT ua.*, u.full_name as auditor_name FROM unmatched_assets ua LEFT JOIN users u ON u.id = ua.scanned_by WHERE ua.id = %s", (unmatched_id,))
+    cur.execute("""
+        SELECT ua.*, u.full_name as auditor_name FROM unmatched_assets ua
+        LEFT JOIN users u ON u.id = ua.scanned_by
+        WHERE ua.id = %s
+    """, (unmatched_id,))
     um = cur.fetchone()
     if not um:
         raise HTTPException(status_code=404, detail="Unmatched asset not found")
     hq_note = req.hq_note or f"{'Matched' if req.status == 'matched' else 'Rejected'} by HQ - {user['employee_id']}"
-    cur.execute("UPDATE unmatched_assets SET status=%s, hq_note=%s, matched_asset_code=%s, serial_no=COALESCE(%s,serial_no), reviewed_by=%s, reviewed_at=NOW(), updated_at=NOW() WHERE id=%s",
-        (req.status, hq_note, req.matched_asset_code, req.serial_no, user["user_id"], unmatched_id))
+    cur.execute("""
+        UPDATE unmatched_assets
+        SET status=%s, hq_note=%s, matched_asset_code=%s,
+            serial_no=COALESCE(%s,serial_no), reviewed_by=%s,
+            reviewed_at=NOW(), updated_at=NOW()
+        WHERE id=%s
+    """, (req.status, hq_note, req.matched_asset_code, req.serial_no, user["user_id"], unmatched_id))
     if req.status == "matched" and req.matched_asset_code:
         cur.execute("SELECT id FROM assets WHERE asset_code = %s LIMIT 1", (req.matched_asset_code,))
         asset = cur.fetchone()
         if asset:
-            cur.execute("INSERT INTO scan_logs (session_id,asset_id,scanned_by,serial_found,serial_match,condition,remark,photo_url,hq_note,scanned_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING",
-                (um["session_id"], asset["id"], um["scanned_by"], req.serial_no or um.get("serial_no"), None, "good", f"[Matched from Unmatched] QR: {um['scanned_qr']}", um.get("photo_url"), hq_note, um.get("scanned_at") or datetime.now()))
+            cur.execute("""
+                INSERT INTO scan_logs
+                    (session_id, asset_id, scanned_by, serial_found, serial_match,
+                     condition, remark, photo_url, hq_note, scanned_at)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT DO NOTHING
+            """, (um["session_id"], asset["id"], um["scanned_by"],
+                  req.serial_no or um.get("serial_no"), None, "good",
+                  f"[Matched from Unmatched] QR: {um['scanned_qr']}",
+                  um.get("photo_url"), hq_note,
+                  um.get("scanned_at") or datetime.now()))
     db.commit()
     return {"ok": True, "unmatched_id": unmatched_id, "status": req.status}
 
@@ -484,7 +529,16 @@ def hq_get_unmatched(db=Depends(get_db), user=Depends(get_current_user)):
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     cur = db.cursor()
-    cur.execute("SELECT ua.id, ua.scanned_qr, ua.name_guess, ua.serial_no, ua.photo_url, ua.scanned_at, ua.status, ua.hq_note, ua.matched_asset_code, u.email AS auditor, b.id AS branch_id, b.name AS branch_name FROM unmatched_assets ua LEFT JOIN users u ON u.id = ua.scanned_by LEFT JOIN audit_sessions s ON s.id = ua.session_id LEFT JOIN branches b ON b.id = s.branch_id ORDER BY ua.scanned_at DESC")
+    cur.execute("""
+        SELECT ua.id, ua.scanned_qr, ua.name_guess, ua.serial_no, ua.photo_url,
+               ua.scanned_at, ua.status, ua.hq_note, ua.matched_asset_code,
+               u.email AS auditor, b.id AS branch_id, b.name AS branch_name
+        FROM unmatched_assets ua
+        LEFT JOIN users u ON u.id = ua.scanned_by
+        LEFT JOIN audit_sessions s ON s.id = ua.session_id
+        LEFT JOIN branches b ON b.id = s.branch_id
+        ORDER BY ua.scanned_at DESC
+    """)
     return {"items": [dict(r) for r in cur.fetchall()]}
 
 @app.get("/hq/assets")
@@ -536,44 +590,27 @@ def hq_merge_sessions(req: MergeSessionsRequest, db=Depends(get_db), user=Depend
     for sid in req.merge_session_ids:
         if sid == req.primary_session_id:
             continue
-        cur.execute("UPDATE scan_logs SET session_id=%s WHERE session_id=%s AND asset_id NOT IN (SELECT asset_id FROM scan_logs WHERE session_id=%s)",
-            (req.primary_session_id, sid, req.primary_session_id))
+        cur.execute("""
+            UPDATE scan_logs SET session_id=%s
+            WHERE session_id=%s
+              AND asset_id NOT IN (SELECT asset_id FROM scan_logs WHERE session_id=%s)
+        """, (req.primary_session_id, sid, req.primary_session_id))
         moved_scans += cur.rowcount
         cur.execute("DELETE FROM scan_logs WHERE session_id = %s", (sid,))
         cur.execute("UPDATE unmatched_assets SET session_id=%s WHERE session_id=%s", (req.primary_session_id, sid))
         moved_unmatched += cur.rowcount
         cur.execute("DELETE FROM audit_sessions WHERE id = %s", (sid,))
         deleted_sessions += cur.rowcount
-    cur.execute("UPDATE audit_sessions SET status='on_process' WHERE id=%s AND status='open' AND EXISTS (SELECT 1 FROM scan_logs WHERE session_id=%s)",
-        (req.primary_session_id, req.primary_session_id))
+    cur.execute("""
+        UPDATE audit_sessions SET status='on_process'
+        WHERE id=%s AND status='open'
+          AND EXISTS (SELECT 1 FROM scan_logs WHERE session_id=%s)
+    """, (req.primary_session_id, req.primary_session_id))
     db.commit()
     cur.close()
-    return {"ok": True, "primary_session_id": req.primary_session_id, "deleted_sessions": deleted_sessions, "moved_scans": moved_scans, "moved_unmatched": moved_unmatched}
-
-# ════════════════════════════════════════════════════════════════
-# SESSIONS HQ
-# ════════════════════════════════════════════════════════════════
-@app.patch("/hq/sessions/{session_id}/acknowledge")
-def hq_acknowledge_session(session_id: int, db=Depends(get_db), user=Depends(get_current_user)):
-    if user["role"] != "hq_admin":
-        raise HTTPException(status_code=403, detail="HQ admin only")
-    cur = db.cursor()
-    cur.execute("UPDATE audit_sessions SET hq_ack=true, updated_at=NOW() WHERE id=%s RETURNING id", (session_id,))
-    if not cur.fetchone():
-        raise HTTPException(status_code=404, detail="Session not found")
-    db.commit()
-    return {"ok": True, "session_id": session_id}
-
-@app.patch("/hq/sessions/{session_id}/needs-correction")
-def hq_needs_correction(session_id: int, db=Depends(get_db), user=Depends(get_current_user)):
-    if user["role"] != "hq_admin":
-        raise HTTPException(status_code=403, detail="HQ admin only")
-    cur = db.cursor()
-    cur.execute("UPDATE audit_sessions SET status='needs_correction', updated_at=NOW() WHERE id=%s RETURNING id", (session_id,))
-    if not cur.fetchone():
-        raise HTTPException(status_code=404, detail="Session not found")
-    db.commit()
-    return {"ok": True, "session_id": session_id}
+    return {"ok": True, "primary_session_id": req.primary_session_id,
+            "deleted_sessions": deleted_sessions, "moved_scans": moved_scans,
+            "moved_unmatched": moved_unmatched}
 
 # ════════════════════════════════════════════════════════════════
 # HEALTH CHECK
