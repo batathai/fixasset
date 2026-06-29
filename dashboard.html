@@ -945,7 +945,7 @@ function renderOverview() {
     const isDup = dupBranches.has(s.branch_id);
     // overdue check
     const today = new Date(); today.setHours(0,0,0,0);
-    const isOverdue = s.scheduled_date && new Date(s.scheduled_date) < today && s.status !== 'done';
+    const isOverdue = false; // scheduled_date ไม่มีใน DB
     const isDoneStatus = s.status === 'done' || s.status === 'done_reviewed' || s.status === 'reviewed';
     const isReviewed = s.status === 'done_reviewed' || s.status === 'reviewed' || s.hq_ack;
     const isPendingReview = isDoneStatus && !isReviewed;
@@ -979,11 +979,9 @@ function renderOverview() {
       <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${pending}</span></td>
       <td>${parseInt(s.unmatched_count)||0?`<span class="badge badge-red">${s.unmatched_count}</span>`:'<span class="badge badge-gray">0</span>'}</td>
       <td>${statusBadge}</td>
-      <td style="font-size:12px;color:var(--text3);${isOverdue?'color:var(--amber);font-weight:700;':''}">${s.scheduled_date?new Date(s.scheduled_date).toLocaleDateString('th-TH',{dateStyle:'short'}):'<span style="color:var(--border);">—</span>'}</td>
+      <td style="font-size:12px;color:var(--text3);"><span style="color:var(--border);">—</span></td>
       <td style="text-align:center;">
-        ${s.active_scanners > 0
-          ? '<span style="display:inline-flex;align-items:center;gap:4px;background:#DCFCE7;color:#15803D;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:600;">🟢 '+s.active_scanners+'</span>'
-          : '<span style="color:var(--text3);font-size:12px;">—</span>'}
+        <span style="color:var(--text3);font-size:12px;">—</span>
       </td>
       <td>${ackCell}</td>
       <td style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -1141,7 +1139,14 @@ async function renderPendingScans(branchId) {
   if (!session) { tbody.innerHTML='<tr><td colspan="10" class="loading">ไม่พบข้อมูล session</td></tr>'; return; }
   tbody.innerHTML = '<tr><td colspan="10" class="loading">⏳ กำลังโหลด Master List...</td></tr>';
   const masterAssets = await loadMasterAssets(session.branch_id);
-  const scannedCodes = new Set(allScans.filter(s=>s.branch_id===session.branch_id).map(s=>s.asset_code));
+  // FIX: ใช้ session_id match ด้วย เพราะ branch_id ใน allScans มาจาก branches table
+  // ซึ่งอาจไม่ตรงกับ session.branch_id ถ้า branches.id เป็น integer หรือรูปแบบต่างกัน
+  const sessionId = session.session_id || session.id;
+  const scannedCodes = new Set(
+    allScans
+      .filter(s => String(s.session_id) === String(sessionId) || s.branch_id === session.branch_id)
+      .map(s => s.asset_code)
+  );
   const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
   document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending)';
   showScanBanner('amber', `⏳ Pending ${pendingAssets.length} รายการ — ยังไม่ได้สแกน สาขา ${session.branch_id}`);
@@ -1801,10 +1806,7 @@ async function submitNeedsFix() {
 // ── OVERDUE BADGE in nav ──────────────────────────────────────
 function updateOverdueBadge() {
   const today = new Date(); today.setHours(0,0,0,0);
-  const overdueCount = allSessions.filter(s =>
-    s.scheduled_date && new Date(s.scheduled_date) < today &&
-    s.status !== 'done' && s.status !== 'done_reviewed' && s.status !== 'reviewed'
-  ).length;
+  const overdueCount = 0; // scheduled_date ไม่มีใน DB
   const pendingAckCount = allSessions.filter(s =>
     (s.status === 'done' && !s.hq_ack)
   ).length;
