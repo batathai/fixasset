@@ -1153,18 +1153,24 @@ async function renderPendingScans(branchId) {
   document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending)';
   showScanBanner('amber', `⏳ Pending ${pendingAssets.length} รายการ — ยังไม่ได้สแกน สาขา ${session.branch_id}`);
   if (!pendingAssets.length) { tbody.innerHTML='<tr><td colspan="10" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>'; return; }
-  tbody.innerHTML = pendingAssets.map(a => `<tr style="background:var(--amber-bg);">
+  tbody.innerHTML = pendingAssets.map(a => {
+    const qrKey = a.qr_key || '';
+    const seqMatch = qrKey.match(/SEQ(\d+)$/i);
+    const seqDisplay = seqMatch
+      ? `<span style="font-family:var(--mono);font-size:12px;">SEQ${seqMatch[1].padStart(3,'0')}</span>`
+      : `<span style="color:var(--text3);font-size:11px;">—</span>`;
+   const cleanCode = a.asset_code || qrKey.replace(/SEQ\d+$/i, '') || '—';
+    return `<tr style="background:var(--amber-bg);">
     <td style="padding:8px 10px;"><div class="scan-no-photo" title="ยังไม่สแกน">⏳</div></td>
-    <td style="font-family:var(--mono);font-size:11px;font-weight:600;">${getFullCode(a.asset_code)||'—'}</td>
+    <td style="font-family:var(--mono);font-size:11px;font-weight:600;">${cleanCode}</td>
     <td><div style="font-weight:500;">${a.name||'—'}</div><div style="font-size:11px;color:var(--text3);">ยังไม่มีผู้สแกน</div></td>
-    <td style="text-align:center;"><span style="color:var(--text3);font-size:11px;">—</span></td>
+    <td style="text-align:center;">${seqDisplay}</td>
     <td><span class="badge badge-amber">Pending</span></td>
     <td><span class="badge badge-gray">—</span></td>
     <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${a.serial_no||'—'}</td>
     <td style="font-size:12px;">${session.branch_id}</td>
     <td style="font-size:11px;color:var(--text3);">—</td>
-    <td><button class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber-bd);" onclick="exportFullReport('${session.branch_id}')">📥</button></td>
-  </tr>`).join('');
+    <td><button class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber-bd);" onclick="exportFullReport('${session.branch_id}')">📥</button></td> </tr>`; }).join('');
 }
 
 // ── PHOTOS ────────────────────────────────────────────
