@@ -205,6 +205,7 @@ def session_progress(session_id: int, db=Depends(get_db), user=Depends(get_curre
             COUNT(sl.id) AS scanned_count,
             (SELECT COUNT(*) FROM assets a
              WHERE a.location_code = s.branch_id AND a.status = 'active') AS total_assets
+            (SELECT COUNT(*) FROM unmatched_assets ua WHERE ua.session_id = s.id AND ua.status = 'pending') AS unmatched_count
         FROM audit_sessions s
         LEFT JOIN scan_logs sl ON sl.session_id = s.id
         WHERE s.id = %s
