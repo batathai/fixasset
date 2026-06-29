@@ -915,12 +915,13 @@ function renderOverview() {
   const totalAssets = allSessions.reduce((sum,s)=>sum+(parseInt(s.total_assets)||0),0);
   // FIX: คำนวณ Pending จาก actual scan log (allScans) เทียบกับ total_assets
   // ไม่ใช้ scanned_count จาก Session ซึ่งอาจไม่ sync กับ scan log จริง
-  const scannedAssetCodes = new Set(allScans.map(s => (s.branch_id||'') + '|' + (s.asset_code||'')));
+  // FIX: นับ unique qr_key ที่ scan แล้วต่อ branch (ไม่ใช่ asset_code ซึ่งซ้ำได้)
   const totalPendingFromDB = allSessions.reduce((sum,s) => {
     const total = parseInt(s.total_assets)||0;
-    // นับจาก actual scans สำหรับ branch นี้
-    const actualScanned = allScans.filter(sc => sc.branch_id === s.branch_id).length;
-    return sum + Math.max(0, total - actualScanned);
+    const scannedQrSet = new Set(
+      allScans.filter(sc => sc.branch_id === s.branch_id).map(sc => sc.qr_key)
+    );
+    return sum + Math.max(0, total - scannedQrSet.size);
   }, 0);
   document.getElementById('s-total-assets').textContent = totalAssets.toLocaleString();
   document.getElementById('s-total').textContent = totalScanned.toLocaleString();
@@ -1142,12 +1143,13 @@ async function renderPendingScans(branchId) {
   // FIX: ใช้ session_id match ด้วย เพราะ branch_id ใน allScans มาจาก branches table
   // ซึ่งอาจไม่ตรงกับ session.branch_id ถ้า branches.id เป็น integer หรือรูปแบบต่างกัน
   const sessionId = session.session_id || session.id;
-  const scannedCodes = new Set(
+  // FIX: ใช้ qr_key match แทน asset_code เพราะ asset_code ซ้ำได้ (หลาย SEQ)
+  const scannedQrKeys = new Set(
     allScans
       .filter(s => String(s.session_id) === String(sessionId) || s.branch_id === session.branch_id)
-      .map(s => s.asset_code)
+      .map(s => s.qr_key)
   );
-  const pendingAssets = masterAssets.filter(a => !scannedCodes.has(a.asset_code));
+  const pendingAssets = masterAssets.filter(a => !scannedQrKeys.has(a.qr_key));
   document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending)';
   showScanBanner('amber', `⏳ Pending ${pendingAssets.length} รายการ — ยังไม่ได้สแกน สาขา ${session.branch_id}`);
   if (!pendingAssets.length) { tbody.innerHTML='<tr><td colspan="10" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>'; return; }
@@ -1538,7 +1540,7 @@ async function exportFullReport(branchId) {
   const scannedMap = {};
   allScans.filter(s=>s.branch_id===session.branch_id).forEach(s=>{ if(!scannedMap[s.asset_code]) scannedMap[s.asset_code]=s; });
   const data = masterAssets.map(a => {
-    const scan = scannedMap[a.asset_code];
+    const scan = scannedMap[a.qr_key]; // FIX: match by qr_key
     return scan ? {'Asset Code':a.asset_code||'','SEQ':a.seq!=null?'SEQ'+String(a.seq).padStart(3,'0'):'','Asset Name':a.name||'','Status':'Scanned ✓','สภาพ':scan.condition||'','ผู้สแกน':scan.auditor||'','เวลาสแกน':scan.scanned_at||'','Serial Found':scan.serial_found||'','มีรูปถ่าย':scan.photo_url?'Yes':'No','HQ Note':scan.hq_note||''}
     : {'Asset Code':a.asset_code||'','SEQ':a.seq!=null?'SEQ'+String(a.seq).padStart(3,'0'):'','Asset Name':a.name||'','Status':'⚠️ PENDING - ยังไม่สแกน','สภาพ':'','ผู้สแกน':'','เวลาสแกน':'','Serial Found':a.serial_no||'','มีรูปถ่าย':'','HQ Note':''};
   });
@@ -1586,10 +1588,10 @@ async function loadAssetsPage() {
 
     // map scan status จาก allScans ที่โหลดไว้แล้ว
     const scannedMap = {};
-    allScans.forEach(s => { scannedMap[s.asset_code] = s; });
+    allScans.forEach(s => { scannedMap[s.qr_key] = s; }); // FIX: ใช้ qr_key เป็น key
 
     allAssets = allAssets.map(a => {
-      const scanMatch = scannedMap[a.asset_code];
+      const scanMatch = scannedMap[a.qr_key]; // FIX: match by qr_key
       return {...a, is_scanned: !!scanMatch, scan_info: scanMatch || null};
     });
 
@@ -1841,7 +1843,7 @@ async function exportPDF(branchId) {
   const scannedCount = masterAssets.filter(a => scannedMap[a.asset_code]).length;
   const pendingCount = masterAssets.filter(a => !scannedMap[a.asset_code]).length;
   const rows = masterAssets.map((a, i) => {
-    const scan = scannedMap[a.asset_code];
+    const scan = scannedMap[a.qr_key]; // FIX: match by qr_key
     const isPending = !scan;
     const rowBg = isPending ? '#fff8f0' : '#fff';
     const statusBadge = isPending
