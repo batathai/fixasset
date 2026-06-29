@@ -298,7 +298,7 @@ tbody tr:hover{background:var(--sf2);}
         <div id="scan-banner" style="display:none"></div>
         <div class="filter-bar" style="flex-wrap:wrap;">
           <div class="search-wrap">
-            <input id="scan-search" type="text" placeholder="ค้นหา asset code / ชื่อ..." onkeydown="if(event.key==='Enter')doSearch()">
+            <input id="scan-search" type="text" placeholder="ค้นหา asset code / ชื่อ..." oninput="doSearch()" onkeydown="if(event.key==='Enter')doSearch()">
             <button class="search-btn" onclick="doSearch()" title="ค้นหา">🔍</button>
           </div>
           <select id="scan-branch" onchange="filterScans()"><option value="">ทุกสาขา</option></select>
@@ -1114,10 +1114,14 @@ function filterScans() {
     const scanDate = s.scanned_at ? new Date(s.scanned_at) : null;
     const matchDate = !preset || !scanDate ? true :
       ((!dateFrom || scanDate >= dateFrom) && (!dateTo || scanDate <= dateTo));
-    const fullQr = (s.qr_key || ((s.asset_code||'') + (s.seq != null ? 'SEQ'+String(s.seq).padStart(3,'0') : ''))).toLowerCase();
-    return (!q||(s.asset_code||'').toLowerCase().includes(q)||(s.asset_name||'').toLowerCase().includes(q)||fullQr.includes(q)) &&
-      (!branch||s.branch_id===branch) && (!cond||s.condition===cond) &&
-      (!photo||(photo==='yes'?!!s.photo_url:!s.photo_url)) && matchDate;
+    const baseCode = (s.asset_code||'').toLowerCase();
+    const seqOnly  = s.seq != null ? String(s.seq).padStart(3,'0') : 
+                     ((s.qr_key||'').match(/SEQ(\d+)$/i)||[,''])[1];
+    const fullQr   = (s.qr_key || (baseCode + (seqOnly ? 'SEQ'+seqOnly : ''))).toLowerCase();
+    const nameStr  = (s.asset_name||'').toLowerCase();
+    const matchQ   = !q || baseCode.includes(q) || nameStr.includes(q) ||
+                     fullQr.includes(q) || (seqOnly && seqOnly.includes(q));
+    return matchQ &&
   });
   renderScans();
 }
