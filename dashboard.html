@@ -1188,9 +1188,10 @@ async function renderPendingScans(branchId) {
     <td style="font-family:var(--mono);font-size:11px;color:var(--text3);">${a.serial_no||'—'}</td>
     <td style="font-size:12px;">${session.branch_id}</td>
     <td style="font-size:11px;color:var(--text3);">—</td>
-    <td><button class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber-bd);" onclick="exportFullReport('${session.branch_id}')">📥</button></td> </tr>`; }).join('');
-}
-
+    <td><button class="btn btn-outline btn-sm" style="color:var(--amber);border-color:var(--amber-bd);" onclick="exportFullReport('${session.branch_id}')">📥</button></td>
+  </tr>`;
+  }).join('');
+}        
 // ── PHOTOS ────────────────────────────────────────────
 function renderPhotos() {
   const q = document.getElementById('photo-search').value.toLowerCase();
