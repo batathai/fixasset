@@ -1123,7 +1123,9 @@ function filterScans() {
     const nameStr  = (s.asset_name||'').toLowerCase();
     const matchQ   = !q || baseCode.includes(q) || nameStr.includes(q) ||
                      fullQr.includes(q) || (seqOnly && seqOnly.includes(q));
-    return matchQ &&
+    return matchQ && matchDate &&
+      (!branch || s.branch_id === branch) &&
+      (!photo  || (photo === 'yes' ? !!s.photo_url : !s.photo_url));
   });
   renderScans();
 }
