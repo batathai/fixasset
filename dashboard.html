@@ -1538,7 +1538,7 @@ async function exportFullReport(branchId) {
   showToast('กำลังโหลด Master List...', '');
   const masterAssets = await loadMasterAssets(session.branch_id);
   const scannedMap = {};
-  allScans.filter(s=>s.branch_id===session.branch_id).forEach(s=>{ if(!scannedMap[s.asset_code]) scannedMap[s.asset_code]=s; });
+  allScans.filter(s=>s.branch_id===session.branch_id).forEach(s=>{ if(!scannedMap[s.qr_key]) scannedMap[s.qr_key]=s; }); // FIX: qr_key
   const data = masterAssets.map(a => {
     const scan = scannedMap[a.qr_key]; // FIX: match by qr_key
     return scan ? {'Asset Code':a.asset_code||'','SEQ':a.seq!=null?'SEQ'+String(a.seq).padStart(3,'0'):'','Asset Name':a.name||'','Status':'Scanned ✓','สภาพ':scan.condition||'','ผู้สแกน':scan.auditor||'','เวลาสแกน':scan.scanned_at||'','Serial Found':scan.serial_found||'','มีรูปถ่าย':scan.photo_url?'Yes':'No','HQ Note':scan.hq_note||''}
@@ -1839,9 +1839,9 @@ async function exportPDF(branchId) {
   showToast('กำลังเตรียม PDF...', '');
   const masterAssets = await loadMasterAssets(session.branch_id);
   const scannedMap = {};
-  allScans.filter(s => s.branch_id === session.branch_id).forEach(s => { if (!scannedMap[s.asset_code]) scannedMap[s.asset_code] = s; });
-  const scannedCount = masterAssets.filter(a => scannedMap[a.asset_code]).length;
-  const pendingCount = masterAssets.filter(a => !scannedMap[a.asset_code]).length;
+  allScans.filter(s => s.branch_id === session.branch_id).forEach(s => { if (!scannedMap[s.qr_key]) scannedMap[s.qr_key] = s; }); // FIX: qr_key
+  const scannedCount = masterAssets.filter(a => scannedMap[a.qr_key]).length;
+  const pendingCount = masterAssets.filter(a => !scannedMap[a.qr_key]).length;
   const rows = masterAssets.map((a, i) => {
     const scan = scannedMap[a.qr_key]; // FIX: match by qr_key
     const isPending = !scan;
