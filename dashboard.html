@@ -277,7 +277,7 @@ tbody tr:hover{background:var(--sf2);}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th>Branch</th><th>Total Assets</th><th>Progress</th><th>Scanned</th><th>Pending</th><th>Unmatched</th><th>Status</th><th style="width:100px;">วันที่นัดสแกน</th><th style="width:80px;">🟢 Active</th><th style="width:110px;">HQ รับงาน</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Branch</th><th>Total Assets</th><th>Progress</th><th>Scanned</th><th>Pending</th><th>Unmatched</th><th>Status</th><th style="width:110px;">HQ รับงาน</th><th>Actions</th></tr></thead>
             <tbody id="sessions-tbody"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -977,19 +977,15 @@ function renderOverview() {
         <br><span style="font-size:11px;color:var(--text3);">${s.branch_name||''}</span>
         <br><span style="font-size:10px;font-family:var(--mono);color:var(--text3);">#${s.session_id||s.id}</span>
       </td>
-      <td><span style="cursor:pointer;color:var(--blue);font-weight:600;text-decoration:underline;" onclick="goToAllAssetsBranch('${s.branch_id}')">${total.toLocaleString()}</span></td>
+      <td><span style="cursor:pointer;color:var(--blue);font-weight:600;" onclick="goToAllAssetsBranch('${s.branch_id}')">${total.toLocaleString()}</span></td>
       <td><div style="display:flex;align-items:center;gap:8px;"><div class="pb"><div class="pb-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:12px;font-family:var(--mono);">${pct}%</span></div></td>
-      <td><span style="cursor:pointer;color:var(--green);font-weight:600;text-decoration:underline;" onclick="goToScannedBranch('${s.branch_id}')">${scanned}</span></td>
-      <td><span style="cursor:pointer;color:var(--amber);font-weight:600;text-decoration:underline;" onclick="goToPending('${s.branch_id}')">${pending}</span></td>
+      <td><span style="cursor:pointer;color:var(--green);font-weight:600;" onclick="goToScannedBranch('${s.branch_id}')">${scanned}</span></td>
+      <td><span style="cursor:pointer;color:var(--amber);font-weight:600;" onclick="goToPending('${s.branch_id}')">${pending}</span></td>
       <td>${parseInt(s.unmatched_count)||0?`<span class="badge badge-red" style="cursor:pointer;" onclick="showPage('unmatched');setTimeout(()=>{const t=document.querySelector('#page-unmatched .tab');if(t)filterUnmatched('pending',t);},50)">${s.unmatched_count}</span>`:'<span class="badge badge-gray">0</span>'}</td>
       <td>${statusBadge}</td>
-      <td style="font-size:12px;color:var(--text3);"><span style="color:var(--border);">—</span></td>
-      <td style="text-align:center;">
-        <span style="color:var(--text3);font-size:12px;">—</span>
-      </td>
       <td>${ackCell}</td>
-      <td style="display:flex;gap:6px;flex-wrap:wrap;">
-        ${isDup?`<button class="btn btn-purple btn-sm" onclick="openMergeModal('${s.branch_id}')">🔀 Merge</button>`:''}
+      <td>
+        ${isDup?`<button class="btn btn-purple btn-sm" onclick="openMergeModal('${s.branch_id}')">🔀 Merge</button> `:''}
         <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red-bd);" onclick="deleteSession(${s.session_id||s.id},'${s.branch_id}')">🗑 Delete</button>
       </td>
     </tr>`;
