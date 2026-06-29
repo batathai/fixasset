@@ -599,6 +599,7 @@ tbody tr:hover{background:var(--sf2);}
 const API = 'https://bata-asset-api-production.up.railway.app';
 let token = null, currentUser = null;
 let allScans = [], allUnmatched = [], allSessions = [];
+let cachedMasterAssets = {};
 let filteredScans = [], unmatchedFilter = 'pending';
 let currentScanMode = 'normal';
 let pendingMergeBranch = null; // สำหรับ merge modal
@@ -675,6 +676,7 @@ function authHeader() { return {'Authorization':'Bearer '+token,'Content-Type':'
 async function loadAll() {
   if (!token) return;
   document.getElementById('last-updated').textContent = 'Loading...';
+  cachedMasterAssets = {};
   try {
     await Promise.all([loadScans(), loadUnmatched(), loadSummary(), loadAssetsBackground()]);
     renderOverview(); renderScans(); renderPhotos(); renderUnmatched(unmatchedFilter); updateBadges();
@@ -1142,8 +1144,11 @@ async function renderPendingScans(branchId) {
   const tbody = document.getElementById('scans-tbody');
   const session = allSessions.find(s => !branchId || s.branch_id === branchId);
   if (!session) { tbody.innerHTML='<tr><td colspan="10" class="loading">ไม่พบข้อมูล session</td></tr>'; return; }
-  tbody.innerHTML = '<tr><td colspan="10" class="loading">⏳ กำลังโหลด Master List...</td></tr>';
-  const masterAssets = await loadMasterAssets(session.branch_id);
+  if (!cachedMasterAssets[session.branch_id]) {
+    tbody.innerHTML = '<tr><td colspan="10" class="loading">⏳ กำลังโหลด Master List...</td></tr>';
+    cachedMasterAssets[session.branch_id] = await loadMasterAssets(session.branch_id);
+  }
+  const masterAssets = cachedMasterAssets[session.branch_id];
   // FIX: ใช้ session_id match ด้วย เพราะ branch_id ใน allScans มาจาก branches table
   // ซึ่งอาจไม่ตรงกับ session.branch_id ถ้า branches.id เป็น integer หรือรูปแบบต่างกัน
   const sessionId = session.session_id || session.id;
@@ -1153,9 +1158,18 @@ async function renderPendingScans(branchId) {
       .filter(s => String(s.session_id) === String(sessionId) || s.branch_id === session.branch_id)
       .map(s => s.qr_key)
   );
-  const pendingAssets = masterAssets.filter(a => !scannedQrKeys.has(a.qr_key));
-  document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending)';
-  showScanBanner('amber', `⏳ Pending ${pendingAssets.length} รายการ — ยังไม่ได้สแกน สาขา ${session.branch_id}`);
+  const q = document.getElementById('scan-search').value.trim().toLowerCase();
+  const pendingAssets = masterAssets.filter(a => {
+    if (scannedQrKeys.has(a.qr_key)) return false;
+    if (!q) return true;
+    const baseCode = (a.asset_code || '').toLowerCase();
+    const name     = (a.name || '').toLowerCase();
+    const qrKey    = (a.qr_key || '').toLowerCase();
+    const seqMatch = (a.qr_key || '').match(/SEQ(\d+)$/i);
+    const seqOnly  = seqMatch ? seqMatch[1] : '';
+    return baseCode.includes(q) || name.includes(q) || qrKey.includes(q) || seqOnly.includes(q);
+  });
+  document.getElementById('scan-count').textContent = pendingAssets.length + ' รายการ (Pending)';  showScanBanner('amber', `⏳ Pending ${pendingAssets.length} รายการ — ยังไม่ได้สแกน สาขา ${session.branch_id}`);
   if (!pendingAssets.length) { tbody.innerHTML='<tr><td colspan="10" class="loading" style="color:var(--green);">✓ สแกนครบทุกรายการแล้ว!</td></tr>'; return; }
   tbody.innerHTML = pendingAssets.map(a => {
     const qrKey = a.qr_key || '';
