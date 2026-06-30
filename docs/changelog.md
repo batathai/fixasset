@@ -44,5 +44,17 @@
 - พบว่า logic ใหม่มีผลกับ scan ใหม่เท่านั้น ต้อง migrate ข้อมูลเก่าด้วย SQL `UPDATE audit_sessions SET status = 'on_process' WHERE ...` แยกต่างหาก
 - แก้ bug `psycopg2.errors.UndefinedColumn: column s.scheduled_date does not exist` — เกิดจาก query อ้างอิง column ที่ไม่เคยถูกสร้างจริงในฐานข้อมูล Neon แก้โดยตัด column ที่ไม่มีจริงออกจาก query และคำนวณ `total_assets`/`scanned_count` จากตาราง `assets`/`scan_logs` โดยตรงแทน
 
+## v0.8 — เพิ่ม Import Asset จากไฟล์ Excel (Admin only) พร้อม Undo
+- เพิ่มปุ่ม Import บนโลโก้ "B" ที่ sidebar ของ HQ Dashboard — แสดง/ใช้งานได้เฉพาะ user role `hq_admin` เท่านั้น (เช็คทั้งฝั่ง backend เพื่อกันการเรียก API ตรงข้าม role)
+- เพิ่ม endpoint `POST /hq/assets/import/preview` (อ่านไฟล์ + preview ก่อนยืนยัน, เช็ค duplicate ด้วย `asset_code+seq`), `POST /hq/assets/import/confirm` (insert จริงแบบ atomic ทั้ง batch), `GET /hq/assets/import-batches` (ดูประวัติ), `POST /hq/assets/import-batches/{batch_id}/undo` (ย้อนกลับการ import)
+- ออกแบบระบบ Undo ด้วยแนวคิด Import Batch: ทุกแถวที่ import มาจากไฟล์เดียวกันจะถูก tag ด้วย `import_batch_id` เดียวกัน, การ undo คือ soft-delete (`is_active = false`) เฉพาะแถวใน batch นั้น ไม่กระทบข้อมูลเดิม
+- เพิ่ม migration: `assets.import_batch_id`, `assets.is_active` (พร้อม backfill แถวเก่าทั้งหมดเป็น `true`), unique index `(asset_code, seq)`, ตารางใหม่ `import_batches`
+- เพิ่ม dependency `xlrd==2.0.1`, `openpyxl==3.1.2` ใน `requirements.txt` เพื่อ parse ไฟล์ `.xls`/`.xlsx`
+- **แก้ bug วันที่ผิด**: ไฟล์ Excel เก็บ `วันที่ซื้อ` เป็น text รูปแบบ `26/06/2026` (DD/MM/YYYY) ไม่ใช่ Excel date serial ทำให้ Postgres ตีความผิดเป็น MM/DD/YYYY แล้ว error `date/time field value out of range` (มองว่าเดือน = 26) แก้โดยเพิ่มฟังก์ชัน `_parse_thai_date_string()` แปลงเป็น ISO `YYYY-MM-DD` ก่อนเข้า DB เสมอ (รองรับปี พ.ศ. ด้วยเผื่ออนาคต)
+- **แก้ bug status code ไม่ map**: คอลัมน์ "สถานะสินทรัพย์" ในไฟล์ Excel เก็บเป็นรหัสย่อ (`A`) แต่ query ทุกหน้ากรองด้วย `status = 'active'` (คำเต็ม) ทำให้ asset ที่เพิ่ง import หายไปจากหน้า Asset Summary ทั้งที่มีอยู่จริงใน DB แก้โดยเพิ่ม `_STATUS_CODE_MAP` (`A→active, D→disposed, T→transferred, M→missing`) แปลงก่อน insert พร้อม SQL fix ข้อมูลเก่าที่ import ไปแล้วด้วย `UPDATE assets SET status='active' WHERE status='A'`
+- แก้ query เดิม 3 จุด (`GET /assets/branch/:id` ทั้ง main query และ fallback union, `GET /hq/assets`) ให้กรองด้วย `COALESCE(is_active, true) = true` เพื่อให้ asset ที่ถูก undo ไปแล้วหายจากทุกหน้าจริง (ไม่ใช่แค่ตอน import)
+- **แก้ bug column สลับกันในหน้า Scan Logs (มุมมอง Pending)**: พบว่า `renderPendingScans()` เป็นฟังก์ชันแยกจาก `renderScans()` ปกติ และเรียง `<td>` ไม่ตรงกับลำดับ `<th>` ของตาราง (ใส่ชื่อ Asset ก่อน SEQ) แก้ให้เรียงตรงกับ header: รูป → Asset Code → SEQ → ชื่อ Asset → สภาพ → Serial Match → สาขา → วันที่ → เวลา → Actions
+- ปรับ CSS ตารางทั้งหมด: เปลี่ยน `vertical-align` จาก `middle` เป็น `top` (กันแถวที่สูงไม่เท่ากันทำให้คอลัมน์ดูเหมือนสลับ), คอลัมน์ "ชื่อ Asset" ใส่ `white-space:nowrap` ให้อยู่บรรทัดเดียวเสมอพร้อม `title` tooltip แสดงชื่อเต็ม
+
 ## บันทึกเพิ่มเติม
 - มีการสร้างคู่มือการใช้งานระบบฉบับย่อ (`bata_audit_manual.txt`) อธิบายภาพรวมการทำงานของ Scanner App และ HQ Dashboard สำหรับผู้ใช้งานทั่วไป
