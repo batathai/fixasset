@@ -334,7 +334,7 @@ tbody tr:hover{background:var(--sf2);}
         </div>
         <div class="tbl-wrap">
           <table>
-            <thead><tr><th style="width:68px;">รูป</th><th>Asset Code</th><th>ชื่อ Asset</th><th style="width:80px;text-align:center;">SEQ</th><th>สภาพ</th><th>Serial Match</th><th>Serial Found</th><th>สาขา</th><th style="width:90px;">วันที่สแกน</th><th>เวลา</th><th>Actions</th></tr></thead>
+            <thead><tr><th style="width:68px;">รูป</th><th>Asset Code</th><th style="width:80px;text-align:center;">SEQ</th><th>ชื่อ Asset</th><th>สภาพ</th><th>Serial Match</th><th>สาขา</th><th style="width:90px;">วันที่สแกน</th><th>เวลา</th><th>Actions</th></tr></thead>
             <tbody id="scans-tbody"><tr><td colspan="10" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -434,10 +434,11 @@ tbody tr:hover{background:var(--sf2);}
                 <th>Serial No.</th>
                 <th style="width:110px;text-align:center;">สถานะ</th>
                 <th style="width:110px;">เวลาสแกน</th>
+                <th style="width:90px;">Actions</th>
               </tr>
             </thead>
             <tbody id="assets-tbody">
-              <tr><td colspan="8" class="loading">กด Refresh เพื่อโหลดข้อมูล SEQ</td></tr>
+              <tr><td colspan="9" class="loading">กด Refresh เพื่อโหลดข้อมูล SEQ</td></tr>
             </tbody>
           </table>
         </div>
@@ -538,8 +539,11 @@ tbody tr:hover{background:var(--sf2);}
         <input type="file" id="photo-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="uploadPhoto(this)">
       </div>
 
-      <div class="field-row">
+      <div class="field-row" style="grid-template-columns:2fr 1fr;">
         <div class="field"><label>Asset Code</label><input id="m-code" type="text" readonly style="background:#f0f0f0;"></div>
+        <div class="field"><label>SEQ</label><input id="m-seq" type="text" readonly style="background:#f0f0f0;"></div>
+      </div>
+      <div class="field-row" style="grid-template-columns:1fr;margin-bottom:12px;">
         <div class="field"><label>Asset Name</label><input id="m-name" type="text" readonly style="background:#f0f0f0;"></div>
       </div>
       <div class="field-row">
@@ -609,6 +613,8 @@ let pendingMergeBranch = null; // สำหรับ merge modal
 
 // ── HELPER: รวม asset_code + SEQ จาก allAssets ──────────
 // ใช้ทุกที่แทนการแสดง asset_code เปล่า ๆ
+// ⚠️ ใช้เฉพาะตอนไม่มี scan log row อยู่ในมือ (เช่น lookup จาก master data ตรง ๆ)
+// เพราะ asset_code เดียวกันมีได้หลาย SEQ — ฟังก์ชันนี้จะหยิบตัวแรกที่เจอเท่านั้น
 function getFullCode(assetCode) {
   if (!assetCode) return '—';
   // ถ้าใน allAssets มี qr_key ที่ขึ้นต้นด้วย assetCode → ดึง SEQ suffix มาต่อท้าย
@@ -623,6 +629,21 @@ function getFullCode(assetCode) {
     if (fallback && fallback.qr_key) return fallback.qr_key.toUpperCase();
   }
   return assetCode;
+}
+
+// ── HELPER: รวม asset_code + SEQ จาก "scan log row นั้นเอง" ──────────
+// ใช้ตัวนี้แทน getFullCode() ทุกที่ที่มี scan log row (s) อยู่ในมือ
+// เพราะ s.qr_key / s.seq คือ SEQ จริงของรายการนี้ ไม่ใช่ค่าที่ไปเดาจาก master data
+// (บั๊กเดิม: asset_code เดียวกันมีหลาย SEQ เช่น SEQ031-038 ทำให้ getFullCode()
+//  สุ่มหยิบ SEQ ผิดตัวมาแสดง เช่น scan log จริงเป็น SEQ036 แต่โชว์ SEQ0001)
+function getScanFullCode(s) {
+  if (!s) return '—';
+  if (s.qr_key) return s.qr_key.toUpperCase();
+  const seqNum = s.seq != null
+    ? String(s.seq).padStart(3, '0')
+    : null;
+  if (s.asset_code && seqNum) return s.asset_code + 'SEQ' + seqNum;
+  return getFullCode(s.asset_code); // fallback สุดท้ายถ้าไม่มีทั้ง qr_key และ seq
 }
 
 // ── AUTH ────────────────────────────────────────────────
@@ -1060,11 +1081,10 @@ function renderScans() {
         : `<div class="scan-no-photo" title="ไม่มีรูปถ่าย">📷</div>`}
     </td>
     <td style="font-family:var(--mono);font-size:11px;">${fullCode}</td>
-    <td><div style="font-weight:500;">${s.asset_name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
     <td style="text-align:center;">${seqDisplay}</td>
+    <td><div style="font-weight:500;">${s.asset_name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
     <td><span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span></td>
     <td>${s.serial_match===true?'<span class="badge badge-green">✓ Match</span>':s.serial_match===false?'<span class="badge badge-red">✗ Mismatch</span>':'<span class="badge badge-gray">N/A</span>'}</td>
-    <td style="font-family:var(--mono);font-size:11px;">${s.serial_found||'—'}</td>
     <td style="font-size:12px;">${s.branch_id||'—'}</td>
     <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleDateString('th-TH',{dateStyle:'short'}):'—'}</td>
     <td style="font-size:11px;color:var(--text3);">${s.scanned_at?new Date(s.scanned_at).toLocaleTimeString('th-TH',{timeStyle:'short'}):'—'}</td>
@@ -1206,7 +1226,7 @@ function renderPhotos() {
     <div class="photo-card">
       <img src="${s.photo_url}" alt="${s.asset_name||''}" onclick="openLightbox('${s.photo_url}')">
       <div class="photo-body">
-        <div class="photo-code">${getFullCode(s.asset_code)||'—'}</div>
+        <div class="photo-code">${getScanFullCode(s)}</div>
         <div class="photo-name">${s.asset_name||'—'}</div>
         <div class="photo-meta">สาขา: ${s.branch_id||'—'} · ${s.auditor||'—'}</div>
         <div class="photo-meta">${s.scanned_at?new Date(s.scanned_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'}):'—'}</div>
@@ -1307,7 +1327,14 @@ function openEditModal(id){
   const s = allScans.find(r => r.id == id);
   if (!s) return;
   document.getElementById('m-scan-id').value = id;
-  document.getElementById('m-code').value = getFullCode(s.asset_code);  // แสดง full code พร้อม SEQ
+  // แยก Asset Code กับ SEQ ออกเป็นคนละช่อง ทั้งคู่มาจาก scan log แถวนี้โดยตรง
+  // (qr_key/seq ของ s เอง ไม่ใช่การไปเดาจาก master data — กันบั๊ก SEQ ผิดตัวเหมือนเดิม)
+  const fullCode = getScanFullCode(s);
+  const seqNum = s.seq != null
+    ? String(s.seq).padStart(3, '0')
+    : ((s.qr_key||'').match(/SEQ(\d+)$/i)||[,''])[1];
+  document.getElementById('m-code').value = fullCode.replace(/SEQ\d+$/i, '') || s.asset_code || '—';
+  document.getElementById('m-seq').value = seqNum ? 'SEQ'+seqNum : '—';
   document.getElementById('m-name').value = s.asset_name || '';
   document.getElementById('m-condition').value = s.condition || 'good';
   document.getElementById('m-serial').value = s.serial_found || '';
@@ -1506,7 +1533,7 @@ async function uploadPhoto(input) {
 // ── ลบ Scan Log ────────────────────────────────────────
 async function deleteScanLog(id) {
   const s = allScans.find(r => r.id == id);
-  if (!confirm('ลบรายการ '+(getFullCode(s?.asset_code)||'')+' ทั้งหมด?\nไม่สามารถกู้คืนได้')) return;
+  if (!confirm('ลบรายการ '+getScanFullCode(s)+' ทั้งหมด?\nไม่สามารถกู้คืนได้')) return;
   try {
     const res = await fetch(API+'/hq/scans/'+id, {method:'DELETE',headers:authHeader()});
     if (!res.ok) throw new Error((await res.json()).detail || 'Error');
@@ -1605,7 +1632,7 @@ async function loadAssetsPage() {
   banner.className = 'page-banner blue';
   banner.style.display = 'flex';
   banner.textContent = '⏳ กำลังโหลดข้อมูล Assets / SEQ...';
-  tbody.innerHTML = '<tr><td colspan="8" class="loading">Loading...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" class="loading">Loading...</td></tr>';
 
   try {
     const res = await fetch(API + '/hq/assets', {headers: authHeader()});
@@ -1639,7 +1666,7 @@ async function loadAssetsPage() {
     banner.className = 'page-banner amber';
     banner.style.display = 'flex';
     banner.textContent = '⚠️ ' + e.message;
-    tbody.innerHTML = `<tr><td colspan="8" class="loading" style="color:var(--amber);">${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="loading" style="color:var(--amber);">${e.message}</td></tr>`;
   }
 }
 
@@ -1688,7 +1715,7 @@ function renderAssetsTable() {
     `หน้า ${assetsPageIdx+1} / ${totalPages}`;
 
   if (!slice.length) {
-    document.getElementById('assets-tbody').innerHTML = '<tr><td colspan="8" class="loading">ไม่พบรายการ</td></tr>';
+    document.getElementById('assets-tbody').innerHTML = '<tr><td colspan="9" class="loading">ไม่พบรายการ</td></tr>';
     return;
   }
 
@@ -1710,6 +1737,10 @@ function renderAssetsTable() {
     // Asset Code อย่างเดียว (ตัด SEQXXX ออก เพราะมีคอลัมน์ SEQ แยกอยู่แล้ว)
     const assetCodePart = qr.replace(/SEQ\d+$/i, '');
 
+    const actionCell = (scanned && a.scan_info?.id)
+      ? `<button class="btn btn-outline btn-sm" onclick="openEditModal(${a.scan_info.id})">✏️ Edit</button>`
+      : `<span style="font-size:11px;color:var(--text3);" title="ยังไม่มี scan log ให้แก้ไข">—</span>`;
+
     return `<tr style="background:${scanned?'rgba(26,122,60,0.03)':''}">
       <td style="color:var(--text3);font-size:11px;">${start+i+1}</td>
       <td>
@@ -1723,6 +1754,7 @@ function renderAssetsTable() {
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2);">${serial}</td>
       <td style="text-align:center;">${badge}</td>
       <td style="font-size:11px;color:var(--text3);">${scanAt}</td>
+      <td>${actionCell}</td>
     </tr>`;
   }).join('');
 
