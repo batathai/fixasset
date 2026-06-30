@@ -2237,15 +2237,16 @@ async function previewImportFile() {
 
   document.getElementById('import-summary').innerHTML =
     `พบ <strong>${data.total_rows}</strong> รายการ` +
-    (data.duplicate_count ? ` — <span style="color:var(--red);">ซ้ำกับข้อมูลเดิม ${data.duplicate_count} รายการ (จะถูกข้าม)</span>` : '');
+    (data.duplicate_count ? ` — <span style="color:var(--red);">ซ้ำกับข้อมูลเดิม ${data.duplicate_count} รายการ (จะถูกข้าม)</span>` : '') +
+    (data.warning_count ? ` — <span style="color:var(--amber);">⚠️ มี ${data.warning_count} รายการที่ควรตรวจสอบก่อน (ดูสีเหลืองในตาราง)</span>` : '');
 
   document.getElementById('import-preview-rows').innerHTML = data.rows.map(r => `
-    <tr style="${r.duplicate ? 'background:#fff3f3;color:#999;' : ''}">
+    <tr style="${r.duplicate ? 'background:#fff3f3;color:#999;' : (r.warnings && r.warnings.length ? 'background:#fffbea;' : '')}">
       <td style="padding:6px;">${r.asset_code}${r.duplicate ? ' (ซ้ำ)' : ''}</td>
       <td style="padding:6px;">${r.location_name || ''}</td>
       <td style="padding:6px;">${r.name || ''}</td>
       <td style="padding:6px;">${r.net_book_value ?? ''}</td>
-      <td style="padding:6px;">${r.status || ''}</td>
+      <td style="padding:6px;">${r.status || ''}${r.warnings && r.warnings.length ? `<br><span style="color:var(--amber);font-size:11px;" title="${r.warnings.join(' / ').replace(/"/g,'&quot;')}">⚠️ ${r.warnings.length} คำเตือน</span>` : ''}</td>
     </tr>`).join('');
 
   document.getElementById('import-step-pick').style.display = 'none';
@@ -2283,12 +2284,20 @@ async function loadImportHistory() {
     </div>`).join('');
 }
 
-async function undoImportBatch(batchId) {
-  if (!confirm('ยืนยัน Undo การ import ครั้งนี้? ข้อมูลทั้งหมดใน batch นี้จะถูกซ่อนออกจากระบบ')) return;
-  const res = await fetch(API + '/hq/assets/import-batches/' + batchId + '/undo', { method: 'POST', headers: authHeader() });
+async function undoImportBatch(batchId, force) {
+  if (!force && !confirm('ยืนยัน Undo การ import ครั้งนี้? ข้อมูลทั้งหมดใน batch นี้จะถูกซ่อนออกจากระบบ')) return;
+  const url = API + '/hq/assets/import-batches/' + batchId + '/undo' + (force ? '?force=true' : '');
+  const res = await fetch(url, { method: 'POST', headers: authHeader() });
   const data = await res.json();
-  if (!res.ok) { alert(data.detail || 'Undo ไม่สำเร็จ'); return; }
-  alert(`Undo สำเร็จ: ซ่อน ${data.undone_rows} รายการ`);
+  if (res.status === 409 && data.detail && data.detail.error === 'has_linked_scans') {
+    // มี scan log ผูกอยู่แล้ว — เตือนซ้ำให้ชัดเจนก่อนค่อยยืนยัน force undo
+    if (confirm(data.detail.message + '\n\nต้องการ undo ต่อหรือไม่?')) {
+      return undoImportBatch(batchId, true);
+    }
+    return;
+  }
+  if (!res.ok) { alert((data.detail && data.detail.message) || data.detail || 'Undo ไม่สำเร็จ'); return; }
+  alert(`Undo สำเร็จ: ซ่อน ${data.undone_rows} รายการ` + (data.linked_scans_warned ? ` (มี scan log ผูกอยู่ ${data.linked_scans_warned} รายการ ที่ยังอ้างอิงถึง asset นี้)` : ''));
   loadImportHistory();
   if (typeof loadAssets === 'function') loadAssets();
 }
