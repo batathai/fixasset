@@ -867,24 +867,24 @@ function initUrovoScanner() {
   if (!mc) return;
   mc.focus(); updateFocusStatus(true);
 
-  let lastKeyTime = 0, scanTimer = null;
-  const SPEED = 50, DONE = 300;
+  let scanTimer = null;
+  const DONE = 300;
 
   mc.addEventListener('keydown', e => {
-    const now = Date.now(), diff = now - lastKeyTime;
-    lastKeyTime = now;
-
     if (e.key === 'Enter') {
       e.preventDefault();
+      clearTimeout(scanTimer);
       const val = mc.value.trim();
       if (val && !S.cd) {
-        mc.value = ''; clearTimeout(scanTimer);
+        mc.value = '';
         S.cd = true; setTimeout(() => S.cd = false, 2500);
         scan(val.toUpperCase());
       }
       return;
     }
-    if (diff < SPEED && e.key.length === 1) {
+    // รีเซ็ต timer ทุกครั้งที่มีตัวอักษรเข้ามา ไม่ว่าจะห่างจากตัวก่อนหน้ากี่ ms
+    // ป้องกันไม่ให้ timer ยิงกลางคันตอนสแกนยังไม่เสร็จ (สาเหตุของโค้ดเบิ้ล/Unmatched)
+    if (e.key.length === 1) {
       clearTimeout(scanTimer);
       scanTimer = setTimeout(() => {
         const val = mc.value.trim();
