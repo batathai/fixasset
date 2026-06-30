@@ -208,7 +208,7 @@ tbody tr:hover{background:var(--sf2);}
         ⚠️ Unmatched <span class="nav-badge" id="badge-unmatched"></span>
       </button>
       <button class="nav-item" id="nav-assets" onclick="showPage('assets')">
-        🗂️ Assets / SEQ <span class="nav-badge" id="badge-assets" style="background:var(--blue);display:none;"></span>
+        🗂️ Asset Summary <span class="nav-badge" id="badge-assets" style="background:var(--blue);display:none;"></span>
       </button>
       <button class="nav-item" id="nav-export" onclick="showPage('export')">📥 Export</button>
     </div>
@@ -381,20 +381,23 @@ tbody tr:hover{background:var(--sf2);}
 
       <!-- Summary cards -->
       <div class="stat-grid" style="padding:16px 18px 0;">
-        <div class="stat-card blue" style="cursor:default;">
+        <div class="stat-card blue" onclick="filterAssetsByStatus('')" title="คลิกดูรายการทั้งหมด">
           <div class="stat-label">SEQ ทั้งหมด</div>
           <div class="stat-val" id="seq-total">—</div>
           <div class="stat-sub">รายการในระบบ</div>
+          <div class="click-hint">คลิกเพื่อดู</div>
         </div>
-        <div class="stat-card green" style="cursor:default;">
+        <div class="stat-card green" onclick="filterAssetsByStatus('scanned')" title="คลิกดูรายการที่สแกนแล้ว">
           <div class="stat-label">สแกนแล้ว</div>
           <div class="stat-val" id="seq-scanned">—</div>
           <div class="stat-sub">พบในระบบสแกน</div>
+          <div class="click-hint">คลิกเพื่อดู</div>
         </div>
-        <div class="stat-card amber" style="cursor:default;">
+        <div class="stat-card amber" onclick="filterAssetsByStatus('pending')" title="คลิกดูรายการที่ยังไม่สแกน">
           <div class="stat-label">ยังไม่สแกน</div>
           <div class="stat-val" id="seq-pending">—</div>
           <div class="stat-sub">รอการตรวจสอบ</div>
+          <div class="click-hint">คลิกเพื่อดู</div>
         </div>
         <div class="stat-card" style="cursor:default;">
           <div class="stat-label">สาขา</div>
@@ -424,9 +427,9 @@ tbody tr:hover{background:var(--sf2);}
             <thead>
               <tr>
                 <th style="width:36px;">#</th>
-                <th>QR Key</th>
-                <th>ชื่อ Asset</th>
+                <th>Asset Code</th>
                 <th style="width:70px;text-align:center;">SEQ</th>
+                <th>ชื่อ Asset</th>
                 <th style="width:85px;">สาขา</th>
                 <th>Serial No.</th>
                 <th style="width:110px;text-align:center;">สถานะ</th>
@@ -1583,7 +1586,7 @@ function today(){return new Date().toISOString().slice(0,10);}
 
 // ── NAV ───────────────────────────────────────────────
 const pages=['overview','scans','photos','unmatched','assets','export'];
-const titles={overview:'Overview',scans:'Scan Logs',photos:'Photos',unmatched:'Unmatched Assets',assets:'Assets / SEQ',export:'Export'};
+const titles={overview:'Overview',scans:'Scan Logs',photos:'Photos',unmatched:'Unmatched Assets',assets:'Asset Summary',export:'Export'};
 function showPage(name){
   pages.forEach(p=>{
     document.getElementById('page-'+p).style.display=p===name?'flex':'none';
@@ -1640,6 +1643,11 @@ async function loadAssetsPage() {
   }
 }
 
+function filterAssetsByStatus(status) {
+  document.getElementById('assets-status-filter').value = status;
+  filterAssets();
+  document.querySelector('#page-assets .section')?.scrollIntoView({behavior:'smooth', block:'start'});
+}
 function filterAssets() {
   const q  = document.getElementById('assets-search').value.toLowerCase().trim();
   const br = document.getElementById('assets-branch-filter').value;
@@ -1696,22 +1704,21 @@ function renderAssetsTable() {
       : '—';
 
     const badge = scanned
-      ? `<span style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">✅ สแกนแล้ว</span>`
-      : `<span style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">⏳ รอสแกน</span>`;
+      ? `<span style="background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;">✅ สแกนแล้ว</span>`
+      : `<span style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap;">⏳ รอสแกน</span>`;
 
-    // แสดง asset_code + SEQ แยกกันให้อ่านง่าย
+    // Asset Code อย่างเดียว (ตัด SEQXXX ออก เพราะมีคอลัมน์ SEQ แยกอยู่แล้ว)
     const assetCodePart = qr.replace(/SEQ\d+$/i, '');
-    const seqPart = (qr.match(/SEQ(\d+)$/i)||['',''])[0];
 
     return `<tr style="background:${scanned?'rgba(26,122,60,0.03)':''}">
       <td style="color:var(--text3);font-size:11px;">${start+i+1}</td>
       <td>
         <span style="font-family:var(--mono);font-size:11px;background:var(--sf2);padding:2px 6px;border-radius:4px;border:1px solid var(--border);letter-spacing:.3px;">
-          ${assetCodePart}<strong style="color:var(--blue);">${seqPart}</strong>
+          ${assetCodePart}
         </span>
       </td>
-      <td style="font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${name}">${name}</td>
       <td style="text-align:center;font-family:var(--mono);font-size:12px;font-weight:700;color:var(--blue);">${seqNum}</td>
+      <td style="font-size:12px;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${name}">${name}</td>
       <td style="font-size:12px;font-weight:600;">${branch}</td>
       <td style="font-family:var(--mono);font-size:11px;color:var(--text2);">${serial}</td>
       <td style="text-align:center;">${badge}</td>
