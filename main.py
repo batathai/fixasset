@@ -652,6 +652,27 @@ EXPECTED_COLUMNS = [
     "วันที่ซื้อ", "จำนวน", "มูลค่าสินทรัพย์", "คสส.", "มูลค่าทางบัญชี",
 ]
 
+def _parse_thai_date_string(value):
+    """แปลง string วันที่ที่มาจากไฟล์ Excel (เก็บเป็น text ไม่ใช่ date serial) ให้เป็น ISO YYYY-MM-DD
+    รองรับรูปแบบที่เจอจริง: 26/06/2026 (DD/MM/YYYY ค.ศ.), 26/06/2569 (DD/MM/YYYY พ.ศ.)"""
+    if not value:
+        return None
+    s = str(value).strip()
+    if not s:
+        return None
+    for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(s, fmt)
+            year = dt.year
+            if year > 2400:  # พ.ศ. -> ค.ศ.
+                year -= 543
+            return f"{year:04d}-{dt.month:02d}-{dt.day:02d}"
+        except ValueError:
+            continue
+    # เผื่อรูปแบบไม่ตรง pattern ใดเลย ส่งกลับ None แทนที่จะยิงค่าผิดเข้า DB
+    return None
+
+
 def _parse_asset_excel(content: bytes, filename: str):
     """อ่านไฟล์ .xls/.xlsx แล้วคืน list of dict ที่ map เป็นชื่อ column ของ DB แล้ว"""
     rows_out = []
@@ -698,7 +719,7 @@ def _parse_asset_excel(content: bytes, filename: str):
                     y, m, day, *_ = xlrd.xldate_as_tuple(d["purchase_date_raw"], wb.datemode)
                     d["purchase_date"] = f"{y:04d}-{m:02d}-{day:02d}"
                 else:
-                    d["purchase_date"] = str(d["purchase_date_raw"]) if d["purchase_date_raw"] else None
+                    d["purchase_date"] = _parse_thai_date_string(d["purchase_date_raw"])
                 rows_out.append(d)
     elif filename.lower().endswith(".xlsx"):
         wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True)
@@ -707,7 +728,7 @@ def _parse_asset_excel(content: bytes, filename: str):
             d = _row_to_dict(list(row))
             if d:
                 pd = d["purchase_date_raw"]
-                d["purchase_date"] = pd.strftime("%Y-%m-%d") if hasattr(pd, "strftime") else (str(pd) if pd else None)
+                d["purchase_date"] = pd.strftime("%Y-%m-%d") if hasattr(pd, "strftime") else _parse_thai_date_string(pd)
                 rows_out.append(d)
     else:
         raise HTTPException(status_code=400, detail="รองรับเฉพาะไฟล์ .xls หรือ .xlsx เท่านั้น")
