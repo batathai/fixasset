@@ -12,7 +12,7 @@
   --white:#fff;--bg:#f4f2ef;--sf:#fff;--sf2:#f9f8f5;
   --border:#e0ddd6;--text:#1a1a1a;--text2:#555;--text3:#999;
   --green:#1a7a3c;--green-bg:#f0faf3;--green-bd:#b3dfc0;
-  --amber:#b85c00;--amber-bg:#fff8f0;--amber-bd:#ffd4a0;
+  --amber:#b85c00;--amber-bg:#fff8f0;--amber-bd:#ffd4a0;PENDING
   --blue:#1a56db;--blue-bg:#eff4ff;--blue-bd:#c3d4fc;
   --purple:#6b21a8;--purple-bg:#faf5ff;--purple-bd:#d8b4fe;
   --sans:'Barlow',sans-serif;--cond:'Barlow Condensed',sans-serif;--mono:'DM Mono',monospace;
@@ -304,15 +304,15 @@ tbody tr:hover{background:var(--sf2);}
           <select id="scan-branch" onchange="filterScans()"><option value="">ทุกสาขา</option></select>
           <select id="scan-condition" onchange="filterScans()">
             <option value="">ทุกสภาพ</option>
-            <option value="pending">⏳ Pending (ยังไม่สแกน)</option>
-            <option value="good">Good</option>
-            <option value="damaged">Damaged</option>
-            <option value="missing">Missing</option>
+            <option value="pending">🟡 Pending (ยังไม่สแกน)</option>
+            <option value="good">🟢 Good</option>
+            <option value="damaged">🟠 Damaged</option>
+            <option value="missing">🔴 Missing</option>
           </select>
           <select id="scan-photo" onchange="filterScans()">
-            <option value="">ทุกรายการ</option>
-            <option value="yes">มีรูปถ่าย</option>
-            <option value="no">ไม่มีรูป</option>
+            <option value="">📋 ทุกรายการ</option>
+            <option value="yes">✅ มีรูปถ่าย</option>
+            <option value="no">❌ ไม่มีรูปถ่าย</option>
           </select>
           <div style="display:flex;align-items:center;gap:6px;background:var(--sf2);border:1px solid var(--border);border-radius:var(--rs);padding:4px 10px;">
             <span style="font-size:11px;font-weight:600;color:var(--text3);">📅 วันที่</span>
