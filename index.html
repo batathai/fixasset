@@ -1299,35 +1299,120 @@ function sc(l,v,c){return`<div class="stat-card"><div class="stat-label">${l}</d
 async function warmupAPI() {
   try { await fetch(API+'/health'); } catch(e){}
 }
-async function startSession() {
+
+// FIX: เดิมถ้า /sessions POST fail (เน็ตหลุด/API cold start) จะ fallback เป็น
+// S.sid = Date.now() ซึ่งเป็น session_id ปลอมที่ไม่มีจริงใน DB ทำให้ scan ทุกอันหลังจากนั้น
+// insert ไม่ผ่านแบบเงียบๆ (ดู FIX ใน saveScanLog ด้านล่างที่กันไม่ให้เงียบอีกต่อไป)
+// ตอนนี้เปลี่ยนเป็น retry แทนการสร้าง session ปลอม ถ้ายัง fail อยู่ดีจะเตือนผู้ใช้ชัดเจน
+// และคง retry ต่อใน background จนกว่าจะได้ session จริง
+async function startSession(retriesLeft = 3) {
   try {
     const res = await fetch(API+'/sessions', {
       method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
       body: JSON.stringify({branch_id:S.branch, audit_date:new Date().toISOString().slice(0,10)})
     });
-    const d = await res.json(); S.sid = d.session_id;
-  } catch(e) { S.sid = Date.now(); }
+    if (!res.ok) throw new Error('session create failed: ' + res.status);
+    const d = await res.json();
+    S.sid = d.session_id;
+    document.getElementById('conn-warn')?.remove();
+  } catch(e) {
+    if (retriesLeft > 0) {
+      await new Promise(r => setTimeout(r, 1500));
+      return startSession(retriesLeft - 1);
+    }
+    // ยัง fail อยู่หลัง retry ครบ — ห้ามปลอม session_id เด็ดขาด เพราะจะทำให้ scan
+    // ทุกอันที่ตามมาหายไปแบบเงียบๆ โดยที่ auditor ไม่รู้ตัว ให้แจ้งเตือนชัดเจนแทน
+    S.sid = null;
+    toast('⚠️ เชื่อมต่อ API ไม่ได้ — สแกนตอนนี้จะไม่ถูกบันทึก กรุณาเช็คเน็ตแล้วลองใหม่');
+    showConnWarning();
+    setTimeout(() => startSession(3), 10000); // ลองใหม่เรื่อยๆ ทุก 10 วิ ใน background
+  }
 }
-async function saveScanLog(qrKey, type, extra={}) {
-  if (!S.sid||!S.token) return;
+
+function showConnWarning() {
+  if (document.getElementById('conn-warn')) return;
+  const el = document.createElement('div');
+  el.id = 'conn-warn';
+  el.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#c00;color:#fff;text-align:center;padding:8px;font-size:13px;font-weight:600;z-index:9999;';
+  el.textContent = '⚠️ ขาดการเชื่อมต่อ — การสแกนจะไม่ถูกบันทึกจนกว่าจะเชื่อมต่อใหม่ได้';
+  document.body.appendChild(el);
+}
+
+// ── RELIABLE SEND QUEUE ─────────────────────────────────────
+// FIX: เดิม saveScanLog/saveUnmatched ครอบด้วย try{}catch(e){} เปล่าๆ
+// ถ้า request fail (เน็ตหลุดตอนอยู่ในสาขา) error จะหายไปเงียบๆ ทันที ไม่ retry ไม่แจ้งเตือน
+// ทั้งที่ UI ฝั่ง local (checklist/% progress) อัปเดตแบบ optimistic ไปแล้วว่า "Verified"
+// ผลคือ auditor เห็นว่าสแกนครบ 100% ทั้งที่จริงๆ มีหลายรายการไม่เคยถึง DB เลย
+// แก้โดยเก็บ request ที่ fail ไว้ใน queue (สำรองไว้ใน localStorage กันหน้าเว็บถูกปิด/รีเฟรช)
+// แล้ว retry อัตโนมัติทุก 15 วิ พร้อมโชว์ badge จำนวนที่ค้างอยู่ให้เห็นตลอดเวลา
+const PENDING_QUEUE_KEY = 'bata_pending_sync_v1';
+function loadPendingQueue() {
+  try { return JSON.parse(localStorage.getItem(PENDING_QUEUE_KEY) || '[]'); } catch(e) { return []; }
+}
+function savePendingQueue(q) {
+  try { localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(q)); } catch(e){}
+}
+function updatePendingBadge() {
+  const q = loadPendingQueue();
+  let el = document.getElementById('pending-sync-badge');
+  if (!q.length) { el?.remove(); return; }
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'pending-sync-badge';
+    el.style.cssText = 'position:fixed;bottom:70px;right:14px;background:var(--amber,#b85c00);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;z-index:9998;box-shadow:0 2px 8px rgba(0,0,0,.2);';
+    document.body.appendChild(el);
+  }
+  el.textContent = `⏳ รอ sync ${q.length} รายการ`;
+}
+async function reliableSend(url, body) {
   try {
-    await fetch(API+'/scans', {
+    const res = await fetch(url, {
       method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
-      body: JSON.stringify({session_id:S.sid, qr_key:qrKey,
-        serial_found:extra.serial_found||null, serial_match:extra.serial_match??null,
-        condition:extra.condition||'good', remark:extra.remark||null})
+      body: JSON.stringify(body)
     });
-  } catch(e){}
+    if (!res.ok && res.status !== 409) throw new Error('send failed: ' + res.status); // 409=already_scanned ถือว่าจัดการแล้ว ไม่ต้อง queue ซ้ำ
+    return true;
+  } catch(e) {
+    const q = loadPendingQueue();
+    q.push({ url, body, queued_at: Date.now() });
+    savePendingQueue(q);
+    updatePendingBadge();
+    toast('⚠️ บันทึกไม่สำเร็จ — เก็บไว้ลองใหม่อัตโนมัติ (' + q.length + ' รายการค้าง)');
+    return false;
+  }
+}
+async function flushPendingQueue() {
+  let q = loadPendingQueue();
+  if (!q.length || !navigator.onLine) return;
+  const stillPending = [];
+  for (const item of q) {
+    try {
+      const res = await fetch(item.url, {
+        method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
+        body: JSON.stringify(item.body)
+      });
+      if (!res.ok && res.status !== 409) stillPending.push(item);
+    } catch(e) {
+      stillPending.push(item);
+    }
+  }
+  savePendingQueue(stillPending);
+  updatePendingBadge();
+  if (stillPending.length < q.length) toast('✅ Sync ข้อมูลที่ค้างไว้สำเร็จ ' + (q.length - stillPending.length) + ' รายการ');
+}
+setInterval(flushPendingQueue, 15000);
+updatePendingBadge(); // โชว์ badge ทันทีถ้ามีของค้างจากรอบก่อนหน้า (เช่นปิดเบราว์เซอร์ไปตอน sync ไม่ทัน)
+
+async function saveScanLog(qrKey, type, extra={}) {
+  if (!S.sid||!S.token) { toast('⚠️ ยังไม่ได้เชื่อมต่อ session — สแกนนี้จะไม่ถูกบันทึก'); return; }
+  await reliableSend(API+'/scans', {session_id:S.sid, qr_key:qrKey,
+    serial_found:extra.serial_found||null, serial_match:extra.serial_match??null,
+    condition:extra.condition||'good', remark:extra.remark||null});
 }
 async function saveUnmatched(qrKey, extra={}) {
-  if (!S.sid||!S.token) return;
-  try {
-    await fetch(API+'/unmatched', {
-      method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.token},
-      body: JSON.stringify({session_id:S.sid, scanned_qr:qrKey,
-        serial_no:extra.serial_no||null, name_guess:extra.name||null, remark:extra.remark||null})
-    });
-  } catch(e){}
+  if (!S.sid||!S.token) { toast('⚠️ ยังไม่ได้เชื่อมต่อ session — รายการนี้จะไม่ถูกบันทึก'); return; }
+  await reliableSend(API+'/unmatched', {session_id:S.sid, scanned_qr:qrKey,
+    serial_no:extra.serial_no||null, name_guess:extra.name||null, remark:extra.remark||null});
 }
 async function syncProgressFromDB() {
   if (!S.sid||!S.token) return;
