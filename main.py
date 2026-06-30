@@ -652,6 +652,15 @@ EXPECTED_COLUMNS = [
     "วันที่ซื้อ", "จำนวน", "มูลค่าสินทรัพย์", "คสส.", "มูลค่าทางบัญชี",
 ]
 
+# รหัสสถานะในไฟล์ Excel ของ HQ ('A' = active เป็นต้น) -> ค่า status เต็มที่ระบบใช้กรองอยู่จริง (WHERE status='active')
+# ถ้าเจอรหัสใหม่ที่ไม่อยู่ใน map นี้ ให้เพิ่มเข้ามาแทนที่จะปล่อยรหัสดิบเข้า DB ตรงๆ (จะทำให้ asset หายจากทุกหน้าที่กรอง status='active')
+_STATUS_CODE_MAP = {
+    "A": "active",
+    "D": "disposed",
+    "T": "transferred",
+    "M": "missing",
+}
+
 def _parse_thai_date_string(value):
     """แปลง string วันที่ที่มาจากไฟล์ Excel (เก็บเป็น text ไม่ใช่ date serial) ให้เป็น ISO YYYY-MM-DD
     รองรับรูปแบบที่เจอจริง: 26/06/2026 (DD/MM/YYYY ค.ศ.), 26/06/2569 (DD/MM/YYYY พ.ศ.)"""
@@ -688,7 +697,8 @@ def _parse_asset_excel(content: bytes, filename: str):
             location_code = str(values[2]).strip() if len(values) > 2 else ""
             location_name = str(values[3]).strip() if len(values) > 3 else ""
             name          = str(values[4]).strip() if len(values) > 4 else ""
-            status        = str(values[5]).strip() if len(values) > 5 else "A"
+            status_code   = str(values[5]).strip() if len(values) > 5 else "A"
+            status        = _STATUS_CODE_MAP.get(status_code.upper(), "active")
             serial_no     = str(values[6]).strip() if len(values) > 6 and values[6] else None
             purchase_date_raw = values[7] if len(values) > 7 else None
             qty            = float(values[8]) if len(values) > 8 and values[8] not in (None, "") else 0
