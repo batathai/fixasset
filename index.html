@@ -789,23 +789,11 @@ function initUrovoScanner() {
   let scanTimer = null;
   const DONE = 300;
 
-  // ป้องกันกรณีเครื่องสแกนยิงโค้ดเดิมซ้ำ 2 รอบติดกันในการสแกนครั้งเดียว
-  // (เช่น "SFU0120...030SFU0120...030") ก่อนจะส่ง Enter ตัวเดียว
-  // ทำให้ความยาวผิดปกติและหา asset ไม่เจอ (ขึ้น Unmatched ทั้งที่จริง ๆ ถูก)
-  function dedupeDoubleRead(val) {
-    const n = val.length;
-    if (n >= 10 && n % 2 === 0) {
-      const half = n / 2;
-      if (val.slice(0, half) === val.slice(half)) return val.slice(0, half);
-    }
-    return val;
-  }
-
   mc.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       e.preventDefault();
       clearTimeout(scanTimer);
-      const val = dedupeDoubleRead(mc.value.trim());
+      const val = mc.value.trim();
       if (val && !S.cd) {
         mc.value = '';
         S.cd = true; setTimeout(() => S.cd = false, 2500);
@@ -818,7 +806,7 @@ function initUrovoScanner() {
     if (e.key.length === 1) {
       clearTimeout(scanTimer);
       scanTimer = setTimeout(() => {
-        const val = dedupeDoubleRead(mc.value.trim());
+        const val = mc.value.trim();
         if (val && val.length > 5 && !S.cd) {
           mc.value = '';
           S.cd = true; setTimeout(() => S.cd = false, 2500);
@@ -836,6 +824,23 @@ function initUrovoScanner() {
   }, 3000);
   mc.addEventListener('focus', () => updateFocusStatus(true));
   mc.addEventListener('blur',  () => updateFocusStatus(false));
+}
+
+// ── SMART CODE CORRECTION ──────────────────────────────────────
+// เครื่องสแกนบางครั้งยิงโค้ดซ้ำ/มีขยะปนท้ายเข้ามา (ปัญหา double-inject ที่ตัวเครื่อง)
+// แทนที่จะ hardcode ความยาวตายตัว (qr_key ในระบบจริงมีทั้ง 21 และ 23 ตัวอักษรปนกัน)
+// ใช้ assetCache ที่โหลดมาจาก master data ของสาขานี้จริง ๆ เป็นตัวอ้างอิงแทน
+// ลองตัดตามความยาวที่มีอยู่จริงในสาขานั้น ถ้าเจอ match ใน cache ค่อยใช้ค่านั้น
+function correctScanValue(raw) {
+  if (assetCache.has(raw)) return raw;
+  const validLengths = [...new Set([...assetCache.keys()].map(k => k.length))]
+    .filter(len => len < raw.length)
+    .sort((a, b) => b - a); // ลองจากยาวสุดก่อน ลดโอกาส false-positive
+  for (const len of validLengths) {
+    const candidate = raw.slice(0, len);
+    if (assetCache.has(candidate)) return candidate;
+  }
+  return raw; // หาไม่เจอใน cache เลย ปล่อยให้ flow เดิมจัดการ (ไป unmatched ตามปกติ)
 }
 
 // ── ASSET CACHE ──────────────────────────────────────────────
@@ -889,7 +894,7 @@ async function flushQueue() {
 
 // ── SCAN ─────────────────────────────────────────────────────
 async function scan(raw) {
-  const key  = raw.replace(/\s/g,'').toUpperCase();
+  const key  = correctScanValue(raw.replace(/\s/g,'').toUpperCase());
   const area = document.getElementById('ra');
   area.style.display = 'block';
 
@@ -1002,9 +1007,10 @@ async function handleManual() {
   document.getElementById('mc').value = '';
   await scan(v);
 }
-document.addEventListener('keypress', e => {
-  if (e.key==='Enter' && document.activeElement.id==='mc') handleManual();
-});
+// (เดิมมี document.addEventListener('keypress', ...) คอยดัก Enter ซ้ำกับ
+//  keydown listener ใน initUrovoScanner() บน field เดียวกัน — เอาออกแล้ว
+//  เพราะซ้ำซ้อนกันโดยไม่จำเป็นและเป็นความเสี่ยง race condition แฝง
+//  ตอนนี้ Enter ถูกจัดการที่จุดเดียวคือใน initUrovoScanner() เท่านั้น)
 
 // ── RENDER CARDS ─────────────────────────────────────────────
 function rMatch(k,a){ return `
