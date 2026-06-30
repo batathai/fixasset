@@ -186,18 +186,27 @@ def assets_by_branch(branch_id: str, db=Depends(get_db), user=Depends(get_curren
 def create_session(req: SessionCreate, db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
     name = req.name or f"Audit {req.branch_id} {req.audit_date}"
-    # ใช้ status != 'done' แทน status = 'open' เพื่อให้ยังจับคู่ session เดิมได้
-    # แม้ status จะถูกเปลี่ยนเป็น 'on_process' ไปแล้วหลังมีคนสแกนชิ้นแรก
-    # (เดิมเช็คแค่ 'open' ทำให้คนที่ login ตามมาทีหลังได้ session ใหม่ซ้ำซ้อน)
+    # FIX (race condition): เดิมเช็คด้วย SELECT ก่อนแล้วค่อย INSERT แยกกัน 2 query
+    # ถ้า Audit A กับ B login พร้อมกันเป๊ะๆ ทั้งคู่ SELECT ไม่เจอ session เดิมพร้อมกันได้
+    # แล้ว INSERT ซ้ำกันทั้งคู่ -> ได้ session คนละอัน ทั้งที่ควรเป็น session เดียวกัน
+    # แก้โดยใช้ INSERT...ON CONFLICT กับ partial unique index
+    # idx_unique_open_session_per_branch_day (ดู migration_session_uniqueness.sql)
+    # ซึ่ง Postgres รับประกัน atomicity ระดับ DB ให้เอง ไม่ต้องพึ่ง check-then-act ฝั่งแอปอีกต่อไป
+    cur.execute("""
+        INSERT INTO audit_sessions (name, branch_id, audit_date, started_by, status)
+        VALUES (%s,%s,%s,%s,'open')
+        ON CONFLICT (branch_id, audit_date) WHERE status != 'done' DO NOTHING
+        RETURNING id
+    """, (name, req.branch_id, req.audit_date, user["user_id"]))
+    row = cur.fetchone()
+    if row:
+        db.commit()
+        return {"session_id": row["id"], "reused": False}
+    # เกิด conflict แปลว่ามี session เดิมอยู่แล้ว (อาจเป็นเพราะอีกคน insert ไปก่อนเสี้ยววินาที) -> ดึงมาใช้ร่วมกัน
     cur.execute("SELECT id FROM audit_sessions WHERE branch_id = %s AND audit_date = %s AND status != 'done'", (req.branch_id, req.audit_date))
     existing = cur.fetchone()
-    if existing:
-        return {"session_id": existing["id"], "reused": True}
-    cur.execute("INSERT INTO audit_sessions (name, branch_id, audit_date, started_by, status) VALUES (%s,%s,%s,%s,'open') RETURNING id",
-                (name, req.branch_id, req.audit_date, user["user_id"]))
-    session_id = cur.fetchone()["id"]
     db.commit()
-    return {"session_id": session_id, "reused": False}
+    return {"session_id": existing["id"], "reused": True}
 
 @app.get("/sessions/{session_id}/progress")
 def session_progress(session_id: int, db=Depends(get_db), user=Depends(get_current_user)):
@@ -208,7 +217,7 @@ def session_progress(session_id: int, db=Depends(get_db), user=Depends(get_curre
             s.created_at, s.closed_at,
             COUNT(sl.id) AS scanned_count,
             (SELECT COUNT(*) FROM assets a
-             WHERE a.location_code = s.branch_id AND a.status = 'active') AS total_assets
+             WHERE a.location_code = s.branch_id AND a.status = 'active') AS total_assets,
             (SELECT COUNT(*) FROM unmatched_assets ua WHERE ua.session_id = s.id AND ua.status = 'pending') AS unmatched_count
         FROM audit_sessions s
         LEFT JOIN scan_logs sl ON sl.session_id = s.id
