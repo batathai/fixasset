@@ -663,23 +663,24 @@ _STATUS_CODE_MAP = {
 
 def _parse_thai_date_string(value):
     """แปลง string วันที่ที่มาจากไฟล์ Excel (เก็บเป็น text ไม่ใช่ date serial) ให้เป็น ISO YYYY-MM-DD
-    รองรับรูปแบบที่เจอจริง: 26/06/2026 (DD/MM/YYYY ค.ศ.), 26/06/2569 (DD/MM/YYYY พ.ศ.)"""
+    รองรับรูปแบบที่เจอจริง: 26/06/2026 (DD/MM/YYYY ค.ศ.), 26/06/2569 (DD/MM/YYYY พ.ศ.)
+    คืนค่า (parsed_date_or_None, ok:bool) — ok=False หมายถึง parse ไม่ได้ ต้องเตือนแอดมิน ไม่ใช่ปล่อยเป็น NULL เงียบๆ"""
     if not value:
-        return None
+        return None, True  # ไม่มีค่าเลยถือว่าโอเค ไม่ใช่ error การ parse
     s = str(value).strip()
     if not s:
-        return None
+        return None, True
     for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d"):
         try:
             dt = datetime.strptime(s, fmt)
             year = dt.year
             if year > 2400:  # พ.ศ. -> ค.ศ.
                 year -= 543
-            return f"{year:04d}-{dt.month:02d}-{dt.day:02d}"
+            return f"{year:04d}-{dt.month:02d}-{dt.day:02d}", True
         except ValueError:
             continue
-    # เผื่อรูปแบบไม่ตรง pattern ใดเลย ส่งกลับ None แทนที่จะยิงค่าผิดเข้า DB
-    return None
+    # รูปแบบไม่ตรง pattern ใดเลย — ส่งกลับ None พร้อม ok=False เพื่อให้ฝั่ง preview แสดง warning แทนที่จะเงียบ
+    return None, False
 
 
 def _parse_asset_excel(content: bytes, filename: str):
@@ -699,6 +700,7 @@ def _parse_asset_excel(content: bytes, filename: str):
             name          = str(values[4]).strip() if len(values) > 4 else ""
             status_code   = str(values[5]).strip() if len(values) > 5 else "A"
             status        = _STATUS_CODE_MAP.get(status_code.upper(), "active")
+            status_known  = status_code.upper() in _STATUS_CODE_MAP
             serial_no     = str(values[6]).strip() if len(values) > 6 and values[6] else None
             purchase_date_raw = values[7] if len(values) > 7 else None
             qty            = float(values[8]) if len(values) > 8 and values[8] not in (None, "") else 0
@@ -709,6 +711,9 @@ def _parse_asset_excel(content: bytes, filename: str):
             raise HTTPException(status_code=400, detail=f"แถวข้อมูลผิดรูปแบบ: {values} ({e})")
         if not asset_code:
             return None
+        warnings = []
+        if not status_known:
+            warnings.append(f"ไม่รู้จักรหัสสถานะ '{status_code}' — ใช้ 'active' เป็นค่า default ไว้ก่อน กรุณาตรวจสอบ")
         return {
             "asset_code": asset_code, "seq": seq, "qr_key": asset_code + seq,
             "location_code": location_code, "location_name": location_name,
@@ -716,6 +721,7 @@ def _parse_asset_excel(content: bytes, filename: str):
             "purchase_date_raw": purchase_date_raw,
             "qty": qty, "purchase_price": purchase_price,
             "accumulated_dep": accumulated_dep, "net_book_value": net_book_value,
+            "warnings": warnings,
         }
 
     if filename.lower().endswith(".xls"):
@@ -729,7 +735,10 @@ def _parse_asset_excel(content: bytes, filename: str):
                     y, m, day, *_ = xlrd.xldate_as_tuple(d["purchase_date_raw"], wb.datemode)
                     d["purchase_date"] = f"{y:04d}-{m:02d}-{day:02d}"
                 else:
-                    d["purchase_date"] = _parse_thai_date_string(d["purchase_date_raw"])
+                    parsed, ok = _parse_thai_date_string(d["purchase_date_raw"])
+                    d["purchase_date"] = parsed
+                    if not ok:
+                        d["warnings"].append(f"แปลงวันที่ '{d['purchase_date_raw']}' ไม่ได้ — purchase_date จะถูกบันทึกเป็นค่าว่าง")
                 rows_out.append(d)
     elif filename.lower().endswith(".xlsx"):
         wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True)
@@ -738,7 +747,13 @@ def _parse_asset_excel(content: bytes, filename: str):
             d = _row_to_dict(list(row))
             if d:
                 pd = d["purchase_date_raw"]
-                d["purchase_date"] = pd.strftime("%Y-%m-%d") if hasattr(pd, "strftime") else _parse_thai_date_string(pd)
+                if hasattr(pd, "strftime"):
+                    d["purchase_date"] = pd.strftime("%Y-%m-%d")
+                else:
+                    parsed, ok = _parse_thai_date_string(pd)
+                    d["purchase_date"] = parsed
+                    if not ok:
+                        d["warnings"].append(f"แปลงวันที่ '{pd}' ไม่ได้ — purchase_date จะถูกบันทึกเป็นค่าว่าง")
                 rows_out.append(d)
     else:
         raise HTTPException(status_code=400, detail="รองรับเฉพาะไฟล์ .xls หรือ .xlsx เท่านั้น")
@@ -748,11 +763,20 @@ def _parse_asset_excel(content: bytes, filename: str):
     return rows_out
 
 
+IMPORT_FILE_SIZE_LIMIT = 10 * 1024 * 1024  # 10MB — asset list ไฟล์จริงมักไม่ใหญ่เกินนี้ ป้องกันอัปโหลดไฟล์ผิดประเภท
+
+async def _read_upload_with_size_limit(file: UploadFile) -> bytes:
+    content = await file.read()
+    if len(content) > IMPORT_FILE_SIZE_LIMIT:
+        raise HTTPException(status_code=400, detail=f"ไฟล์ใหญ่เกินไป ({len(content)/1024/1024:.1f}MB) — รองรับสูงสุด {IMPORT_FILE_SIZE_LIMIT//1024//1024}MB")
+    return content
+
+
 @app.post("/hq/assets/import/preview")
 async def hq_import_assets_preview(file: UploadFile = File(...), user=Depends(get_current_user), db=Depends(get_db)):
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
-    content = await file.read()
+    content = await _read_upload_with_size_limit(file)
     rows = _parse_asset_excel(content, file.filename)
 
     cur = db.cursor()
@@ -769,14 +793,16 @@ async def hq_import_assets_preview(file: UploadFile = File(...), user=Depends(ge
         preview.append({**{k: v for k, v in r.items() if k != "purchase_date_raw"}, "duplicate": is_dup})
 
     return {"file_name": file.filename, "total_rows": len(rows),
-            "duplicate_count": sum(1 for p in preview if p["duplicate"]), "rows": preview}
+            "duplicate_count": sum(1 for p in preview if p["duplicate"]),
+            "warning_count": sum(1 for p in preview if p["warnings"]),
+            "rows": preview}
 
 
 @app.post("/hq/assets/import/confirm")
 async def hq_import_assets_confirm(file: UploadFile = File(...), user=Depends(get_current_user), db=Depends(get_db)):
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
-    content = await file.read()
+    content = await _read_upload_with_size_limit(file)
     rows = _parse_asset_excel(content, file.filename)
 
     batch_id = uuid.uuid4().hex
@@ -821,7 +847,7 @@ def hq_list_import_batches(db=Depends(get_db), user=Depends(get_current_user)):
 
 
 @app.post("/hq/assets/import-batches/{batch_id}/undo")
-def hq_undo_import_batch(batch_id: str, db=Depends(get_db), user=Depends(get_current_user)):
+def hq_undo_import_batch(batch_id: str, force: bool = False, db=Depends(get_db), user=Depends(get_current_user)):
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     cur = db.cursor()
@@ -832,11 +858,27 @@ def hq_undo_import_batch(batch_id: str, db=Depends(get_db), user=Depends(get_cur
     if batch["status"] == "undone":
         raise HTTPException(status_code=400, detail="Batch นี้ถูก undo ไปแล้ว")
 
+    # เช็คก่อนว่ามี scan_logs ผูกกับ asset ใน batch นี้แล้วหรือยัง — ถ้ามีและไม่ force
+    # ให้แค่เตือนกลับไป ไม่ undo ทันที เพราะถ้า undo แล้วจะเหลือ scan_logs.asset_id
+    # ที่ชี้ไปยัง asset ที่ is_active=false (ค้างเป็น dangling reference)
+    cur.execute("""
+        SELECT COUNT(*) AS cnt FROM scan_logs sl
+        JOIN assets a ON a.id = sl.asset_id
+        WHERE a.import_batch_id = %s
+    """, (batch_id,))
+    scan_count = cur.fetchone()["cnt"]
+    if scan_count > 0 and not force:
+        raise HTTPException(status_code=409, detail={
+            "error": "has_linked_scans",
+            "message": f"พบ scan log ที่ผูกกับ asset ใน batch นี้แล้ว {scan_count} รายการ — ถ้า undo ต่อ scan log เหล่านี้จะยังอ้างอิงถึง asset ที่ถูกซ่อนไป กรุณายืนยันอีกครั้งถ้าต้องการ undo จริงๆ",
+            "scan_count": scan_count,
+        })
+
     cur.execute("UPDATE assets SET is_active = false WHERE import_batch_id = %s", (batch_id,))
     undone_count = cur.rowcount
     cur.execute("UPDATE import_batches SET status = 'undone' WHERE batch_id = %s", (batch_id,))
     db.commit()
-    return {"ok": True, "batch_id": batch_id, "undone_rows": undone_count}
+    return {"ok": True, "batch_id": batch_id, "undone_rows": undone_count, "linked_scans_warned": scan_count}
 
 
 # ════════════════════════════════════════════════════════════════
