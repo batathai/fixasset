@@ -789,11 +789,23 @@ function initUrovoScanner() {
   let scanTimer = null;
   const DONE = 300;
 
+  // ป้องกันกรณีเครื่องสแกนยิงโค้ดเดิมซ้ำ 2 รอบติดกันในการสแกนครั้งเดียว
+  // (เช่น "SFU0120...030SFU0120...030") ก่อนจะส่ง Enter ตัวเดียว
+  // ทำให้ความยาวผิดปกติและหา asset ไม่เจอ (ขึ้น Unmatched ทั้งที่จริง ๆ ถูก)
+  function dedupeDoubleRead(val) {
+    const n = val.length;
+    if (n >= 10 && n % 2 === 0) {
+      const half = n / 2;
+      if (val.slice(0, half) === val.slice(half)) return val.slice(0, half);
+    }
+    return val;
+  }
+
   mc.addEventListener('keydown', e => {
     if (e.key === 'Enter') {
       e.preventDefault();
       clearTimeout(scanTimer);
-      const val = mc.value.trim();
+      const val = dedupeDoubleRead(mc.value.trim());
       if (val && !S.cd) {
         mc.value = '';
         S.cd = true; setTimeout(() => S.cd = false, 2500);
@@ -806,7 +818,7 @@ function initUrovoScanner() {
     if (e.key.length === 1) {
       clearTimeout(scanTimer);
       scanTimer = setTimeout(() => {
-        const val = mc.value.trim();
+        const val = dedupeDoubleRead(mc.value.trim());
         if (val && val.length > 5 && !S.cd) {
           mc.value = '';
           S.cd = true; setTimeout(() => S.cd = false, 2500);
