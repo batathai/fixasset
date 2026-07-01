@@ -70,6 +70,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14
 .stat-card.amber .stat-val{color:var(--amber);}
 .stat-card.amber:hover{border-color:var(--amber);}
 .stat-card.red .stat-val{color:var(--red);}
+.stat-card.red:hover{border-color:var(--red);}
 .stat-card.blue .stat-val{color:var(--blue);}
 .stat-card.blue:hover{border-color:var(--blue);}
 .section{background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
@@ -252,10 +253,11 @@ tbody tr:hover{background:var(--sf2);}
           <div class="stat-sub" id="s-pending-sub">ยังไม่ได้สแกน (รวมทุกสาขา)</div>
           <div class="click-hint">คลิกเพื่อดูรายการ →</div>
         </div>
-        <div class="stat-card red">
+        <div class="stat-card red" onclick="goToUnmatched()" title="คลิกดูรายการ Unmatched">
           <div class="stat-label">Unmatched</div>
           <div class="stat-val" id="s-unmatched">—</div>
           <div class="stat-sub">pending review</div>
+          <div class="click-hint">คลิกเพื่อดูรายการ →</div>
         </div>
       </div>
       <!-- Daily Summary Banner -->
@@ -272,13 +274,23 @@ tbody tr:hover{background:var(--sf2);}
 
       <div class="section">
         <div class="section-head">
-          <div class="section-title">Branch Sessions</div>
+          <div class="section-title">Store Session</div>
           <button class="btn btn-red btn-sm" onclick="openCreateSessionModal()">➕ สร้าง Session</button>
         </div>
         <div class="tbl-wrap">
-          <table>
-            <thead><tr><th>Branch</th><th>Total Assets</th><th>Progress</th><th>Scanned</th><th>Pending</th><th>Unmatched</th><th>Status</th><th style="width:110px;">HQ รับงาน</th><th>Actions</th></tr></thead>
-            <tbody id="sessions-tbody"><tr><td colspan="8" class="loading">Loading...</td></tr></tbody>
+          <table style="table-layout:fixed;">
+            <thead><tr>
+              <th style="width:12%;">Branch</th>
+              <th style="width:11%;">Total Assets</th>
+              <th style="width:14%;">Progress</th>
+              <th style="width:10%;">Scanned</th>
+              <th style="width:9%;">Pending</th>
+              <th style="width:10%;">Unmatched</th>
+              <th style="width:10%;">Status</th>
+              <th style="width:12%;">HQ รับงาน</th>
+              <th style="width:12%;">Actions</th>
+            </tr></thead>
+            <tbody id="sessions-tbody"><tr><td colspan="9" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -333,8 +345,19 @@ tbody tr:hover{background:var(--sf2);}
           <button class="btn btn-outline btn-sm" onclick="clearSearch()">✕ ล้าง</button>
         </div>
         <div class="tbl-wrap">
-          <table>
-            <thead><tr><th style="width:68px;">รูป</th><th>Asset Code</th><th style="width:80px;text-align:center;">SEQ</th><th>ชื่อ Asset</th><th>สภาพ</th><th>Serial Match</th><th>สาขา</th><th style="width:90px;">วันที่สแกน</th><th>เวลา</th><th>Actions</th></tr></thead>
+          <table style="table-layout:fixed;">
+            <thead><tr>
+              <th style="width:7%;">รูป</th>
+              <th style="width:15%;">Asset Code</th>
+              <th style="width:8%;text-align:center;">SEQ</th>
+              <th style="width:26%;">ชื่อ Asset</th>
+              <th style="width:9%;">สภาพ</th>
+              <th style="width:10%;">Serial Match</th>
+              <th style="width:8%;">สาขา</th>
+              <th style="width:8%;">วันที่สแกน</th>
+              <th style="width:6%;">เวลา</th>
+              <th style="width:9%;">Actions</th>
+            </tr></thead>
             <tbody id="scans-tbody"><tr><td colspan="10" class="loading">Loading...</td></tr></tbody>
           </table>
         </div>
@@ -958,7 +981,7 @@ function renderOverview() {
   document.getElementById('s-unmatched').textContent = allUnmatched.filter(u=>u.status==='pending').length.toLocaleString();
 
   const tbody = document.getElementById('sessions-tbody');
-  if (!allSessions.length) { tbody.innerHTML='<tr><td colspan="11" class="loading">No sessions</td></tr>'; return; }
+  if (!allSessions.length) { tbody.innerHTML='<tr><td colspan="9" class="loading">No sessions</td></tr>'; return; }
 
   // ตรวจ dup เพื่อ highlight
   const dupBranches = new Set(detectDuplicateSessions().map(([b])=>b));
@@ -1052,6 +1075,13 @@ function goToPending(branchId) {
   document.getElementById('scan-search').value = '';
   filterScans();
 }
+function goToUnmatched() {
+  showPage('unmatched');
+  setTimeout(() => {
+    const t = document.querySelector('#page-unmatched .tab');
+    if (t) filterUnmatched('pending', t);
+  }, 50);
+}
 function showScanBanner(type, msg) {
   const b = document.getElementById('scan-banner');
   b.className = 'page-banner' + (type !== 'blue' ? ' '+type : '');
@@ -1080,9 +1110,9 @@ function renderScans() {
         ? `<img class="scan-thumb" src="${s.photo_url}" alt="" onclick="openLightbox('${s.photo_url}')" title="คลิกเพื่อขยาย">`
         : `<div class="scan-no-photo" title="ไม่มีรูปถ่าย">📷</div>`}
     </td>
-    <td style="font-family:var(--mono);font-size:11px;">${fullCode}</td>
+    <td style="font-family:var(--mono);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${fullCode}</td>
     <td style="text-align:center;">${seqDisplay}</td>
-    <td style="white-space:nowrap;"><div style="font-weight:500;" title="${(s.asset_name||'').replace(/"/g,'&quot;')}">${s.asset_name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
+    <td style="white-space:normal;word-break:break-word;"><div style="font-weight:500;" title="${(s.asset_name||'').replace(/"/g,'&quot;')}">${s.asset_name||'—'}</div><div style="font-size:11px;color:var(--text3);">${s.auditor||'—'}</div></td>
     <td><span class="badge ${s.condition==='good'?'badge-green':s.condition==='damaged'?'badge-red':'badge-gray'}">${s.condition||'—'}</span></td>
     <td>${s.serial_match===true?'<span class="badge badge-green">✓ Match</span>':s.serial_match===false?'<span class="badge badge-red">✗ Mismatch</span>':'<span class="badge badge-gray">N/A</span>'}</td>
     <td style="font-size:12px;">${s.branch_id||'—'}</td>
@@ -1944,6 +1974,7 @@ function openAddAssetModal() {
   document.getElementById('add-asset-overlay').style.display = 'flex';
   // reset form
   document.getElementById('aa-code').value      = '';
+  document.getElementById('aa-seq').value       = '';
   document.getElementById('aa-name').value      = '';
   document.getElementById('aa-condition').value = '';
   document.getElementById('aa-serial').value    = '';
@@ -1986,13 +2017,14 @@ function aaCodeInput() {
   document.getElementById('aa-name').placeholder = '— รอดึงข้อมูล —';
 
   const code = document.getElementById('aa-code').value.trim();
+  const seq  = document.getElementById('aa-seq').value.trim();
   if (!code) return;
 
   document.getElementById('aa-name').placeholder = 'กำลังดึงข้อมูล...';
 
   aaFetchTimer = setTimeout(() => {
     // ─── เชื่อมต่อ API จริงตรงนี้ ───────────────────────────────
-    // ตัวอย่าง: fetch(`/api/assets?code=${encodeURIComponent(code)}`)
+    // ตัวอย่าง: fetch(`/api/assets?code=${encodeURIComponent(code)}&seq=${encodeURIComponent(seq)}`)
     //   .then(r => r.json()).then(data => { ... })
     //
     // ตอนนี้ใช้ mock data (แทนที่ด้วย API call จริง):
@@ -2002,7 +2034,10 @@ function aaCodeInput() {
       'SFU012024020093SE0003': 'Sport Sneaker Black Edition BR 6.',
       'BTA2024010001SE0010':   'Canvas Slip-On Navy',
     };
-    const found = MOCK[code];
+    // รวม Asset Code + SEQ เป็น key เดียวกันแบบเดียวกับ qr_key (เช่น "SFU..SEQ006")
+    // ถ้ายังไม่ได้กรอก SEQ ให้ลอง match ด้วย Asset Code เปล่า ๆ ก่อน
+    const seqKey = seq ? code + 'SE' + seq.padStart(4, '0') : code;
+    const found = MOCK[seqKey] || (!seq ? Object.keys(MOCK).find(k => k.startsWith(code)) && MOCK[Object.keys(MOCK).find(k => k.startsWith(code))] : null);
     if (found) {
       document.getElementById('aa-name').value               = found;
       document.getElementById('aa-name').style.color         = 'var(--text)';
@@ -2017,20 +2052,22 @@ function aaCodeInput() {
 
 function aaSubmit() {
   const code  = document.getElementById('aa-code').value.trim();
+  const seq   = document.getElementById('aa-seq').value.trim();
   const name  = document.getElementById('aa-name').value.trim();
   const cond  = document.getElementById('aa-condition').value;
   const serial= document.getElementById('aa-serial').value.trim();
   const remark= document.getElementById('aa-remark').value.trim();
 
   if (!code) { showToast('กรุณาระบุ Asset Code', 'error'); return; }
-  if (!name) { showToast('ไม่พบ Asset Name — กรุณาตรวจสอบ Asset Code', 'error'); return; }
+  if (!seq)  { showToast('กรุณาระบุ SEQ', 'error'); return; }
+  if (!name) { showToast('ไม่พบ Asset Name — กรุณาตรวจสอบ Asset Code / SEQ', 'error'); return; }
 
   // ─── ส่งข้อมูลไป API จริงตรงนี้ ──────────────────────────────
-  // const payload = { asset_code: code, asset_name: name, condition: cond,
+  // const payload = { asset_code: code, seq: Number(seq), asset_name: name, condition: cond,
   //                   serial_found: serial, remark, image: aaImageFile };
   // fetch('/api/scan-logs', { method:'POST', body: formData }).then(...)
 
-  console.log('Add Asset:', { code, name, cond, serial, remark, image: aaImageFile });
+  console.log('Add Asset:', { code, seq, name, cond, serial, remark, image: aaImageFile });
   showToast('เพิ่มรายการเรียบร้อย', 'success');
   closeAddAssetModal();
   // refresh scan log table หลัง save
@@ -2122,18 +2159,23 @@ function aaSubmit() {
         <button class="btn btn-outline btn-sm" style="flex:1;" onclick="document.getElementById('aa-file-input').click()">🔄 เปลี่ยนรูป</button>
       </div>
 
-      <div class="field-row">
+      <div class="field-row" style="grid-template-columns:2fr 1fr;">
         <div class="field">
           <label>Asset Code</label>
           <input type="text" id="aa-code" placeholder="พิมพ์ Asset Code..." autocomplete="off" oninput="aaCodeInput()">
-          <span style="font-size:11px;color:var(--text3);margin-top:2px;">ระบุ code แล้วระบบจะดึงชื่อให้อัตโนมัติ</span>
         </div>
         <div class="field">
-          <label>Asset Name</label>
-          <input type="text" id="aa-name" placeholder="— รอดึงข้อมูล —" readonly style="background:var(--sf2);color:var(--text3);">
-          <span id="aa-found-badge"    style="display:none;margin-top:3px;font-size:11px;font-weight:600;color:var(--green);">✓ พบข้อมูล</span>
-          <span id="aa-notfound-badge" style="display:none;margin-top:3px;font-size:11px;font-weight:600;color:var(--red);">✕ ไม่พบข้อมูล</span>
+          <label>SEQ</label>
+          <input type="text" id="aa-seq" placeholder="เช่น 006" autocomplete="off" oninput="aaCodeInput()">
         </div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);margin:-10px 0 12px;">ระบุ Asset Code + SEQ แล้วระบบจะดึงชื่อให้อัตโนมัติ</div>
+
+      <div class="field">
+        <label>Asset Name</label>
+        <input type="text" id="aa-name" placeholder="— รอดึงข้อมูล —" readonly style="background:var(--sf2);color:var(--text3);">
+        <span id="aa-found-badge"    style="display:none;margin-top:3px;font-size:11px;font-weight:600;color:var(--green);">✓ พบข้อมูล</span>
+        <span id="aa-notfound-badge" style="display:none;margin-top:3px;font-size:11px;font-weight:600;color:var(--red);">✕ ไม่พบข้อมูล</span>
       </div>
 
       <div class="field-row">
