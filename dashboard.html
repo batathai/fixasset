@@ -167,6 +167,11 @@
   .add-btn:hover{background:var(--red-600);}
   .import-btn{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 15px;font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;}
   .import-btn:hover{background:var(--surface-1);}
+  .export-dropdown-wrap{position:relative;display:inline-block;}
+  .export-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--sh-lg);min-width:150px;z-index:250;overflow:hidden;}
+  .export-menu.show{display:block;}
+  .export-menu button{display:block;width:100%;text-align:left;padding:9px 14px;font-size:12.5px;border:none;background:none;color:var(--ink);cursor:pointer;}
+  .export-menu button:hover{background:var(--surface-2);}
 
   .dropzone{border:1.5px dashed var(--line-2);border-radius:var(--r-md);padding:26px 16px;text-align:center;color:var(--ink-3);margin-bottom:16px;}
   .dropzone-btn{background:var(--ink);color:#fff;border:none;border-radius:var(--r-sm);padding:9px 16px;font-size:12.5px;font-weight:600;margin-top:10px;}
@@ -238,6 +243,14 @@
     .asset-row{grid-template-columns:1fr;row-gap:5px;}
     .drawer{width:100%;max-width:100%;}
   }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style media="print">
+  .sidebar, .content-header, .toolbar, .as-toolbar, .hq-strip, .store-switcher, .store-chips,
+  .as-pagination, .login-overlay, .data-source-banner, .as-row-actions, .row-more-menu,
+  .as-modal-overlay, .export-menu { display: none !important; }
+  .content-body { padding: 0; }
+  .app { display: block; }
 </style>
 </head>
 <body>
@@ -343,6 +356,14 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             <input type="text" id="assetSearch" placeholder="Search asset, barcode, serial, location" oninput="renderAssetList()">
           </div>
+          <div class="export-dropdown-wrap">
+            <button class="import-btn" onclick="toggleExportMenu('overviewExportMenu')">⬇ Export ▾</button>
+            <div class="export-menu" id="overviewExportMenu">
+              <button onclick="exportOverviewCSV()">Export CSV</button>
+              <button onclick="exportOverviewExcel()">Export Excel</button>
+              <button onclick="printCurrentView()">Print / Save as PDF</button>
+            </div>
+          </div>
           <button class="import-btn" onclick="openImportDrawer()">⬆ Import</button>
           <button class="add-btn" onclick="openAddDrawer()">+ Add Asset</button>
         </div>
@@ -389,6 +410,14 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Refresh
           </button>
+          <div class="export-dropdown-wrap">
+            <button class="import-btn" onclick="toggleExportMenu('asExportMenu')">⬇ Export ▾</button>
+            <div class="export-menu" id="asExportMenu">
+              <button onclick="exportAssetSummaryCSV()">Export CSV</button>
+              <button onclick="exportAssetSummaryExcel()">Export Excel</button>
+              <button onclick="printCurrentView()">Print / Save as PDF</button>
+            </div>
+          </div>
           <button class="add-btn" onclick="showToast('เปิดฟอร์มเพิ่ม Asset')">+ Add Asset</button>
         </div>
         <div class="as-table-wrap">
@@ -616,6 +645,105 @@ document.getElementById('loginApiBase').textContent = API_BASE;
 
 var authToken = null;
 var authUser = null;
+
+/* ================================================================
+   EXPORT — CSV / Excel / Print, always respecting whatever filter
+   is currently applied (search, branch, status, KPI click). Each
+   render function below stashes the exact filtered array it just
+   displayed; export reads from that cache rather than recomputing,
+   so what gets exported always matches what's on screen.
+   ================================================================ */
+var lastOverviewExportList = [];
+var lastAssetSummaryExportList = [];
+
+function toggleExportMenu(id){
+  document.querySelectorAll('.export-menu').forEach(function(m){
+    if(m.id === id) m.classList.toggle('show'); else m.classList.remove('show');
+  });
+}
+function closeAllExportMenus(){
+  document.querySelectorAll('.export-menu').forEach(function(m){ m.classList.remove('show'); });
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.export-dropdown-wrap')) closeAllExportMenus();
+});
+
+function todayStamp(){
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function csvEscape(v){
+  v = (v === undefined || v === null) ? '' : String(v);
+  if(/[",\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
+  return v;
+}
+function toCSV(headers, rows){
+  var lines = [headers.map(csvEscape).join(',')];
+  rows.forEach(function(r){ lines.push(r.map(csvEscape).join(',')); });
+  return lines.join('\r\n');
+}
+function downloadFile(filename, content, mime){
+  var blob = new Blob([content], { type: mime });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+function exportToExcel(headers, rows, sheetName, filename){
+  if(typeof XLSX === 'undefined'){
+    showToast('โหลด Excel library ไม่สำเร็จ (อาจไม่มีอินเทอร์เน็ต) — ลอง Export CSV แทน');
+    return;
+  }
+  var data = [headers].concat(rows);
+  var ws = XLSX.utils.aoa_to_sheet(data);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, filename);
+}
+
+var OVERVIEW_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Location', 'Status', 'Last Scan'];
+function overviewExportRows(){
+  return lastOverviewExportList.map(function(a){
+    return [a.barcode, a.name, a.location, a.status, formatDateShort(a.lastScan)];
+  });
+}
+function exportOverviewCSV(){
+  closeAllExportMenus();
+  var rows = overviewExportRows();
+  downloadFile('overview-' + currentStore + '-' + todayStamp() + '.csv', toCSV(OVERVIEW_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
+  showToast('Export CSV สำเร็จ (' + rows.length + ' รายการ)');
+}
+function exportOverviewExcel(){
+  closeAllExportMenus();
+  var rows = overviewExportRows();
+  exportToExcel(OVERVIEW_EXPORT_HEADERS, rows, 'Overview', 'overview-' + currentStore + '-' + todayStamp() + '.xlsx');
+  showToast('Export Excel สำเร็จ (' + rows.length + ' รายการ)');
+}
+
+var AS_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Branch', 'Serial No.', 'Status', 'Last Scan'];
+function assetSummaryExportRows(){
+  return lastAssetSummaryExportList.map(function(a){
+    return [a.code, a.name, a.branch, a.serial, a.status, formatDateShort(a.scanTime)];
+  });
+}
+function exportAssetSummaryCSV(){
+  closeAllExportMenus();
+  var rows = assetSummaryExportRows();
+  downloadFile('asset-summary-' + todayStamp() + '.csv', toCSV(AS_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
+  showToast('Export CSV สำเร็จ (' + rows.length + ' รายการ)');
+}
+function exportAssetSummaryExcel(){
+  closeAllExportMenus();
+  var rows = assetSummaryExportRows();
+  exportToExcel(AS_EXPORT_HEADERS, rows, 'Asset Summary', 'asset-summary-' + todayStamp() + '.xlsx');
+  showToast('Export Excel สำเร็จ (' + rows.length + ' รายการ)');
+}
+
+function printCurrentView(){
+  closeAllExportMenus();
+  window.print();
+}
 
 function initialsFrom(text){
   if(!text) return '?';
@@ -1035,6 +1163,7 @@ function renderAssetList(){
       a.location.toLowerCase().indexOf(term) > -1;
     return matchesFilter && matchesSearch;
   });
+  lastOverviewExportList = list;
   var wrap = document.getElementById('assetRows');
   if(list.length === 0){
     wrap.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);">No assets match this filter.</div>';
@@ -1388,6 +1517,7 @@ function renderAssetSummary(){
     var mSearch = !term || a.code.toLowerCase().indexOf(term) > -1 || a.seq.toLowerCase().indexOf(term) > -1 || a.name.toLowerCase().indexOf(term) > -1 || a.serial.toLowerCase().indexOf(term) > -1;
     return mKpi && mBranch && mStatus && mSearch;
   });
+  lastAssetSummaryExportList = filtered;
 
   if(filtered.length === 0){
     tbody.innerHTML = asEmptyStateHtml();
