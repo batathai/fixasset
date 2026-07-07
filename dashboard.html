@@ -315,7 +315,7 @@
         <div class="store-switcher">
           <div class="store-search-box">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            <input type="text" id="storeSwitchInput" list="storeDatalist" placeholder="พิมพ์ชื่อหรือรหัสสาขา (จาก 200 สาขา)" onchange="handleStoreSwitch(this.value)" onkeydown="if(event.key==='Enter') handleStoreSwitch(this.value)">
+            <input type="text" id="storeSwitchInput" list="storeDatalist" autocomplete="off" placeholder="พิมพ์ชื่อหรือรหัสสาขา (จาก 200 สาขา)" onchange="handleStoreSwitch(this.value)" onkeyup="if(event.key==='Enter') handleStoreSwitch(this.value)">
           </div>
           <datalist id="storeDatalist"></datalist>
         </div>
@@ -707,35 +707,85 @@ function logout(){
   showLogin();
 }
 
-/* Map whatever audit-status the API happens to send. If the API only ever
-   returns a lifecycle status (e.g. 'active'/'disposed') rather than an
-   audit-verification status, we cannot invent Verified/Missing/Damaged —
-   that requires cross-referencing scan_logs, which isn't wired yet. In that
-   case every row safely defaults to "pending" (true statement: "not yet
-   confirmed by a scan"), and the banner below says so instead of guessing. */
-var auditStatusUnavailable = false;
-function normalizeAuditStatus(raw){
-  var s = (raw || '').toString().toLowerCase();
-  if(['verified','pending','missing','damaged','unmatched'].indexOf(s) > -1) return s;
-  auditStatusUnavailable = true;
-  return 'pending';
+/* GET /hq/scans exists (confirmed from /docs) — this is the piece that lets us
+   derive real per-asset audit status instead of defaulting everything to Pending.
+   A scan record's qr_key tells us which master asset it belongs to; its
+   condition/serial_match tell us Verified vs Damaged vs Unmatched. Anything
+   in the master list with no matching scan is honestly "Pending" — it hasn't
+   been scanned, full stop, no guessing involved. */
+function statusFromScan(scan){
+  var condition = (scan.condition || scan.status || '').toString().toLowerCase();
+  var serialMatch = scan.serial_match;
+  if(serialMatch === false) return 'unmatched';
+  if(condition.indexOf('damage') > -1 || condition === 'bad' || condition === 'broken') return 'damaged';
+  return 'verified';
+}
+function scanTimeOf(scan){
+  return scan.scanned_at || scan.created_at || scan.time || scan.timestamp || '-';
+}
+function scanUserOf(scan){
+  return scan.employee_id || scan.user || scan.scanned_by || scan.auditor || 'Unknown';
+}
+function scanQrKeyOf(scan){
+  return scan.qr_key || scan.asset_qr || scan.qr || scan.asset_code || null;
+}
+function scanPhotoOf(scan){
+  return scan.photo_url || scan.photo || scan.image_url || scan.photo_path || null;
+}
+/* dd/mm/yy — for the Last Scan column, a date is enough; the full timestamp is
+   still available in Activity Log where the exact time actually matters. */
+function formatDateShort(raw){
+  if(!raw || raw === '-') return '-';
+  var d = new Date(raw);
+  if(isNaN(d.getTime())) return String(raw).slice(0, 10);
+  var dd = String(d.getDate()).padStart(2, '0');
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = String(d.getFullYear()).slice(-2);
+  return dd + '/' + mm + '/' + yy;
+}
+function formatDateTime(raw){
+  if(!raw || raw === '-') return '-';
+  var d = new Date(raw);
+  if(isNaN(d.getTime())) return String(raw);
+  var dd = String(d.getDate()).padStart(2, '0');
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = String(d.getFullYear()).slice(-2);
+  var hh = String(d.getHours()).padStart(2, '0');
+  var mi = String(d.getMinutes()).padStart(2, '0');
+  return dd + '/' + mm + '/' + yy + ' ' + hh + ':' + mi;
+}
+/* Real SEQ is just a 3-digit number (e.g. "SEQ064") — no extra padding/dash.
+   Real Asset Code, as it appears on the printed report, is AssetCode-SEQ
+   (e.g. "COM012020120002-064"), so that's what we build for the barcode field. */
+function seqDigitsOf(raw){
+  if(raw === null || raw === undefined || raw === '') return null;
+  var digits = String(raw).replace(/[^0-9]/g, '');
+  if(!digits) return null;
+  return digits.padStart(3, '0').slice(-3);
 }
 
-function buildStoresFromRealAssets(list){
+function buildStoresFromRealAssets(list, scansByQrKey){
+  scansByQrKey = scansByQrKey || {};
   var grouped = {};
   list.forEach(function(a){
     var code = a.location_code || a.branch_id || a.branch_code || 'UNKNOWN';
     var name = a.location_name || a.branch_name || code;
     if(!grouped[code]){ grouped[code] = { name: name, items: [] }; }
+    var qrKey = a.qr_key || a.asset_code;
+    var matchingScan = qrKey ? scansByQrKey[qrKey] : null;
+    var seqNum = seqDigitsOf(a.seq);
+    var baseCode = a.asset_code || a.qr_key || String(a.id != null ? a.id : '');
     grouped[code].items.push({
-      name: a.name || a.asset_name || ('Asset ' + (a.asset_code || a.id || '')),
-      seq: (a.seq != null) ? ('SEQ-' + String(a.seq).padStart(6, '0')) : (a.qr_key || '—'),
-      barcode: a.asset_code || a.qr_key || String(a.id != null ? a.id : ''),
+      name: a.name || a.asset_name || ('Asset ' + baseCode),
+      seq: seqNum ? ('SEQ' + seqNum) : (a.qr_key || '—'),
+      barcode: baseCode + (seqNum ? ('-' + seqNum) : ''),
       category: a.category || 'Uncategorized',
       location: a.location_detail || name,
-      status: normalizeAuditStatus(a.audit_status || a.status),
-      lastScan: a.last_scan || '-',
+      status: matchingScan ? statusFromScan(matchingScan) : 'pending',
+      lastScan: matchingScan ? scanTimeOf(matchingScan) : '-',
       remark: a.remark || '',
+      photo: matchingScan ? scanPhotoOf(matchingScan) : null,
+      serial: a.serial_no || a.serial || '',
       history: []
     });
   });
@@ -756,29 +806,71 @@ function buildStoresFromRealAssets(list){
   assetsByStore = newAssetsByStore;
 }
 
+function buildActivityLogFromScans(scans, assetsByQrKey){
+  return scans.map(function(sc){
+    var qrKey = scanQrKeyOf(sc);
+    var asset = qrKey ? assetsByQrKey[qrKey] : null;
+    var status = statusFromScan(sc);
+    var actionLabel = status === 'verified' ? 'Verified' : status === 'damaged' ? 'Damaged' : 'Unmatched';
+    return {
+      time: scanTimeOf(sc),
+      user: scanUserOf(sc),
+      store: (asset && (asset.location_name || asset.location_code)) || sc.branch_id || sc.location_code || '—',
+      asset: (asset && (asset.name || asset.asset_name)) || qrKey || 'Unknown asset',
+      action: actionLabel,
+      detail: sc.remark || ''
+    };
+  }).sort(function(a, b){ return (b.time || '').localeCompare(a.time || ''); });
+}
+
 async function loadRealData(){
   var banner = document.getElementById('overviewDataBanner');
   var bannerText = document.getElementById('overviewDataBannerText');
-  auditStatusUnavailable = false;
+  var warnings = [];
+
+  var assetList = [];
   try{
-    var raw = await apiFetch('/hq/assets', { method: 'GET' });
-    var list = Array.isArray(raw) ? raw : (raw.assets || raw.data || []);
-    if(!Array.isArray(list)){ throw new Error('รูปแบบข้อมูลจาก /hq/assets ไม่ตรงที่คาดไว้ (ไม่ใช่ array) — เช็ค response จริงใน DevTools'); }
-    buildStoresFromRealAssets(list);
-    if(list.length === 0){
-      bannerText.textContent = 'เชื่อมต่อ API สำเร็จ แต่ /hq/assets ส่งกลับมา 0 รายการ';
-      banner.style.display = 'flex';
-    } else if(auditStatusUnavailable){
-      bannerText.textContent = 'เชื่อมต่อสำเร็จ (' + list.length + ' assets) แต่ API ยังไม่ส่งสถานะ audit (Verified/Missing/Damaged) มาด้วย — ทุกรายการแสดงเป็น Pending ไปก่อนจนกว่าจะเชื่อม scan_logs endpoint';
-      banner.style.display = 'flex';
-    } else {
-      banner.style.display = 'none';
-    }
+    var rawAssets = await apiFetch('/hq/assets', { method: 'GET' });
+    assetList = Array.isArray(rawAssets) ? rawAssets : (rawAssets.assets || rawAssets.data || []);
+    if(!Array.isArray(assetList)) throw new Error('รูปแบบข้อมูลจาก /hq/assets ไม่ตรงที่คาดไว้ (ไม่ใช่ array)');
   } catch(e){
     bannerText.textContent = e.message;
     banner.style.display = 'flex';
     showToast('โหลดข้อมูลจริงไม่สำเร็จ');
     return;
+  }
+
+  var scansByQrKey = {};
+  var assetsByQrKey = {};
+  assetList.forEach(function(a){ var k = a.qr_key || a.asset_code; if(k) assetsByQrKey[k] = a; });
+
+  var scanList = [];
+  try{
+    var rawScans = await apiFetch('/hq/scans', { method: 'GET' });
+    scanList = Array.isArray(rawScans) ? rawScans : (rawScans.scans || rawScans.data || []);
+    if(!Array.isArray(scanList)) throw new Error('รูปแบบข้อมูลไม่ตรงที่คาด');
+    scanList.forEach(function(sc){
+      var k = scanQrKeyOf(sc);
+      if(!k) return;
+      // keep the most recent scan per asset (list order isn't guaranteed sorted, so compare timestamps)
+      var existing = scansByQrKey[k];
+      if(!existing || (scanTimeOf(sc) > scanTimeOf(existing))) scansByQrKey[k] = sc;
+    });
+  } catch(e){
+    warnings.push('เชื่อมต่อ /hq/scans ไม่สำเร็จ (' + e.message + ') — Verified/Damaged/Unmatched จะยังไม่แม่นยำ ทุกรายการจะแสดงเป็น Pending ไปก่อน, Activity Log จะว่างเปล่า');
+  }
+
+  buildStoresFromRealAssets(assetList, scansByQrKey);
+  activityLog = buildActivityLogFromScans(scanList, assetsByQrKey);
+
+  if(assetList.length === 0){
+    warnings.push('/hq/assets ส่งกลับมา 0 รายการ');
+  }
+  if(warnings.length){
+    bannerText.textContent = warnings.join(' · ');
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
   }
 
   if(!stores.length){ showToast('ไม่มีสาขาให้แสดง'); return; }
@@ -793,7 +885,11 @@ async function loadRealData(){
 
   document.getElementById('asBranchFilter').innerHTML = '<option value="all">ทุกสาขา</option>';
   asFirstLoadDone = false;
-  showToast('โหลดข้อมูลจริงสำเร็จ');
+
+  document.getElementById('alBranchFilter').innerHTML = '<option value="all">ทุกสาขา</option>';
+  renderActivityLog();
+
+  showToast('โหลดข้อมูลจริงสำเร็จ (' + assetList.length + ' assets, ' + scanList.length + ' scans)');
 }
 
 showLogin();
@@ -875,7 +971,8 @@ function populateStoreDatalist(){
 
 function handleStoreSwitch(value){
   if(!value) return;
-  var term = value.toLowerCase();
+  var term = value.trim().toLowerCase();
+  if(!term) return;
   var match = stores.filter(function(s){ return s.name.toLowerCase() === term; })[0]
            || stores.filter(function(s){ return s.name.toLowerCase().indexOf(term) > -1; })[0];
   if(match){
@@ -948,10 +1045,10 @@ function renderAssetList(){
     var safeName = a.name.replace(/'/g, "\\'");
     var safeCode = a.barcode.replace(/'/g, "\\'");
     return '<div class="asset-row" onclick="openAssetDrawer(' + idx + ')">'
-      + '<div class="asset-name">' + a.name + '<span style="display:block;font-size:11px;color:var(--ink-3);font-weight:400;">SEQ ' + a.seq + '</span></div>'
+      + '<div class="asset-name">' + a.barcode + '<span style="display:block;font-size:11px;color:var(--ink-3);font-weight:400;">' + a.name + '</span></div>'
       + '<div>' + a.location + '</div>'
       + '<div>' + statusPillHtml(a.status) + '</div>'
-      + '<div class="row-time">' + a.lastScan + '</div>'
+      + '<div class="row-time">' + formatDateShort(a.lastScan) + '</div>'
       + '<div class="as-row-actions">'
         + '<button class="as-act-btn" title="View" onclick="event.stopPropagation(); openAssetDrawer(' + idx + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg></button>'
         + '<button class="as-act-btn" title="Edit" onclick="event.stopPropagation(); openAssetDrawer(' + idx + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
@@ -1196,7 +1293,7 @@ function allAssetsFlat(){
   stores.forEach(function(s){
     assetsByStore[s.name].forEach(function(a){
       flat.push({
-        code: a.barcode, seq: a.seq, name: a.name, branch: s.name, serial: a.barcode.replace('SFU', 'SN'),
+        code: a.barcode, seq: a.seq, name: a.name, branch: s.name, serial: (a.serial && a.serial.length) ? a.serial : a.barcode.replace('SFU', 'SN'),
         status: a.status, scanTime: a.lastScan
       });
     });
@@ -1307,7 +1404,7 @@ function renderAssetSummary(){
       + '<td>' + a.branch + '</td>'
       + '<td>' + a.serial + '</td>'
       + '<td>' + statusPillHtml(a.status) + '</td>'
-      + '<td>' + a.scanTime + '</td>'
+      + '<td>' + formatDateShort(a.scanTime) + '</td>'
       + '<td><div class="as-row-actions">'
         + '<button class="as-act-btn" title="View" onclick="showToast(\'View: ' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg></button>'
         + '<button class="as-act-btn" title="Edit" onclick="showToast(\'Editing ' + safeCode + '…\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
@@ -1430,7 +1527,7 @@ function renderActivityLog(){
   }
   tbody.innerHTML = filtered.slice(0, 60).map(function(e){
     return '<tr>'
-      + '<td>' + e.time + '</td>'
+      + '<td>' + formatDateTime(e.time) + '</td>'
       + '<td>' + e.user + '</td>'
       + '<td>' + e.store + '</td>'
       + '<td>' + e.asset + '</td>'
