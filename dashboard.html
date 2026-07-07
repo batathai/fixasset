@@ -14,6 +14,7 @@
     --amber-bg:#FEF3E2; --amber-fg:#9A6400;
     --red-fg:#C0281F; --red-bg2:#FCE9E9;
     --purple-bg:#F1EDFB; --purple-fg:#6440C7;
+    --orange-bg:#FDEEE2; --orange-fg:#B5590F;
     --blue-bg:#EAF2FE; --blue-fg:#1B5FC4;
     --r-sm:8px; --r-md:12px; --r-lg:16px;
     --sh-xs:0 1px 2px rgba(16,24,40,.05);
@@ -48,12 +49,60 @@
   .screen2{display:none;}
   .screen2.active{display:block;}
 
+  .login-overlay{position:fixed;inset:0;background:var(--surface-1);z-index:500;display:flex;align-items:center;justify-content:center;}
+  .login-box{width:360px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg);padding:26px 26px 20px;}
+  .login-brand{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+  .login-brand-name{font-weight:700;font-size:14px;}
+  .login-brand-sub{font-size:10px;color:var(--ink-3);}
+  .login-title{font-size:15px;font-weight:700;margin:0 0 14px;}
+  .login-error{background:var(--red-bg2);color:var(--red-fg);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:9px 12px;font-size:12.5px;margin-bottom:12px;}
+  .login-label{display:block;font-size:11.5px;color:var(--ink-2);margin:12px 0 5px;font-weight:600;}
+  .login-input{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:9px 11px;font-size:13px;color:var(--ink);}
+  .login-input:focus{outline:none;border-color:var(--red-500);}
+  .login-sub{font-size:11px;color:var(--ink-3);margin:14px 0 0;text-align:center;}
+  .login-sub code{background:var(--surface-2);padding:1px 5px;border-radius:4px;}
+  .data-source-banner{display:none;align-items:center;gap:8px;background:var(--red-bg2);color:var(--red-fg);border:1px solid #F3C2BC;border-radius:var(--r-md);padding:10px 16px;font-size:12.5px;margin-bottom:14px;}
   .as-error-banner{display:flex;align-items:center;gap:8px;background:#FEF3E2;color:#9A6400;border:1px solid #F5DDA8;border-radius:var(--r-md);padding:10px 16px;font-size:12.5px;margin-bottom:16px;}
   .as-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px;}
-  .as-kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--sh-xs);}
+  .as-kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--sh-xs);position:relative;overflow:hidden;cursor:pointer;transition:box-shadow .15s ease,transform .15s ease;}
+  .as-kpi-card:hover{box-shadow:0 4px 16px rgba(16,24,40,.10);transform:translateY(-1px);}
+  .as-kpi-card.kpi-active{outline:2px solid var(--red-500);outline-offset:-1px;}
+  .as-kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+  .as-kpi-card.kpi-total::before{background:var(--ink-4);}
+  .as-kpi-card.kpi-verified::before{background:var(--green-fg);}
+  .as-kpi-card.kpi-pending::before{background:var(--amber-fg);}
+  .as-kpi-card.kpi-missing::before{background:var(--red-fg);}
   .as-kpi-label{font-size:12.5px;color:var(--ink-2);margin:0 0 8px;}
   .as-kpi-value{font-size:24px;font-weight:700;margin:0;}
   .as-kpi-sub{font-size:11.5px;color:var(--ink-3);margin-top:4px;}
+  .as-last-sync{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);background:var(--surface-1);border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap;}
+  .as-last-sync b{color:var(--ink);font-weight:700;}
+  .as-last-sync .dot{width:6px;height:6px;border-radius:50%;background:var(--green-fg);flex-shrink:0;}
+  .as-row-actions{display:flex;align-items:center;gap:2px;}
+  .as-act-btn{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;border:none;background:transparent;cursor:pointer;color:var(--ink-3);}
+  .as-act-btn:hover{background:var(--surface-2);color:var(--ink);}
+  .as-act-btn.as-danger:hover{background:var(--red-bg2);color:var(--red-fg);}
+  .row-more-menu{display:none;position:fixed;z-index:400;background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--sh-lg);min-width:150px;overflow:hidden;}
+  .row-more-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 14px;font-size:12.5px;border:none;background:none;color:var(--ink);}
+  .row-more-item:hover{background:var(--surface-2);}
+  .row-more-item.danger{color:var(--red-fg);}
+  .row-more-item.danger:hover{background:var(--red-bg2);}
+  .as-skel{background:linear-gradient(90deg,var(--surface-2) 25%,var(--line) 37%,var(--surface-2) 63%);background-size:400% 100%;animation:asShimmer 1.4s ease infinite;border-radius:4px;height:12px;display:inline-block;}
+  @keyframes asShimmer{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
+  .as-empty{padding:56px 20px;text-align:center;}
+  .as-empty .as-empty-icon{width:48px;height:48px;border-radius:50%;background:var(--surface-2);color:var(--ink-3);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+  .as-empty-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+  .as-empty-sub{font-size:12.5px;color:var(--ink-3);margin-bottom:16px;}
+  .as-modal-overlay{display:none;position:fixed;inset:0;background:rgba(17,19,24,.45);z-index:300;align-items:center;justify-content:center;}
+  .as-modal-overlay.show{display:flex;}
+  .as-modal{background:#fff;border-radius:var(--r-lg);padding:22px;width:380px;max-width:calc(100vw - 32px);box-shadow:var(--sh-lg);}
+  .as-modal-title{font-size:14.5px;font-weight:700;margin:0 0 6px;}
+  .as-modal-body{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-bottom:6px;}
+  .as-modal-asset{display:flex;justify-content:space-between;background:var(--surface-2);border-radius:var(--r-sm);padding:10px 12px;margin:10px 0 16px;font-size:12.5px;}
+  .as-modal-asset b{font-weight:700;}
+  .as-modal-actions{display:flex;justify-content:flex-end;gap:8px;}
+  .btn-outline-red{background:transparent;border:1px solid var(--red-fg);color:var(--red-fg);border-radius:var(--r-sm);padding:8px 14px;font-size:12.5px;font-weight:600;}
+  .btn-outline-red:hover{background:var(--red-bg2);}
   .as-toolbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:14px 18px;flex-wrap:wrap;}
   .as-toolbar-title{font-size:14px;font-weight:700;margin:0;flex:1;min-width:140px;}
   .as-select{border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 10px;font-size:12.5px;color:var(--ink-2);background:var(--surface);}
@@ -130,17 +179,23 @@
 
   /* ASSET LIST */
   .asset-table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);}
-  .asset-head{display:grid;grid-template-columns:1.3fr 1fr 1fr 90px 90px;gap:10px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;}
-  .asset-row{display:grid;grid-template-columns:1.3fr 1fr 1fr 90px 90px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;}
+  .asset-head{display:grid;grid-template-columns:1.3fr 1fr 1fr 90px 132px;gap:10px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;}
+  .asset-row{display:grid;grid-template-columns:1.3fr 1fr 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;}
   .asset-row:last-child{border-bottom:none;}
   .asset-row:hover{background:var(--surface-1);}
   .asset-name{font-weight:600;}
-  .status-pill{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;display:inline-flex;white-space:nowrap;}
+  .status-pill{font-size:11px;font-weight:600;padding:3px 10px 3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+  .status-pill .sp-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
   .status-pill.verified{background:var(--green-bg);color:var(--green-fg);}
+  .status-pill.verified .sp-dot{background:var(--green-fg);}
   .status-pill.pending{background:var(--amber-bg);color:var(--amber-fg);}
+  .status-pill.pending .sp-dot{background:var(--amber-fg);}
   .status-pill.missing{background:var(--red-bg2);color:var(--red-fg);}
-  .status-pill.damaged{background:var(--red-bg2);color:var(--red-fg);}
+  .status-pill.missing .sp-dot{background:var(--red-fg);}
+  .status-pill.damaged{background:var(--orange-bg);color:var(--orange-fg);}
+  .status-pill.damaged .sp-dot{background:var(--orange-fg);}
   .status-pill.unmatched{background:var(--purple-bg);color:var(--purple-fg);}
+  .status-pill.unmatched .sp-dot{background:var(--purple-fg);}
   .row-time{color:var(--ink-3);font-size:12px;}
   .row-action{background:none;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:6px 12px;font-size:12px;font-weight:600;color:var(--ink);}
   .row-action:hover{background:var(--surface-1);}
@@ -187,7 +242,24 @@
 </head>
 <body>
 
-<div class="app">
+<!-- ============ LOGIN OVERLAY (real system — /auth/login) ============ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-brand"><div class="brand-mark">B</div><div><div class="login-brand-name">Bata Audit</div><div class="login-brand-sub">HQ Dashboard v2</div></div></div>
+    <p class="login-title">Sign in</p>
+    <div class="login-error" id="loginError" style="display:none;"></div>
+    <label class="login-label">Employee ID</label>
+    <input class="login-input" id="loginEmployeeId" type="text" placeholder="เช่น ADMIN01" onkeydown="if(event.key==='Enter') doLogin()">
+    <label class="login-label">Password</label>
+    <input class="login-input" id="loginPassword" type="password" onkeydown="if(event.key==='Enter') doLogin()">
+    <label class="login-label">Branch ID <span style="color:var(--ink-3);font-weight:400;">(HQ เว้นว่างได้ถ้าไม่บังคับ)</span></label>
+    <input class="login-input" id="loginBranchId" type="text" placeholder="เช่น HQ หรือรหัสสาขา" onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="add-btn" style="width:100%;margin-top:6px;" id="loginSubmitBtn" onclick="doLogin()">Sign in</button>
+    <p class="login-sub">เชื่อมต่อ API: <code id="loginApiBase"></code></p>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none;">
   <nav class="sidebar">
     <div class="sb-brand">
       <div class="brand-mark">B</div>
@@ -213,13 +285,22 @@
   <div class="content">
     <div class="content-header">
       <p class="content-title" id="pageTitle">Overview</p>
-      <div class="avatar">JS</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:12px;color:var(--ink-2);" id="headerUserLabel"></span>
+        <button class="btn-outline" style="padding:6px 12px;font-size:11.5px;" onclick="logout()">Sign out</button>
+        <div class="avatar">JS</div>
+      </div>
     </div>
 
     <div class="content-body">
 
       <!-- ============ SCREEN: OVERVIEW (audit workspace) ============ -->
       <section class="screen2 active" id="pageOverview">
+
+        <div class="data-source-banner" id="overviewDataBanner">
+          <span>⚠</span>
+          <span id="overviewDataBannerText">โหลดข้อมูลจริงไม่สำเร็จ</span>
+        </div>
 
         <div class="hq-strip">
           <span class="hq-total" id="hqTotal">48 Stores</span>
@@ -247,7 +328,7 @@
             <span class="summary-cycle" id="sumCycle">Audit cycle: Q3 2026</span>
           </div>
           <div class="summary-grid">
-            <div><p class="summary-stat-label">Total assets</p><p class="summary-stat-value" id="sumTotal">1,245</p></div>
+            <div class="stat-clickable" onclick="setAssetFilter('all')" title="ดูรายการทั้งหมด"><p class="summary-stat-label">Total assets</p><p class="summary-stat-value" id="sumTotal">1,245</p></div>
             <div class="stat-clickable" onclick="setAssetFilter('verified')" title="ดูรายการที่สแกนแล้ว"><p class="summary-stat-label">Scanned</p><p class="summary-stat-value" id="sumScanned">890</p></div>
             <div class="stat-clickable" onclick="setAssetFilter('pending')" title="ดูรายการที่ยังไม่สแกน"><p class="summary-stat-label">Remaining</p><p class="summary-stat-value warn" id="sumRemaining">355</p></div>
             <div class="stat-clickable" onclick="setAssetFilter('exceptions')" title="ดู Missing / Damaged / Unmatched ทั้งหมด"><p class="summary-stat-label">Exceptions</p><p class="summary-stat-value danger" id="sumExceptions">18</p></div>
@@ -278,11 +359,15 @@
       <!-- ============ SCREEN: ASSET SUMMARY (master list, all branches) ============ -->
       <section class="screen2" id="pageAssetSummary">
 
-        <div class="as-kpi-grid">
-          <div class="as-kpi-card"><p class="as-kpi-label">Total assets</p><p class="as-kpi-value" id="asTotal">—</p><p class="as-kpi-sub">รายการในระบบ</p></div>
-          <div class="as-kpi-card"><p class="as-kpi-label">Scanned</p><p class="as-kpi-value" id="asScanned" style="color:var(--green-fg);">—</p><p class="as-kpi-sub">พบในระบบสแกน</p></div>
-          <div class="as-kpi-card"><p class="as-kpi-label">Not scanned</p><p class="as-kpi-value" id="asNotScanned" style="color:var(--amber-fg);">—</p><p class="as-kpi-sub">รอการตรวจสอบ</p></div>
-          <div class="as-kpi-card"><p class="as-kpi-label">Branches</p><p class="as-kpi-value" id="asBranches">—</p><p class="as-kpi-sub">ที่มีข้อมูล</p></div>
+        <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
+          <div class="as-last-sync"><span class="dot"></span>Last Sync <b id="asLastSync">7 Jul 2026, 09:45</b></div>
+        </div>
+
+        <div class="as-kpi-grid" id="asKpiGrid">
+          <div class="as-kpi-card kpi-total kpi-active" data-as-filter="all" onclick="setAsKpiFilter('all')"><p class="as-kpi-label">Total</p><p class="as-kpi-value" id="asTotal">—</p><p class="as-kpi-sub">assets tracked</p></div>
+          <div class="as-kpi-card kpi-verified" data-as-filter="verified" onclick="setAsKpiFilter('verified')"><p class="as-kpi-label">Verified</p><p class="as-kpi-value" id="asVerified" style="color:var(--green-fg);">—</p><p class="as-kpi-sub">scanned &amp; matched</p></div>
+          <div class="as-kpi-card kpi-pending" data-as-filter="pending" onclick="setAsKpiFilter('pending')"><p class="as-kpi-label">Pending</p><p class="as-kpi-value" id="asPending" style="color:var(--amber-fg);">—</p><p class="as-kpi-sub">not yet scanned</p></div>
+          <div class="as-kpi-card kpi-missing" data-as-filter="missing" onclick="setAsKpiFilter('missing')"><p class="as-kpi-label">Missing</p><p class="as-kpi-value" id="asMissing" style="color:var(--red-fg);">—</p><p class="as-kpi-sub">unaccounted for</p></div>
         </div>
 
         <div class="as-toolbar">
@@ -300,23 +385,43 @@
             <option value="damaged">Damaged</option>
             <option value="unmatched">Unmatched</option>
           </select>
-          <button class="as-refresh" onclick="renderAssetSummary(); showToast('Refreshed')">
+          <button class="as-refresh" onclick="refreshAssetSummary()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Refresh
           </button>
+          <button class="add-btn" onclick="showToast('เปิดฟอร์มเพิ่ม Asset')">+ Add Asset</button>
         </div>
         <div class="as-table-wrap">
           <table class="as-table">
             <thead><tr><th>#</th><th>Asset code</th><th>SEQ</th><th>ชื่อ Asset</th><th>สาขา</th><th>Serial no.</th><th>สถานะ</th><th>เวลาสแกน</th><th>Actions</th></tr></thead>
             <tbody id="asRows"></tbody>
           </table>
-          <div class="as-pagination">
+          <div class="as-pagination" id="asPagination">
             <button class="btn-outline" onclick="showToast('หน้าก่อนหน้า')">◀ ก่อนหน้า</button>
             <button class="btn-outline" onclick="showToast('หน้าถัดไป')">ถัดไป ▶</button>
           </div>
         </div>
 
       </section>
+
+      <!-- Shared row "more" popover (View/Edit/Photo/More actions on any table row) -->
+      <div class="row-more-menu" id="rowMoreMenu">
+        <button class="row-more-item" id="rowMoreDupBtn">📄 Duplicate</button>
+        <button class="row-more-item danger" id="rowMoreDeleteBtn">🗑 Delete</button>
+      </div>
+
+      <!-- Confirm Delete modal (shared) -->
+      <div class="as-modal-overlay" id="asModalOverlay">
+        <div class="as-modal">
+          <p class="as-modal-title">Delete Asset?</p>
+          <p class="as-modal-body">การลบจะนำ asset นี้ออกจากทะเบียนถาวร และไม่สามารถกู้คืนได้</p>
+          <div class="as-modal-asset"><span id="asModalName">—</span><b id="asModalCode">—</b></div>
+          <div class="as-modal-actions">
+            <button class="btn-outline" onclick="closeAsModal()">Cancel</button>
+            <button class="btn-outline-red" onclick="confirmAsDelete()">Delete</button>
+          </div>
+        </div>
+      </div>
 
       <!-- ============ SCREEN: ACTIVITY LOG (system-wide audit trail) ============ -->
       <section class="screen2" id="pageActivityLog">
@@ -501,6 +606,187 @@ function seedAssets(store, storeIndex){
 }
 stores.forEach(function(s, i){ assetsByStore[s.name] = seedAssets(s, i); });
 
+/* ================================================================
+   REAL SYSTEM INTEGRATION — replaces the mock arrays above once
+   sign-in succeeds. Mock data above only backs the Login screen's
+   own background render; nobody sees it because the overlay covers it.
+   ================================================================ */
+var API_BASE = 'https://bata-asset-api-production.up.railway.app';
+document.getElementById('loginApiBase').textContent = API_BASE;
+
+var authToken = null;
+var authUser = null;
+
+async function apiFetch(path, options){
+  options = options || {};
+  options.headers = Object.assign({}, options.headers || {}, authToken ? {'Authorization':'Bearer ' + authToken} : {});
+  if(options.body && !options.headers['Content-Type']){ options.headers['Content-Type'] = 'application/json'; }
+  var res;
+  try{
+    res = await fetch(API_BASE + path, options);
+  } catch(e){
+    throw new Error('เชื่อมต่อ API ไม่ได้ (network หรือ CORS): ' + e.message);
+  }
+  if(res.status === 401){
+    authToken = null;
+    showLogin('Session หมดอายุ หรือยังไม่ได้ sign in — กรุณา sign in ใหม่');
+    throw new Error('401 Unauthorized');
+  }
+  if(!res.ok){
+    var txt = '';
+    try{ txt = await res.text(); }catch(e2){}
+    throw new Error('API error ' + res.status + (txt ? (': ' + txt.slice(0,200)) : ''));
+  }
+  return res.json();
+}
+
+function showLogin(message){
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('appRoot').style.display = 'none';
+  var errEl = document.getElementById('loginError');
+  if(message){ errEl.textContent = message; errEl.style.display = 'block'; }
+  else { errEl.style.display = 'none'; }
+}
+function hideLogin(){
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('appRoot').style.display = '';
+}
+
+async function doLogin(){
+  var employeeId = document.getElementById('loginEmployeeId').value.trim();
+  var password = document.getElementById('loginPassword').value;
+  var branchId = document.getElementById('loginBranchId').value.trim();
+  var errEl = document.getElementById('loginError');
+  if(!employeeId || !password){
+    errEl.textContent = 'กรุณากรอก Employee ID และ Password';
+    errEl.style.display = 'block';
+    return;
+  }
+  var btn = document.getElementById('loginSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try{
+    var data = await apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ employee_id: employeeId, password: password, branch_id: branchId })
+    });
+    authToken = data.token;
+    authUser = {
+      employee_id: data.employee_id || data.user || employeeId,
+      role: data.role || '',
+      branch_id: data.branch_id || branchId,
+      branch_name: data.branch_name || ''
+    };
+    document.getElementById('headerUserLabel').textContent = authUser.employee_id + (authUser.role ? ' · ' + authUser.role : '');
+    hideLogin();
+    await loadRealData();
+    document.getElementById('assetSearch').focus();
+  } catch(e){
+    errEl.textContent = 'Sign in ไม่สำเร็จ: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+}
+
+function logout(){
+  authToken = null; authUser = null;
+  document.getElementById('loginPassword').value = '';
+  showLogin();
+}
+
+/* Map whatever audit-status the API happens to send. If the API only ever
+   returns a lifecycle status (e.g. 'active'/'disposed') rather than an
+   audit-verification status, we cannot invent Verified/Missing/Damaged —
+   that requires cross-referencing scan_logs, which isn't wired yet. In that
+   case every row safely defaults to "pending" (true statement: "not yet
+   confirmed by a scan"), and the banner below says so instead of guessing. */
+var auditStatusUnavailable = false;
+function normalizeAuditStatus(raw){
+  var s = (raw || '').toString().toLowerCase();
+  if(['verified','pending','missing','damaged','unmatched'].indexOf(s) > -1) return s;
+  auditStatusUnavailable = true;
+  return 'pending';
+}
+
+function buildStoresFromRealAssets(list){
+  var grouped = {};
+  list.forEach(function(a){
+    var code = a.location_code || a.branch_id || a.branch_code || 'UNKNOWN';
+    var name = a.location_name || a.branch_name || code;
+    if(!grouped[code]){ grouped[code] = { name: name, items: [] }; }
+    grouped[code].items.push({
+      name: a.name || a.asset_name || ('Asset ' + (a.asset_code || a.id || '')),
+      seq: (a.seq != null) ? ('SEQ-' + String(a.seq).padStart(6, '0')) : (a.qr_key || '—'),
+      barcode: a.asset_code || a.qr_key || String(a.id != null ? a.id : ''),
+      category: a.category || 'Uncategorized',
+      location: a.location_detail || name,
+      status: normalizeAuditStatus(a.audit_status || a.status),
+      lastScan: a.last_scan || '-',
+      remark: a.remark || '',
+      history: []
+    });
+  });
+
+  var newStores = Object.keys(grouped).map(function(code){
+    var g = grouped[code];
+    var total = g.items.length;
+    var scanned = g.items.filter(function(x){ return x.status === 'verified'; }).length;
+    var exceptions = g.items.filter(function(x){ return ['missing','damaged','unmatched'].indexOf(x.status) > -1; }).length;
+    var status = scanned === 0 ? 'notstarted' : (scanned === total ? 'completed' : 'progress');
+    return { name: g.name, total: total, scanned: scanned, exceptions: exceptions, status: status };
+  });
+
+  var newAssetsByStore = {};
+  Object.keys(grouped).forEach(function(code){ newAssetsByStore[grouped[code].name] = grouped[code].items; });
+
+  stores = newStores;
+  assetsByStore = newAssetsByStore;
+}
+
+async function loadRealData(){
+  var banner = document.getElementById('overviewDataBanner');
+  var bannerText = document.getElementById('overviewDataBannerText');
+  auditStatusUnavailable = false;
+  try{
+    var raw = await apiFetch('/hq/assets', { method: 'GET' });
+    var list = Array.isArray(raw) ? raw : (raw.assets || raw.data || []);
+    if(!Array.isArray(list)){ throw new Error('รูปแบบข้อมูลจาก /hq/assets ไม่ตรงที่คาดไว้ (ไม่ใช่ array) — เช็ค response จริงใน DevTools'); }
+    buildStoresFromRealAssets(list);
+    if(list.length === 0){
+      bannerText.textContent = 'เชื่อมต่อ API สำเร็จ แต่ /hq/assets ส่งกลับมา 0 รายการ';
+      banner.style.display = 'flex';
+    } else if(auditStatusUnavailable){
+      bannerText.textContent = 'เชื่อมต่อสำเร็จ (' + list.length + ' assets) แต่ API ยังไม่ส่งสถานะ audit (Verified/Missing/Damaged) มาด้วย — ทุกรายการแสดงเป็น Pending ไปก่อนจนกว่าจะเชื่อม scan_logs endpoint';
+      banner.style.display = 'flex';
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch(e){
+    bannerText.textContent = e.message;
+    banner.style.display = 'flex';
+    showToast('โหลดข้อมูลจริงไม่สำเร็จ');
+    return;
+  }
+
+  if(!stores.length){ showToast('ไม่มีสาขาให้แสดง'); return; }
+  currentStore = stores[0].name;
+  currentHQFilter = 'all';
+  currentAssetFilter = 'all';
+  filterHQ('all');
+  populateStoreDatalist();
+  renderSummary();
+  renderFilterChips();
+  renderAssetList();
+
+  document.getElementById('asBranchFilter').innerHTML = '<option value="all">ทุกสาขา</option>';
+  asFirstLoadDone = false;
+  showToast('โหลดข้อมูลจริงสำเร็จ');
+}
+
+showLogin();
+document.getElementById('loginEmployeeId').focus();
+
+
 var currentStore = stores[0].name;
 var currentUser = "Praew T.";
 var activityLog = [];
@@ -646,13 +932,19 @@ function renderAssetList(){
   }
   wrap.innerHTML = list.map(function(a){
     var idx = assetsByStore[currentStore].indexOf(a);
-    var label = a.status.charAt(0).toUpperCase() + a.status.slice(1);
+    var safeName = a.name.replace(/'/g, "\\'");
+    var safeCode = a.barcode.replace(/'/g, "\\'");
     return '<div class="asset-row" onclick="openAssetDrawer(' + idx + ')">'
       + '<div class="asset-name">' + a.name + '<span style="display:block;font-size:11px;color:var(--ink-3);font-weight:400;">SEQ ' + a.seq + '</span></div>'
       + '<div>' + a.location + '</div>'
-      + '<div><span class="status-pill ' + a.status + '">' + label + '</span></div>'
+      + '<div>' + statusPillHtml(a.status) + '</div>'
       + '<div class="row-time">' + a.lastScan + '</div>'
-      + '<div><button class="row-action" onclick="event.stopPropagation(); openAssetDrawer(' + idx + ')">Open</button></div>'
+      + '<div class="as-row-actions">'
+        + '<button class="as-act-btn" title="View" onclick="event.stopPropagation(); openAssetDrawer(' + idx + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg></button>'
+        + '<button class="as-act-btn" title="Edit" onclick="event.stopPropagation(); openAssetDrawer(' + idx + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
+        + '<button class="as-act-btn" title="Photo" onclick="event.stopPropagation(); openAssetDrawer(' + idx + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></button>'
+        + '<button class="as-act-btn row-more-trigger" title="More" onclick="event.stopPropagation(); openRowMore(this,\'overview\',\'' + safeName + '\',\'' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg></button>'
+      + '</div>'
     + '</div>';
   }).join('');
 }
@@ -796,35 +1088,46 @@ function saveDrawer(){
     if(!reason){ showToast('กรุณาเลือกเหตุผลที่ Write off ก่อนบันทึก'); return; }
     if(reason === 'other' && !remark){ showToast('กรุณาระบุรายละเอียดใน Remark สำหรับเหตุผล "อื่นๆ"'); return; }
   }
+  if(isAddMode && !barcode){ showToast('Barcode is required'); return; }
 
-  if(isAddMode){
-    if(!barcode){ showToast('Barcode is required'); return; }
-    var newName = category || 'New asset';
-    assetsByStore[currentStore].unshift({
-      name: newName, seq: nextSeqFor(currentStore), barcode: barcode, category: category || 'Uncategorized',
-      location: location || 'Unassigned', status: status, lastScan: '-', remark: remark, photo: photo,
-      history: [{event:'Added', by: currentUser, time:'Just now'}]
-    });
-    logActivity(currentStore, newName, 'Added', '');
-    showToast('Asset added');
-  } else {
-    var a = assetsByStore[currentStore][editingAssetIndex];
-    a.barcode = barcode; a.category = category; a.location = location || a.location;
-    a.status = status; a.remark = remark; if(photo) a.photo = photo;
-    if(status === 'disposed'){
-      var reasonLabels = {sold:'ขายแล้ว', donated:'บริจาค', damaged_beyond_repair:'เสียหายจนซ่อมไม่ได้', lost:'สูญหาย', other:'อื่นๆ'};
-      var reasonVal = document.getElementById('fWriteOffReason').value;
-      a.history.push({event:'Write off — เหตุผล: ' + reasonLabels[reasonVal], by: currentUser, time:'Just now'});
-      logActivity(currentStore, a.name, 'Write off', 'เหตุผล: ' + reasonLabels[reasonVal]);
+  var saveBtn = document.getElementById('drawerSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+
+  setTimeout(function(){
+    if(isAddMode){
+      var newName = category || 'New asset';
+      assetsByStore[currentStore].unshift({
+        name: newName, seq: nextSeqFor(currentStore), barcode: barcode, category: category || 'Uncategorized',
+        location: location || 'Unassigned', status: status, lastScan: '-', remark: remark, photo: photo,
+        history: [{event:'Added', by: currentUser, time:'Just now'}]
+      });
+      logActivity(currentStore, newName, 'Added', '');
+      showToast('Asset added');
     } else {
-      a.history.push({event:'Status set to ' + status, by: currentUser, time:'Just now'});
-      logActivity(currentStore, a.name, 'Status change', 'set to ' + status);
+      var a = assetsByStore[currentStore][editingAssetIndex];
+      a.barcode = barcode; a.category = category; a.location = location || a.location;
+      a.status = status; a.remark = remark; if(photo) a.photo = photo;
+      if(status === 'disposed'){
+        var reasonLabels = {sold:'ขายแล้ว', donated:'บริจาค', damaged_beyond_repair:'เสียหายจนซ่อมไม่ได้', lost:'สูญหาย', other:'อื่นๆ'};
+        var reasonVal = document.getElementById('fWriteOffReason').value;
+        a.history.push({event:'Write off — เหตุผล: ' + reasonLabels[reasonVal], by: currentUser, time:'Just now'});
+        logActivity(currentStore, a.name, 'Write off', 'เหตุผล: ' + reasonLabels[reasonVal]);
+      } else {
+        a.history.push({event:'Status set to ' + status, by: currentUser, time:'Just now'});
+        logActivity(currentStore, a.name, 'Status change', 'set to ' + status);
+      }
+      if(status === 'verified') a.lastScan = 'Just now';
+      showToast('Saved');
     }
-    if(status === 'verified') a.lastScan = 'Just now';
-    showToast('Saved');
-  }
-  closeDrawer();
-  renderAssetList();
+    saveBtn.textContent = '✔ Saved';
+    setTimeout(function(){
+      closeDrawer();
+      renderAssetList();
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+    }, 450);
+  }, 450);
 }
 
 function toggleWriteOffReason(){
@@ -854,11 +1157,19 @@ function showPage(name){
     document.getElementById('pageOverview').classList.add('active');
     document.getElementById('navOverview').classList.add('active');
     document.getElementById('pageTitle').textContent = 'Overview';
+    setTimeout(function(){ document.getElementById('assetSearch').focus(); }, 0);
   } else if(name === 'assetSummary'){
     document.getElementById('pageAssetSummary').classList.add('active');
     document.getElementById('navAssetSummary').classList.add('active');
     document.getElementById('pageTitle').textContent = 'Asset Summary';
-    renderAssetSummary();
+    if(!asFirstLoadDone){
+      asLoading = true;
+      renderAssetSummary();
+      setTimeout(function(){ asLoading = false; asFirstLoadDone = true; renderAssetSummary(); }, 700);
+    } else {
+      renderAssetSummary();
+    }
+    setTimeout(function(){ document.getElementById('asSearch').focus(); }, 0);
   } else if(name === 'activityLog'){
     document.getElementById('pageActivityLog').classList.add('active');
     document.getElementById('navActivityLog').classList.add('active');
@@ -890,32 +1201,91 @@ function populateBranchFilter(){
   });
 }
 
+var asKpiFilter = 'all';
+var asDeletedCodes = {};
+var asLoading = false;
+var asFirstLoadDone = false;
+var asPendingDeleteCode = null;
+
+function setAsKpiFilter(key){
+  asKpiFilter = key;
+  document.querySelectorAll('#asKpiGrid .as-kpi-card').forEach(function(c){ c.classList.remove('kpi-active'); });
+  document.querySelector('#asKpiGrid [data-as-filter="' + key + '"]').classList.add('kpi-active');
+  renderAssetSummary();
+}
+
+function refreshAssetSummary(){
+  asLoading = true;
+  renderAssetSummary();
+  setTimeout(function(){
+    asLoading = false;
+    renderAssetSummary();
+    document.getElementById('asLastSync').textContent = 'just now';
+    showToast('Refreshed');
+  }, 600);
+}
+
+function asSkeletonRows(n){
+  var html = '';
+  for(var i=0;i<n;i++){
+    html += '<tr>'
+      + '<td><span class="as-skel" style="width:14px;"></span></td>'
+      + '<td><span class="as-skel" style="width:70px;"></span></td>'
+      + '<td><span class="as-skel" style="width:60px;"></span></td>'
+      + '<td><span class="as-skel" style="width:140px;"></span></td>'
+      + '<td><span class="as-skel" style="width:90px;"></span></td>'
+      + '<td><span class="as-skel" style="width:80px;"></span></td>'
+      + '<td><span class="as-skel" style="width:70px;border-radius:20px;"></span></td>'
+      + '<td><span class="as-skel" style="width:60px;"></span></td>'
+      + '<td><span class="as-skel" style="width:70px;"></span></td>'
+    + '</tr>';
+  }
+  return html;
+}
+
+function asEmptyStateHtml(){
+  return '<tr><td colspan="9"><div class="as-empty">'
+    + '<div class="as-empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>'
+    + '<div class="as-empty-title">No Asset Found</div>'
+    + '<div class="as-empty-sub">Try another keyword, or check the branch/status filter</div>'
+    + '<button class="add-btn" onclick="showToast(\'เปิดฟอร์มเพิ่ม Asset\')">+ Add Asset</button>'
+    + '</div></td></tr>';
+}
+
 function renderAssetSummary(){
   populateBranchFilter();
-  var all = allAssetsFlat();
+  var all = allAssetsFlat().filter(function(a){ return !asDeletedCodes[a.code]; });
+
   document.getElementById('asTotal').textContent = all.length.toLocaleString();
-  document.getElementById('asScanned').textContent = all.filter(function(a){ return a.status === 'verified'; }).length.toLocaleString();
-  document.getElementById('asNotScanned').textContent = all.filter(function(a){ return a.status !== 'verified'; }).length.toLocaleString();
-  document.getElementById('asBranches').textContent = stores.length;
+  document.getElementById('asVerified').textContent = all.filter(function(a){ return a.status === 'verified'; }).length.toLocaleString();
+  document.getElementById('asPending').textContent = all.filter(function(a){ return a.status === 'pending'; }).length.toLocaleString();
+  document.getElementById('asMissing').textContent = all.filter(function(a){ return a.status === 'missing'; }).length.toLocaleString();
+
+  var tbody = document.getElementById('asRows');
+  if(asLoading){
+    tbody.innerHTML = asSkeletonRows(6);
+    return;
+  }
 
   var term = (document.getElementById('asSearch').value || '').toLowerCase();
   var branchF = document.getElementById('asBranchFilter').value;
   var statusF = document.getElementById('asStatusFilter').value;
 
   var filtered = all.filter(function(a){
+    var mKpi = asKpiFilter === 'all' || a.status === asKpiFilter;
     var mBranch = branchF === 'all' || a.branch === branchF;
     var mStatus = statusF === 'all' || a.status === statusF;
     var mSearch = !term || a.code.toLowerCase().indexOf(term) > -1 || a.seq.toLowerCase().indexOf(term) > -1 || a.name.toLowerCase().indexOf(term) > -1 || a.serial.toLowerCase().indexOf(term) > -1;
-    return mBranch && mStatus && mSearch;
+    return mKpi && mBranch && mStatus && mSearch;
   });
 
-  var tbody = document.getElementById('asRows');
   if(filtered.length === 0){
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--ink-3);padding:30px;">ไม่พบรายการที่ตรงกับตัวกรอง</td></tr>';
+    tbody.innerHTML = asEmptyStateHtml();
     return;
   }
   tbody.innerHTML = filtered.slice(0, 25).map(function(a, i){
-    var label = a.status.charAt(0).toUpperCase() + a.status.slice(1);
+    var safeCode = a.code.replace(/'/g, "\\'");
+    var safeName = a.name.replace(/'/g, "\\'");
     return '<tr>'
       + '<td>' + (i+1) + '</td>'
       + '<td>' + a.code + '</td>'
@@ -923,12 +1293,96 @@ function renderAssetSummary(){
       + '<td>' + a.name + '</td>'
       + '<td>' + a.branch + '</td>'
       + '<td>' + a.serial + '</td>'
-      + '<td><span class="status-pill ' + a.status + '">' + label + '</span></td>'
+      + '<td>' + statusPillHtml(a.status) + '</td>'
       + '<td>' + a.scanTime + '</td>'
-      + '<td><button class="row-action" onclick="showToast(\'Opening ' + a.code + '\')">View</button></td>'
+      + '<td><div class="as-row-actions">'
+        + '<button class="as-act-btn" title="View" onclick="showToast(\'View: ' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg></button>'
+        + '<button class="as-act-btn" title="Edit" onclick="showToast(\'Editing ' + safeCode + '…\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
+        + '<button class="as-act-btn" title="Photo" onclick="showToast(\'Opening photo: ' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></button>'
+        + '<button class="as-act-btn row-more-trigger" title="More" onclick="openRowMore(this,\'assetSummary\',\'' + safeName + '\',\'' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg></button>'
+      + '</div></td>'
     + '</tr>';
   }).join('');
 }
+
+/* ---------- Generic delete-confirm modal (shared by Overview table & Asset Summary table) ---------- */
+var pendingDeleteCallback = null;
+function openDeleteConfirm(name, code, onConfirm){
+  pendingDeleteCallback = onConfirm;
+  document.getElementById('asModalName').textContent = name;
+  document.getElementById('asModalCode').textContent = code;
+  document.getElementById('asModalOverlay').classList.add('show');
+}
+function closeAsModal(){
+  document.getElementById('asModalOverlay').classList.remove('show');
+  pendingDeleteCallback = null;
+}
+function confirmAsDelete(){
+  if(pendingDeleteCallback) pendingDeleteCallback();
+  closeAsModal();
+}
+document.getElementById('asModalOverlay').addEventListener('click', function(e){
+  if(e.target === e.currentTarget) closeAsModal();
+});
+
+/* Kept for compatibility: Asset Summary row calls this directly */
+function openAsDeleteModal(code, name){
+  openDeleteConfirm(name, code, function(){
+    asDeletedCodes[code] = true;
+    renderAssetSummary();
+    showToast('Asset Deleted');
+  });
+}
+
+function deleteOverviewAsset(code){
+  var idx = assetsByStore[currentStore].findIndex(function(a){ return a.barcode === code; });
+  if(idx > -1){
+    var removed = assetsByStore[currentStore][idx];
+    assetsByStore[currentStore].splice(idx, 1);
+    logActivity(currentStore, removed.name, 'Deleted', '');
+  }
+  renderAssetList();
+  renderSummary();
+  showToast('Asset Deleted');
+}
+
+/* ---------- Shared row "More" popover (⋮) — Duplicate / Delete ---------- */
+function openRowMore(btnEl, context, name, code){
+  var menu = document.getElementById('rowMoreMenu');
+  var rect = btnEl.getBoundingClientRect();
+  menu.style.top = (rect.bottom + 6) + 'px';
+  menu.style.left = Math.max(8, rect.right - 150) + 'px';
+  menu.style.display = 'block';
+  document.getElementById('rowMoreDupBtn').onclick = function(){
+    closeRowMore();
+    showToast('Duplicated ' + code);
+  };
+  document.getElementById('rowMoreDeleteBtn').onclick = function(){
+    closeRowMore();
+    if(context === 'overview'){
+      openDeleteConfirm(name, code, function(){ deleteOverviewAsset(code); });
+    } else {
+      openDeleteConfirm(name, code, function(){
+        asDeletedCodes[code] = true;
+        renderAssetSummary();
+        showToast('Asset Deleted');
+      });
+    }
+  };
+}
+function closeRowMore(){
+  document.getElementById('rowMoreMenu').style.display = 'none';
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.row-more-menu') && !e.target.closest('.row-more-trigger')) closeRowMore();
+});
+
+/* ---------- Shared status-pill renderer: icon dot + text, never color alone ---------- */
+function statusPillHtml(status){
+  var label = status.charAt(0).toUpperCase() + status.slice(1);
+  return '<span class="status-pill ' + status + '"><span class="sp-dot"></span>' + label + '</span>';
+}
+
 
 function populateActivityBranchFilter(){
   var sel = document.getElementById('alBranchFilter');
@@ -978,6 +1432,7 @@ seedActivityLogFromAssets();
 renderSummary();
 renderFilterChips();
 renderAssetList();
+document.getElementById('assetSearch').focus();
 </script>
 </body>
 </html>
