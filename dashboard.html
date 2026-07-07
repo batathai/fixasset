@@ -958,16 +958,27 @@ function renderDailySummary() {
   stats.innerHTML = parts.join(' ');
 }
 
-function renderOverview() {
+async function renderOverview() {
   renderDailySummary();
+
+  // FIX: ปัญหา Pending ไม่ตรงกันระหว่าง Overview (8) กับ Scan Logs > Pending (6)
+  // เดิม Overview ใช้ s.total_assets ซึ่งเป็นค่าที่ backend เก็บไว้ตอนสร้าง session (snapshot)
+  // ไม่ sync อัตโนมัติเมื่อ master data เปลี่ยนจาก Import/Undo — ในขณะที่ Scan Logs > Pending
+  // ดึง master list สดจาก /assets/branch/{id} มาคำนวณสด ๆ ทุกครั้ง (ถูกต้องกว่า)
+  // แก้โดยให้ Overview ดึง/cache master list สดต่อสาขาแบบเดียวกัน แล้วใช้จำนวนจริงแทน s.total_assets
+  const branchIds = [...new Set(allSessions.map(s => s.branch_id))];
+  await Promise.all(branchIds.map(async b => {
+    if (!cachedMasterAssets[b]) cachedMasterAssets[b] = await loadMasterAssets(b);
+  }));
+  const liveTotal = b => (cachedMasterAssets[b] || []).length;
+
   const totalScanned = allScans.length;
   const sessionCount = allSessions.length;
-  const totalAssets = allSessions.reduce((sum,s)=>sum+(parseInt(s.total_assets)||0),0);
-  // FIX: คำนวณ Pending จาก actual scan log (allScans) เทียบกับ total_assets
-  // ไม่ใช้ scanned_count จาก Session ซึ่งอาจไม่ sync กับ scan log จริง
+  const totalAssets = allSessions.reduce((sum,s)=>sum+liveTotal(s.branch_id),0);
+  // FIX: คำนวณ Pending จาก actual scan log (allScans) เทียบกับ total_assets ที่เป็นค่าสดล่าสุด
   // FIX: นับ unique qr_key ที่ scan แล้วต่อ branch (ไม่ใช่ asset_code ซึ่งซ้ำได้)
   const totalPendingFromDB = allSessions.reduce((sum,s) => {
-    const total = parseInt(s.total_assets)||0;
+    const total = liveTotal(s.branch_id);
     const scannedQrSet = new Set(
       allScans.filter(sc => sc.branch_id === s.branch_id).map(sc => sc.qr_key)
     );
@@ -987,7 +998,7 @@ function renderOverview() {
   const dupBranches = new Set(detectDuplicateSessions().map(([b])=>b));
 
   tbody.innerHTML = allSessions.map(s => {
-    const total = parseInt(s.total_assets)||0;
+    const total = liveTotal(s.branch_id);
     // FIX: ใช้จำนวน scan จริงจาก allScans แทน scanned_count จาก session
     const scanned = allScans.filter(sc => sc.branch_id === s.branch_id).length;
     const pending = Math.max(0,total-scanned);
