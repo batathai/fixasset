@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bata Thailand — Fixed Asset Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red-50:#FDF2F3; --red-100:#FBE2E4; --red-500:#C8102E; --red-600:#AB0D27; --red-700:#8E0A20;
+    --ink:#111318; --ink-2:#5B5F6B; --ink-3:#9297A3; --ink-4:#C4C7CE;
+    --line:#EBECEF; --line-2:#E1E3E8;
+    --surface:#FFFFFF; --surface-1:#FAFAFB; --surface-2:#F3F4F6;
+    --green-bg:#EAF7EE; --green-fg:#1B7A3C; --green-dot:#2AA84A;
+    --amber-bg:#FEF3E2; --amber-fg:#9A6400; --amber-dot:#E8A317;
+    --red-bg:#FCE9E9;   --red-fg:#C0281F; --red-dot:#E14336;
+    --purple-bg:#F1EDFB; --purple-fg:#6440C7;
+    --blue-bg:#EAF2FE;  --blue-fg:#1B5FC4; --blue-dot:#3B82F6;
+    --gray-bg:#F1F2F4;  --gray-fg:#6B7280; --gray-dot:#9CA3AF;
+    --r-sm:8px; --r-md:12px; --r-lg:18px; --r-full:999px;
+    --sh-xs:0 1px 2px rgba(16,24,40,.05);
+    --sh-sm:0 1px 3px rgba(16,24,40,.06), 0 1px 2px rgba(16,24,40,.04);
+    --sh-md:0 2px 8px rgba(16,24,40,.06), 0 8px 24px rgba(16,24,40,.05);
+    --sh-lg:0 12px 40px rgba(16,24,40,.14);
+    --ease:cubic-bezier(.2,.7,.3,1);
+    --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--font);background:var(--surface-1);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;font-feature-settings:"cv11","ss01";}
+  button{font-family:inherit;cursor:pointer;}
+  ::selection{background:var(--red-100);}
+  .app{display:flex;flex-direction:column;min-height:100vh;}
+
+  /* HEADER */
+  .header{height:64px;flex-shrink:0;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 24px;position:sticky;top:0;z-index:40;}
+  .header-left{display:flex;align-items:center;gap:18px;}
+  .brand{display:flex;align-items:center;gap:11px;}
+  .brand-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(155deg,var(--red-500),var(--red-700));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;box-shadow:0 2px 6px rgba(200,16,46,.28);}
+  .brand-name{font-weight:600;font-size:14.5px;color:var(--ink);letter-spacing:-.01em;}
+  .menu-toggle{display:none;background:none;border:1px solid var(--line-2);border-radius:var(--r-sm);width:36px;height:36px;align-items:center;justify-content:center;color:var(--ink-2);}
+  .search-box{display:flex;align-items:center;gap:9px;background:var(--surface-1);border:1px solid transparent;border-radius:var(--r-md);padding:8px 14px;width:300px;color:var(--ink-3);transition:border-color .15s var(--ease), background .15s var(--ease);}
+  .search-box:focus-within{background:var(--surface);border-color:var(--red-500);box-shadow:0 0 0 3px var(--red-50);}
+  .search-box input{border:none;background:none;outline:none;width:100%;font-size:13.5px;color:var(--ink);font-family:inherit;}
+  .kbd{font-size:10.5px;color:var(--ink-3);background:var(--surface-2);border:1px solid var(--line-2);border-radius:5px;padding:1px 6px;}
+  .header-right{display:flex;align-items:center;gap:12px;}
+  .cycle-pill{display:flex;align-items:center;gap:7px;background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-full);padding:6px 14px 6px 10px;font-size:12.5px;color:var(--ink-2);white-space:nowrap;}
+  .cycle-pill .dot{width:6px;height:6px;border-radius:50%;background:var(--amber-dot);}
+  .cycle-pill b{color:var(--ink);font-weight:600;}
+  .icon-btn{position:relative;width:36px;height:36px;border-radius:50%;border:none;background:none;display:flex;align-items:center;justify-content:center;color:var(--ink-2);transition:background .15s var(--ease), color .15s var(--ease);}
+  .icon-btn:hover{background:var(--surface-2);color:var(--ink);}
+  .badge-dot{position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--red-500);border:2px solid var(--surface);}
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(155deg,#2B2E38,#111318);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;}
+  .user-menu{position:relative;}
+  .dropdown{position:absolute;top:48px;right:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--sh-lg);width:280px;padding:8px;display:none;z-index:60;transform:translateY(-4px);opacity:0;transition:transform .16s var(--ease), opacity .16s var(--ease);}
+  .dropdown.open{display:block;transform:translateY(0);opacity:1;}
+  .dropdown-item{padding:11px 12px;border-radius:var(--r-sm);font-size:13px;color:var(--ink);transition:background .1s;}
+  .dropdown-item:hover{background:var(--surface-1);}
+  .dropdown-title{font-size:11.5px;font-weight:600;color:var(--ink-3);padding:6px 12px;text-transform:uppercase;letter-spacing:.04em;}
+
+  .body-row{display:flex;flex:1;min-height:0;}
+
+  /* SIDEBAR */
+  .sidebar{width:236px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--line);padding:18px 12px;transition:width .2s var(--ease);overflow:hidden;}
+  .sidebar.collapsed{width:64px;}
+  .side-collapse-btn{width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:none;border:1px solid var(--line);border-radius:50%;color:var(--ink-3);margin-bottom:14px;transition:background .15s var(--ease), transform .2s var(--ease);}
+  .side-collapse-btn:hover{background:var(--surface-1);color:var(--ink);}
+  .nav-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:var(--r-sm);color:var(--ink-2);font-size:13.5px;font-weight:500;margin-bottom:2px;white-space:nowrap;transition:background .14s var(--ease), color .14s var(--ease);}
+  .nav-item svg{flex-shrink:0;width:18px;height:18px;}
+  .nav-item:hover{background:var(--surface-1);color:var(--ink);}
+  .nav-item.active{color:var(--red-600);font-weight:600;background:var(--red-50);}
+  .nav-group-label{font-size:10.5px;font-weight:600;letter-spacing:.06em;color:var(--ink-4);text-transform:uppercase;padding:18px 12px 7px;white-space:nowrap;}
+  .sidebar.collapsed .brand-name,.sidebar.collapsed .label-text,.sidebar.collapsed .nav-group-label{display:none;}
+  .sidebar.collapsed .nav-item{justify-content:center;padding:10px 0;}
+  .sidebar.collapsed .side-collapse-btn{transform:rotate(180deg);}
+
+  .main{flex:1;min-width:0;overflow-y:auto;padding:28px 32px 70px;}
+  .breadcrumb{font-size:12px;color:var(--ink-3);margin-bottom:6px;display:flex;align-items:center;gap:6px;}
+  .breadcrumb b{color:var(--ink);font-weight:600;}
+  .breadcrumb a{color:var(--ink-3);cursor:pointer;}
+  .breadcrumb a:hover{color:var(--red-600);}
+  .page-title-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;gap:16px;}
+  .page-title{font-size:22px;font-weight:700;margin:0;letter-spacing:-.02em;}
+  .page-sub{font-size:13px;color:var(--ink-3);margin:4px 0 0;}
+
+  .cycle-banner{display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#17181D,#2A2C34);border-radius:var(--r-lg);padding:20px 26px;margin-bottom:20px;box-shadow:var(--sh-md);}
+  .cycle-banner-left p{margin:0;}
+  .cycle-label{font-size:12px;color:rgba(255,255,255,.55);margin-bottom:4px !important;letter-spacing:.02em;}
+  .cycle-value{font-size:17px;font-weight:600;color:#fff;letter-spacing:-.01em;}
+  .days-left{background:rgba(232,163,23,.18);color:#F5C25E;font-size:12.5px;font-weight:600;padding:7px 16px;border-radius:var(--r-full);white-space:nowrap;border:1px solid rgba(245,194,94,.25);}
+  .days-left.urgent{background:rgba(225,67,54,.18);color:#F0847A;border-color:rgba(240,132,122,.25);}
+
+  /* EXECUTIVE SUMMARY STRIP */
+  .exec-strip{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:14px;margin-bottom:22px;}
+  .exec-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;box-shadow:var(--sh-xs);display:flex;gap:13px;align-items:flex-start;}
+  .exec-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .exec-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);margin:0 0 4px;}
+  .exec-text{font-size:13.5px;font-weight:600;margin:0;color:var(--ink);line-height:1.4;}
+  .exec-sub{font-size:12px;color:var(--ink-3);margin:3px 0 0;}
+  .exec-card.action{background:var(--ink);border-color:var(--ink);}
+  .exec-card.action .exec-eyebrow{color:rgba(255,255,255,.5);}
+  .exec-card.action .exec-text{color:#fff;}
+  .exec-card.action .exec-sub{color:rgba(255,255,255,.55);}
+  .exec-cta{margin-top:9px;background:var(--red-500);color:#fff;border:none;border-radius:var(--r-sm);padding:7px 14px;font-size:12px;font-weight:600;transition:background .15s;}
+  .exec-cta:hover{background:var(--red-600);}
+
+  .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:24px;}
+  .kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px;cursor:pointer;transition:box-shadow .18s var(--ease), transform .18s var(--ease), border-color .18s var(--ease);box-shadow:var(--sh-xs);}
+  .kpi-card:hover{box-shadow:var(--sh-md);transform:translateY(-2px);border-color:var(--line-2);}
+  .kpi-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .kpi-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;}
+  .kpi-label{font-size:12.5px;color:var(--ink-2);margin:0;font-weight:500;}
+  .kpi-value{font-size:27px;font-weight:700;margin:0 0 8px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  .kpi-value.danger{color:var(--red-fg);}
+  .kpi-trend{font-size:11.5px;color:var(--ink-3);display:flex;align-items:center;gap:4px;}
+  .kpi-trend.up{color:var(--green-fg);}
+  .progress-track{height:5px;border-radius:var(--r-full);background:var(--surface-2);overflow:hidden;margin-top:12px;}
+  .progress-fill{height:100%;border-radius:var(--r-full);transition:width .5s var(--ease);}
+
+  .section-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);margin-bottom:20px;overflow:hidden;box-shadow:var(--sh-xs);}
+  .section-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);}
+  .section-header h3{font-size:14.5px;font-weight:600;margin:0;letter-spacing:-.01em;}
+  .section-header span.count{color:var(--ink-3);font-weight:400;}
+  .link-btn{background:none;border:none;color:var(--red-600);font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:4px;transition:gap .15s var(--ease);}
+  .link-btn:hover{gap:7px;}
+
+  .store-row{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);transition:background .12s var(--ease);}
+  .store-row:last-child{border-bottom:none;}
+  .store-row:hover{background:var(--surface-1);}
+  .store-left{display:flex;align-items:center;gap:14px;min-width:0;flex:1;}
+  .status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .store-info{flex:1;min-width:0;}
+  .store-name-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+  .store-name{font-size:13.5px;font-weight:600;color:var(--ink);}
+  .status-pill{font-size:10.5px;font-weight:600;padding:2px 9px;border-radius:var(--r-full);white-space:nowrap;}
+  .status-overdue{background:var(--red-bg);color:var(--red-fg);}
+  .status-progress{background:var(--amber-bg);color:var(--amber-fg);}
+  .status-notstarted{background:var(--gray-bg);color:var(--gray-fg);}
+  .status-completed{background:var(--green-bg);color:var(--green-fg);}
+  .store-progress-row{display:flex;align-items:center;gap:10px;width:220px;max-width:100%;}
+  .store-progress-row .progress-track{flex:1;margin-top:0;}
+  .store-pct{font-size:11.5px;color:var(--ink-3);font-weight:500;min-width:30px;font-variant-numeric:tabular-nums;}
+  .store-days{font-size:11.5px;color:var(--ink-3);margin-left:16px;flex-shrink:0;width:88px;}
+  .btn-outline{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:7px 15px;font-size:12.5px;font-weight:600;color:var(--ink);flex-shrink:0;transition:all .15s var(--ease);}
+  .btn-outline:hover{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .btn-primary{background:var(--red-500);border:1px solid var(--red-500);border-radius:var(--r-sm);padding:8px 18px;font-size:12.5px;font-weight:600;color:#fff;flex-shrink:0;transition:background .15s var(--ease), transform .1s;box-shadow:0 1px 2px rgba(200,16,46,.2);}
+  .btn-primary:hover{background:var(--red-600);}
+  .btn-primary:active{transform:scale(.98);}
+
+  .queue-row{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;gap:16px;}
+  .queue-row p{margin:0;}
+  .queue-left{display:flex;align-items:center;gap:14px;}
+  .queue-icon{width:40px;height:40px;border-radius:11px;background:var(--blue-bg);color:var(--blue-fg);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .queue-title{font-size:13.5px;font-weight:600;}
+  .queue-sub{font-size:12px;color:var(--ink-3);margin-top:3px;}
+
+  .activity-row{display:flex;align-items:center;gap:12px;padding:13px 22px;font-size:12.5px;color:var(--ink-2);border-bottom:1px solid var(--line);}
+  .activity-row:last-child{border-bottom:none;}
+  .activity-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .activity-time{margin-left:auto;color:var(--ink-3);font-size:11.5px;flex-shrink:0;}
+
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(24px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:var(--r-full);font-size:13px;box-shadow:var(--sh-lg);z-index:200;opacity:0;transition:all .25s var(--ease);pointer-events:none;display:flex;align-items:center;gap:8px;font-weight:500;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .bottom-nav{display:none;position:sticky;bottom:0;background:rgba(255,255,255,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:9px 0 max(9px,env(safe-area-inset-bottom));justify-content:space-around;z-index:40;}
+  .bottom-nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--ink-3);font-size:10px;font-weight:500;}
+  .bottom-nav button.active{color:var(--red-600);}
+  .bottom-nav svg{width:20px;height:20px;}
+
+  .screen{display:none;}
+  .screen.active{display:block;}
+
+  /* ---------- STORE OVERVIEW ---------- */
+  .store-hero{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 24px;margin-bottom:20px;box-shadow:var(--sh-xs);}
+  .store-hero-left{display:flex;align-items:center;gap:16px;}
+  .store-avatar{width:48px;height:48px;border-radius:13px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--ink-2);flex-shrink:0;}
+  .store-hero-name{font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em;}
+  .store-hero-meta{font-size:12.5px;color:var(--ink-3);margin:3px 0 0;}
+  .store-hero-right{display:flex;align-items:center;gap:10px;}
+
+  .control-grid{display:grid;grid-template-columns:280px 1fr;gap:16px;margin-bottom:20px;}
+  .donut-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-xs);padding:24px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;}
+  .donut-wrap{position:relative;width:168px;height:168px;margin-bottom:14px;}
+  .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .donut-pct{font-size:30px;font-weight:700;letter-spacing:-.02em;}
+  .donut-label{font-size:11.5px;color:var(--ink-3);margin-top:2px;}
+  .donut-caption{font-size:12.5px;color:var(--ink-2);font-weight:500;}
+
+  .metric-stack{display:flex;flex-direction:column;gap:10px;}
+  .metric-row{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 18px;display:flex;align-items:center;justify-content:space-between;box-shadow:var(--sh-xs);cursor:pointer;transition:box-shadow .15s var(--ease), transform .15s var(--ease);}
+  .metric-row:hover{box-shadow:var(--sh-md);transform:translateY(-1px);}
+  .metric-left{display:flex;align-items:center;gap:13px;}
+  .metric-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .metric-name{font-size:13px;font-weight:600;margin:0;}
+  .metric-sub{font-size:11.5px;color:var(--ink-3);margin:2px 0 0;}
+  .metric-value{font-size:22px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+
+  .next-action-card{background:linear-gradient(135deg,#17181D,#2A2C34);border-radius:var(--r-lg);padding:22px 26px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;box-shadow:var(--sh-md);gap:20px;}
+  .next-action-left{display:flex;align-items:center;gap:16px;}
+  .next-action-icon{width:44px;height:44px;border-radius:12px;background:rgba(232,163,23,.18);color:#F5C25E;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .next-action-eyebrow{font-size:11px;color:rgba(255,255,255,.5);margin:0 0 4px;text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+  .next-action-title{font-size:15px;font-weight:600;color:#fff;margin:0;}
+  .next-action-sub{font-size:12.5px;color:rgba(255,255,255,.6);margin:3px 0 0;}
+  .btn-white{background:#fff;color:var(--ink);border:none;border-radius:var(--r-sm);padding:10px 20px;font-size:13px;font-weight:600;flex-shrink:0;transition:background .15s;}
+  .btn-white:hover{background:#F0F0F0;}
+
+  .mini-activity{display:flex;flex-direction:column;}
+
+  /* ---------- PENDING SCREEN ---------- */
+  .filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+  .filter-search{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-md);padding:9px 14px;flex:1;min-width:220px;color:var(--ink-3);box-shadow:var(--sh-xs);transition:border-color .15s var(--ease), box-shadow .15s var(--ease);}
+  .filter-search:focus-within{border-color:var(--red-500);box-shadow:0 0 0 3px var(--red-50);}
+  .filter-search input{border:none;background:none;outline:none;font-size:13.5px;width:100%;color:var(--ink);font-family:inherit;}
+  .chip-row{display:flex;gap:8px;flex-wrap:wrap;}
+  .chip{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-full);padding:8px 15px;font-size:12.5px;font-weight:600;color:var(--ink-2);white-space:nowrap;transition:all .14s var(--ease);}
+  .chip:hover{border-color:var(--ink-4);}
+  .chip.active{background:var(--red-50);border-color:var(--red-500);color:var(--red-600);}
+  .sort-select{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-md);padding:9px 12px;font-size:12.5px;color:var(--ink-2);font-weight:600;font-family:inherit;box-shadow:var(--sh-xs);}
+
+  .pending-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:20px;}
+  .pstrip-card{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line-2);border-radius:var(--r-md);padding:15px 18px;box-shadow:var(--sh-xs);}
+  .pstrip-label{font-size:12px;color:var(--ink-3);margin:0 0 6px;font-weight:500;}
+  .pstrip-value{font-size:21px;font-weight:700;margin:0;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+
+  .asset-table-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;margin-bottom:20px;box-shadow:var(--sh-xs);}
+  .asset-table-head{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 96px;gap:12px;padding:13px 20px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em;}
+  .asset-row2{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 96px;gap:12px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--line);font-size:13px;transition:background .12s var(--ease);}
+  .asset-row2:last-child{border-bottom:none;}
+  .asset-row2:hover{background:var(--surface-1);}
+  .asset-name2{font-weight:600;color:var(--ink);margin:0;}
+  .asset-code2{font-size:11.5px;color:var(--ink-3);margin:2px 0 0;}
+  .zone-pill{display:inline-flex;background:var(--surface-2);color:var(--ink-2);font-size:11.5px;font-weight:600;padding:3px 11px;border-radius:var(--r-full);white-space:nowrap;}
+  .never-scanned{color:var(--red-fg);font-size:12px;font-weight:600;}
+  .row-actions{display:flex;gap:6px;justify-content:flex-end;}
+  .row-btn{background:none;border:1px solid var(--line-2);border-radius:var(--r-sm);width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--ink-2);transition:all .13s var(--ease);}
+  .row-btn:hover{border-color:var(--ink-4);background:var(--surface-1);}
+  .row-btn.verify:hover{color:var(--green-fg);border-color:var(--green-fg);background:var(--green-bg);}
+
+  .pagination{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;font-size:12.5px;color:var(--ink-3);}
+  .page-btns{display:flex;gap:4px;}
+  .page-btn{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r-sm);width:28px;height:28px;font-size:12px;color:var(--ink-2);}
+  .page-btn.active{background:var(--red-500);color:#fff;border-color:var(--red-500);}
+
+  @media (max-width:900px){
+    .pending-strip{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .asset-table-head{display:none;}
+    .asset-table-wrap{border:none;background:none;box-shadow:none;}
+    .asset-row2{grid-template-columns:1fr;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);margin-bottom:8px;padding:14px 16px;box-shadow:var(--sh-xs);}
+    .row-actions{justify-content:flex-start;margin-top:10px;}
+  }
+
+  @media (max-width:980px){
+    .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .search-box{width:200px;}
+    .store-days{display:none;}
+    .exec-strip{grid-template-columns:1fr;}
+    .control-grid{grid-template-columns:1fr;}
+  }
+  @media (max-width:760px){
+    .sidebar{display:none;}
+    .menu-toggle{display:flex;}
+    .search-box{display:none;}
+    .cycle-pill{display:none;}
+    .main{padding:18px 16px 24px;}
+    .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+    .kpi-card{padding:16px;}
+    .kpi-value{font-size:21px;}
+    .bottom-nav{display:flex;}
+    .store-progress-row{width:110px;}
+    .store-days{display:none;}
+    .btn-outline{padding:6px 11px;font-size:11.5px;}
+    .cycle-banner{flex-direction:column;align-items:flex-start;gap:12px;padding:18px 20px;}
+    .page-title{font-size:19px;}
+    .exec-strip{grid-template-columns:1fr;}
+    .next-action-card{flex-direction:column;align-items:flex-start;}
+    .store-hero{flex-direction:column;align-items:flex-start;gap:14px;}
+  }
+  @media (min-width:761px){.bottom-nav{display:none !important;}}
+  .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="header">
+    <div class="header-left">
+      <button class="menu-toggle" id="mobileMenuBtn" aria-label="Menu">
+        <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <div class="brand">
+        <div class="brand-mark">B</div>
+        <div class="brand-name">Fixed Asset Management</div>
+      </div>
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" width="15" height="15"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="text" placeholder="Search asset code or store" oninput="handleSearch(this.value)">
+        <span class="kbd">⌘K</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="cycle-pill"><span class="dot"></span>Cycle <b>FY2026</b></span>
+      <div class="user-menu">
+        <button class="icon-btn" aria-label="Notifications" onclick="toggleDropdown('bellDropdown')">
+          <svg viewBox="0 0 24 24" fill="none" width="19" height="19"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M13.7 21a2 2 0 01-3.4 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span class="badge-dot"></span>
+        </button>
+        <div class="dropdown" id="bellDropdown">
+          <div class="dropdown-title">Notifications</div>
+          <div class="dropdown-item">Big C Bangplee is overdue — 3 days left, 18% complete.</div>
+          <div class="dropdown-item">6 stores crossed 50% completion this week.</div>
+          <div class="dropdown-item">14 items are awaiting HQ review.</div>
+        </div>
+      </div>
+      <div class="user-menu">
+        <button class="avatar" onclick="toggleDropdown('userDropdown')" aria-label="Account">JS</button>
+        <div class="dropdown" id="userDropdown" style="width:220px;">
+          <div class="dropdown-item"><b>Jirawat Sukprasert</b><br><span style="color:var(--ink-3);font-size:12px;">HQ Administrator</span></div>
+          <div style="border-top:1px solid var(--line);margin:6px 0;"></div>
+          <div class="dropdown-item">Account settings</div>
+          <div class="dropdown-item">Sign out</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="body-row">
+    <nav class="sidebar" id="sidebar">
+      <button class="side-collapse-btn" onclick="toggleSidebar()" aria-label="Collapse sidebar">
+        <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <div class="nav-item active" id="navDashboard" onclick="showScreen('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="2" stroke="currentColor" stroke-width="1.7"/></svg>
+        <span class="label-text">Dashboard</span>
+      </div>
+      <div class="nav-group-label">Asset Register</div>
+      <div class="nav-item" onclick="go('summary')">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span class="label-text">Asset Summary</span>
+      </div>
+      <div class="nav-item" onclick="go('import')">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span class="label-text">Import</span>
+      </div>
+      <div class="nav-item" onclick="go('export')">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V3m0 0l-4 4m4-4l4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" transform="rotate(180 12 9)"/><path d="M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span class="label-text">Export</span>
+      </div>
+      <div class="nav-group-label">Audit Management</div>
+      <div class="nav-item" id="navOverview" onclick="showScreen('store', currentStoreIndex)">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 21V9a2 2 0 012-2h2a2 2 0 012 2v12M3 21V13a2 2 0 012-2h1M18 21v-6a2 2 0 012-2h1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="label-text">Store Overview</span>
+      </div>
+      <div class="nav-item" onclick="go('finds')">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M11 19a8 8 0 100-16 8 8 0 000 16z" stroke="currentColor" stroke-width="1.7"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span class="label-text">Unrecorded Finds</span>
+      </div>
+      <div class="nav-item" onclick="go('cycle')">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span class="label-text">Audit Cycle</span>
+      </div>
+      <div class="nav-group-label">Reporting</div>
+      <div class="nav-item" onclick="go('reports')">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span class="label-text">Reports</span>
+      </div>
+      <div class="nav-group-label">Administration</div>
+      <div class="nav-item" onclick="go('users')">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3.2" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20c0-3 2.5-5.2 5.5-5.2S14.5 17 14.5 20" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16 8.5a3 3 0 110 6M20.5 20c0-2.6-2-4.6-4.4-5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        <span class="label-text">Users &amp; Roles</span>
+      </div>
+      <div class="nav-item" onclick="go('settings')">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M19.4 15a1.7 1.7 0 00.3 1.9l.1.1a2 2 0 11-2.9 2.9l-.1-.1a1.7 1.7 0 00-1.9-.3 1.7 1.7 0 00-1 1.6V21a2 2 0 11-4 0v-.2a1.7 1.7 0 00-1-1.6 1.7 1.7 0 00-1.9.3l-.1.1a2 2 0 11-2.9-2.9l.1-.1a1.7 1.7 0 00.3-1.9 1.7 1.7 0 00-1.6-1H3a2 2 0 110-4h.2a1.7 1.7 0 001.6-1 1.7 1.7 0 00-.3-1.9l-.1-.1a2 2 0 112.9-2.9l.1.1a1.7 1.7 0 001.9.3H9a1.7 1.7 0 001-1.6V3a2 2 0 114 0v.2a1.7 1.7 0 001 1.6 1.7 1.7 0 001.9-.3l.1-.1a2 2 0 112.9 2.9l-.1.1a1.7 1.7 0 00-.3 1.9V9a1.7 1.7 0 001.6 1H21a2 2 0 110 4h-.2a1.7 1.7 0 00-1.6 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+        <span class="label-text">Settings</span>
+      </div>
+    </nav>
+
+    <main class="main">
+
+      <!-- ============ DASHBOARD SCREEN ============ -->
+      <section class="screen active" id="screenDashboard">
+        <div class="breadcrumb"><b>Dashboard</b></div>
+        <div class="page-title-row">
+          <div>
+            <p class="page-title">Network overview</p>
+            <p class="page-sub">Where the network needs attention right now</p>
+          </div>
+        </div>
+
+        <div class="cycle-banner">
+          <div class="cycle-banner-left">
+            <p class="cycle-label">ACTIVE AUDIT CYCLE</p>
+            <p class="cycle-value">FY2026 Annual Stock Count</p>
+          </div>
+          <span class="days-left">12 days remaining</span>
+        </div>
+
+        <div class="exec-strip">
+          <div class="exec-card">
+            <div class="exec-icon" style="background:var(--green-bg);color:var(--green-fg);">
+              <svg viewBox="0 0 24 24" fill="none" width="17" height="17"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <p class="exec-eyebrow">What happened</p>
+              <p class="exec-text">6 stores crossed 50% completion this week</p>
+              <p class="exec-sub">31 of 48 stores now fully verified</p>
+            </div>
+          </div>
+          <div class="exec-card">
+            <div class="exec-icon" style="background:var(--red-bg);color:var(--red-fg);">
+              <svg viewBox="0 0 24 24" fill="none" width="17" height="17"><path d="M12 9v4M12 17h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M10.3 3.9L2.4 18.1a1.6 1.6 0 001.4 2.4h16.4a1.6 1.6 0 001.4-2.4L13.7 3.9a1.6 1.6 0 00-2.8 0z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <p class="exec-eyebrow">Needs attention</p>
+              <p class="exec-text">Big C Bangplee is overdue — 3 days left</p>
+              <p class="exec-sub">18% complete, lowest in the network</p>
+            </div>
+          </div>
+          <div class="exec-card action">
+            <div class="exec-icon" style="background:rgba(232,163,23,.18);color:#F5C25E;">
+              <svg viewBox="0 0 24 24" fill="none" width="17" height="17"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <p class="exec-eyebrow">Next action</p>
+              <p class="exec-text">Review 14 items awaiting HQ decision</p>
+              <button class="exec-cta" onclick="go('finds')">Review now</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-card" onclick="showToast('Filtered to stores by completion status')">
+            <div class="kpi-top"><p class="kpi-label">Stores completed</p>
+              <div class="kpi-icon" style="background:var(--green-bg);color:var(--green-fg);"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+            <p class="kpi-value">31 / 48</p>
+            <div class="progress-track"><div class="progress-fill" style="width:65%;background:var(--green-dot);"></div></div>
+            <p class="kpi-trend up" style="margin-top:10px;"><svg viewBox="0 0 24 24" fill="none" width="12" height="12"><path d="M6 15l6-6 6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>+4 since last week</p>
+          </div>
+          <div class="kpi-card" onclick="showToast('Filtered to stores not yet started')">
+            <div class="kpi-top"><p class="kpi-label">Not started</p>
+              <div class="kpi-icon" style="background:var(--gray-bg);color:var(--gray-fg);"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+            </div>
+            <p class="kpi-value">5</p>
+            <div class="progress-track"><div class="progress-fill" style="width:10%;background:var(--gray-dot);"></div></div>
+            <p class="kpi-trend" style="margin-top:10px;">3 stores contacted</p>
+          </div>
+          <div class="kpi-card" onclick="showToast('Opening network Missing report')">
+            <div class="kpi-top"><p class="kpi-label">Missing value exposure</p>
+              <div class="kpi-icon" style="background:var(--red-bg);color:var(--red-fg);"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 9v4M12 17h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M10.3 3.9L2.4 18.1a1.6 1.6 0 001.4 2.4h16.4a1.6 1.6 0 001.4-2.4L13.7 3.9a1.6 1.6 0 00-2.8 0z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+            </div>
+            <p class="kpi-value danger">฿186,400</p>
+            <div class="progress-track"><div class="progress-fill" style="width:38%;background:var(--red-dot);"></div></div>
+            <p class="kpi-trend" style="margin-top:10px;">23 assets across 9 stores</p>
+          </div>
+          <div class="kpi-card" onclick="go('finds')">
+            <div class="kpi-top"><p class="kpi-label">Awaiting HQ review</p>
+              <div class="kpi-icon" style="background:var(--blue-bg);color:var(--blue-fg);"><svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="1.7"/></svg></div>
+            </div>
+            <p class="kpi-value">14</p>
+            <div class="progress-track"><div class="progress-fill" style="width:25%;background:var(--blue-dot);"></div></div>
+            <p class="kpi-trend" style="margin-top:10px;">6 unrecorded, 8 disputed</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header">
+            <h3>Stores requiring attention <span class="count">(8)</span></h3>
+            <button class="link-btn" onclick="showToast('Opening full store directory')">View all stores<svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          </div>
+          <div id="storeList"></div>
+        </div>
+
+        <div class="section-card">
+          <div class="queue-row">
+            <div class="queue-left">
+              <div class="queue-icon"><svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M11 19a8 8 0 100-16 8 8 0 000 16z" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+              <div><p class="queue-title">14 items awaiting HQ decision</p><p class="queue-sub">Unrecorded finds and disputed matches across all stores</p></div>
+            </div>
+            <button class="btn-primary" onclick="go('finds')">Review flagged items</button>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header"><h3>Recent activity</h3></div>
+          <div id="activityList"></div>
+        </div>
+      </section>
+
+      <!-- ============ STORE OVERVIEW SCREEN ============ -->
+      <section class="screen" id="screenStore">
+        <div class="breadcrumb"><a onclick="showScreen('dashboard')">Dashboard</a> / <b id="storeCrumb">Store Overview</b></div>
+        <div class="page-title-row">
+          <div>
+            <p class="page-title">Store overview</p>
+            <p class="page-sub">Is this store on track for the current cycle?</p>
+          </div>
+        </div>
+
+        <div class="store-hero">
+          <div class="store-hero-left">
+            <div class="store-avatar" id="storeInitials">BC</div>
+            <div>
+              <p class="store-hero-name" id="storeHeroName">Big C Bangplee</p>
+              <p class="store-hero-meta" id="storeHeroMeta">FY2026 annual stock count · deadline 11 Jul 2026</p>
+            </div>
+          </div>
+          <div class="store-hero-right">
+            <span class="status-pill" id="storeHeroStatus">Overdue</span>
+          </div>
+        </div>
+
+        <div class="next-action-card">
+          <div class="next-action-left">
+            <div class="next-action-icon">
+              <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <p class="next-action-eyebrow">What your team should do next</p>
+              <p class="next-action-title" id="nextActionTitle">246 assets still need scanning — 3 days left</p>
+              <p class="next-action-sub">Assign staff to work through the pending list before the cycle closes.</p>
+            </div>
+          </div>
+          <button class="btn-white" onclick="showScreen('pending')">View pending list</button>
+        </div>
+
+        <div class="control-grid">
+          <div class="donut-card">
+            <div class="donut-wrap">
+              <svg viewBox="0 0 120 120" width="168" height="168">
+                <circle cx="60" cy="60" r="52" fill="none" stroke="var(--surface-2)" stroke-width="12"/>
+                <circle id="donutRing" cx="60" cy="60" r="52" fill="none" stroke="var(--green-dot)" stroke-width="12" stroke-linecap="round" transform="rotate(-90 60 60)"/>
+              </svg>
+              <div class="donut-center">
+                <span class="donut-pct" id="donutPct">18%</span>
+                <span class="donut-label">verified</span>
+              </div>
+            </div>
+            <p class="donut-caption" id="donutCaption">54 of 300 assets confirmed</p>
+          </div>
+
+          <div class="metric-stack">
+            <div class="metric-row" onclick="showToast('Opening Completed list')">
+              <div class="metric-left">
+                <div class="metric-icon" style="background:var(--green-bg);color:var(--green-fg);"><svg viewBox="0 0 24 24" fill="none" width="17" height="17"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                <div><p class="metric-name">Completed</p><p class="metric-sub">Verified so far this cycle</p></div>
+              </div>
+              <span class="metric-value" id="metricCompleted" style="color:var(--green-fg);">54</span>
+            </div>
+            <div class="metric-row" onclick="showScreen('pending')">
+              <div class="metric-left">
+                <div class="metric-icon" style="background:var(--amber-bg);color:var(--amber-fg);"><svg viewBox="0 0 24 24" fill="none" width="17" height="17"><path d="M12 7v5l3 3" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg></div>
+                <div><p class="metric-name">Pending</p><p class="metric-sub">Still needs scanning</p></div>
+              </div>
+              <span class="metric-value" id="metricPending" style="color:var(--amber-fg);">246</span>
+            </div>
+            <div class="metric-row" onclick="showToast('Opening Missing list')">
+              <div class="metric-left">
+                <div class="metric-icon" style="background:var(--red-bg);color:var(--red-fg);"><svg viewBox="0 0 24 24" fill="none" width="17" height="17"><path d="M12 9v4M12 17h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M10.3 3.9L2.4 18.1a1.6 1.6 0 001.4 2.4h16.4a1.6 1.6 0 001.4-2.4L13.7 3.9a1.6 1.6 0 00-2.8 0z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+                <div><p class="metric-name">Missing</p><p class="metric-sub">Unaccounted for — needs HQ decision</p></div>
+              </div>
+              <span class="metric-value" id="metricMissing" style="color:var(--red-fg);">12</span>
+            </div>
+            <div class="metric-row" onclick="showToast('Opening new assets assigned to this store')">
+              <div class="metric-left">
+                <div class="metric-icon" style="background:var(--blue-bg);color:var(--blue-fg);"><svg viewBox="0 0 24 24" fill="none" width="17" height="17"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></div>
+                <div><p class="metric-name">New since last visit</p><p class="metric-sub">Arrived via HQ import mid-cycle</p></div>
+              </div>
+              <span class="metric-value" id="metricNew" style="color:var(--blue-fg);">6</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-header"><h3>Recent scans</h3><button class="link-btn" onclick="showToast('Opening full scan history')">View all<svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+          <div class="mini-activity" id="storeScanList"></div>
+        </div>
+      </section>
+
+      <!-- ============ PENDING SCREEN ============ -->
+      <section class="screen" id="screenPending">
+        <div class="breadcrumb"><a onclick="showScreen('dashboard')">Dashboard</a> / <a onclick="showScreen('store')">Store Overview</a> / <b>Pending</b></div>
+        <div class="page-title-row">
+          <div>
+            <p class="page-title">Pending</p>
+            <p class="page-sub" id="pendingSub">Assets on the Master list not yet confirmed this cycle</p>
+          </div>
+          <button class="btn-outline" onclick="showScreen('store')">
+            <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Store overview
+          </button>
+        </div>
+
+        <div class="pending-strip">
+          <div class="pstrip-card" style="border-left-color:var(--amber-fg);">
+            <p class="pstrip-label">Total pending</p>
+            <p class="pstrip-value" id="pendingTotalStrip">246</p>
+          </div>
+          <div class="pstrip-card" style="border-left-color:var(--red-fg);">
+            <p class="pstrip-label" style="color:var(--red-fg);">Never scanned</p>
+            <p class="pstrip-value" style="color:var(--red-fg);" id="pendingNeverStrip">168</p>
+          </div>
+          <div class="pstrip-card">
+            <p class="pstrip-label">Zones remaining</p>
+            <p class="pstrip-value">5 of 8</p>
+          </div>
+          <div class="pstrip-card">
+            <p class="pstrip-label">Est. time to clear</p>
+            <p class="pstrip-value">~4 hrs</p>
+          </div>
+        </div>
+
+        <div class="filter-bar">
+          <div class="filter-search">
+            <svg viewBox="0 0 24 24" fill="none" width="15" height="15"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" placeholder="Search asset code or name" oninput="handlePendingSearch(this.value)">
+          </div>
+          <div class="chip-row">
+            <button class="chip active" data-filter="all" onclick="setPendingFilter('all')">All zones</button>
+            <button class="chip" data-filter="floor1" onclick="setPendingFilter('floor1')">Floor 1</button>
+            <button class="chip" data-filter="floor2" onclick="setPendingFilter('floor2')">Floor 2</button>
+            <button class="chip" data-filter="stockroom" onclick="setPendingFilter('stockroom')">Stockroom</button>
+            <button class="chip" data-filter="never" onclick="setPendingFilter('never')">Never scanned</button>
+          </div>
+          <select class="sort-select" onchange="showToast('Sorted by ' + this.value)">
+            <option>Sort: Zone (walk order)</option>
+            <option>Sort: Asset code</option>
+            <option>Sort: Category</option>
+          </select>
+        </div>
+
+        <div class="asset-table-wrap">
+          <div class="asset-table-head">
+            <span>Asset</span><span>Category</span><span>Zone</span><span>Last known status</span><span></span>
+          </div>
+          <div id="pendingAssetRows"></div>
+          <div class="pagination">
+            <span id="pendingPagingLabel">Showing 1–8 of 246</span>
+            <div class="page-btns">
+              <button class="page-btn active">1</button>
+              <button class="page-btn">2</button>
+              <button class="page-btn">3</button>
+              <button class="page-btn">…</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="active" onclick="showScreen('dashboard')"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="2" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="2" stroke="currentColor" stroke-width="1.7"/></svg>Dashboard</button>
+    <button onclick="showScreen('store', currentStoreIndex)"><svg viewBox="0 0 24 24" fill="none"><path d="M3 9l9-6 9 6v11a1 1 0 01-1 1h-5v-7H9v7H4a1 1 0 01-1-1z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>Stores</button>
+    <button id="navPendingBtn" onclick="showScreen('pending')"><svg viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Pending</button>
+    <button onclick="go('reports')"><svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Reports</button>
+    <button onclick="toggleDropdown('userDropdown')"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M4 20c0-4 3.5-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>Account</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  var stores = [
+    {name:"Big C Bangplee", pct:18, daysLeft:3, status:"overdue", master:300, completed:54, pending:246, missing:12, newAssets:6, deadline:"11 Jul 2026", lastScan:"2 hours ago"},
+    {name:"Central Rama 9", pct:0, daysLeft:12, status:"notstarted", master:210, completed:0, pending:210, missing:0, newAssets:0, deadline:"20 Jul 2026", lastScan:"No activity yet"},
+    {name:"Terminal 21 Pattaya", pct:42, daysLeft:6, status:"progress", master:265, completed:111, pending:154, missing:3, newAssets:2, deadline:"15 Jul 2026", lastScan:"38 minutes ago"},
+    {name:"Siam Paragon", pct:8, daysLeft:12, status:"notstarted", master:340, completed:27, pending:313, missing:0, newAssets:9, deadline:"20 Jul 2026", lastScan:"1 day ago"},
+    {name:"Mega Bangna", pct:61, daysLeft:5, status:"progress", master:288, completed:176, pending:108, missing:4, newAssets:1, deadline:"14 Jul 2026", lastScan:"12 minutes ago"},
+    {name:"Central World", pct:29, daysLeft:4, status:"overdue", master:412, completed:120, pending:284, missing:8, newAssets:3, deadline:"12 Jul 2026", lastScan:"3 hours ago"},
+    {name:"Robinson Chiang Mai", pct:73, daysLeft:6, status:"progress", master:198, completed:145, pending:50, missing:3, newAssets:0, deadline:"15 Jul 2026", lastScan:"5 minutes ago"},
+    {name:"Icon Siam", pct:5, daysLeft:12, status:"notstarted", master:355, completed:18, pending:337, missing:0, newAssets:4, deadline:"20 Jul 2026", lastScan:"6 hours ago"}
+  ];
+
+  var activity = [
+    {icon:"upload", color:"blue", text:"Import committed: SFU04202607.xlsx — 2 new rows", time:"09:12"},
+    {icon:"calendar", color:"blue", text:"Cycle opened: Siam Paragon", time:"Yesterday"},
+    {icon:"check", color:"green", text:"6 stores crossed 50% completion", time:"Yesterday"},
+    {icon:"flag", color:"amber", text:"Central World flagged as overdue", time:"2 days ago"},
+    {icon:"undo", color:"gray", text:"Import batch #0092 reversed by HQ admin", time:"3 days ago"}
+  ];
+
+  var storeScans = [
+    {code:"SFU042026060012", name:"Dell Latitude 5420", time:"2 hours ago", ok:true},
+    {code:"SFU042026060045", name:"Steel storage cabinet", time:"2 hours ago", ok:true},
+    {code:"SFU042026060078", name:"Epson receipt printer", time:"3 hours ago", ok:false}
+  ];
+
+  var statusMeta = {
+    overdue:{label:"Overdue", pill:"status-overdue", bar:"var(--red-dot)", dot:"var(--red-dot)", ring:"#E14336"},
+    progress:{label:"In progress", pill:"status-progress", bar:"var(--amber-dot)", dot:"var(--amber-dot)", ring:"#E8A317"},
+    notstarted:{label:"Not started", pill:"status-notstarted", bar:"var(--gray-dot)", dot:"var(--gray-dot)", ring:"#9CA3AF"},
+    completed:{label:"Completed", pill:"status-completed", bar:"var(--green-dot)", dot:"var(--green-dot)", ring:"#2AA84A"}
+  };
+
+  var currentStoreIndex = 0;
+
+  function renderStores(list){
+    var el = document.getElementById('storeList');
+    el.innerHTML = list.map(function(s, i){
+      var m = statusMeta[s.status];
+      return '<div class="store-row">'
+        + '<div class="store-left">'
+          + '<span class="status-dot" style="background:' + m.dot + ';"></span>'
+          + '<div class="store-info">'
+            + '<div class="store-name-row"><span class="store-name">' + s.name + '</span><span class="status-pill ' + m.pill + '">' + m.label + '</span></div>'
+            + '<div class="store-progress-row"><div class="progress-track"><div class="progress-fill" style="width:' + s.pct + '%;background:' + m.bar + ';"></div></div><span class="store-pct">' + s.pct + '%</span></div>'
+          + '</div>'
+        + '</div>'
+        + '<span class="store-days">' + s.daysLeft + ' days left</span>'
+        + '<button class="btn-outline" onclick="openStorePage(' + i + ')">View store</button>'
+      + '</div>';
+    }).join('');
+  }
+
+  function renderActivity(){
+    var iconPaths = {
+      upload:'<path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v3a1 1 0 001 1h14a1 1 0 001-1v-3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+      calendar:'<rect x="3" y="5" width="18" height="16" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>',
+      check:'<path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+      flag:'<path d="M5 21V4M5 4h13l-3 4 3 4H5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>',
+      undo:'<path d="M9 14L4 9l5-5M4 9h11a5 5 0 010 10h-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>'
+    };
+    var colorMap = {blue:["var(--blue-bg)","var(--blue-fg)"],green:["var(--green-bg)","var(--green-fg)"],amber:["var(--amber-bg)","var(--amber-fg)"],gray:["var(--gray-bg)","var(--gray-fg)"]};
+    document.getElementById('activityList').innerHTML = activity.map(function(a){
+      var c = colorMap[a.color];
+      return '<div class="activity-row"><div class="activity-icon" style="background:' + c[0] + ';color:' + c[1] + ';"><svg viewBox="0 0 24 24" fill="none" width="14" height="14">' + iconPaths[a.icon] + '</svg></div><span>' + a.text + '</span><span class="activity-time">' + a.time + '</span></div>';
+    }).join('');
+  }
+
+  function renderStoreScans(){
+    document.getElementById('storeScanList').innerHTML = storeScans.map(function(sc){
+      var ok = sc.ok;
+      var bg = ok ? 'var(--green-bg)' : 'var(--red-bg)';
+      var fg = ok ? 'var(--green-fg)' : 'var(--red-fg)';
+      var icon = ok ? '<path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' : '<path d="M12 9v4M12 17h.01" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>';
+      return '<div class="activity-row"><div class="activity-icon" style="background:' + bg + ';color:' + fg + ';"><svg viewBox="0 0 24 24" fill="none" width="14" height="14">' + icon + '</svg></div><span>' + sc.name + ' <span style="color:var(--ink-3);">(' + sc.code + ')</span></span><span class="activity-time">' + sc.time + '</span></div>';
+    }).join('');
+  }
+
+  var pendingAssets = [
+    {code:'FX-2031', name:'Display fixture — window bay 3', category:'Fixture', zone:'Floor 1', status:'Not scanned', neverScanned:true, floor:'floor1'},
+    {code:'PT-014', name:'POS terminal, register 4', category:'Equipment', zone:'Floor 1', status:'Not scanned', neverScanned:true, floor:'floor1'},
+    {code:'MN-102', name:'Mannequin set, kids section', category:'Fixture', zone:'Floor 2', status:'Seen last cycle', neverScanned:false, floor:'floor2'},
+    {code:'SH-0088', name:'Shelving unit B-12', category:'Fixture', zone:'Stockroom', status:'Not scanned', neverScanned:true, floor:'stockroom'},
+    {code:'CT-221', name:'CCTV camera, entrance', category:'Equipment', zone:'Floor 1', status:'Seen last cycle', neverScanned:false, floor:'floor1'},
+    {code:'RK-045', name:'Shoe rack, athletic wall', category:'Fixture', zone:'Floor 2', status:'Not scanned', neverScanned:true, floor:'floor2'},
+    {code:'AC-330', name:'Air conditioning unit 3', category:'Equipment', zone:'Stockroom', status:'Seen last cycle', neverScanned:false, floor:'stockroom'},
+    {code:'MR-019', name:'Mirror panel, fitting room', category:'Fixture', zone:'Floor 2', status:'Not scanned', neverScanned:true, floor:'floor2'}
+  ];
+  var currentPendingFilter = 'all';
+
+  function renderPendingScreen(){
+    var s = stores[currentStoreIndex];
+    document.getElementById('pendingSub').textContent = s.name + ' · Assets on the Master list not yet confirmed this cycle';
+    document.getElementById('pendingTotalStrip').textContent = s.pending;
+    document.getElementById('pendingNeverStrip').textContent = Math.round(s.pending * 0.68);
+    document.getElementById('pendingPagingLabel').textContent = 'Showing 1–' + pendingAssets.length + ' of ' + s.pending;
+    applyPendingFilters();
+  }
+
+  function renderPendingRows(list){
+    var wrap = document.getElementById('pendingAssetRows');
+    if(list.length === 0){
+      wrap.innerHTML = '<div style="padding:34px 20px;text-align:center;color:var(--ink-3);font-size:13px;">No assets match this filter.</div>';
+      return;
+    }
+    wrap.innerHTML = list.map(function(a){
+      return '<div class="asset-row2">'
+        + '<div><p class="asset-name2">' + a.name + '</p><p class="asset-code2">' + a.code + '</p></div>'
+        + '<div>' + a.category + '</div>'
+        + '<div><span class="zone-pill">' + a.zone + '</span></div>'
+        + '<div>' + (a.neverScanned ? '<span class="never-scanned">Never scanned</span>' : a.status) + '</div>'
+        + '<div class="row-actions">'
+          + '<button class="row-btn" title="View detail" onclick="showToast(\'Opening asset detail: ' + a.code + '\')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg></button>'
+          + '<button class="row-btn verify" title="Mark verified" onclick="markPendingVerified(this, \'' + a.code + '\')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
+        + '</div>'
+      + '</div>';
+    }).join('');
+  }
+
+  function markPendingVerified(btn, code){
+    showToast('Marked ' + code + ' as verified');
+    btn.closest('.asset-row2').style.opacity = '0.4';
+  }
+
+  function setPendingFilter(f){
+    currentPendingFilter = f;
+    document.querySelectorAll('#screenPending .chip').forEach(function(c){ c.classList.toggle('active', c.dataset.filter === f); });
+    applyPendingFilters();
+  }
+
+  function handlePendingSearch(val){
+    applyPendingFilters(val);
+  }
+
+  function applyPendingFilters(searchVal){
+    var term = (searchVal || '').toLowerCase();
+    var filtered = pendingAssets.filter(function(a){
+      var matchesFilter = currentPendingFilter === 'all' ? true :
+        currentPendingFilter === 'never' ? a.neverScanned :
+        a.floor === currentPendingFilter;
+      var matchesSearch = !term || a.name.toLowerCase().indexOf(term) > -1 || a.code.toLowerCase().indexOf(term) > -1;
+      return matchesFilter && matchesSearch;
+    });
+    renderPendingRows(filtered);
+  }
+
+  function renderStorePage(i){
+    var s = stores[i];
+    currentStoreIndex = i;
+    var m = statusMeta[s.status];
+    document.getElementById('storeCrumb').textContent = s.name;
+    document.getElementById('storeHeroName').textContent = s.name;
+    document.getElementById('storeHeroMeta').textContent = 'FY2026 annual stock count · deadline ' + s.deadline;
+    var statusEl = document.getElementById('storeHeroStatus');
+    statusEl.textContent = m.label;
+    statusEl.className = 'status-pill ' + m.pill;
+    document.getElementById('storeInitials').textContent = s.name.split(' ').map(function(w){return w[0];}).slice(0,2).join('').toUpperCase();
+
+    document.getElementById('donutPct').textContent = s.pct + '%';
+    document.getElementById('donutCaption').textContent = s.completed + ' of ' + s.master + ' assets confirmed';
+    var ring = document.getElementById('donutRing');
+    var circumference = 2 * Math.PI * 52;
+    ring.style.stroke = m.ring;
+    ring.setAttribute('stroke-dasharray', circumference);
+    ring.setAttribute('stroke-dashoffset', circumference - (s.pct / 100) * circumference);
+
+    document.getElementById('metricCompleted').textContent = s.completed;
+    document.getElementById('metricPending').textContent = s.pending;
+    document.getElementById('metricMissing').textContent = s.missing;
+    document.getElementById('metricNew').textContent = s.newAssets;
+
+    var actionTitle = s.pending > 0
+      ? s.pending + ' assets still need scanning — ' + s.daysLeft + ' days left'
+      : 'All assets verified — ready to close this cycle';
+    document.getElementById('nextActionTitle').textContent = actionTitle;
+  }
+
+  function openStorePage(i){
+    renderStorePage(i);
+    showScreen('store', i);
+  }
+
+  function showScreen(name, storeIndex){
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+    document.getElementById('navDashboard').classList.remove('active');
+    document.getElementById('navOverview').classList.remove('active');
+    document.querySelectorAll('.bottom-nav button').forEach(function(b){ b.classList.remove('active'); });
+
+    if(name === 'dashboard'){
+      document.getElementById('screenDashboard').classList.add('active');
+      document.getElementById('navDashboard').classList.add('active');
+      document.querySelector('.bottom-nav button').classList.add('active');
+    } else if(name === 'store'){
+      if(typeof storeIndex === 'number') renderStorePage(storeIndex);
+      else renderStorePage(currentStoreIndex);
+      document.getElementById('screenStore').classList.add('active');
+      document.getElementById('navOverview').classList.add('active');
+    } else if(name === 'pending'){
+      renderPendingScreen();
+      document.getElementById('screenPending').classList.add('active');
+      document.getElementById('navOverview').classList.add('active');
+      document.getElementById('navPendingBtn').classList.add('active');
+    }
+    window.scrollTo(0,0);
+    document.querySelector('.main').scrollTo(0,0);
+  }
+
+  function toggleDropdown(id){
+    var el = document.getElementById(id);
+    var wasOpen = el.classList.contains('open');
+    document.querySelectorAll('.dropdown').forEach(function(d){ d.classList.remove('open'); });
+    if(!wasOpen) el.classList.add('open');
+  }
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.user-menu')){ document.querySelectorAll('.dropdown').forEach(function(d){ d.classList.remove('open'); }); }
+  });
+
+  function toggleSidebar(){ document.getElementById('sidebar').classList.toggle('collapsed'); }
+  document.getElementById('mobileMenuBtn').addEventListener('click', function(){ showToast('Navigation menu'); });
+
+  function go(page){ showToast('This screen is not yet built in the prototype: ' + page); }
+
+  var toastTimer;
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2200);
+  }
+
+  function handleSearch(val){
+    if(!val){ renderStores(stores); return; }
+    var filtered = stores.filter(function(s){ return s.name.toLowerCase().indexOf(val.toLowerCase()) > -1; });
+    renderStores(filtered);
+  }
+
+  renderStores(stores);
+  renderActivity();
+  renderStoreScans();
+  renderStorePage(0);
+</script>
+</body>
+</html>
