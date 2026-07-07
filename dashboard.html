@@ -288,7 +288,7 @@
       <div style="display:flex;align-items:center;gap:12px;">
         <span style="font-size:12px;color:var(--ink-2);" id="headerUserLabel"></span>
         <button class="btn-outline" style="padding:6px 12px;font-size:11.5px;" onclick="logout()">Sign out</button>
-        <div class="avatar">JS</div>
+        <div class="avatar" id="headerAvatar">—</div>
       </div>
     </div>
 
@@ -617,6 +617,16 @@ document.getElementById('loginApiBase').textContent = API_BASE;
 var authToken = null;
 var authUser = null;
 
+function initialsFrom(text){
+  if(!text) return '?';
+  var clean = text.trim();
+  var parts = clean.split(/[\s._-]+/).filter(Boolean);
+  if(parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  var lettersOnly = clean.replace(/[^A-Za-z]/g, '');
+  if(lettersOnly.length >= 2) return lettersOnly.slice(0, 2).toUpperCase();
+  return clean.slice(0, 2).toUpperCase();
+}
+
 async function apiFetch(path, options){
   options = options || {};
   options.headers = Object.assign({}, options.headers || {}, authToken ? {'Authorization':'Bearer ' + authToken} : {});
@@ -677,6 +687,7 @@ async function doLogin(){
       branch_name: data.branch_name || ''
     };
     document.getElementById('headerUserLabel').textContent = authUser.employee_id + (authUser.role ? ' · ' + authUser.role : '');
+    document.getElementById('headerAvatar').textContent = initialsFrom(authUser.employee_id);
     hideLogin();
     await loadRealData();
     document.getElementById('assetSearch').focus();
@@ -691,6 +702,8 @@ async function doLogin(){
 function logout(){
   authToken = null; authUser = null;
   document.getElementById('loginPassword').value = '';
+  document.getElementById('headerUserLabel').textContent = '';
+  document.getElementById('headerAvatar').textContent = '—';
   showLogin();
 }
 
