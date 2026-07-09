@@ -253,6 +253,10 @@
   .as-modal-overlay, .export-menu { display: none !important; }
   .content-body { padding: 0; }
   .app { display: block; }
+  .print-report-header { display: block !important; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #000; }
+</style>
+<style>
+  .print-report-header { display: none; }
 </style>
 </head>
 <body>
@@ -311,6 +315,11 @@
 
       <!-- ============ SCREEN: OVERVIEW (audit workspace) ============ -->
       <section class="screen2 active" id="pageOverview">
+
+        <div class="print-report-header" id="overviewPrintHeader">
+          <div style="font-size:16px;font-weight:700;">Bata Fixed Asset Audit — Overview Report</div>
+          <div style="font-size:12.5px;color:#333;margin-top:4px;" id="overviewPrintHeaderMeta"></div>
+        </div>
 
         <div class="data-source-banner" id="overviewDataBanner">
           <span>⚠</span>
@@ -391,6 +400,11 @@
 
       <!-- ============ SCREEN: ASSET SUMMARY (master list, all branches) ============ -->
       <section class="screen2" id="pageAssetSummary">
+
+        <div class="print-report-header" id="asPrintHeader">
+          <div style="font-size:16px;font-weight:700;">Bata Fixed Asset Audit — Asset Summary Report</div>
+          <div style="font-size:12.5px;color:#333;margin-top:4px;" id="asPrintHeaderMeta"></div>
+        </div>
 
         <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
           <div class="as-last-sync"><span class="dot"></span>Last Sync <b id="asLastSync">7 Jul 2026, 09:45</b></div>
@@ -690,6 +704,25 @@ function csvEscape(v){
   if(/[",\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
   return v;
 }
+function csvLine(arr){ return arr.map(csvEscape).join(','); }
+function buildMetaCSVBlock(title, branchLabel, count){
+  return [
+    csvLine([title]),
+    csvLine(['Branch', branchLabel]),
+    csvLine(['Exported At', formatDateTime(new Date().toISOString())]),
+    csvLine(['Total Items', count]),
+    ''
+  ].join('\r\n') + '\r\n';
+}
+function buildMetaRows(title, branchLabel, count){
+  return [
+    [title],
+    ['Branch', branchLabel],
+    ['Exported At', formatDateTime(new Date().toISOString())],
+    ['Total Items', count],
+    []
+  ];
+}
 function toCSV(headers, rows){
   var lines = [headers.map(csvEscape).join(',')];
   rows.forEach(function(r){ lines.push(r.map(csvEscape).join(',')); });
@@ -703,16 +736,27 @@ function downloadFile(filename, content, mime){
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
 }
-function exportToExcel(headers, rows, sheetName, filename){
+function exportToExcel(headers, rows, sheetName, filename, metaRows){
   if(typeof XLSX === 'undefined'){
     showToast('โหลด Excel library ไม่สำเร็จ (อาจไม่มีอินเทอร์เน็ต) — ลอง Export CSV แทน');
     return;
   }
-  var data = [headers].concat(rows);
+  var data = (metaRows || []).concat([headers]).concat(rows);
   var ws = XLSX.utils.aoa_to_sheet(data);
   var wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
   XLSX.writeFile(wb, filename);
+}
+
+function currentOverviewBranchLabel(){
+  var s = stores.filter(function(x){ return x.name === currentStore; })[0];
+  return s ? ((s.displayName || s.name) + ' (' + s.name + ')') : currentStore;
+}
+function currentAssetSummaryBranchLabel(){
+  var branchesInResult = {};
+  lastAssetSummaryExportList.forEach(function(a){ branchesInResult[a.branch] = true; });
+  var names = Object.keys(branchesInResult);
+  return names.length === 1 ? names[0] : (names.length + ' สาขา: ' + names.slice(0, 10).join(', ') + (names.length > 10 ? ', ...' : ''));
 }
 
 var OVERVIEW_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Location', 'Qty', 'Status', 'Last Scan'];
@@ -724,13 +768,17 @@ function overviewExportRows(){
 function exportOverviewCSV(){
   closeAllExportMenus();
   var rows = overviewExportRows();
-  downloadFile('overview-' + currentStore + '-' + todayStamp() + '.csv', toCSV(OVERVIEW_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
+  var branchLabel = currentOverviewBranchLabel();
+  var meta = buildMetaCSVBlock('Bata Fixed Asset Audit - Overview Report', branchLabel, rows.length);
+  downloadFile('overview-' + currentStore + '-' + todayStamp() + '.csv', meta + toCSV(OVERVIEW_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
   showToast('Export CSV สำเร็จ (' + rows.length + ' รายการ)');
 }
 function exportOverviewExcel(){
   closeAllExportMenus();
   var rows = overviewExportRows();
-  exportToExcel(OVERVIEW_EXPORT_HEADERS, rows, 'Overview', 'overview-' + currentStore + '-' + todayStamp() + '.xlsx');
+  var branchLabel = currentOverviewBranchLabel();
+  var metaRows = buildMetaRows('Bata Fixed Asset Audit - Overview Report', branchLabel, rows.length);
+  exportToExcel(OVERVIEW_EXPORT_HEADERS, rows, 'Overview', 'overview-' + currentStore + '-' + todayStamp() + '.xlsx', metaRows);
   showToast('Export Excel สำเร็จ (' + rows.length + ' รายการ)');
 }
 
@@ -743,13 +791,17 @@ function assetSummaryExportRows(){
 function exportAssetSummaryCSV(){
   closeAllExportMenus();
   var rows = assetSummaryExportRows();
-  downloadFile('asset-summary-' + todayStamp() + '.csv', toCSV(AS_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
+  var branchLabel = currentAssetSummaryBranchLabel();
+  var meta = buildMetaCSVBlock('Bata Fixed Asset Audit - Asset Summary Report', branchLabel, rows.length);
+  downloadFile('asset-summary-' + todayStamp() + '.csv', meta + toCSV(AS_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
   showToast('Export CSV สำเร็จ (' + rows.length + ' รายการ)');
 }
 function exportAssetSummaryExcel(){
   closeAllExportMenus();
   var rows = assetSummaryExportRows();
-  exportToExcel(AS_EXPORT_HEADERS, rows, 'Asset Summary', 'asset-summary-' + todayStamp() + '.xlsx');
+  var branchLabel = currentAssetSummaryBranchLabel();
+  var metaRows = buildMetaRows('Bata Fixed Asset Audit - Asset Summary Report', branchLabel, rows.length);
+  exportToExcel(AS_EXPORT_HEADERS, rows, 'Asset Summary', 'asset-summary-' + todayStamp() + '.xlsx', metaRows);
   showToast('Export Excel สำเร็จ (' + rows.length + ' รายการ)');
 }
 
@@ -1208,6 +1260,12 @@ function renderAssetList(){
     return matchesFilter && matchesSearch;
   });
   lastOverviewExportList = list;
+  var s = stores.filter(function(x){ return x.name === currentStore; })[0];
+  var branchLabel = s ? ((s.displayName || s.name) + ' (' + s.name + ')') : currentStore;
+  document.getElementById('overviewPrintHeaderMeta').innerHTML =
+    'สาขา: <b>' + branchLabel + '</b> &nbsp;|&nbsp; วันที่พิมพ์: <b>' + formatDateTime(new Date().toISOString()) + '</b>'
+    + (term ? (' &nbsp;|&nbsp; ค้นหา: "' + document.getElementById('assetSearch').value + '"') : '')
+    + ' &nbsp;|&nbsp; จำนวน: <b>' + list.length.toLocaleString() + ' รายการ</b>';
   var countEl = document.getElementById('assetResultCount');
   countEl.textContent = term
     ? ('พบ ' + list.length.toLocaleString() + ' รายการที่ตรงกับ "' + document.getElementById('assetSearch').value + '"')
@@ -1722,6 +1780,10 @@ function renderAssetSummary(){
   var branchesInResult = {};
   filtered.forEach(function(a){ branchesInResult[a.branch] = (branchesInResult[a.branch] || 0) + 1; });
   var branchNames = Object.keys(branchesInResult);
+  var branchSummaryForPrint = branchNames.length === 1 ? branchNames[0] : (branchNames.length + ' สาขา');
+  document.getElementById('asPrintHeaderMeta').innerHTML =
+    'สาขา: <b>' + branchSummaryForPrint + '</b> &nbsp;|&nbsp; วันที่พิมพ์: <b>' + formatDateTime(new Date().toISOString()) + '</b>'
+    + ' &nbsp;|&nbsp; จำนวน: <b>' + filtered.length.toLocaleString() + ' รายการ</b>';
   var countEl = document.getElementById('asResultCount');
   if(filtered.length === 0){
     countEl.textContent = '';
