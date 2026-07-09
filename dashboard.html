@@ -134,7 +134,7 @@
   /* STORE SWITCHER */
   .store-chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:18px;padding-bottom:2px;}
   .store-chip{flex-shrink:0;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);white-space:nowrap;}
-  .store-chip.active{background:var(--red-bg);border-color:var(--red-500);color:var(--red-600);}
+  .store-chip.active{background:var(--red-500);border-color:var(--red-500);color:#fff;font-weight:700;}
   .store-switcher{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
   .store-search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 12px;flex:1;min-width:220px;max-width:340px;color:var(--ink-3);}
   .store-search-box input{border:none;background:none;outline:none;font-size:13px;width:100%;color:var(--ink);}
@@ -184,8 +184,8 @@
 
   /* ASSET LIST */
   .asset-table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);}
-  .asset-head{display:grid;grid-template-columns:52px 1.3fr 1fr 1fr 90px 132px;gap:10px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;}
-  .asset-row{display:grid;grid-template-columns:52px 1.3fr 1fr 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;}
+  .asset-head{display:grid;grid-template-columns:52px 1.3fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;}
+  .asset-row{display:grid;grid-template-columns:52px 1.3fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;}
   .asset-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;display:block;background:var(--surface-2);}
   .asset-thumb-placeholder{width:40px;height:40px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-4);}
   .asset-row:last-child{border-bottom:none;}
@@ -381,7 +381,7 @@
         <div class="filter-chips" id="filterChips" style="margin-bottom:14px;"></div>
 
         <div class="asset-table">
-          <div class="asset-head"><span>Photo</span><span>Asset</span><span>Location</span><span>Status</span><span>Last scan</span><span></span></div>
+          <div class="asset-head"><span>Photo</span><span>Asset</span><span>Location</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span></div>
           <div id="assetRows"></div>
         </div>
 
@@ -432,7 +432,7 @@
         </div>
         <div class="as-table-wrap">
           <table class="as-table">
-            <thead><tr><th>#</th><th>Asset code</th><th>SEQ</th><th>ชื่อ Asset</th><th>สาขา</th><th>Serial no.</th><th>สถานะ</th><th>เวลาสแกน</th><th>Actions</th></tr></thead>
+            <thead><tr><th>#</th><th>Asset code</th><th>SEQ</th><th>ชื่อ Asset</th><th>สาขา</th><th>Serial no.</th><th>Qty</th><th>สถานะ</th><th>เวลาสแกน</th><th>Actions</th></tr></thead>
             <tbody id="asRows"></tbody>
           </table>
           <div class="as-pagination" id="asPagination">
@@ -712,10 +712,10 @@ function exportToExcel(headers, rows, sheetName, filename){
   XLSX.writeFile(wb, filename);
 }
 
-var OVERVIEW_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Location', 'Status', 'Last Scan'];
+var OVERVIEW_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Location', 'Qty', 'Status', 'Last Scan'];
 function overviewExportRows(){
   return lastOverviewExportList.map(function(a){
-    return [a.barcode, a.name, a.location, a.status, formatDateShort(a.lastScan)];
+    return [a.barcode, a.name, a.location, (a.qty != null ? a.qty : 1), a.status, formatDateShort(a.lastScan)];
   });
 }
 function exportOverviewCSV(){
@@ -731,10 +731,10 @@ function exportOverviewExcel(){
   showToast('Export Excel สำเร็จ (' + rows.length + ' รายการ)');
 }
 
-var AS_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Branch', 'Serial No.', 'Status', 'Last Scan'];
+var AS_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Branch', 'Serial No.', 'Qty', 'Status', 'Last Scan'];
 function assetSummaryExportRows(){
   return lastAssetSummaryExportList.map(function(a){
-    return [a.code, a.name, a.branch, a.serial, a.status, formatDateShort(a.scanTime)];
+    return [a.code, a.name, a.branch, a.serial, (a.qty != null ? a.qty : 1), a.status, formatDateShort(a.scanTime)];
   });
 }
 function exportAssetSummaryCSV(){
@@ -910,7 +910,7 @@ function buildStoresFromRealAssets(list, scansByQrKey){
   var grouped = {};
   list.forEach(function(a){
     var code = a.location_code || a.branch_id || a.branch_code || 'UNKNOWN';
-    var name = a.location_name || a.branch_name || code;
+    var name = a.location_name || a.branch_name || a.store_name || a.location_desc || a.location_description || a.branch_desc || code;
     if(!grouped[code]){ grouped[code] = { name: name, items: [] }; }
     var qrKey = a.qr_key || a.asset_code;
     var matchingScan = qrKey ? scansByQrKey[qrKey] : null;
@@ -929,6 +929,7 @@ function buildStoresFromRealAssets(list, scansByQrKey){
       photo: matchingScan ? scanPhotoOf(matchingScan) : null,
       scanId: matchingScan ? scanIdOf(matchingScan) : null,
       qrKey: qrKey,
+      qty: (a.qty != null ? a.qty : (a.quantity != null ? a.quantity : 1)),
       serial: a.serial_no || a.serial || '',
       history: []
     });
@@ -1193,6 +1194,7 @@ function renderAssetList(){
       + '<div>' + (a.photo ? ('<img class="asset-thumb" src="' + a.photo + '" alt="">') : ('<div class="asset-thumb-placeholder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></div>')) + '</div>'
       + '<div class="asset-name">' + a.barcode + '<span style="display:block;font-size:11px;color:var(--ink-3);font-weight:400;">' + a.name + '</span></div>'
       + '<div>' + a.location + '</div>'
+      + '<div style="text-align:center;">' + (a.qty != null ? a.qty : 1) + '</div>'
       + '<div>' + statusPillHtml(a.status) + '</div>'
       + '<div class="row-time">' + formatDateShort(a.lastScan) + '</div>'
       + '<div class="as-row-actions">'
@@ -1588,7 +1590,7 @@ function allAssetsFlat(){
     assetsByStore[s.name].forEach(function(a){
       flat.push({
         code: a.barcode, seq: a.seq, name: a.name, branch: s.name, serial: (a.serial && a.serial.length) ? a.serial : a.barcode.replace('SFU', 'SN'),
-        status: a.status, scanTime: a.lastScan
+        status: a.status, scanTime: a.lastScan, qty: a.qty != null ? a.qty : 1
       });
     });
   });
@@ -1698,6 +1700,7 @@ function renderAssetSummary(){
       + '<td>' + a.name + '</td>'
       + '<td>' + a.branch + '</td>'
       + '<td>' + a.serial + '</td>'
+      + '<td style="text-align:center;">' + (a.qty != null ? a.qty : 1) + '</td>'
       + '<td>' + statusPillHtml(a.status) + '</td>'
       + '<td>' + formatDateShort(a.scanTime) + '</td>'
       + '<td><div class="as-row-actions">'
