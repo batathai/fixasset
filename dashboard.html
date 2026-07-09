@@ -760,7 +760,7 @@ function initialsFrom(text){
 async function apiFetch(path, options){
   options = options || {};
   options.headers = Object.assign({}, options.headers || {}, authToken ? {'Authorization':'Bearer ' + authToken} : {});
-  if(options.body && !options.headers['Content-Type']){ options.headers['Content-Type'] = 'application/json'; }
+  if(options.body && !(options.body instanceof FormData) && !options.headers['Content-Type']){ options.headers['Content-Type'] = 'application/json'; }
   var res;
   try{
     res = await fetch(API_BASE + path, options);
@@ -1255,6 +1255,7 @@ function closeDrawer(){
 
 var pendingImportRows = [];
 var pendingImportFileName = '';
+var pendingImportFile = null;
 
 function openImportDrawer(){
   document.getElementById('importStoreName').textContent = currentStore;
@@ -1281,6 +1282,7 @@ function handleImportFile(input){
   if(!input.files || !input.files[0]) return;
   var file = input.files[0];
   pendingImportFileName = file.name;
+  pendingImportFile = file;
 
   if(typeof XLSX === 'undefined'){
     showToast('โหลด library อ่านไฟล์ไม่สำเร็จ (เช็คอินเทอร์เน็ต) — ลองใหม่อีกครั้ง');
@@ -1355,21 +1357,35 @@ function handleImportFile(input){
   reader.readAsArrayBuffer(file);
 }
 
-function confirmImport(){
-  pendingImportRows.forEach(function(r){
-    var seqNum = seqDigitsOf(r.seq) || seqDigitsOf(nextSeqFor(currentStore).replace('SEQ',''));
-    assetsByStore[currentStore].unshift({
-      name: r.name, seq: 'SEQ' + seqNum, barcode: r.assetCode + 'SEQ' + seqNum, rawAssetCode: String(r.assetCode).trim(),
-      category: 'Uncategorized', location: r.locationName || r.locationCode || currentStore,
-      status: 'pending', lastScan: '-', remark: '', serial: r.serial || '',
-      history: [{event:'Imported', by: currentUser, time:'Just now', detail:'จากไฟล์ ' + pendingImportFileName}]
-    });
-    logActivity(currentStore, r.name, 'Imported', 'จากไฟล์ ' + pendingImportFileName);
-  });
-  showToast('เพิ่ม ' + pendingImportRows.length + ' รายการในหน้าจอนี้แล้ว (ยังไม่ได้เขียนเข้า production DB จริง — รอเชื่อม /hq/assets/import/confirm)');
-  closeImportDrawer();
-  renderAssetList();
-  renderSummary();
+async function confirmImport(){
+  if(!pendingImportFile){ showToast('ไม่พบไฟล์ที่จะ import — เลือกไฟล์ใหม่อีกครั้ง'); return; }
+  var btn = document.getElementById('importConfirmBtn');
+  btn.disabled = true;
+  var originalLabel = btn.textContent;
+  btn.textContent = 'Importing...';
+
+  var expectedCount = pendingImportRows.length;
+  var fileToSend = pendingImportFile;
+  var fileNameToSend = pendingImportFileName;
+
+  try{
+    var fd = new FormData();
+    fd.append('file', fileToSend);
+    await apiFetch('/hq/assets/import/confirm', { method: 'POST', body: fd });
+
+    showToast('Import สำเร็จ — เขียนเข้า production database จริงแล้ว กำลังโหลดข้อมูลล่าสุด...');
+    logActivity(currentStore, fileNameToSend, 'Imported', 'ยืนยัน import จริงผ่าน /hq/assets/import/confirm (' + expectedCount + ' รายการที่คาดไว้)');
+    var storeBeingImportedTo = currentStore;
+    closeImportDrawer();
+    await loadRealData();
+    if(stores.some(function(s){ return s.name === storeBeingImportedTo; })){
+      selectStore(storeBeingImportedTo);
+    }
+  } catch(e){
+    showToast('Import ไม่สำเร็จ: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
 }
 
 function saveDrawer(){
