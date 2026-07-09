@@ -905,26 +905,44 @@ function seqDigitsOf(raw){
   return digits.padStart(3, '0').slice(-3);
 }
 
+/* Static branch code -> Thai/English name lookup, from the official store list
+   export (source: บริษัท บาจา (ประเทศไทย) จำกัด, SPFA LOC report). The real
+   /hq/assets API confirmed it does NOT return a branch name field at all —
+   only location_code — so we keep this table locally rather than guessing
+   field names or adding an extra API call. */
+var STORE_NAMES = {"0040000": "Factory", "0099999": "Office", "0060000": "NRSD", "0099996": "Resident", "0071205": "Infinic (Samut Prakan)", "0055951": "Big C Hadyai", "0071502": "Pata Pinklaow", "0072007": "Chaiyapong Pichit", "0072009": "Friday Uttaradit", "0072011": "Chareonphan Payao", "0073005": "Roi-et Plaza", "0073015": "Suenheng Srisakate", "0074004": "Hua Hin Shopping Mall", "0074009": "Klang 1 Assadang", "0074014": "Sahathai Petchburi", "0074017": "Eastern Chacheungsao", "0074023": "Kanockkarn Kanchanaburi", "0075011": "Siribun Trang", "0075012": "Vouge Krabi", "0075014": "Ocean Chumporn", "0064000": "Merchandising", "0055036": "Big C Trang", "0055037": "Lotus Chalong", "0055901": "Robinson Trung", "0055902": "Big C Nakhonsrithammarat", "0055905": "Phuket 3", "0055906": "Big C Satun", "0055946": "Lotus Nakornsrithammarat", "0055949": "Big C Suratthani", "0055009": "Big C Hadyai 2", "0055010": "Lotus Krabi", "0055040": "Lotus Jana", "0055041": "Lotus Hadyai", "0055042": "Lotus Songkla", "0055013": "Robinson", "0055014": "Big C Samui", "0055016": "Big C Krabi", "0055017": "Lotus Thungsong", "0055018": "Lotus Pattalung", "0055019": "Lotus Samui Lamai", "0055020": "Lotus Satun", "0055021": "Big C Chumporn", "0055022": "Big C Pung-Nga", "0055023": "Pattanee 1", "0055024": "Lotus Hadyai 2", "0055002": "Songkla 1", "0055004": "Lotus Thasala", "0055005": "Lotus Suratthani", "0055031": "Big C Phuket", "0055032": "Big C Pha-ngan", "0055033": "Lotus Vengsa", "0053032": "Robinson Sakonnakorn", "0053034": "Ptt Nangrong", "0053035": "Robinson Roi-et", "0053036": "Robinson Mukdahan", "0053037": "Assawan 2 Nongkai", "0053038": "Lotus Khonkean", "0053039": "Big C Burirum", "0053040": "Big C Nakhonratchasima2", "0053041": "Central Nakhonratchasima", "0053042": "Nakhonratchasima 3", "0053044": "Khonkean 3", "0053045": "Lotus Nangrong", "0053046": "Lotus Khonkeaen 2", "0053047": "Lotus Ubonratchathani", "0053048": "Lotus Chumpaer", "0053901": "Tukcom Khonkean", "0053902": "Lotus Loei", "0053903": "Nakhonphanom 2", "0053905": "Big C Loei", "0053944": "Mukdaharn", "0053947": "Big C Rayong", "0053948": "Big C Nakhonratchasima", "0053950": "Lotus Nakhonratchasima", "0053951": "Udonthani 1", "0053953": "Big C Ubolratchathani", "0053955": "Lotus Nongkai", "0053958": "Big C Khonkaen", "0054000": "0054000", "0054001": "Petchburi", "0054002": "Lotus Sattaheep", "0054004": "Big C Pattaya", "0054009": "Lotus Saraburi", "0054010": "Com City Pattaya", "0054012": "Big C Petchaburi", "0054013": "Big C Chacheungsao 2", "0054016": "Big C Cholburi (2)", "0054018": "Big C Ayutthaya", "0054019": "Big C Sakaew", "0054020": "Lotus Mahachai", "0054025": "Lotus Amatanakhon", "0054026": "Big C Pattaya 2", "0054027": "Big C Mahachai", "0054028": "Leamthong Bangsan", "0054029": "Harbor Mall", "0054030": "Big C Chonburi", "0054032": "Sukanan Park", "0054035": "Robinson Saraburi", "0054037": "Big C Kanchanaburi", "0054038": "Big C Srimahaphot", "0054039": "Lotus Nakhonnayok", "0054040": "Robinson Supanburi", "0054041": "Lotus Samutsakorn", "0054042": "Nakhonpathom", "0054043": "Mike Pattaya", "0054044": "Robinson Chachuengsao", "0054045": "Robinson Prachinburi", "0053026": "Fairy Khonkean", "0053027": "Sunee Ubol", "0053029": "Sermthai Complex", "0053030": "Big C Roi-et", "0054049": "Lotus Sampran", "0054092": "Lotus Prachinburi", "0054901": "Leamthong Rayong", "0054945": "Lotus Suphanburi", "0054947": "Lotus Nakhonpathom", "0054960": "Lotus Rajburi", "0051132": "Big C Lopburi", "0051184": "Royal Garden", "0051201": "Ck Plaza", "0051211": "Ptt Chiangkhan", "0000000": "0000000", "0051402": "Pantip Plaza", "0051411": "Sathorn", "0051412": "Big C Rattanatibet", "0051417": "Lotus Pakkred", "0051418": "Lotus Rangsit Klong 7", "0051419": "Lotus Navanakorn", "0051424": "Zeer Rangsit", "0051523": "Lotus Rama 2", "0051524": "Lotus Charansanitwong", "0051525": "The Mall 3", "0051527": "Big C Onnuch", "0051529": "Lotus Srinakarin", "0051530": "Big C Petkasem", "0051531": "Bangplee", "0051532": "Big C Omyai", "0051533": "Lotus Lumlookka", "0051534": "Big C Bangpakok", "0051535": "Big C Suwinthavong", "0051540": "Big C Ramindra", "0051542": "Supreme Samsen", "0051543": "Lotus Kratumban", "0051544": "Big C Sukhapiban 3", "0051545": "Robinson Samuthprakarn", "0051546": "Lotus Bangyai", "0051548": "Big C Bangplee", "0051549": "Big C Bangyai", "0051550": "Big C Suksawas", "0051560": "Ratchawong Pier", "0051442": "Nonthaburi 1", "0051445": "Big C Lamlukka2", "0051498": "Minburi Outlet", "0051506": "Imperial Samrong", "0051507": "Big C Srinakarin", "0051508": "Taprachan", "0051509": "Big C Ramkumheng", "0051510": "Yaowaraj", "0051514": "Big C Rama 4", "0051515": "Lotus Bangpoo", "0051516": "Big C Rama 2 (2)", "0051517": "Lotus Salaya", "0051901": "Big C Wongsawang", "0051903": "Imperial Ladplaow", "0051958": "Lotus Minburi", "0051960": "Big C Rama 2", "0051962": "Big C Samuthprakarn", "0051965": "Lotus Bangkapi", "0051968": "Lotus Rama 4", "0051409": "IT Laksi Plaza", "0051938": "Lotus Ladplaow", "0051939": "Lotus Chaengwattana", "0052005": "Big C Chiengmai", "0052006": "Chiangmai 1", "0052014": "Lotus Hangdong", "0052016": "Lotus Singburi", "0052017": "Lotus Maesot", "0052023": "Prae", "0052030": "Hongfha", "0051946": "Big C Rangsit", "0051948": "Lotus Laksi", "0052032": "Lotus Pitsanuloke 2", "0052033": "Happy Pichit", "0052038": "Chaisang Singburi", "0052039": "Ptt Lamphun", "0052040": "Big C Pitsanulok", "0052041": "The Walk Nakhonsawan", "0052042": "Uttaradit", "0052043": "Big C Petchaboon", "0052048": "Lotus Nan", "0052901": "Big C Kampengpech", "0052902": "Big C Chiangmai 2", "0052903": "Chiangrai 2", "0052942": "Big C Chiangrai", "0052943": "Big C Lampang", "0053002": "Big C Udornthani", "0053003": "Thaweekit Buriram 2", "0053005": "Lotus Sawangdandin", "0053006": "Lotus Thabor", "0053008": "Lotus Det Udom", "0052036": "Lotus Ruomchok", "0053010": "Surin Plaza", "0053011": "Kalasin Plaza", "0053016": "Lotus Chaiyapoom", "0053017": "Big C Yasothorn", "0053018": "Big C Warin Ubol", "0053020": "Big C Srisakate", "0053021": "Lotus Udonthani 2", "0053022": "Central Khonkaen", "0053012": "Central Udonthani", "0052037": "Central Cheingmai", "0053009": "The Mall Koraj", "0052035": "The Plaza", "0051954": "The Mall 5 Thapra", "0052031": "Central Lampang", "0052007": "Lotus Kamteing", "0052008": "Central Airport", "0052010": "Central Pitsanuloke", "0051944": "Maboonkrong", "0051410": "Central Bangna", "0052001": "Kadsuankaew", "0052002": "Central Chiengrai", "0052003": "Ayutthaya Park", "0051905": "Central Rama 2", "0051906": "Seacon Bangkae", "0051518": "Central Rama 3", "0051511": "The Mall 7 Bangkae", "0051512": "Seacon Square 1", "0051425": "Central Jeangwattana", "0051426": "Big C Rajdamri", "0051427": "Paradise Park", "0051428": "Maboonkrong 2", "0051429": "Seacon Square 2", "0051430": "Central Rama 9", "0051431": "Mega Bangna", "0051432": "Central Word", "0051433": "Central Salaya", "0051434": "Sukhumvit 15", "0051435": "Homepro Sunvannabhumi", "0051436": "Central Westgate", "0051438": "Central Pinklow", "0051415": "Central Ramindra", "0051416": "The Mall 8 Bangkapi", "0051403": "Future Park Rangsit", "0051404": "Fashion Island", "0051407": "The Mall 6 Ngamwongwan", "0051401": "Central Rattanatibet", "0055001": "Hua Hin Market Village", "0053031": "Central Ubolratchathani", "0054046": "Central Rayong", "0054021": "Central Pattaya Beach", "0054023": "Central Cholburi", "0054007": "Lotus Pattaya", "0054008": "Royal Garden Pattaya", "0055008": "Jungceylon Phuket", "0055030": "Central Suratthani", "0055043": "Central", "0055044": "Bluport Huahin", "0055012": "Central Phuket", "0054048": "Central Marina Pattaya", "0055035": "Central Hadyai", "0055950": "Lotus Phuket", "0055038": "Central Samui", "0051801": "Footin Market Village", "0051809": "Footin Bangkae", "0051810": "Footin Phuket", "0051811": "Footin Mall Koraj", "0051814": "Footin Homepro", "0051819": "Footin Future Park", "0051820": "Footin Big C Bangyai", "0051822": "Footin Seacon", "0051823": "Footin Royal Garden", "0051824": "Footin The Mall 8", "0051826": "Footin Maboonkrong", "0051828": "Footin Central Khonkaen", "0051830": "Footin The Mall 5 Thapra", "0051835": "Footin Carrefour Rama 4", "0051836": "Footin The Mall 7 Bangkae", "0051838": "Footin Nongkai", "0051839": "Footin Rajdamri", "0051840": "Footin Central Chiengrai", "0051842": "Footin Central Pitsanuloke", "0051843": "Footin Big C Chiengrai", "0051845": "Footin The Mall 6", "0051847": "Footin Mega Bangna", "0051849": "Footin Central Rama2", "0051851": "Footin Central Suratthani", "0051854": "Footin Central", "0051858": "Footin Lotus Pattaya North", "0051213": "Chokchai Outlet", "0052049": "Lotus Pitsanuloke Extra 2", "0052098": "Chiangmai Outlet", "0055034": "Hadyai", "0054034": "Pattaya", "0054047": "Harbor Mall Pattaya", "0099998": "Store Other", "0071206": "Robinson Sukhumvit", "0051208": "Home Pro Chaiyapoom", "0099997": "Store Warehouse", "0068000": "Warehouse", "0051446": "Lotus Rangsit Klong 4", "0099994": "IT", "0099995": "IT Tem", "0051171": "Bangplee Temporary", "0054022": "Central Mahachai", "0052018": "Robinson Kamphaengphet", "0054014": "Lotus Banpong", "0051447": "Central World", "0051521": "Lotus Bangpakok", "0054031": "Lotus Chanthaburi", "0052019": "Lotus Payao", "0053049": "Robinson Chaiyaphoom", "0051034": "Pacific Park Sriracha", "0054033": "Lotus Bansuan", "0051890": "Footin Bangplee Fair", "0052044": "Big C Nakornsawan 2", "0053023": "Top Phol Plaza", "0099993": "IT Hold", "0052020": "Lotus Tak", "0054003": "Bata Women CT Marina", "0051520": "Robinsan Srisamarn", "0055046": "Big C Phang-nga", "0053024": "Big C Pakchong", "0054017": "Robinson Kanchanaburi", "0051439": "Robinson Ladkabang", "0054005": "Central Sriracha", "0054011": "Central Ayuthaya", "0055047": "Robinson Thalang", "0052045": "Big C Lamphun", "0054024": "Big C Nakornpathom", "0053043": "Big C Amnatcharoen", "0051449": "Silom Complex", "0052024": "Lotus Petchaboon", "0055048": "Robinson Chalong", "0052025": "Maya Chiengmai", "0051450": "Central Westville", "0051078": "Central Ladprao POP UP", "0052026": "Central Nakornsawan", "0054094": "Central Nakornpathom", "0055049": "Lotus Yala", "0099910": "Store Temporary", "0054095": "Lotus Saraburi", "0052021": "Central Airport", "0051406": "Central Bangna"};
+
 function buildStoresFromRealAssets(list, scansByQrKey){
   scansByQrKey = scansByQrKey || {};
   var grouped = {};
   list.forEach(function(a){
     var code = a.location_code || a.branch_id || a.branch_code || 'UNKNOWN';
-    var name = a.location_name || a.branch_name || a.store_name || a.location_desc || a.location_description || a.branch_desc || code;
-    if(!grouped[code]){ grouped[code] = { name: name, items: [] }; }
+    var displayName = STORE_NAMES[code] || a.location_name || a.branch_name || a.store_name || a.location_desc || a.location_description || a.branch_desc || code;
+    if(!grouped[code]){ grouped[code] = { name: code, displayName: displayName, items: [] }; }
     var qrKey = a.qr_key || a.asset_code;
     var matchingScan = qrKey ? scansByQrKey[qrKey] : null;
     var seqNum = seqDigitsOf(a.seq);
     var baseCode = a.asset_code || a.qr_key || String(a.id != null ? a.id : '');
+    // Confirmed from a live /hq/assets record: is_scanned/scanned_at/scanned_by live
+    // directly on the asset itself — that's a more authoritative "has this been
+    // scanned" signal than our own qr_key join against /hq/scans. We still use the
+    // matched scan record (when we have one) for the finer-grained condition
+    // (Verified vs Damaged vs Unmatched); if is_scanned is true but we can't find
+    // a matching scan row, we fall back to Verified rather than wrongly saying Pending.
+    var wasScanned = (a.is_scanned === true) || !!a.scanned_at || !!matchingScan;
+    var status = 'pending';
+    if(wasScanned){
+      status = matchingScan ? statusFromScan(matchingScan) : 'verified';
+    }
     grouped[code].items.push({
       name: a.name || a.asset_name || ('Asset ' + baseCode),
       seq: seqNum ? ('SEQ' + seqNum) : (a.qr_key || '—'),
       barcode: baseCode + (seqNum ? ('SEQ' + seqNum) : ''),
       rawAssetCode: baseCode,
       category: a.category || 'Uncategorized',
-      location: a.location_detail || name,
-      status: matchingScan ? statusFromScan(matchingScan) : 'pending',
-      lastScan: matchingScan ? scanTimeOf(matchingScan) : '-',
+      location: a.location_detail || displayName,
+      status: status,
+      lastScan: a.scanned_at || (matchingScan ? scanTimeOf(matchingScan) : '-'),
       remark: a.remark || '',
       photo: matchingScan ? scanPhotoOf(matchingScan) : null,
       scanId: matchingScan ? scanIdOf(matchingScan) : null,
@@ -941,7 +959,7 @@ function buildStoresFromRealAssets(list, scansByQrKey){
     var scanned = g.items.filter(function(x){ return x.status === 'verified'; }).length;
     var exceptions = g.items.filter(function(x){ return ['missing','damaged','unmatched'].indexOf(x.status) > -1; }).length;
     var status = scanned === 0 ? 'notstarted' : (scanned === total ? 'completed' : 'progress');
-    return { name: g.name, total: total, scanned: scanned, exceptions: exceptions, status: status };
+    return { name: g.name, displayName: g.displayName, total: total, scanned: scanned, exceptions: exceptions, status: status };
   });
 
   var newAssetsByStore = {};
@@ -960,7 +978,7 @@ function buildActivityLogFromScans(scans, assetsByQrKey){
     return {
       time: scanTimeOf(sc),
       user: scanUserOf(sc),
-      store: (asset && (asset.location_name || asset.location_code)) || sc.branch_id || sc.location_code || '—',
+      store: (function(){ var lc = (asset && asset.location_code) || sc.branch_id || sc.location_code || null; return lc ? (STORE_NAMES[lc] || lc) : '—'; })(),
       asset: (asset && (asset.name || asset.asset_name)) || qrKey || 'Unknown asset',
       action: actionLabel,
       detail: sc.remark || ''
@@ -1049,7 +1067,7 @@ function logActivity(store, assetLabel, action, detail, user, time){
   activityLog.unshift({
     time: time || 'Just now',
     user: user || currentUser,
-    store: store,
+    store: STORE_NAMES[store] || store,
     asset: assetLabel,
     action: action,
     detail: detail || ''
@@ -1092,7 +1110,7 @@ function renderStoreChips(){
   var list = stores.filter(function(s){ return currentHQFilter === 'all' || s.status === currentHQFilter; });
   var wrap = document.getElementById('storeChips');
   wrap.innerHTML = list.map(function(s){
-    return '<button class="store-chip ' + (s.name === currentStore ? 'active' : '') + '" onclick="selectStore(\'' + s.name + '\')">' + s.name + '</button>';
+    return '<button class="store-chip ' + (s.name === currentStore ? 'active' : '') + '" onclick="selectStore(\'' + s.name + '\')">' + (s.displayName || s.name) + '</button>';
   }).join('');
   if(list.length && !list.some(function(s){ return s.name === currentStore; })){
     selectStore(list[0].name);
@@ -1111,19 +1129,24 @@ function selectStore(name){
 
 function populateStoreDatalist(){
   var dl = document.getElementById('storeDatalist');
-  dl.innerHTML = stores.map(function(s){ return '<option value="' + s.name + '">'; }).join('');
+  dl.innerHTML = stores.map(function(s){
+    var label = s.displayName && s.displayName !== s.name ? (s.displayName + ' (' + s.name + ')') : s.name;
+    return '<option value="' + label + '">';
+  }).join('');
 }
 
 function handleStoreSwitch(value){
   if(!value) return;
   var term = value.trim().toLowerCase();
   if(!term) return;
-  var match = stores.filter(function(s){ return s.name.toLowerCase() === term; })[0]
-           || stores.filter(function(s){ return s.name.toLowerCase().indexOf(term) > -1; })[0];
+  var codeInParens = value.match(/\(([^)]+)\)\s*$/);
+  if(codeInParens) term = codeInParens[1].trim().toLowerCase();
+  var match = stores.filter(function(s){ return s.name.toLowerCase() === term || (s.displayName && s.displayName.toLowerCase() === term); })[0]
+           || stores.filter(function(s){ return s.name.toLowerCase().indexOf(term) > -1 || (s.displayName && s.displayName.toLowerCase().indexOf(term) > -1); })[0];
   if(match){
     filterHQ('all');
     selectStore(match.name);
-    showToast('เปลี่ยนไปสาขา ' + match.name);
+    showToast('เปลี่ยนไปสาขา ' + (match.displayName || match.name));
   } else {
     showToast('ไม่พบสาขาที่ตรงกับ "' + value + '" — ในระบบจริงจะค้นจาก 200 สาขาผ่าน API');
   }
@@ -1133,7 +1156,8 @@ function renderSummary(){
   var s = stores.filter(function(x){ return x.name === currentStore; })[0];
   var remaining = s.total - s.scanned;
   var pct = Math.round((s.scanned / s.total) * 100);
-  document.getElementById('sumStoreName').textContent = s.name;
+  var display = s.displayName || s.name;
+  document.getElementById('sumStoreName').textContent = display + (display !== s.name ? ' (' + s.name + ')' : '');
   document.getElementById('sumTotal').textContent = s.total.toLocaleString();
   document.getElementById('sumScanned').textContent = s.scanned.toLocaleString();
   document.getElementById('sumRemaining').textContent = remaining.toLocaleString();
@@ -1273,7 +1297,8 @@ var pendingImportFileName = '';
 var pendingImportFile = null;
 
 function openImportDrawer(){
-  document.getElementById('importStoreName').textContent = currentStore;
+  var s = stores.filter(function(x){ return x.name === currentStore; })[0];
+  document.getElementById('importStoreName').textContent = (s && s.displayName) ? (s.displayName + ' (' + s.name + ')') : currentStore;
   document.getElementById('importStep1').style.display = 'block';
   document.getElementById('importStep2').style.display = 'none';
   document.getElementById('importConfirmBtn').disabled = true;
@@ -1589,7 +1614,7 @@ function allAssetsFlat(){
   stores.forEach(function(s){
     assetsByStore[s.name].forEach(function(a){
       flat.push({
-        code: a.barcode, seq: a.seq, name: a.name, branch: s.name, serial: (a.serial && a.serial.length) ? a.serial : a.barcode.replace('SFU', 'SN'),
+        code: a.barcode, seq: a.seq, name: a.name, branch: (s.displayName || s.name), serial: (a.serial && a.serial.length) ? a.serial : a.barcode.replace('SFU', 'SN'),
         status: a.status, scanTime: a.lastScan, qty: a.qty != null ? a.qty : 1
       });
     });
@@ -1602,7 +1627,8 @@ function populateBranchFilter(){
   if(sel.options.length > 1) return;
   stores.forEach(function(s){
     var opt = document.createElement('option');
-    opt.value = s.name; opt.textContent = s.name;
+    var label = s.displayName || s.name;
+    opt.value = label; opt.textContent = label;
     sel.appendChild(opt);
   });
 }
@@ -1797,7 +1823,8 @@ function populateActivityBranchFilter(){
   if(sel.options.length > 1) return;
   stores.forEach(function(s){
     var opt = document.createElement('option');
-    opt.value = s.name; opt.textContent = s.name;
+    var label = s.displayName || s.name;
+    opt.value = label; opt.textContent = label;
     sel.appendChild(opt);
   });
 }
