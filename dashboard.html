@@ -317,6 +317,14 @@
           <span id="overviewDataBannerText">โหลดข้อมูลจริงไม่สำเร็จ</span>
         </div>
 
+        <div class="data-source-banner" id="importUndoBanner" style="background:var(--surface-1);color:var(--ink);border-color:var(--line-2);justify-content:space-between;">
+          <span id="importUndoBannerText">Import สำเร็จ</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-outline-red" onclick="undoLastImport()">Undo import นี้</button>
+            <button class="btn-outline" onclick="document.getElementById('importUndoBanner').style.display='none'">ปิด</button>
+          </div>
+        </div>
+
         <div class="hq-strip">
           <span class="hq-total" id="hqTotal">48 Stores</span>
           <div class="hq-segment">
@@ -862,6 +870,9 @@ function scanQrKeyOf(scan){
 function scanPhotoOf(scan){
   return scan.photo_url || scan.photo || scan.image_url || scan.photo_path || null;
 }
+function scanIdOf(scan){
+  return scan.id != null ? scan.id : (scan.scan_id != null ? scan.scan_id : null);
+}
 /* dd/mm/yy — for the Last Scan column, a date is enough; the full timestamp is
    still available in Activity Log where the exact time actually matters. */
 function formatDateShort(raw){
@@ -916,6 +927,8 @@ function buildStoresFromRealAssets(list, scansByQrKey){
       lastScan: matchingScan ? scanTimeOf(matchingScan) : '-',
       remark: a.remark || '',
       photo: matchingScan ? scanPhotoOf(matchingScan) : null,
+      scanId: matchingScan ? scanIdOf(matchingScan) : null,
+      qrKey: qrKey,
       serial: a.serial_no || a.serial || '',
       history: []
     });
@@ -1357,6 +1370,49 @@ function handleImportFile(input){
   reader.readAsArrayBuffer(file);
 }
 
+var lastImportBatchId = null;
+
+/* We don't know if /hq/assets/import/confirm returns a batch_id (Swagger only showed
+   a placeholder "string" example) — so instead of guessing that response shape, we
+   look up the real batch list right after, which is a GET we're already confident about. */
+async function lookUpAndOfferUndo(fileName){
+  try{
+    var raw = await apiFetch('/hq/assets/import-batches', { method: 'GET' });
+    var batches = Array.isArray(raw) ? raw : (raw.batches || raw.data || []);
+    if(!Array.isArray(batches) || batches.length === 0) return;
+    var sorted = batches.slice().sort(function(a, b){
+      var ta = a.created_at || a.imported_at || a.time || '';
+      var tb = b.created_at || b.imported_at || b.time || '';
+      return String(tb).localeCompare(String(ta));
+    });
+    var latest = sorted[0];
+    lastImportBatchId = latest.id != null ? latest.id : (latest.batch_id != null ? latest.batch_id : null);
+    if(lastImportBatchId == null) return;
+    document.getElementById('importUndoBannerText').textContent =
+      'Import "' + fileName + '" สำเร็จ (batch #' + lastImportBatchId + ') — ถ้า import ผิด กด Undo ได้ภายในตอนนี้';
+    document.getElementById('importUndoBanner').style.display = 'flex';
+  } catch(e){
+    // Can't confirm a batch to undo — say so instead of showing a button that might not work.
+    showToast('Import สำเร็จ แต่หา batch สำหรับ Undo ไม่เจอ (' + e.message + ') — เช็ค /hq/assets/import-batches เองใน /docs ถ้าต้องยกเลิก');
+  }
+}
+
+async function undoLastImport(){
+  if(lastImportBatchId == null){ showToast('ไม่พบ batch ที่จะ undo'); return; }
+  var batchId = lastImportBatchId;
+  try{
+    await apiFetch('/hq/assets/import-batches/' + batchId + '/undo', { method: 'POST' });
+    document.getElementById('importUndoBanner').style.display = 'none';
+    lastImportBatchId = null;
+    showToast('Undo import สำเร็จ — กำลังโหลดข้อมูลล่าสุด...');
+    var storeBeforeUndo = currentStore;
+    await loadRealData();
+    if(stores.some(function(s){ return s.name === storeBeforeUndo; })) selectStore(storeBeforeUndo);
+  } catch(e){
+    showToast('Undo ไม่สำเร็จ: ' + e.message);
+  }
+}
+
 async function confirmImport(){
   if(!pendingImportFile){ showToast('ไม่พบไฟล์ที่จะ import — เลือกไฟล์ใหม่อีกครั้ง'); return; }
   var btn = document.getElementById('importConfirmBtn');
@@ -1381,6 +1437,7 @@ async function confirmImport(){
     if(stores.some(function(s){ return s.name === storeBeingImportedTo; })){
       selectStore(storeBeingImportedTo);
     }
+    await lookUpAndOfferUndo(fileNameToSend);
   } catch(e){
     showToast('Import ไม่สำเร็จ: ' + e.message);
     btn.disabled = false;
@@ -1388,7 +1445,18 @@ async function confirmImport(){
   }
 }
 
-function saveDrawer(){
+/* Best-effort mapping from our internal status to the scan's `condition` field.
+   'good'/'damaged' are confirmed by the scan_logs schema notes from earlier;
+   the rest (missing/duplicate/wrong_location/disposed) are our best guess and
+   need to be verified live — if the backend rejects one, the error banner
+   below will say so rather than silently pretending it worked. */
+function statusToCondition(status){
+  var map = { verified: 'good', pending: 'pending', missing: 'missing', damaged: 'damaged',
+              duplicate: 'duplicate', wrong_location: 'wrong_location', disposed: 'disposed' };
+  return map[status] || status;
+}
+
+async function saveDrawer(){
   var barcode = document.getElementById('fBarcode').value.trim();
   var category = document.getElementById('fCategory').value.trim();
   var location = document.getElementById('fLocation').value.trim();
@@ -1397,11 +1465,12 @@ function saveDrawer(){
   var photoImg = document.querySelector('#photoBox img');
   var photo = photoImg ? photoImg.getAttribute('src') : null;
 
+  var reasonLabels = {sold:'ขายแล้ว', donated:'บริจาค', damaged_beyond_repair:'เสียหายจนซ่อมไม่ได้', lost:'สูญหาย', other:'อื่นๆ'};
+  var reasonVal = '';
   if(status === 'disposed'){
-    var reasonSel = document.getElementById('fWriteOffReason');
-    var reason = reasonSel.value;
-    if(!reason){ showToast('กรุณาเลือกเหตุผลที่ Write off ก่อนบันทึก'); return; }
-    if(reason === 'other' && !remark){ showToast('กรุณาระบุรายละเอียดใน Remark สำหรับเหตุผล "อื่นๆ"'); return; }
+    reasonVal = document.getElementById('fWriteOffReason').value;
+    if(!reasonVal){ showToast('กรุณาเลือกเหตุผลที่ Write off ก่อนบันทึก'); return; }
+    if(reasonVal === 'other' && !remark){ showToast('กรุณาระบุรายละเอียดใน Remark สำหรับเหตุผล "อื่นๆ"'); return; }
   }
   if(isAddMode && !barcode){ showToast('Barcode is required'); return; }
 
@@ -1409,8 +1478,10 @@ function saveDrawer(){
   saveBtn.disabled = true;
   saveBtn.textContent = 'Saving...';
 
-  setTimeout(function(){
-    if(isAddMode){
+  if(isAddMode){
+    // Adding a brand-new asset has no confirmed backend endpoint yet (see checklist) —
+    // stays local-only for now, clearly labeled as such.
+    setTimeout(function(){
       var newName = category || 'New asset';
       assetsByStore[currentStore].unshift({
         name: newName, seq: nextSeqFor(currentStore), barcode: barcode, category: category || 'Uncategorized',
@@ -1418,31 +1489,49 @@ function saveDrawer(){
         history: [{event:'Added', by: currentUser, time:'Just now'}]
       });
       logActivity(currentStore, newName, 'Added', '');
-      showToast('Asset added');
-    } else {
-      var a = assetsByStore[currentStore][editingAssetIndex];
-      a.barcode = barcode; a.category = category; a.location = location || a.location;
-      a.status = status; a.remark = remark; if(photo) a.photo = photo;
-      if(status === 'disposed'){
-        var reasonLabels = {sold:'ขายแล้ว', donated:'บริจาค', damaged_beyond_repair:'เสียหายจนซ่อมไม่ได้', lost:'สูญหาย', other:'อื่นๆ'};
-        var reasonVal = document.getElementById('fWriteOffReason').value;
-        a.history.push({event:'Write off — เหตุผล: ' + reasonLabels[reasonVal], by: currentUser, time:'Just now'});
-        logActivity(currentStore, a.name, 'Write off', 'เหตุผล: ' + reasonLabels[reasonVal]);
-      } else {
-        a.history.push({event:'Status set to ' + status, by: currentUser, time:'Just now'});
-        logActivity(currentStore, a.name, 'Status change', 'set to ' + status);
-      }
-      if(status === 'verified') a.lastScan = 'Just now';
-      showToast('Saved');
-    }
-    saveBtn.textContent = '✔ Saved';
-    setTimeout(function(){
-      closeDrawer();
-      renderAssetList();
-      saveBtn.disabled = false;
-      saveBtn.textContent = 'Save';
-    }, 450);
-  }, 450);
+      showToast('เพิ่มในหน้าจอนี้แล้ว (ยังไม่มี endpoint สำหรับสร้าง asset เดี่ยว ๆ จริง — ไม่ persist ถาวร)');
+      saveBtn.textContent = '✔ Saved';
+      setTimeout(function(){
+        closeDrawer(); renderAssetList();
+        saveBtn.disabled = false; saveBtn.textContent = 'Save';
+      }, 450);
+    }, 300);
+    return;
+  }
+
+  var a = assetsByStore[currentStore][editingAssetIndex];
+
+  if(!a.scanId){
+    // Never been scanned — updating status would mean creating a new scan
+    // (POST /scans), which needs an active audit session. Not wired yet.
+    showToast('Asset นี้ยังไม่เคยถูกสแกน — บันทึกสถานะยังทำไม่ได้จริง (ต้องมี session การตรวจก่อน) รอเชื่อม POST /scans');
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+    return;
+  }
+
+  var fullRemark = remark;
+  if(status === 'disposed'){
+    fullRemark = 'Write off — เหตุผล: ' + (reasonLabels[reasonVal] || reasonVal) + (remark ? (' — ' + remark) : '');
+  }
+
+  try{
+    await apiFetch('/hq/scans/' + a.scanId, {
+      method: 'PATCH',
+      body: JSON.stringify({ condition: statusToCondition(status), remark: fullRemark })
+    });
+    // Trust the server, not our own optimism — reload real data so the drawer
+    // and every list reflect what's actually saved.
+    var storeBeingEdited = currentStore;
+    closeDrawer();
+    await loadRealData();
+    if(stores.some(function(s){ return s.name === storeBeingEdited; })) selectStore(storeBeingEdited);
+    showToast('บันทึกเข้า production จริงแล้ว');
+  } catch(e){
+    showToast('บันทึกไม่สำเร็จ: ' + e.message + ' — ลองเช็ค PATCH /hq/scans/{id} ใน /docs ว่า field ตรงกันไหม');
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+  }
 }
 
 function toggleWriteOffReason(){
