@@ -570,22 +570,22 @@
     </button>
   </div>
   <div class="drawer-body">
-    <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 14px;">อัปโหลดไฟล์ Master List (CSV) สำหรับสาขา <b id="importStoreName">Central Rama 2</b> ระบบจะตรวจสอบก่อนเขียนเข้าจริง</p>
+    <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 14px;">อัปโหลดไฟล์ Master List (CSV/Excel — คอลัมน์เดียวกับที่ระบบเดิมใช้: รหัสสินทรัพย์, รหัสที่ตั้ง, ชื่อที่ตั้ง, รายละเอียดสินทรัพย์, เลขที่เครื่อง ฯลฯ) สำหรับสาขา <b id="importStoreName">Central Rama 2</b> ระบบจะตรวจสอบก่อนเขียนเข้าจริง</p>
     <button class="row-action" style="margin-bottom:14px;" onclick="showToast('ดาวน์โหลด template.csv')">⬇ ดาวน์โหลด Template</button>
 
     <div id="importStep1">
       <div class="dropzone">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-width="1.6" stroke-linecap="round"/></svg>
         <p style="font-size:12.5px;margin:8px 0 0;">ลากไฟล์มาวาง หรือ</p>
-        <button class="dropzone-btn" onclick="document.getElementById('importFileInput').click()">เลือกไฟล์ CSV</button>
-        <input type="file" id="importFileInput" accept=".csv" style="display:none" onchange="handleImportFile(this)">
+        <button class="dropzone-btn" onclick="document.getElementById('importFileInput').click()">เลือกไฟล์ CSV / Excel</button>
+        <input type="file" id="importFileInput" accept=".csv,.xls,.xlsx" style="display:none" onchange="handleImportFile(this)">
       </div>
     </div>
 
     <div id="importStep2" style="display:none;">
       <div class="import-summary" id="importSummaryText"></div>
       <table class="import-preview">
-        <thead><tr><th>Asset</th><th>Barcode</th><th>Category</th><th>Location</th></tr></thead>
+        <thead><tr><th>Asset</th><th>Asset Code</th><th>Serial</th><th>Location</th><th>Status</th></tr></thead>
         <tbody id="importPreviewRows"></tbody>
       </table>
     </div>
@@ -908,7 +908,8 @@ function buildStoresFromRealAssets(list, scansByQrKey){
     grouped[code].items.push({
       name: a.name || a.asset_name || ('Asset ' + baseCode),
       seq: seqNum ? ('SEQ' + seqNum) : (a.qr_key || '—'),
-      barcode: baseCode + (seqNum ? ('-' + seqNum) : ''),
+      barcode: baseCode + (seqNum ? ('SEQ' + seqNum) : ''),
+      rawAssetCode: baseCode,
       category: a.category || 'Uncategorized',
       location: a.location_detail || name,
       status: matchingScan ? statusFromScan(matchingScan) : 'pending',
@@ -1269,47 +1270,103 @@ function closeImportDrawer(){
   document.getElementById('importDrawer').classList.remove('show');
 }
 
+function getField(row, names){
+  for(var i=0;i<names.length;i++){
+    if(row[names[i]] !== undefined && row[names[i]] !== null && String(row[names[i]]).trim() !== '') return row[names[i]];
+  }
+  return '';
+}
+
 function handleImportFile(input){
   if(!input.files || !input.files[0]) return;
-  pendingImportFileName = input.files[0].name;
+  var file = input.files[0];
+  pendingImportFileName = file.name;
 
-  // Prototype uses mock data; production would parse the actual CSV/XLSX here.
-  var mockNames = ["Barcode scanner","Cash drawer","Security tag gun","Storage rack","Signage board"];
-  var mockLocations = ["Stockroom","Floor 1","Floor 2","Office"];
-  pendingImportRows = [];
-  for(var i=0;i<6;i++){
-    pendingImportRows.push({
-      name: mockNames[i % mockNames.length] + " " + (200+i),
-      barcode: "SFU042026099" + i,
-      category: i % 2 === 0 ? "Equipment" : "Fixture",
-      location: mockLocations[i % mockLocations.length]
-    });
+  if(typeof XLSX === 'undefined'){
+    showToast('โหลด library อ่านไฟล์ไม่สำเร็จ (เช็คอินเทอร์เน็ต) — ลองใหม่อีกครั้ง');
+    return;
   }
-  var duplicateCount = 2;
 
-  document.getElementById('importStep1').style.display = 'none';
-  document.getElementById('importStep2').style.display = 'block';
-  document.getElementById('importSummaryText').innerHTML =
-    'ไฟล์ <b>' + pendingImportFileName + '</b> — พบ <b>' + (pendingImportRows.length + duplicateCount) + ' แถว</b>: '
-    + '<b>' + pendingImportRows.length + ' รายการใหม่</b>, '
-    + '<b>' + duplicateCount + ' รายการซ้ำกับ Master List เดิม (จะข้าม)</b>';
-  document.getElementById('importPreviewRows').innerHTML = pendingImportRows.map(function(r){
-    return '<tr><td>' + r.name + '</td><td>' + r.barcode + '</td><td>' + r.category + '</td><td>' + r.location + '</td></tr>';
-  }).join('');
-  document.getElementById('importConfirmBtn').disabled = false;
-  document.getElementById('importConfirmBtn').style.opacity = '1';
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var rawRows;
+    try{
+      var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      rawRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    } catch(err){
+      showToast('อ่านไฟล์ไม่สำเร็จ: ' + err.message);
+      return;
+    }
+
+    // Real Master List column headers (matches the actual export format used today).
+    var parsed = rawRows.map(function(row){
+      return {
+        assetCode: getField(row, ['รหัสสินทรัพย์', 'Asset Code', 'asset_code']),
+        seq: getField(row, ['ลำดับ', 'SEQ', 'seq']),
+        locationCode: getField(row, ['รหัสที่ตั้ง', 'Location Code', 'location_code']),
+        locationName: getField(row, ['ชื่อที่ตั้ง', 'Location Name', 'location_name']),
+        name: getField(row, ['รายละเอียดสินทรัพย์(อังกฤษ)', 'รายละเอียดสินทรัพย์', 'Asset Name', 'name']),
+        status: getField(row, ['สถานะสินทรัพย์', 'Status']),
+        serial: getField(row, ['เลขที่เครื่อง', 'Serial', 'serial_no']),
+        purchaseDate: getField(row, ['วันที่ซื้อ', 'Purchase Date']),
+        qty: getField(row, ['จำนวน', 'Qty']),
+        assetValue: getField(row, ['มูลค่าสินทรัพย์', 'Asset Value']),
+        bookValue: getField(row, ['มูลค่าทางบัญชี', 'Book Value'])
+      };
+    }).filter(function(r){
+      var code = String(r.assetCode).trim();
+      return code !== '' && code.toLowerCase() !== 'grand total';
+    });
+
+    if(parsed.length === 0){
+      showToast('ไม่พบแถวข้อมูลที่อ่านได้ในไฟล์นี้ — เช็คว่าหัวคอลัมน์ตรงกับ Master List ต้นฉบับไหม');
+      return;
+    }
+
+    var existingCodes = {};
+    (assetsByStore[currentStore] || []).forEach(function(a){ if(a.rawAssetCode) existingCodes[a.rawAssetCode] = true; });
+
+    var newRows = [], duplicateRows = [];
+    parsed.forEach(function(r){
+      if(existingCodes[String(r.assetCode).trim()]) duplicateRows.push(r); else newRows.push(r);
+    });
+    pendingImportRows = newRows;
+
+    var mismatchNote = '';
+    var firstLoc = String(parsed[0].locationCode || '').replace(/\.0$/, '').padStart(currentStore.length, '0');
+    if(parsed[0].locationCode && firstLoc !== currentStore){
+      mismatchNote = ' <span style="color:var(--red-fg);">— ⚠ ไฟล์นี้ดูเหมือนเป็นของสาขา ' + parsed[0].locationCode + ' ไม่ใช่ ' + currentStore + ' เช็คก่อน confirm</span>';
+    }
+
+    document.getElementById('importStep1').style.display = 'none';
+    document.getElementById('importStep2').style.display = 'block';
+    document.getElementById('importSummaryText').innerHTML =
+      'ไฟล์ <b>' + pendingImportFileName + '</b> — พบ <b>' + parsed.length + ' แถว</b>: '
+      + '<b>' + newRows.length + ' รายการใหม่</b>, '
+      + '<b>' + duplicateRows.length + ' รายการซ้ำกับ Master List เดิม (จะข้าม)</b>' + mismatchNote;
+    document.getElementById('importPreviewRows').innerHTML = newRows.map(function(r){
+      return '<tr><td>' + r.name + '</td><td>' + r.assetCode + '</td><td>' + r.serial + '</td><td>' + (r.locationName || r.locationCode) + '</td><td>' + r.status + '</td></tr>';
+    }).join('');
+    document.getElementById('importConfirmBtn').disabled = newRows.length === 0;
+    document.getElementById('importConfirmBtn').style.opacity = newRows.length === 0 ? '.5' : '1';
+  };
+  reader.onerror = function(){ showToast('อ่านไฟล์ไม่สำเร็จ'); };
+  reader.readAsArrayBuffer(file);
 }
 
 function confirmImport(){
   pendingImportRows.forEach(function(r){
+    var seqNum = seqDigitsOf(r.seq) || seqDigitsOf(nextSeqFor(currentStore).replace('SEQ',''));
     assetsByStore[currentStore].unshift({
-      name: r.name, seq: nextSeqFor(currentStore), barcode: r.barcode, category: r.category,
-      location: r.location, status: 'pending', lastScan: '-', remark: '',
+      name: r.name, seq: 'SEQ' + seqNum, barcode: r.assetCode + 'SEQ' + seqNum, rawAssetCode: String(r.assetCode).trim(),
+      category: 'Uncategorized', location: r.locationName || r.locationCode || currentStore,
+      status: 'pending', lastScan: '-', remark: '', serial: r.serial || '',
       history: [{event:'Imported', by: currentUser, time:'Just now', detail:'จากไฟล์ ' + pendingImportFileName}]
     });
     logActivity(currentStore, r.name, 'Imported', 'จากไฟล์ ' + pendingImportFileName);
   });
-  showToast('Imported ' + pendingImportRows.length + ' assets');
+  showToast('เพิ่ม ' + pendingImportRows.length + ' รายการในหน้าจอนี้แล้ว (ยังไม่ได้เขียนเข้า production DB จริง — รอเชื่อม /hq/assets/import/confirm)');
   closeImportDrawer();
   renderAssetList();
   renderSummary();
@@ -1380,7 +1437,7 @@ function toggleWriteOffReason(){
 function nextSeqFor(storeName){
   var idx = stores.map(function(s){ return s.name; }).indexOf(storeName);
   var count = assetsByStore[storeName].length + 1;
-  return "SEQ-" + String(idx * 300 + count).padStart(6, "0");
+  return "SEQ" + String((idx * 300 + count) % 1000).padStart(3, "0");
 }
 
 var toastTimer;
