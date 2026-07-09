@@ -378,6 +378,8 @@
           <button class="add-btn" onclick="openAddDrawer()">+ Add Asset</button>
         </div>
 
+        <p id="assetResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
+
         <div class="filter-chips" id="filterChips" style="margin-bottom:14px;"></div>
 
         <div class="asset-table">
@@ -430,6 +432,7 @@
           </div>
           <button class="add-btn" onclick="showToast('เปิดฟอร์มเพิ่ม Asset')">+ Add Asset</button>
         </div>
+        <p id="asResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
         <div class="as-table-wrap">
           <table class="as-table">
             <thead><tr><th>#</th><th>Asset code</th><th>SEQ</th><th>ชื่อ Asset</th><th>สาขา</th><th>Serial no.</th><th>Qty</th><th>สถานะ</th><th>เวลาสแกน</th><th>Actions</th></tr></thead>
@@ -1205,6 +1208,10 @@ function renderAssetList(){
     return matchesFilter && matchesSearch;
   });
   lastOverviewExportList = list;
+  var countEl = document.getElementById('assetResultCount');
+  countEl.textContent = term
+    ? ('พบ ' + list.length.toLocaleString() + ' รายการที่ตรงกับ "' + document.getElementById('assetSearch').value + '"')
+    : ('ทั้งหมด ' + list.length.toLocaleString() + ' รายการ');
   var wrap = document.getElementById('assetRows');
   if(list.length === 0){
     wrap.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);">No assets match this filter.</div>';
@@ -1711,6 +1718,20 @@ function renderAssetSummary(){
     return mKpi && mBranch && mStatus && mSearch;
   });
   lastAssetSummaryExportList = filtered;
+
+  var branchesInResult = {};
+  filtered.forEach(function(a){ branchesInResult[a.branch] = (branchesInResult[a.branch] || 0) + 1; });
+  var branchNames = Object.keys(branchesInResult);
+  var countEl = document.getElementById('asResultCount');
+  if(filtered.length === 0){
+    countEl.textContent = '';
+  } else if(branchNames.length === 1){
+    countEl.textContent = 'พบ ' + filtered.length.toLocaleString() + ' รายการ จากสาขา ' + branchNames[0];
+  } else {
+    countEl.textContent = 'พบ ' + filtered.length.toLocaleString() + ' รายการ จาก ' + branchNames.length + ' สาขา ('
+      + branchNames.slice(0, 5).map(function(b){ return b + ' ' + branchesInResult[b]; }).join(', ')
+      + (branchNames.length > 5 ? ', ...' : '') + ')';
+  }
 
   if(filtered.length === 0){
     tbody.innerHTML = asEmptyStateHtml();
