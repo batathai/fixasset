@@ -14,7 +14,7 @@ app = FastAPI(title="Bata Asset Audit API", version="1.2.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://batathai.github.io","http://localhost","http://127.0.0.1","*"],
+    allow_origins=["https://batathai.github.io","http://localhost","http://127.0.0.1","https://fixasset.batathai.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
