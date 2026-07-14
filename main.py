@@ -588,7 +588,7 @@ def hq_get_all_assets(db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
     cur.execute("""
         SELECT a.id, a.qr_key, a.asset_code, a.seq, a.name, a.serial_no,
-               a.location_code, a.purchase_date, a.status,
+               a.location_code, a.purchase_date, a.status, a.qty,
                CASE WHEN sl.id IS NOT NULL THEN true ELSE false END AS is_scanned,
                sl.scanned_at, u.email AS scanned_by, s.branch_id
         FROM assets a
