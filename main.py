@@ -72,6 +72,13 @@ class ScanLogUpdate(BaseModel):
     serial_found: Optional[str] = None
     hq_note: Optional[str] = None
 
+class ScanLogPatchByQR(BaseModel):
+    photo_url: Optional[str] = None
+    remark: Optional[str] = None
+    serial_found: Optional[str] = None
+    serial_match: Optional[bool] = None
+    condition: Optional[str] = None
+
 class UnmatchedUpdate(BaseModel):
     status: str
     hq_note: Optional[str] = None
@@ -517,6 +524,54 @@ def delete_scan_by_qr(session_id: int, qr_key: str, db=Depends(get_db), user=Dep
     cur.execute("DELETE FROM scan_logs WHERE id = %s", (row["id"],))
     db.commit()
     return {"ok": True, "deleted_scan_id": row["id"]}
+
+# ════════════════════════════════════════════════════════════════
+# BRANCH SELF-SERVICE SCAN UPDATE (แก้บั๊ก "ถ่ายรูปแล้วอัพขึ้น Cloudinary สำเร็จ
+# แต่ Dashboard ไม่มีรูป")
+# สาเหตุจริง: index.html สร้าง scan_log ทันทีตอนสแกนเจอ QR (POST /scans ครั้งแรก,
+# ยังไม่มีรูป) แล้วพอผู้ใช้ถ่ายรูป+กด SAVE จะยิง POST /scans อีกครั้งพร้อม photo_url
+# ซึ่งชนกับ scan_log ที่มีอยู่แล้ว (asset เดิม, session เดิม) โดน guard "already_scanned"
+# ตอบ 409 กลับไป แล้ว photo_url ก็หายไปเงียบๆ เพราะ frontend ปฏิบัติกับ 409 เป็น "สำเร็จ"
+# (ดู reliableSend ใน index.html) ทางแก้: แยก endpoint นี้ไว้ "แก้ไข" record ที่มีอยู่แล้ว
+# แทนที่จะพยายาม POST ซ้ำ — index.html เรียก endpoint นี้แทน saveScanLog() ตอนแนบรูป/remark
+# ════════════════════════════════════════════════════════════════
+@app.patch("/scans")
+def update_scan_by_qr(session_id: int, qr_key: str, req: ScanLogPatchByQR,
+                       db=Depends(get_db), user=Depends(get_current_user)):
+    cur = db.cursor()
+    cur.execute("SELECT id, branch_id, status FROM audit_sessions WHERE id = %s", (session_id,))
+    sess = cur.fetchone()
+    if not sess:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if user["role"] != "hq_admin" and sess["branch_id"] != user.get("branch_id"):
+        raise HTTPException(status_code=403, detail="ไม่มีสิทธิ์แก้ไข scan ของสาขาอื่น")
+    if sess["status"] == "done" and user["role"] != "hq_admin":
+        raise HTTPException(status_code=400, detail={
+            "error": "session_closed",
+            "message": "Session นี้ปิดงานแล้ว แก้ไขจากหน้าแอพสแกนไม่ได้ กรุณาแจ้ง HQ"
+        })
+    cur.execute("""
+        SELECT sl.id FROM scan_logs sl
+        JOIN assets a ON a.id = sl.asset_id
+        WHERE sl.session_id = %s AND a.qr_key = %s
+    """, (session_id, qr_key))
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="ไม่พบ scan ของ QR นี้ในรอบนี้ (อาจยังไม่ถูกบันทึกเข้าระบบ)")
+
+    fields, values = [], []
+    if req.photo_url is not None: fields.append("photo_url = %s"); values.append(req.photo_url)
+    if req.remark is not None: fields.append("remark = %s"); values.append(req.remark)
+    if req.serial_found is not None: fields.append("serial_found = %s"); values.append(req.serial_found)
+    if req.serial_match is not None: fields.append("serial_match = %s"); values.append(req.serial_match)
+    if req.condition is not None: fields.append("condition = %s"); values.append(req.condition)
+    if not fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    fields.append("updated_at = NOW()")
+    values.append(row["id"])
+    cur.execute(f"UPDATE scan_logs SET {', '.join(fields)} WHERE id = %s", values)
+    db.commit()
+    return {"ok": True, "scan_id": row["id"]}
 
 @app.get("/hq/scan-delete-logs")
 def hq_get_scan_delete_logs(branch_id: Optional[str] = None, session_id: Optional[int] = None,
