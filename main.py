@@ -324,7 +324,7 @@ def create_scan(req: ScanLogCreate, db=Depends(get_db), user=Depends(get_current
 def get_scans(session_id: int, db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
     cur.execute("""
-        SELECT sl.id, sl.scanned_at, sl.serial_match, sl.condition, sl.remark,
+        SELECT sl.id, sl.scanned_at, sl.serial_match, sl.condition, sl.remark, sl.photo_url,
                a.qr_key, a.name, a.serial_no
         FROM scan_logs sl
         JOIN assets a ON a.id = sl.asset_id
