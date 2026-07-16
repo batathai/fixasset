@@ -195,6 +195,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 #close-report table{width:100%;border-collapse:collapse;font-size:12px;}
 #close-report th,#close-report td{border:1px solid #999;padding:5px 7px;text-align:left;}
 #close-report th{background:#eee;}
+#close-report .sig-row{display:flex;justify-content:space-between;gap:50px;margin-top:50px;}
+#close-report .sig-block{flex:1;font-size:12px;color:#000;font-family:sans-serif;}
+#close-report .sig-line{border-bottom:1px solid #000;height:55px;margin-bottom:8px;}
 @media print{
   body *{visibility:hidden;}
   #close-report, #close-report *{visibility:visible;}
@@ -471,13 +474,24 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
         <option value="unmatched">? Unmatched</option>
       </select>
     </div>
+    <div class="fg" style="margin-bottom:14px;">
+      <div class="fl">Photo</div>
+      <div class="ph-area" onclick="document.getElementById('edit-photo-input').click()" style="padding:12px;display:flex;align-items:center;gap:10px;text-align:left;">
+        <input type="file" id="edit-photo-input" accept="image/*" capture="environment" style="display:none" onchange="prevEditPhoto(this)">
+        <img id="edit-photo-prev" class="ph-prev" style="width:60px;height:60px;object-fit:cover;border-radius:6px;flex-shrink:0;display:none;">
+        <div id="edit-photo-ph" style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:22px;">📷</span>
+          <div><div style="font-size:13px;font-weight:500;">Tap to add / replace photo</div><div style="font-size:11px;color:var(--gray3);" id="edit-photo-status">No photo yet</div></div>
+        </div>
+      </div>
+    </div>
     <div class="fg" style="margin-bottom:20px;">
       <div class="fl">Remark</div>
       <input class="fi" id="edit-remark" placeholder="หมายเหตุ..."/>
     </div>
     <div class="br">
       <button class="btn-g" onclick="closeEditModal()">Cancel</button>
-      <button class="btn-c" onclick="saveEdit()">SAVE</button>
+      <button class="btn-c" id="edit-save-btn" onclick="saveEdit()">SAVE</button>
     </div>
     <div style="margin-top:12px;text-align:center;">
       <button onclick="deleteEntry(editTarget)" style="background:none;border:none;color:var(--red);font-size:13px;cursor:pointer;text-decoration:underline;">🗑 ลบรายการนี้</button>
@@ -1692,7 +1706,11 @@ async function buildCloseReport() {
     <table>
       <thead><tr><th>#</th><th>QR / Asset Code</th><th>ชื่อ Asset</th><th>Serial</th><th>สภาพ</th><th>ผลตรวจ</th><th>เวลาที่สแกน</th></tr></thead>
       <tbody>${rows || '<tr><td colspan="7">ไม่มีรายการ</td></tr>'}</tbody>
-    </table>`;
+    </table>
+    <div class="sig-row">
+      <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจนับ (Auditor)<br>วันที่ ..........................</div>
+      <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจสอบ / รับรอง (HQ)<br>วันที่ ..........................</div>
+    </div>`;
 
   // ต้องรอให้ browser วาด DOM ให้เสร็จก่อนค่อยเปิด print dialog ไม่งั้นบางเบราว์เซอร์จะพิมพ์หน้าว่าง
   await new Promise(r => setTimeout(r, 150));
@@ -1804,26 +1822,77 @@ function showUploadOverlay(show) {
 
 // ── EDIT MODAL ────────────────────────────────────────────────
 let editTarget = null;
+let editPhotoFile = null;
+let editPhotoExistingUrl = null;
+
 function openEditModal(idx) {
   const item = S.log[idx];
   if (!item) return;
   editTarget = idx;
+  editPhotoFile = null;
+  editPhotoExistingUrl = item.photo_url || null;
   document.getElementById('edit-key').textContent = item.k;
   document.getElementById('edit-remark').value = item.remark||'';
   document.getElementById('edit-type').value = item.type;
+  document.getElementById('edit-photo-input').value = '';
+  const prev = document.getElementById('edit-photo-prev');
+  const status = document.getElementById('edit-photo-status');
+  if (editPhotoExistingUrl) {
+    prev.src = editPhotoExistingUrl; prev.style.display = 'block';
+    status.textContent = 'มีรูปอยู่แล้ว — แตะเพื่อเปลี่ยน';
+  } else {
+    prev.style.display = 'none';
+    status.textContent = 'No photo yet';
+  }
   document.getElementById('edit-modal').classList.add('show');
+}
+function prevEditPhoto(inp) {
+  const file = inp.files[0];
+  if (!file) return;
+  editPhotoFile = file;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const prev = document.getElementById('edit-photo-prev');
+    prev.src = e.target.result; prev.style.display = 'block';
+    document.getElementById('edit-photo-status').textContent = 'รูปใหม่ (จะอัพตอนกด SAVE)';
+  };
+  reader.readAsDataURL(file);
 }
 function closeEditModal() {
   document.getElementById('edit-modal').classList.remove('show');
   editTarget = null;
+  editPhotoFile = null;
 }
-function saveEdit() {
+async function saveEdit() {
   if (editTarget === null) return;
   const item = S.log[editTarget];
   if (!item) return;
-  item.remark = document.getElementById('edit-remark').value;
-  item.type   = document.getElementById('edit-type').value;
+  const btn = document.getElementById('edit-save-btn');
+  const remark = document.getElementById('edit-remark').value;
+  const type = document.getElementById('edit-type').value;
+
+  let photoUrl = editPhotoExistingUrl;
+  if (editPhotoFile) {
+    btn.textContent = 'กำลังอัพโหลดรูป...'; btn.disabled = true;
+    try {
+      photoUrl = await uploadToCloudinary(editPhotoFile, S.branch||'unknown');
+    } catch(e) {
+      toast('⚠ Upload รูปล้มเหลว — บันทึกส่วนอื่นต่อโดยไม่มีรูปใหม่');
+    }
+  }
+
+  item.remark = remark;
+  item.type   = type;
+  if (photoUrl) item.photo_url = photoUrl;
   saveSession();
+
+  // FIX: เดิม saveEdit() แก้แค่ S.log ในเครื่อง (localStorage) ไม่เคยส่งไป backend เลย
+  // ทั้งที่มีปุ่ม SAVE ให้กดจริง ตอนนี้ยิง PATCH /scans เพื่ออัปเดต remark/รูปเข้า
+  // record จริงด้วย (ใช้ endpoint เดียวกับที่แก้บั๊กรูปหายตอนสแกนใหม่)
+  btn.textContent = 'กำลังบันทึก...'; btn.disabled = true;
+  await updateScanLog(item.k, {remark, photo_url: photoUrl});
+  btn.textContent = 'SAVE'; btn.disabled = false;
+
   speak(VOICE.saved);   // 🔊 "บันทึกเรียบร้อย"
   toast('แก้ไขแล้ว ✓');
   closeEditModal();
