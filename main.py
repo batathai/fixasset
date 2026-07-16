@@ -931,7 +931,10 @@ async def hq_import_assets_preview(file: UploadFile = File(...), user=Depends(ge
     cur = db.cursor()
     codes = [(r["asset_code"], r["seq"]) for r in rows]
     if codes:
-        cur.execute("SELECT asset_code, seq FROM assets WHERE (asset_code, seq) IN %s", (tuple(codes),))
+        # FIX: เดิมเช็ค duplicate จากทุกแถวไม่ว่า is_active หรือไม่ ทำให้ asset ที่เคยถูก
+        # Undo import ไปแล้ว (is_active=false) ยังถูกฟ้องว่า "ซ้ำ" อยู่ตลอดไป ทั้งที่จริงๆ
+        # ควร import ใหม่ได้ (ดูคอมเมนต์ยาวใน /hq/assets/import/confirm ด้านล่าง)
+        cur.execute("SELECT asset_code, seq FROM assets WHERE (asset_code, seq) IN %s AND COALESCE(is_active, true) = true", (tuple(codes),))
         existing = {(r["asset_code"], r["seq"]) for r in cur.fetchall()}
     else:
         existing = set()
@@ -959,13 +962,38 @@ async def hq_import_assets_confirm(file: UploadFile = File(...), user=Depends(ge
     inserted = skipped = 0
     try:
         for r in rows:
+            # FIX (root cause of "import สำเร็จแต่หาไม่เจอ" ที่เกิดซ้ำๆ): เดิมใช้
+            # ON CONFLICT (asset_code, seq) DO NOTHING เฉยๆ — ปัญหาคือ "Undo import"
+            # (ดู /hq/assets/import-batches/{batch_id}/undo ด้านล่าง) แค่ set is_active=false
+            # ไม่เคยลบแถวจริง ดังนั้นถ้าเคย import แล้ว undo ไป asset_code+seq นั้นจะชน
+            # unique constraint นี้ตลอดไป โดน DO NOTHING skip ทุกครั้งที่ import ซ้ำ
+            # (ต่อให้เป็นไฟล์ถูกต้อง คนละไฟล์ก็ตาม) และเพราะ is_active=false มันจะไม่โผล่ใน
+            # /hq/assets เลย กลายเป็น "หายไปถาวร" ทั้งที่ user ไม่ได้ทำอะไรผิด
+            # ทางแก้: ถ้า conflict เกิดกับแถวที่ is_active=false อยู่แล้ว (เคยถูก undo)
+            # ให้ reactivate + อัปเดตข้อมูลใหม่แทนที่จะ skip เงียบๆ — ส่วนแถวที่ยัง
+            # is_active=true (ซ้ำจริงกับของที่ใช้งานอยู่) ยังคง skip เหมือนเดิม
             cur.execute("""
                 INSERT INTO assets
                     (asset_code, seq, qr_key, location_code, location_name, name,
                      status, serial_no, purchase_date, qty, purchase_price,
                      accumulated_dep, net_book_value, import_batch_id, is_active, imported_at)
                 VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,true,NOW())
-                ON CONFLICT (asset_code, seq) DO NOTHING
+                ON CONFLICT (asset_code, seq) DO UPDATE SET
+                    qr_key = EXCLUDED.qr_key,
+                    location_code = EXCLUDED.location_code,
+                    location_name = EXCLUDED.location_name,
+                    name = EXCLUDED.name,
+                    status = EXCLUDED.status,
+                    serial_no = EXCLUDED.serial_no,
+                    purchase_date = EXCLUDED.purchase_date,
+                    qty = EXCLUDED.qty,
+                    purchase_price = EXCLUDED.purchase_price,
+                    accumulated_dep = EXCLUDED.accumulated_dep,
+                    net_book_value = EXCLUDED.net_book_value,
+                    import_batch_id = EXCLUDED.import_batch_id,
+                    is_active = true,
+                    imported_at = NOW()
+                WHERE assets.is_active = false
             """, (r["asset_code"], r["seq"], r["qr_key"], r["location_code"], r["location_name"],
                   r["name"], r["status"], r["serial_no"], r["purchase_date"], r["qty"],
                   r["purchase_price"], r["accumulated_dep"], r["net_book_value"], batch_id))
