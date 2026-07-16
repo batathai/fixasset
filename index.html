@@ -878,6 +878,9 @@ async function flushQueue() {
           serial_match:item.extra.serial_match??null,
           condition:item.extra.condition||'good',
           remark:item.extra.remark||null,
+          // FIX: เดิมลืมส่ง photo_url ไปด้วย — รูปอัพขึ้น Cloudinary สำเร็จจริง แต่ backend ไม่รู้ URL
+          // เลยได้แค่ scan record เปล่าๆ ไม่มีรูปติดไปเลย (เจอจากหน้างานที่ถ่ายรูปแล้วรูปหายไปตอนดูใน Dashboard)
+          photo_url:item.extra.photo_url||null,
           scanned_by:S.user||null
         })
       });
@@ -1420,7 +1423,8 @@ async function saveScanLog(qrKey, type, extra={}) {
   if (!S.sid||!S.token) { toast('⚠️ ยังไม่ได้เชื่อมต่อ session — สแกนนี้จะไม่ถูกบันทึก'); return; }
   await reliableSend(API+'/scans', {session_id:S.sid, qr_key:qrKey,
     serial_found:extra.serial_found||null, serial_match:extra.serial_match??null,
-    condition:extra.condition||'good', remark:extra.remark||null});
+    condition:extra.condition||'good', remark:extra.remark||null,
+    photo_url:extra.photo_url||null}); // FIX: เดิมลืมส่ง photo_url เหมือนกับใน flushQueue()
 }
 async function saveUnmatched(qrKey, extra={}) {
   if (!S.sid||!S.token) { toast('⚠️ ยังไม่ได้เชื่อมต่อ session — รายการนี้จะไม่ถูกบันทึก'); return; }
