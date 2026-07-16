@@ -147,6 +147,18 @@
   .summary-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:6px;}
   .summary-store{font-size:17px;font-weight:700;margin:0;}
   .summary-cycle{font-size:12.5px;color:var(--ink-3);}
+  .bg-col-title{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;margin-bottom:10px;}
+  .bg-col-count{background:var(--surface-2);color:var(--ink-2);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;}
+  .bg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+  .bg-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ink-4);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;box-shadow:var(--sh-xs);transition:box-shadow .15s ease,transform .15s ease;}
+  .bg-card:hover{box-shadow:var(--sh-lg);transform:translateY(-1px);}
+  .bg-card-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+  .bg-card-code{font-size:11px;color:var(--ink-3);margin-bottom:8px;}
+  .bg-card-stat{font-size:11.5px;color:var(--ink-2);}
+  .bg-card-empty{font-size:12.5px;color:var(--ink-3);padding:10px 2px;}
+  .bg-col.on_process .bg-card{border-left-color:var(--amber-fg);}
+  .bg-col.open .bg-card{border-left-color:var(--red-fg);}
+  .bg-col.done .bg-card{border-left-color:var(--green-fg);}
   .summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px;}
   .summary-stat-label{font-size:11px;color:var(--ink-3);margin:0 0 4px;text-transform:uppercase;letter-spacing:.03em;}
   .summary-stat-value{font-size:20px;font-weight:700;margin:0;letter-spacing:-.02em;}
@@ -291,6 +303,10 @@
       <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
       Overview
     </div>
+    <div class="nav-item" id="navBranchGrid" onclick="showPage('branchGrid')">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
+      สถานะสาขา
+    </div>
     <div class="nav-item" id="navAssetSummary" onclick="showPage('assetSummary')">
       <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
       Asset Summary
@@ -312,6 +328,14 @@
     </div>
 
     <div class="content-body">
+
+      <!-- ============ SCREEN: BRANCH STATUS GRID ============ -->
+      <section class="screen2" id="pageBranchGrid">
+        <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 16px;">
+          แบ่งตามสถานะ session ล่าสุดของแต่ละสาขา — คลิกที่การ์ดเพื่อดูรายละเอียด asset ของสาขานั้น
+        </p>
+        <div id="branchGridWrap" style="display:flex;flex-direction:column;gap:22px;"></div>
+      </section>
 
       <!-- ============ SCREEN: OVERVIEW (audit workspace) ============ -->
       <section class="screen2 active" id="pageOverview">
@@ -1301,6 +1325,53 @@ function cycleLabelFor(branchCode){
   return label;
 }
 
+/* ---------- Branch Status Grid ----------
+   แบ่งสาขาเป็น 3 กลุ่มตาม status ของ session ล่าสุด:
+   on_process = กำลังทำอยู่, open (หรือยังไม่เคยเปิด session เลย) = ค้างงาน/ยังไม่เริ่ม, done = เสร็จแล้ว */
+function renderBranchGrid(){
+  var buckets = { on_process: [], open: [], done: [] };
+  stores.forEach(function(s){
+    var rounds = sessionsByBranch[s.name] || [];
+    var latest = rounds.length ? rounds[rounds.length - 1] : null;
+    var key = (latest && latest.status === 'on_process') ? 'on_process'
+            : (latest && latest.status === 'done') ? 'done'
+            : 'open';
+    buckets[key].push(s);
+  });
+  ['on_process','open','done'].forEach(function(k){
+    buckets[k].sort(function(a,b){ return (a.displayName||a.name).localeCompare(b.displayName||b.name); });
+  });
+
+  var cols = [
+    {key:'on_process', title:'🟡 กำลังทำอยู่', list:buckets.on_process},
+    {key:'open',       title:'🔴 ค้างงาน / ยังไม่เริ่ม', list:buckets.open},
+    {key:'done',       title:'🟢 ตรวจเสร็จแล้ว', list:buckets.done}
+  ];
+
+  document.getElementById('branchGridWrap').innerHTML = cols.map(function(col){
+    var cardsHtml = col.list.length ? col.list.map(function(s){
+      var pct = s.total > 0 ? Math.round((s.scanned / s.total) * 100) : 0;
+      var display = s.displayName || s.name;
+      var safeName = s.name.replace(/'/g, "\\'");
+      return '<div class="bg-card" onclick="goToStoreFromGrid(\'' + safeName + '\')">'
+        + '<div class="bg-card-name">' + display + '</div>'
+        + '<div class="bg-card-code">' + s.name + '</div>'
+        + '<div class="bg-card-stat">' + s.scanned.toLocaleString() + ' / ' + s.total.toLocaleString() + ' (' + pct + '%)</div>'
+        + '<div class="bg-card-stat">' + cycleLabelFor(s.name) + '</div>'
+      + '</div>';
+    }).join('') : '<div class="bg-card-empty">ไม่มีสาขาในกลุ่มนี้</div>';
+    return '<div class="bg-col ' + col.key + '">'
+      + '<div class="bg-col-title">' + col.title + ' <span class="bg-col-count">' + col.list.length + '</span></div>'
+      + '<div class="bg-cards">' + cardsHtml + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+function goToStoreFromGrid(name){
+  showPage('overview');
+  selectStore(name);
+}
+
 var filterDefs = [
   {key:'all', label:'All'},
   {key:'pending', label:'Pending'},
@@ -1726,7 +1797,12 @@ function showToast(msg){
 function showPage(name){
   document.querySelectorAll('.screen2').forEach(function(s){ s.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
-  if(name === 'overview'){
+  if(name === 'branchGrid'){
+    document.getElementById('pageBranchGrid').classList.add('active');
+    document.getElementById('navBranchGrid').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'สถานะสาขา';
+    renderBranchGrid();
+  } else if(name === 'overview'){
     document.getElementById('pageOverview').classList.add('active');
     document.getElementById('navOverview').classList.add('active');
     document.getElementById('pageTitle').textContent = 'Overview';
