@@ -266,9 +266,14 @@
   .content-body { padding: 0; }
   .app { display: block; }
   .print-report-header { display: block !important; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #000; }
+  .print-report-footer { display: block !important; margin-top: 50px; page-break-inside: avoid; }
 </style>
 <style>
   .print-report-header { display: none; }
+  .print-report-footer { display: none; }
+  .sig-row{display:flex;justify-content:space-between;gap:50px;margin-top:20px;}
+  .sig-block{flex:1;font-size:12px;color:#000;}
+  .sig-line{border-bottom:1px solid #000;height:55px;margin-bottom:8px;}
 </style>
 </head>
 <body>
@@ -410,6 +415,13 @@
           <div id="assetRows"></div>
         </div>
 
+        <div class="print-report-footer">
+          <div class="sig-row">
+            <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจนับ (Auditor)<br>วันที่ ..........................</div>
+            <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจสอบ / รับรอง (HQ)<br>วันที่ ..........................</div>
+          </div>
+        </div>
+
       </section>
 
       <!-- ============ SCREEN: ASSET SUMMARY (master list, all branches) ============ -->
@@ -469,6 +481,13 @@
           <div class="as-pagination" id="asPagination">
             <button class="btn-outline" onclick="showToast('หน้าก่อนหน้า')">◀ ก่อนหน้า</button>
             <button class="btn-outline" onclick="showToast('หน้าถัดไป')">ถัดไป ▶</button>
+          </div>
+        </div>
+
+        <div class="print-report-footer">
+          <div class="sig-row">
+            <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจนับ (Auditor)<br>วันที่ ..........................</div>
+            <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจสอบ / รับรอง (HQ)<br>วันที่ ..........................</div>
           </div>
         </div>
 
@@ -1663,18 +1682,38 @@ async function confirmImport(){
   var expectedCount = pendingImportRows.length;
   var fileToSend = pendingImportFile;
   var fileNameToSend = pendingImportFileName;
+  // FIX: เดิม ignore response ของ /hq/assets/import/confirm ทิ้งไปเลย (แค่ await เฉยๆ)
+  // ทำให้ต่อให้ backend insert ได้ 0 แถวจริง (เช่น asset_code+seq ซ้ำกับที่มีอยู่แล้ว
+  // ทั้งหมด — ON CONFLICT DO NOTHING) ผู้ใช้ก็ยังเห็นข้อความ "Import สำเร็จ" เหมือนเดิม
+  // เลยงงว่า import ไปแล้วทำไมหาไม่เจอ ตอนนี้อ่านตัวเลข inserted/skipped จริงมาแจ้งด้วย
+  var distinctLocations = {};
+  pendingImportRows.forEach(function(r){
+    var loc = String(r.locationCode || '').trim();
+    if(loc) distinctLocations[loc] = (r.locationName || loc);
+  });
+  var locList = Object.keys(distinctLocations).map(function(code){ return code + ' (' + distinctLocations[code] + ')'; }).join(', ');
 
   try{
     var fd = new FormData();
     fd.append('file', fileToSend);
-    await apiFetch('/hq/assets/import/confirm', { method: 'POST', body: fd });
+    var result = await apiFetch('/hq/assets/import/confirm', { method: 'POST', body: fd });
+    var inserted = result.inserted != null ? result.inserted : 0;
+    var skipped = result.skipped_duplicates != null ? result.skipped_duplicates : 0;
 
-    showToast('Import สำเร็จ — เขียนเข้า production database จริงแล้ว กำลังโหลดข้อมูลล่าสุด...');
-    logActivity(currentStore, fileNameToSend, 'Imported', 'ยืนยัน import จริงผ่าน /hq/assets/import/confirm (' + expectedCount + ' รายการที่คาดไว้)');
+    if(inserted === 0){
+      showToast('⚠ Import เสร็จแต่ไม่มีแถวใหม่เข้าระบบเลย (' + skipped + ' แถวถูกข้ามเพราะรหัสสินทรัพย์ซ้ำกับที่มีอยู่แล้ว) — เช็คว่าไฟล์นี้เคย import ไปแล้วหรือไม่');
+    } else {
+      showToast('Import สำเร็จ: เพิ่มใหม่ ' + inserted + ' แถว, ข้ามซ้ำ ' + skipped + ' แถว — เข้าไปดูที่สาขา ' + (locList || currentStore) + ' ในหน้า Overview');
+    }
+    logActivity(currentStore, fileNameToSend, 'Imported', 'inserted=' + inserted + ', skipped_duplicates=' + skipped + ' (คาดไว้ ' + expectedCount + ' แถวจาก preview)');
     var storeBeingImportedTo = currentStore;
     closeImportDrawer();
     await loadRealData();
-    if(stores.some(function(s){ return s.name === storeBeingImportedTo; })){
+    // ถ้า import เข้าสาขาที่ไม่ใช่สาขาที่เลือกอยู่ตอนนี้ ให้พาไปสาขานั้นเลย ไม่ต้องให้ผู้ใช้หาเอง
+    var targetStore = distinctLocations[storeBeingImportedTo] ? storeBeingImportedTo : Object.keys(distinctLocations)[0];
+    if(targetStore && stores.some(function(s){ return s.name === targetStore; })){
+      selectStore(targetStore);
+    } else if(stores.some(function(s){ return s.name === storeBeingImportedTo; })){
       selectStore(storeBeingImportedTo);
     }
     await lookUpAndOfferUndo(fileNameToSend);
