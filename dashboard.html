@@ -1,0 +1,2224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bata Thailand — Audit Dashboard</title>
+<style>
+  :root{
+    --red-500:#C8102E; --red-600:#AB0D27; --red-bg:#FDF2F3;
+    --ink:#111318; --ink-2:#5B5F6B; --ink-3:#9297A3; --ink-4:#C4C7CE;
+    --line:#EBECEF; --line-2:#E1E3E8;
+    --surface:#FFFFFF; --surface-1:#FAFAFB; --surface-2:#F3F4F6;
+    --green-bg:#EAF7EE; --green-fg:#1B7A3C;
+    --amber-bg:#FEF3E2; --amber-fg:#9A6400;
+    --red-fg:#C0281F; --red-bg2:#FCE9E9;
+    --purple-bg:#F1EDFB; --purple-fg:#6440C7;
+    --orange-bg:#FDEEE2; --orange-fg:#B5590F;
+    --blue-bg:#EAF2FE; --blue-fg:#1B5FC4;
+    --r-sm:8px; --r-md:12px; --r-lg:16px;
+    --sh-xs:0 1px 2px rgba(16,24,40,.05);
+    --sh-lg:0 12px 40px rgba(16,24,40,.16);
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{font-family:var(--font);background:var(--surface-1);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased;}
+  button{font-family:inherit;cursor:pointer;}
+  textarea,select,input{font-family:inherit;}
+
+  .app{display:flex;min-height:100vh;}
+  .sidebar{width:210px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--line);padding:16px 12px;}
+  .sb-brand{display:flex;align-items:center;gap:9px;padding:6px 8px 18px;}
+  .sb-brand-name{font-weight:700;font-size:13.5px;}
+  .sb-brand-sub{font-size:9.5px;color:var(--ink-3);display:block;margin-top:1px;}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-sm);color:var(--ink-2);font-size:13px;font-weight:500;margin-bottom:2px;}
+  .nav-item:hover{background:var(--surface-1);color:var(--ink);}
+  .nav-item.active{background:var(--red-bg);color:var(--red-600);font-weight:600;}
+  .nav-item svg{flex-shrink:0;width:16px;height:16px;}
+  .nav-badge{margin-left:auto;background:var(--surface-2);color:var(--ink-2);font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;}
+  .nav-item.active .nav-badge{background:var(--red-500);color:#fff;}
+
+  .avatar{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600;flex-shrink:0;}
+  .brand-mark{width:26px;height:26px;border-radius:6px;background:var(--red-500);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;}
+
+  .content{flex:1;min-width:0;}
+  .content-header{display:flex;align-items:center;justify-content:space-between;padding:16px 26px;border-bottom:1px solid var(--line);background:var(--surface);}
+  .content-title{font-size:17px;font-weight:700;margin:0;}
+  .content-body{padding:20px 26px 60px;max-width:1400px;}
+  .screen2{display:none;}
+  .screen2.active{display:block;}
+
+  .login-overlay{position:fixed;inset:0;background:var(--surface-1);z-index:500;display:flex;align-items:center;justify-content:center;}
+  .login-box{width:360px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg);padding:26px 26px 20px;}
+  .login-brand{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+  .login-brand-name{font-weight:700;font-size:14px;}
+  .login-brand-sub{font-size:10px;color:var(--ink-3);}
+  .login-title{font-size:15px;font-weight:700;margin:0 0 14px;}
+  .login-error{background:var(--red-bg2);color:var(--red-fg);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:9px 12px;font-size:12.5px;margin-bottom:12px;}
+  .login-label{display:block;font-size:11.5px;color:var(--ink-2);margin:12px 0 5px;font-weight:600;}
+  .login-input{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:9px 11px;font-size:13px;color:var(--ink);}
+  .login-input:focus{outline:none;border-color:var(--red-500);}
+  .login-sub{font-size:11px;color:var(--ink-3);margin:14px 0 0;text-align:center;}
+  .login-sub code{background:var(--surface-2);padding:1px 5px;border-radius:4px;}
+  .data-source-banner{display:none;align-items:center;gap:8px;background:var(--red-bg2);color:var(--red-fg);border:1px solid #F3C2BC;border-radius:var(--r-md);padding:10px 16px;font-size:12.5px;margin-bottom:14px;}
+  .as-error-banner{display:flex;align-items:center;gap:8px;background:#FEF3E2;color:#9A6400;border:1px solid #F5DDA8;border-radius:var(--r-md);padding:10px 16px;font-size:12.5px;margin-bottom:16px;}
+  .as-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px;}
+  .as-kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--sh-xs);position:relative;overflow:hidden;cursor:pointer;transition:box-shadow .15s ease,transform .15s ease;}
+  .as-kpi-card:hover{box-shadow:0 4px 16px rgba(16,24,40,.10);transform:translateY(-1px);}
+  .as-kpi-card.kpi-active{outline:2px solid var(--red-500);outline-offset:-1px;}
+  .as-kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+  .as-kpi-card.kpi-total::before{background:var(--ink-4);}
+  .as-kpi-card.kpi-verified::before{background:var(--green-fg);}
+  .as-kpi-card.kpi-pending::before{background:var(--amber-fg);}
+  .as-kpi-card.kpi-missing::before{background:var(--red-fg);}
+  .as-kpi-label{font-size:12.5px;color:var(--ink-2);margin:0 0 8px;}
+  .as-kpi-value{font-size:24px;font-weight:700;margin:0;}
+  .as-kpi-sub{font-size:11.5px;color:var(--ink-3);margin-top:4px;}
+  .as-last-sync{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);background:var(--surface-1);border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap;}
+  .as-last-sync b{color:var(--ink);font-weight:700;}
+  .as-last-sync .dot{width:6px;height:6px;border-radius:50%;background:var(--green-fg);flex-shrink:0;}
+  .as-row-actions{display:flex;align-items:center;gap:2px;}
+  .as-act-btn{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;border:none;background:transparent;cursor:pointer;color:var(--ink-3);}
+  .as-act-btn:hover{background:var(--surface-2);color:var(--ink);}
+  .as-act-btn.as-danger:hover{background:var(--red-bg2);color:var(--red-fg);}
+  .row-more-menu{display:none;position:fixed;z-index:400;background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--sh-lg);min-width:150px;overflow:hidden;}
+  .row-more-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 14px;font-size:12.5px;border:none;background:none;color:var(--ink);}
+  .row-more-item:hover{background:var(--surface-2);}
+  .row-more-item.danger{color:var(--red-fg);}
+  .row-more-item.danger:hover{background:var(--red-bg2);}
+  .as-skel{background:linear-gradient(90deg,var(--surface-2) 25%,var(--line) 37%,var(--surface-2) 63%);background-size:400% 100%;animation:asShimmer 1.4s ease infinite;border-radius:4px;height:12px;display:inline-block;}
+  @keyframes asShimmer{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
+  .as-empty{padding:56px 20px;text-align:center;}
+  .as-empty .as-empty-icon{width:48px;height:48px;border-radius:50%;background:var(--surface-2);color:var(--ink-3);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+  .as-empty-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
+  .as-empty-sub{font-size:12.5px;color:var(--ink-3);margin-bottom:16px;}
+  .as-modal-overlay{display:none;position:fixed;inset:0;background:rgba(17,19,24,.45);z-index:300;align-items:center;justify-content:center;}
+  .as-modal-overlay.show{display:flex;}
+  .as-modal{background:#fff;border-radius:var(--r-lg);padding:22px;width:380px;max-width:calc(100vw - 32px);box-shadow:var(--sh-lg);}
+  .as-modal-title{font-size:14.5px;font-weight:700;margin:0 0 6px;}
+  .as-modal-body{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-bottom:6px;}
+  .as-modal-asset{display:flex;justify-content:space-between;background:var(--surface-2);border-radius:var(--r-sm);padding:10px 12px;margin:10px 0 16px;font-size:12.5px;}
+  .as-modal-asset b{font-weight:700;}
+  .as-modal-actions{display:flex;justify-content:flex-end;gap:8px;}
+  .btn-outline-red{background:transparent;border:1px solid var(--red-fg);color:var(--red-fg);border-radius:var(--r-sm);padding:8px 14px;font-size:12.5px;font-weight:600;}
+  .btn-outline-red:hover{background:var(--red-bg2);}
+  .as-toolbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:14px 18px;flex-wrap:wrap;}
+  .as-toolbar-title{font-size:14px;font-weight:700;margin:0;flex:1;min-width:140px;}
+  .as-select{border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 10px;font-size:12.5px;color:var(--ink-2);background:var(--surface);}
+  .as-refresh{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 13px;font-size:12.5px;font-weight:600;color:var(--ink);}
+  .as-table-wrap{background:var(--surface);border:1px solid var(--line);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);overflow-x:auto;box-shadow:var(--sh-xs);}
+  .as-table{width:100%;border-collapse:collapse;min-width:900px;}
+  .as-table th{text-align:left;font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;padding:11px 16px;border-bottom:1px solid var(--line);white-space:nowrap;}
+  .as-table td{padding:11px 16px;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap;}
+  .as-table tr:last-child td{border-bottom:none;}
+  .as-table tr:hover td{background:var(--surface-1);}
+  .as-pagination{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;}
+  .btn-outline{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--ink);}
+  .btn-outline:hover{background:var(--surface-1);}
+
+  /* HQ STRIP */
+  .hq-strip{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--sh-xs);}
+  .hq-total{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;}
+  .hq-segment{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px;gap:2px;}
+  .seg-btn{border:none;background:transparent;padding:7px 15px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:7px;white-space:nowrap;transition:all .12s ease;}
+  .seg-btn:hover{color:var(--ink);}
+  .seg-btn.active{background:var(--surface);color:var(--ink);box-shadow:var(--sh-xs);}
+  .seg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .seg-dot.green{background:var(--green-fg);}
+  .seg-dot.amber{background:var(--amber-fg);}
+  .seg-dot.gray{background:var(--ink-4);}
+  .seg-count{font-variant-numeric:tabular-nums;color:var(--ink-3);font-weight:600;}
+  .seg-btn.active .seg-count{color:var(--ink-2);}
+
+  /* STORE SWITCHER */
+  .store-chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:18px;padding-bottom:2px;}
+  .store-chip{flex-shrink:0;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);white-space:nowrap;}
+  .store-chip.active{background:var(--red-500);border-color:var(--red-500);color:#fff;font-weight:700;}
+  .store-switcher{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+  .store-search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 12px;flex:1;min-width:220px;max-width:340px;color:var(--ink-3);}
+  .store-search-box input{border:none;background:none;outline:none;font-size:13px;width:100%;color:var(--ink);}
+  .store-switcher-hint{font-size:12px;color:var(--ink-3);}
+  .stat-clickable{cursor:pointer;}
+  .stat-clickable:hover .summary-stat-value{text-decoration:underline;text-decoration-color:var(--line-2);}
+
+  /* SUMMARY */
+  .summary-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;margin-bottom:14px;box-shadow:var(--sh-xs);}
+  .summary-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:6px;}
+  .summary-store{font-size:17px;font-weight:700;margin:0;}
+  .summary-cycle{font-size:12.5px;color:var(--ink-3);}
+  .bg-col-title{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;margin-bottom:10px;}
+  .bg-col-count{background:var(--surface-2);color:var(--ink-2);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;}
+  .bg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+  .bg-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ink-4);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;box-shadow:var(--sh-xs);transition:box-shadow .15s ease,transform .15s ease;}
+  .bg-card:hover{box-shadow:var(--sh-lg);transform:translateY(-1px);}
+  .bg-card-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
+  .bg-card-code{font-size:11px;color:var(--ink-3);margin-bottom:8px;}
+  .bg-card-stat{font-size:11.5px;color:var(--ink-2);}
+  .bg-card-empty{font-size:12.5px;color:var(--ink-3);padding:10px 2px;}
+  .bg-col.on_process .bg-card{border-left-color:var(--amber-fg);}
+  .bg-col.open .bg-card{border-left-color:var(--red-fg);}
+  .bg-col.done .bg-card{border-left-color:var(--green-fg);}
+  .summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px;}
+  .summary-stat-label{font-size:11px;color:var(--ink-3);margin:0 0 4px;text-transform:uppercase;letter-spacing:.03em;}
+  .summary-stat-value{font-size:20px;font-weight:700;margin:0;letter-spacing:-.02em;}
+  .summary-stat-value.warn{color:var(--amber-fg);}
+  .summary-stat-value.danger{color:var(--red-fg);}
+  .progress-track{height:9px;border-radius:20px;background:var(--surface-2);overflow:hidden;}
+  .progress-fill{height:100%;background:var(--green-fg);transition:width .3s;}
+  .progress-caption{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:6px;}
+
+  /* FILTER + SEARCH */
+  .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 12px;flex:1;min-width:200px;color:var(--ink-3);}
+  .search-box input{border:none;background:none;outline:none;font-size:13px;width:100%;color:var(--ink);}
+  .filter-chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .f-chip{font-size:12px;font-weight:600;padding:7px 13px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);}
+  .f-chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .add-btn{background:var(--red-500);color:#fff;border:none;border-radius:var(--r-sm);padding:8px 15px;font-size:12.5px;font-weight:600;white-space:nowrap;}
+  .add-btn:hover{background:var(--red-600);}
+  .import-btn{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 15px;font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;}
+  .import-btn:hover{background:var(--surface-1);}
+  .export-dropdown-wrap{position:relative;display:inline-block;}
+  .export-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--sh-lg);min-width:150px;z-index:250;overflow:hidden;}
+  .export-menu.show{display:block;}
+  .export-menu button{display:block;width:100%;text-align:left;padding:9px 14px;font-size:12.5px;border:none;background:none;color:var(--ink);cursor:pointer;}
+  .export-menu button:hover{background:var(--surface-2);}
+
+  .dropzone{border:1.5px dashed var(--line-2);border-radius:var(--r-md);padding:26px 16px;text-align:center;color:var(--ink-3);margin-bottom:16px;}
+  .dropzone-btn{background:var(--ink);color:#fff;border:none;border-radius:var(--r-sm);padding:9px 16px;font-size:12.5px;font-weight:600;margin-top:10px;}
+  .import-summary{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin-bottom:14px;font-size:12.5px;}
+  .import-summary b{color:var(--ink);}
+  .import-preview{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
+  .import-preview th{text-align:left;color:var(--ink-3);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line);}
+  .import-preview td{padding:6px 8px;border-bottom:1px solid var(--line);}
+  .writeoff-warn{background:var(--red-bg2);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:10px 12px;font-size:12px;color:var(--red-fg);margin-bottom:10px;}
+
+  /* ASSET LIST */
+  .asset-table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);}
+  .asset-head{display:grid;grid-template-columns:52px 1.3fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;}
+  .asset-row{display:grid;grid-template-columns:52px 1.3fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;}
+  .asset-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;display:block;background:var(--surface-2);}
+  .asset-thumb-placeholder{width:40px;height:40px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-4);}
+  .asset-row:last-child{border-bottom:none;}
+  .asset-row:hover{background:var(--surface-1);}
+  .asset-name{font-weight:600;}
+  .status-pill{font-size:11px;font-weight:600;padding:3px 10px 3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+  .status-pill .sp-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .status-pill.verified{background:var(--green-bg);color:var(--green-fg);}
+  .status-pill.verified .sp-dot{background:var(--green-fg);}
+  .status-pill.pending{background:var(--amber-bg);color:var(--amber-fg);}
+  .status-pill.pending .sp-dot{background:var(--amber-fg);}
+  .status-pill.missing{background:var(--red-bg2);color:var(--red-fg);}
+  .status-pill.missing .sp-dot{background:var(--red-fg);}
+  .status-pill.damaged{background:var(--orange-bg);color:var(--orange-fg);}
+  .status-pill.damaged .sp-dot{background:var(--orange-fg);}
+  .status-pill.unmatched{background:var(--purple-bg);color:var(--purple-fg);}
+  .status-pill.unmatched .sp-dot{background:var(--purple-fg);}
+  .row-time{color:var(--ink-3);font-size:12px;}
+  .row-action{background:none;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:6px 12px;font-size:12px;font-weight:600;color:var(--ink);}
+  .row-action:hover{background:var(--surface-1);}
+
+  /* DRAWER */
+  .overlay{position:fixed;inset:0;background:rgba(17,19,24,.4);z-index:90;display:none;}
+  .overlay.show{display:block;}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:92vw;background:var(--surface);z-index:100;box-shadow:var(--sh-lg);transform:translateX(100%);transition:transform .22s ease;overflow-y:auto;}
+  .drawer.show{transform:translateX(0);}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:5;}
+  .drawer-title{font-size:15px;font-weight:700;margin:0;}
+  .drawer-close{background:none;border:none;color:var(--ink-2);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .drawer-close:hover{background:var(--surface-1);}
+  .drawer-body{padding:18px 20px 26px;}
+  .photo-box{width:100%;aspect-ratio:4/3;background:var(--surface-2);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:var(--ink-4);margin-bottom:10px;overflow:hidden;}
+  .photo-box img{width:100%;height:100%;object-fit:cover;}
+  .photo-actions{display:flex;gap:8px;margin-bottom:20px;}
+  .photo-actions button{flex:1;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px;font-size:12px;font-weight:600;color:var(--ink);}
+  .field-group{margin-bottom:16px;}
+  .field-label{font-size:11.5px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.03em;margin:0 0 6px;}
+  .field-value{font-size:13.5px;color:var(--ink);}
+  .field-input,.field-select,.field-textarea{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:9px 11px;font-size:13px;color:var(--ink);outline:none;}
+  .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--red-500);}
+  .field-textarea{min-height:64px;resize:vertical;}
+  .history-item{padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px;}
+  .history-item:last-child{border-bottom:none;}
+  .history-event{font-weight:600;color:var(--ink);}
+  .history-meta{color:var(--ink-3);margin-top:2px;}
+  .drawer-footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:14px 20px;display:flex;gap:10px;}
+  .btn-save{flex:1;background:var(--red-500);color:#fff;border:none;border-radius:var(--r-sm);padding:11px;font-size:13.5px;font-weight:600;}
+  .btn-save:hover{background:var(--red-600);}
+  .btn-cancel{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:11px 16px;font-size:13.5px;font-weight:600;color:var(--ink);}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:20px;padding:10px 18px;font-size:13px;z-index:200;opacity:0;transition:all .2s;pointer-events:none;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  @media (max-width:700px){
+    .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .asset-head{display:none;}
+    .asset-row{grid-template-columns:1fr;row-gap:5px;}
+    .drawer{width:100%;max-width:100%;}
+  }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style media="print">
+  .sidebar, .content-header, .toolbar, .as-toolbar, .hq-strip, .store-switcher, .store-chips,
+  .as-pagination, .login-overlay, .data-source-banner, .as-row-actions, .row-more-menu,
+  .as-modal-overlay, .export-menu { display: none !important; }
+  .content-body { padding: 0; }
+  .app { display: block; }
+  .print-report-header { display: block !important; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #C8102E; }
+  .print-report-footer { display: block !important; margin-top: 50px; page-break-inside: avoid; }
+  .print-letterhead { display: block; }
+  .print-wordmark { display: flex; align-items: baseline; gap: 9px; }
+  .print-wordmark-bata { font-size: 26px; font-weight: 800; color: #AB0D27; font-family: Arial, sans-serif; letter-spacing: .5px; }
+  .print-wordmark-thailand { font-size: 14px; font-weight: 600; color: #444; font-family: Arial, sans-serif; letter-spacing: 1.5px; }
+  .print-report-title { font-size: 12.5px; font-weight: 600; color: #333; margin-top: 4px; }
+
+  /* ตารางเวลาพิมพ์ — ใส่เส้นขอบและสีหัวตารางให้ดูเป็นฟอร์มมาตรฐาน แทนเส้นบางๆ สีจางที่ใช้บนจอ */
+  .asset-table, .as-table-wrap { border: 1px solid #C8102E !important; }
+  .asset-head, .as-table thead th { background: #FDF2F3 !important; color: #AB0D27 !important; border-bottom: 1.5px solid #C8102E !important; font-weight: 700 !important; }
+  .asset-row, .as-table td { border-bottom: 1px solid #ddd !important; }
+  .asset-row:nth-child(even), .as-table tbody tr:nth-child(even) td { background: #FAFAFA !important; }
+  .as-table { border-collapse: collapse !important; }
+</style>
+<style>
+  .print-report-header { display: none; }
+  .print-report-footer { display: none; }
+  .sig-row{display:flex;justify-content:space-between;gap:50px;margin-top:20px;}
+  .sig-block{flex:1;font-size:12px;color:#000;}
+  .sig-line{border-bottom:1px solid #000;height:55px;margin-bottom:8px;}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN OVERLAY (real system — /auth/login) ============ -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-box">
+    <div class="login-brand"><div class="brand-mark">B</div><div><div class="login-brand-name">Bata Audit</div><div class="login-brand-sub">HQ Dashboard v2</div></div></div>
+    <p class="login-title">Sign in</p>
+    <div class="login-error" id="loginError" style="display:none;"></div>
+    <label class="login-label">Employee ID</label>
+    <input class="login-input" id="loginEmployeeId" type="text" placeholder="เช่น ADMIN01" onkeydown="if(event.key==='Enter') doLogin()">
+    <label class="login-label">Password</label>
+    <input class="login-input" id="loginPassword" type="password" onkeydown="if(event.key==='Enter') doLogin()">
+    <label class="login-label">Branch ID <span style="color:var(--ink-3);font-weight:400;">(HQ เว้นว่างได้ถ้าไม่บังคับ)</span></label>
+    <input class="login-input" id="loginBranchId" type="text" placeholder="เช่น HQ หรือรหัสสาขา" onkeydown="if(event.key==='Enter') doLogin()">
+    <button class="add-btn" style="width:100%;margin-top:6px;" id="loginSubmitBtn" onclick="doLogin()">Sign in</button>
+    <p class="login-sub">เชื่อมต่อ API: <code id="loginApiBase"></code></p>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none;">
+  <nav class="sidebar">
+    <div class="sb-brand">
+      <div class="brand-mark">B</div>
+      <div>
+        <span class="sb-brand-name">Bata Audit</span>
+        <span class="sb-brand-sub">HQ Dashboard v2</span>
+      </div>
+    </div>
+    <div class="nav-item active" id="navOverview" onclick="showPage('overview')">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
+      Overview
+    </div>
+    <div class="nav-item" id="navBranchGrid" onclick="showPage('branchGrid')">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
+      สถานะสาขา
+    </div>
+    <div class="nav-item" id="navAssetSummary" onclick="showPage('assetSummary')">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      Asset Summary
+    </div>
+    <div class="nav-item" id="navActivityLog" onclick="showPage('activityLog')">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
+      Activity Log
+    </div>
+  </nav>
+
+  <div class="content">
+    <div class="content-header">
+      <p class="content-title" id="pageTitle">Overview</p>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:12px;color:var(--ink-2);" id="headerUserLabel"></span>
+        <button class="btn-outline" style="padding:6px 12px;font-size:11.5px;" onclick="logout()">Sign out</button>
+        <div class="avatar" id="headerAvatar">—</div>
+      </div>
+    </div>
+
+    <div class="content-body">
+
+      <!-- ============ SCREEN: BRANCH STATUS GRID ============ -->
+      <section class="screen2" id="pageBranchGrid">
+        <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 16px;">
+          แบ่งตามสถานะ session ล่าสุดของแต่ละสาขา — คลิกที่การ์ดเพื่อดูรายละเอียด asset ของสาขานั้น
+        </p>
+        <div id="branchGridWrap" style="display:flex;flex-direction:column;gap:22px;"></div>
+      </section>
+
+      <!-- ============ SCREEN: OVERVIEW (audit workspace) ============ -->
+      <section class="screen2 active" id="pageOverview">
+
+        <div class="print-report-header" id="overviewPrintHeader">
+          <div class="print-letterhead">
+            <div class="print-wordmark"><span class="print-wordmark-bata">BATA</span><span class="print-wordmark-thailand">THAILAND</span></div>
+            <div class="print-report-title">Fixed Asset Audit — Overview Report</div>
+          </div>
+          <div style="font-size:12.5px;color:#333;margin-top:10px;" id="overviewPrintHeaderMeta"></div>
+        </div>
+
+        <div class="data-source-banner" id="overviewDataBanner">
+          <span>⚠</span>
+          <span id="overviewDataBannerText">โหลดข้อมูลจริงไม่สำเร็จ</span>
+        </div>
+
+        <div class="data-source-banner" id="importUndoBanner" style="background:var(--surface-1);color:var(--ink);border-color:var(--line-2);justify-content:space-between;">
+          <span id="importUndoBannerText">Import สำเร็จ</span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <button class="btn-outline-red" onclick="undoLastImport()">Undo import นี้</button>
+            <button class="btn-outline" onclick="document.getElementById('importUndoBanner').style.display='none'">ปิด</button>
+          </div>
+        </div>
+
+        <div class="store-switcher">
+          <div class="store-search-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" id="storeSwitchInput" list="storeDatalist" autocomplete="off" placeholder="พิมพ์ชื่อหรือรหัสสาขา (จาก 200 สาขา)" onchange="handleStoreSwitch(this.value)" onkeyup="if(event.key==='Enter') handleStoreSwitch(this.value)">
+          </div>
+          <datalist id="storeDatalist"></datalist>
+        </div>
+
+        <div class="store-chips" id="storeChips"></div>
+
+        <div class="summary-card">
+          <div class="summary-top">
+            <p class="summary-store" id="sumStoreName">Central Rama 2</p>
+            <span class="summary-cycle" id="sumCycle">Audit cycle: Q3 2026</span>
+          </div>
+          <div class="summary-grid">
+            <div class="stat-clickable" onclick="setAssetFilter('all')" title="ดูรายการทั้งหมด"><p class="summary-stat-label">Total assets</p><p class="summary-stat-value" id="sumTotal">1,245</p></div>
+            <div class="stat-clickable" onclick="setAssetFilter('verified')" title="ดูรายการที่สแกนแล้ว"><p class="summary-stat-label">Scanned</p><p class="summary-stat-value" id="sumScanned">890</p></div>
+            <div class="stat-clickable" onclick="setAssetFilter('pending')" title="ดูรายการที่ยังไม่สแกน"><p class="summary-stat-label">Remaining</p><p class="summary-stat-value warn" id="sumRemaining">355</p></div>
+            <div class="stat-clickable" onclick="setAssetFilter('exceptions')" title="ดู Missing / Damaged / Unmatched ทั้งหมด"><p class="summary-stat-label">Exceptions</p><p class="summary-stat-value danger" id="sumExceptions">18</p></div>
+            <div><p class="summary-stat-label">Completion</p><p class="summary-stat-value" id="sumPct">71%</p></div>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="sumBar" style="width:71%;"></div></div>
+          <div class="progress-caption"><span id="sumCaption">71% complete</span><span id="sumRemainCaption">355 assets remaining</span></div>
+        </div>
+
+        <div class="toolbar">
+          <div class="search-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" id="assetSearch" placeholder="Search asset, barcode, serial, location" oninput="renderAssetList()">
+          </div>
+          <div class="export-dropdown-wrap">
+            <button class="import-btn" onclick="toggleExportMenu('overviewExportMenu')">⬇ Export ▾</button>
+            <div class="export-menu" id="overviewExportMenu">
+              <button onclick="exportOverviewCSV()">Export CSV</button>
+              <button onclick="exportOverviewExcel()">Export Excel</button>
+              <button onclick="printCurrentView()">Print / Save as PDF</button>
+            </div>
+          </div>
+          <button class="import-btn" onclick="openImportDrawer()">⬆ Import</button>
+          <button class="add-btn" onclick="openAddDrawer()">+ Add Asset</button>
+        </div>
+
+        <p id="assetResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
+
+        <div class="filter-chips" id="filterChips" style="margin-bottom:14px;"></div>
+
+        <div class="asset-table">
+          <div class="asset-head"><span>Photo</span><span>Asset</span><span>Location</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span></div>
+          <div id="assetRows"></div>
+        </div>
+
+        <div class="print-report-footer">
+          <div class="sig-row">
+            <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจนับ (Auditor)<br>วันที่ ..........................</div>
+            <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจสอบ / รับรอง (HQ)<br>วันที่ ..........................</div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============ SCREEN: ASSET SUMMARY (master list, all branches) ============ -->
+      <section class="screen2" id="pageAssetSummary">
+
+        <div class="print-report-header" id="asPrintHeader">
+          <div class="print-letterhead">
+            <div class="print-wordmark"><span class="print-wordmark-bata">BATA</span><span class="print-wordmark-thailand">THAILAND</span></div>
+            <div class="print-report-title">Fixed Asset Audit — Asset Summary Report</div>
+          </div>
+          <div style="font-size:12.5px;color:#333;margin-top:10px;" id="asPrintHeaderMeta"></div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
+          <div class="as-last-sync"><span class="dot"></span>Last Sync <b id="asLastSync">7 Jul 2026, 09:45</b></div>
+        </div>
+
+        <div class="as-kpi-grid" id="asKpiGrid">
+          <div class="as-kpi-card kpi-total kpi-active" data-as-filter="all" onclick="setAsKpiFilter('all')"><p class="as-kpi-label">Total</p><p class="as-kpi-value" id="asTotal">—</p><p class="as-kpi-sub">assets tracked</p></div>
+          <div class="as-kpi-card kpi-verified" data-as-filter="verified" onclick="setAsKpiFilter('verified')"><p class="as-kpi-label">Verified</p><p class="as-kpi-value" id="asVerified" style="color:var(--green-fg);">—</p><p class="as-kpi-sub">scanned &amp; matched</p></div>
+          <div class="as-kpi-card kpi-pending" data-as-filter="pending" onclick="setAsKpiFilter('pending')"><p class="as-kpi-label">Pending</p><p class="as-kpi-value" id="asPending" style="color:var(--amber-fg);">—</p><p class="as-kpi-sub">not yet scanned</p></div>
+          <div class="as-kpi-card kpi-missing" data-as-filter="missing" onclick="setAsKpiFilter('missing')"><p class="as-kpi-label">Missing</p><p class="as-kpi-value" id="asMissing" style="color:var(--red-fg);">—</p><p class="as-kpi-sub">unaccounted for</p></div>
+        </div>
+
+        <div class="as-toolbar">
+          <p class="as-toolbar-title">รายการ Asset ทั้งหมด</p>
+          <div class="search-box" style="width:220px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" id="asSearch" placeholder="ค้นหา code / ชื่อ / serial" oninput="renderAssetSummary()">
+          </div>
+          <select class="as-select" id="asBranchFilter" onchange="renderAssetSummary()"><option value="all">ทุกสาขา</option></select>
+          <select class="as-select" id="asStatusFilter" onchange="renderAssetSummary()">
+            <option value="all">ทุกสถานะ</option>
+            <option value="verified">Verified</option>
+            <option value="pending">Pending</option>
+            <option value="missing">Missing</option>
+            <option value="damaged">Damaged</option>
+            <option value="unmatched">Unmatched</option>
+          </select>
+          <button class="as-refresh" onclick="refreshAssetSummary()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Refresh
+          </button>
+          <div class="export-dropdown-wrap">
+            <button class="import-btn" onclick="toggleExportMenu('asExportMenu')">⬇ Export ▾</button>
+            <div class="export-menu" id="asExportMenu">
+              <button onclick="exportAssetSummaryCSV()">Export CSV</button>
+              <button onclick="exportAssetSummaryExcel()">Export Excel</button>
+              <button onclick="printCurrentView()">Print / Save as PDF</button>
+            </div>
+          </div>
+          <button class="add-btn" onclick="showToast('เปิดฟอร์มเพิ่ม Asset')">+ Add Asset</button>
+        </div>
+        <p id="asResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
+        <div class="as-table-wrap">
+          <table class="as-table">
+            <thead><tr><th>#</th><th>Asset code</th><th>SEQ</th><th>ชื่อ Asset</th><th>สาขา</th><th>Serial no.</th><th>Qty</th><th>สถานะ</th><th>เวลาสแกน</th><th>Actions</th></tr></thead>
+            <tbody id="asRows"></tbody>
+          </table>
+          <div class="as-pagination" id="asPagination">
+            <button class="btn-outline" onclick="showToast('หน้าก่อนหน้า')">◀ ก่อนหน้า</button>
+            <button class="btn-outline" onclick="showToast('หน้าถัดไป')">ถัดไป ▶</button>
+          </div>
+        </div>
+
+        <div class="print-report-footer">
+          <div class="sig-row">
+            <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจนับ (Auditor)<br>วันที่ ..........................</div>
+            <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจสอบ / รับรอง (HQ)<br>วันที่ ..........................</div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Shared row "more" popover (View/Edit/Photo/More actions on any table row) -->
+      <div class="row-more-menu" id="rowMoreMenu">
+        <button class="row-more-item" id="rowMoreDupBtn">📄 Duplicate</button>
+        <button class="row-more-item danger" id="rowMoreDeleteBtn">🗑 Delete</button>
+      </div>
+
+      <!-- Confirm Delete modal (shared) -->
+      <div class="as-modal-overlay" id="asModalOverlay">
+        <div class="as-modal">
+          <p class="as-modal-title">Delete Asset?</p>
+          <p class="as-modal-body">การลบจะนำ asset นี้ออกจากทะเบียนถาวร และไม่สามารถกู้คืนได้</p>
+          <div class="as-modal-asset"><span id="asModalName">—</span><b id="asModalCode">—</b></div>
+          <div class="as-modal-actions">
+            <button class="btn-outline" onclick="closeAsModal()">Cancel</button>
+            <button class="btn-outline-red" onclick="confirmAsDelete()">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SCREEN: ACTIVITY LOG (system-wide audit trail) ============ -->
+      <section class="screen2" id="pageActivityLog">
+
+        <div class="as-toolbar">
+          <p class="as-toolbar-title">Activity Log <span style="font-weight:400;color:var(--ink-3);">— ทุก action ของทุกสาขา เรียงจากล่าสุด</span></p>
+          <div class="search-box" style="width:220px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" id="alSearch" placeholder="ค้นหา user / asset / สาขา" oninput="renderActivityLog()">
+          </div>
+          <select class="as-select" id="alBranchFilter" onchange="renderActivityLog()"><option value="all">ทุกสาขา</option></select>
+          <select class="as-select" id="alActionFilter" onchange="renderActivityLog()">
+            <option value="all">ทุก Action</option>
+            <option value="Added">Added</option>
+            <option value="Imported">Imported</option>
+            <option value="Status">Status change</option>
+            <option value="Write off">Write off</option>
+          </select>
+        </div>
+        <div class="as-table-wrap">
+          <table class="as-table">
+            <thead><tr><th>เวลา</th><th>ผู้ทำรายการ</th><th>สาขา</th><th>Asset</th><th>Action</th></tr></thead>
+            <tbody id="alRows"></tbody>
+          </table>
+        </div>
+
+      </section>
+
+    </div>
+  </div>
+</div>
+
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-head">
+    <p class="drawer-title" id="drawerTitle">Asset detail</p>
+    <button class="drawer-close" onclick="closeDrawer()" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body">
+    <div class="photo-box" id="photoBox">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="2" stroke-width="1.6"/><circle cx="9" cy="11" r="2" stroke-width="1.6"/><path d="M21 16l-5-5-4 4-3-3-6 6" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    </div>
+    <div class="photo-actions">
+      <button onclick="document.getElementById('photoInput').click()">Take photo</button>
+      <button onclick="document.getElementById('photoInput').click()">Upload</button>
+      <button onclick="showToast('Replace photo')">Replace</button>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(this)">
+
+    <div class="field-group" id="seqGroup">
+      <p class="field-label">SEQ <span style="text-transform:none;font-weight:400;color:var(--ink-3);">(จาก Master List — แก้ไขไม่ได้)</span></p>
+      <p class="field-value" id="fSeq" style="font-family:monospace;color:var(--ink-2);">—</p>
+    </div>
+    <div class="field-group">
+      <p class="field-label">Barcode</p>
+      <input class="field-input" id="fBarcode" placeholder="e.g. SFU042026060012">
+    </div>
+    <div class="field-group" id="categoryGroup">
+      <p class="field-label">Category</p>
+      <input class="field-input" id="fCategory" placeholder="e.g. Equipment">
+    </div>
+    <div class="field-group">
+      <p class="field-label">Location</p>
+      <input class="field-input" id="fLocation" placeholder="e.g. Office, Floor 1">
+    </div>
+    <div class="field-group">
+      <p class="field-label">Status</p>
+      <select class="field-select" id="fStatus" onchange="toggleWriteOffReason()">
+        <option value="verified">Verified</option>
+        <option value="pending">Pending</option>
+        <option value="missing">Missing</option>
+        <option value="damaged">Damaged</option>
+        <option value="duplicate">Duplicate</option>
+        <option value="wrong_location">Wrong location</option>
+        <option value="disposed">Disposed (Write off)</option>
+      </select>
+    </div>
+    <div class="field-group" id="writeOffGroup" style="display:none;">
+      <div class="writeoff-warn">⚠ Write off เป็นการตัดออกจากทะเบียนถาวร ต้องระบุเหตุผลก่อนบันทึก</div>
+      <p class="field-label">เหตุผลที่ Write Off</p>
+      <select class="field-select" id="fWriteOffReason">
+        <option value="">-- เลือกเหตุผล --</option>
+        <option value="sold">ขายแล้ว</option>
+        <option value="donated">บริจาค</option>
+        <option value="damaged_beyond_repair">เสียหายจนซ่อมไม่ได้</option>
+        <option value="lost">สูญหาย</option>
+        <option value="other">อื่นๆ (ระบุใน Remark)</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <p class="field-label">Remark</p>
+      <textarea class="field-textarea" id="fRemark" placeholder="Add a note about this asset…"></textarea>
+    </div>
+
+    <div class="field-group" id="historyGroup">
+      <p class="field-label">History</p>
+      <div id="historyList"></div>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-cancel" onclick="closeDrawer()">Cancel</button>
+    <button class="btn-save" id="drawerSaveBtn" onclick="saveDrawer()">Save</button>
+  </div>
+</div>
+
+<div class="overlay" id="importOverlay" onclick="closeImportDrawer()"></div>
+<div class="drawer" id="importDrawer">
+  <div class="drawer-head">
+    <p class="drawer-title">Import assets</p>
+    <button class="drawer-close" onclick="closeImportDrawer()" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body">
+    <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 14px;">อัปโหลดไฟล์ Master List (CSV/Excel — คอลัมน์เดียวกับที่ระบบเดิมใช้: รหัสสินทรัพย์, รหัสที่ตั้ง, ชื่อที่ตั้ง, รายละเอียดสินทรัพย์, เลขที่เครื่อง ฯลฯ) สำหรับสาขา <b id="importStoreName">Central Rama 2</b> ระบบจะตรวจสอบก่อนเขียนเข้าจริง</p>
+    <button class="row-action" style="margin-bottom:14px;" onclick="showToast('ดาวน์โหลด template.csv')">⬇ ดาวน์โหลด Template</button>
+
+    <div id="importStep1">
+      <div class="dropzone">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <p style="font-size:12.5px;margin:8px 0 0;">ลากไฟล์มาวาง หรือ</p>
+        <button class="dropzone-btn" onclick="document.getElementById('importFileInput').click()">เลือกไฟล์ CSV / Excel</button>
+        <input type="file" id="importFileInput" accept=".csv,.xls,.xlsx" style="display:none" onchange="handleImportFile(this)">
+      </div>
+    </div>
+
+    <div id="importStep2" style="display:none;">
+      <div class="import-summary" id="importSummaryText"></div>
+      <table class="import-preview">
+        <thead><tr><th>Asset</th><th>Asset Code</th><th>Serial</th><th>Location</th><th>Status</th></tr></thead>
+        <tbody id="importPreviewRows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-cancel" onclick="closeImportDrawer()">Cancel</button>
+    <button class="btn-save" id="importConfirmBtn" onclick="confirmImport()" disabled style="opacity:.5;">Confirm Import</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var stores = [
+  {name:"Central Rama 2", total:1245, scanned:890, exceptions:18, status:"progress"},
+  {name:"Big C Bangplee", total:300, scanned:54, exceptions:18, status:"progress"},
+  {name:"Central World", total:412, scanned:120, exceptions:17, status:"progress"},
+  {name:"Terminal 21 Pattaya", total:265, scanned:265, exceptions:0, status:"completed"},
+  {name:"Mega Bangna", total:288, scanned:288, exceptions:0, status:"completed"},
+  {name:"Siam Paragon", total:340, scanned:0, exceptions:0, status:"notstarted"},
+  {name:"Icon Siam", total:355, scanned:0, exceptions:0, status:"notstarted"},
+  {name:"Robinson Chiang Mai", total:198, scanned:198, exceptions:0, status:"completed"}
+];
+
+var assetsByStore = {};
+var sessionsByBranch = {}; // branch_id(location_code) -> [audit_sessions...] sorted oldest-first, ใช้คำนวณ "รอบที่ N"
+function seedAssets(store, storeIndex){
+  var names = ["Printer","Laptop","Chair","Monitor","Desk","Air conditioner","Shelving unit","CCTV camera","POS terminal","Router","Whiteboard","Filing cabinet"];
+  var locations = ["Office","Meeting room","Stockroom","Floor 1","Floor 2","Reception"];
+  var statuses = ["verified","pending","missing","damaged","unmatched"];
+  var list = [];
+  for(var i=0;i<12;i++){
+    var st = i < 6 ? "verified" : statuses[i % statuses.length];
+    list.push({
+      name: names[i % names.length] + " " + (100+i),
+      seq: "SEQ-" + String(storeIndex * 300 + i + 1).padStart(6, "0"),
+      barcode: "SFU0420260" + (6000+i),
+      category: i % 2 === 0 ? "Equipment" : "Fixture",
+      location: locations[i % locations.length],
+      status: st,
+      lastScan: st === "verified" ? (8+i) + ":25" : "-",
+      remark: "",
+      history: st === "verified" ? [
+        {event:"Verified", by:"Somchai P.", time:"12 Jul, 09:30"},
+        {event:"Remark added", by:"Somchai P.", time:"13 Jul, 14:10"}
+      ] : []
+    });
+  }
+  return list;
+}
+stores.forEach(function(s, i){ assetsByStore[s.name] = seedAssets(s, i); });
+
+/* ================================================================
+   REAL SYSTEM INTEGRATION — replaces the mock arrays above once
+   sign-in succeeds. Mock data above only backs the Login screen's
+   own background render; nobody sees it because the overlay covers it.
+   ================================================================ */
+var API_BASE = 'https://bata-asset-api-production.up.railway.app';
+document.getElementById('loginApiBase').textContent = API_BASE;
+
+var authToken = null;
+var authUser = null;
+
+/* ================================================================
+   EXPORT — CSV / Excel / Print, always respecting whatever filter
+   is currently applied (search, branch, status, KPI click). Each
+   render function below stashes the exact filtered array it just
+   displayed; export reads from that cache rather than recomputing,
+   so what gets exported always matches what's on screen.
+   ================================================================ */
+var lastOverviewExportList = [];
+var lastAssetSummaryExportList = [];
+
+function toggleExportMenu(id){
+  document.querySelectorAll('.export-menu').forEach(function(m){
+    if(m.id === id) m.classList.toggle('show'); else m.classList.remove('show');
+  });
+}
+function closeAllExportMenus(){
+  document.querySelectorAll('.export-menu').forEach(function(m){ m.classList.remove('show'); });
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.export-dropdown-wrap')) closeAllExportMenus();
+});
+
+function todayStamp(){
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function csvEscape(v){
+  v = (v === undefined || v === null) ? '' : String(v);
+  if(/[",\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
+  return v;
+}
+function csvLine(arr){ return arr.map(csvEscape).join(','); }
+function buildMetaCSVBlock(title, branchLabel, count){
+  return [
+    csvLine([title]),
+    csvLine(['Branch', branchLabel]),
+    csvLine(['Exported At', formatDateTime(new Date().toISOString())]),
+    csvLine(['Total Items', count]),
+    ''
+  ].join('\r\n') + '\r\n';
+}
+function buildMetaRows(title, branchLabel, count){
+  return [
+    [title],
+    ['Branch', branchLabel],
+    ['Exported At', formatDateTime(new Date().toISOString())],
+    ['Total Items', count],
+    []
+  ];
+}
+function toCSV(headers, rows){
+  var lines = [headers.map(csvEscape).join(',')];
+  rows.forEach(function(r){ lines.push(r.map(csvEscape).join(',')); });
+  return lines.join('\r\n');
+}
+function downloadFile(filename, content, mime){
+  var blob = new Blob([content], { type: mime });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+function exportToExcel(headers, rows, sheetName, filename, metaRows){
+  if(typeof XLSX === 'undefined'){
+    showToast('โหลด Excel library ไม่สำเร็จ (อาจไม่มีอินเทอร์เน็ต) — ลอง Export CSV แทน');
+    return;
+  }
+  var data = (metaRows || []).concat([headers]).concat(rows);
+  var ws = XLSX.utils.aoa_to_sheet(data);
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+  XLSX.writeFile(wb, filename);
+}
+
+function currentOverviewBranchLabel(){
+  var s = stores.filter(function(x){ return x.name === currentStore; })[0];
+  return s ? ((s.displayName || s.name) + ' (' + s.name + ')') : currentStore;
+}
+function currentAssetSummaryBranchLabel(){
+  var branchesInResult = {};
+  lastAssetSummaryExportList.forEach(function(a){ branchesInResult[a.branch] = true; });
+  var names = Object.keys(branchesInResult);
+  return names.length === 1 ? names[0] : (names.length + ' สาขา: ' + names.slice(0, 10).join(', ') + (names.length > 10 ? ', ...' : ''));
+}
+
+var OVERVIEW_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Location', 'Qty', 'Status', 'Last Scan'];
+function overviewExportRows(){
+  return lastOverviewExportList.map(function(a){
+    return [a.barcode, a.name, a.location, (a.qty != null ? a.qty : 1), a.status, formatDateShort(a.lastScan)];
+  });
+}
+function exportOverviewCSV(){
+  closeAllExportMenus();
+  var rows = overviewExportRows();
+  var branchLabel = currentOverviewBranchLabel();
+  var meta = buildMetaCSVBlock('Bata Fixed Asset Audit - Overview Report', branchLabel, rows.length);
+  downloadFile('overview-' + currentStore + '-' + todayStamp() + '.csv', meta + toCSV(OVERVIEW_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
+  showToast('Export CSV สำเร็จ (' + rows.length + ' รายการ)');
+}
+async function exportOverviewExcel(){
+  closeAllExportMenus();
+  var rows = overviewExportRows();
+  var branchLabel = currentOverviewBranchLabel();
+  showToast('กำลังสร้างไฟล์ Excel...');
+  try{
+    await apiFetchDownload('/hq/export/excel', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Overview Report',
+        branch_label: branchLabel,
+        headers: OVERVIEW_EXPORT_HEADERS,
+        rows: rows,
+        filename: 'overview-' + currentStore + '-' + todayStamp() + '.xlsx'
+      })
+    }, 'overview-' + currentStore + '-' + todayStamp() + '.xlsx');
+    showToast('Export Excel สำเร็จ (' + rows.length + ' รายการ)');
+  } catch(e){
+    showToast('Export Excel ไม่สำเร็จ: ' + e.message + ' — ลอง Export CSV แทนได้');
+  }
+}
+
+var AS_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Branch', 'Serial No.', 'Qty', 'Status', 'Last Scan'];
+function assetSummaryExportRows(){
+  return lastAssetSummaryExportList.map(function(a){
+    return [a.code, a.name, a.branch, a.serial, (a.qty != null ? a.qty : 1), a.status, formatDateShort(a.scanTime)];
+  });
+}
+function exportAssetSummaryCSV(){
+  closeAllExportMenus();
+  var rows = assetSummaryExportRows();
+  var branchLabel = currentAssetSummaryBranchLabel();
+  var meta = buildMetaCSVBlock('Bata Fixed Asset Audit - Asset Summary Report', branchLabel, rows.length);
+  downloadFile('asset-summary-' + todayStamp() + '.csv', meta + toCSV(AS_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
+  showToast('Export CSV สำเร็จ (' + rows.length + ' รายการ)');
+}
+async function exportAssetSummaryExcel(){
+  closeAllExportMenus();
+  var rows = assetSummaryExportRows();
+  var branchLabel = currentAssetSummaryBranchLabel();
+  showToast('กำลังสร้างไฟล์ Excel...');
+  try{
+    await apiFetchDownload('/hq/export/excel', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: 'Asset Summary Report',
+        branch_label: branchLabel,
+        headers: AS_EXPORT_HEADERS,
+        rows: rows,
+        filename: 'asset-summary-' + todayStamp() + '.xlsx'
+      })
+    }, 'asset-summary-' + todayStamp() + '.xlsx');
+    showToast('Export Excel สำเร็จ (' + rows.length + ' รายการ)');
+  } catch(e){
+    showToast('Export Excel ไม่สำเร็จ: ' + e.message + ' — ลอง Export CSV แทนได้');
+  }
+}
+
+function printCurrentView(){
+  closeAllExportMenus();
+  window.print();
+}
+
+function initialsFrom(text){
+  if(!text) return '?';
+  var clean = text.trim();
+  var parts = clean.split(/[\s._-]+/).filter(Boolean);
+  if(parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  var lettersOnly = clean.replace(/[^A-Za-z]/g, '');
+  if(lettersOnly.length >= 2) return lettersOnly.slice(0, 2).toUpperCase();
+  return clean.slice(0, 2).toUpperCase();
+}
+
+async function apiFetch(path, options){
+  options = options || {};
+  options.headers = Object.assign({}, options.headers || {}, authToken ? {'Authorization':'Bearer ' + authToken} : {});
+  if(options.body && !(options.body instanceof FormData) && !options.headers['Content-Type']){ options.headers['Content-Type'] = 'application/json'; }
+  var res;
+  try{
+    res = await fetch(API_BASE + path, options);
+  } catch(e){
+    throw new Error('เชื่อมต่อ API ไม่ได้ (network หรือ CORS): ' + e.message);
+  }
+  if(res.status === 401){
+    authToken = null;
+    try{ localStorage.removeItem('bataAuditToken'); localStorage.removeItem('bataAuditUser'); } catch(e){}
+    showLogin('Session หมดอายุ หรือยังไม่ได้ sign in — กรุณา sign in ใหม่');
+    throw new Error('401 Unauthorized');
+  }
+  if(!res.ok){
+    var txt = '';
+    try{ txt = await res.text(); }catch(e2){}
+    throw new Error('API error ' + res.status + (txt ? (': ' + txt.slice(0,200)) : ''));
+  }
+  return res.json();
+}
+
+/* ใช้กับ endpoint ที่คืนไฟล์ตรงๆ (ไม่ใช่ JSON) เช่น /hq/export/excel — ดาวน์โหลดเป็นไฟล์ให้เลย */
+async function apiFetchDownload(path, options, filename){
+  options = options || {};
+  options.headers = Object.assign({}, options.headers || {}, authToken ? {'Authorization':'Bearer ' + authToken} : {});
+  if(options.body && !(options.body instanceof FormData) && !options.headers['Content-Type']){ options.headers['Content-Type'] = 'application/json'; }
+  var res;
+  try{
+    res = await fetch(API_BASE + path, options);
+  } catch(e){
+    throw new Error('เชื่อมต่อ API ไม่ได้ (network หรือ CORS): ' + e.message);
+  }
+  if(res.status === 401){
+    authToken = null;
+    try{ localStorage.removeItem('bataAuditToken'); localStorage.removeItem('bataAuditUser'); } catch(e){}
+    showLogin('Session หมดอายุ หรือยังไม่ได้ sign in — กรุณา sign in ใหม่');
+    throw new Error('401 Unauthorized');
+  }
+  if(!res.ok){
+    var txt = '';
+    try{ txt = await res.text(); }catch(e2){}
+    throw new Error('API error ' + res.status + (txt ? (': ' + txt.slice(0,200)) : ''));
+  }
+  var blob = await res.blob();
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+
+function showLogin(message){
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('appRoot').style.display = 'none';
+  var errEl = document.getElementById('loginError');
+  if(message){ errEl.textContent = message; errEl.style.display = 'block'; }
+  else { errEl.style.display = 'none'; }
+}
+function hideLogin(){
+  document.getElementById('loginOverlay').style.display = 'none';
+  document.getElementById('appRoot').style.display = '';
+}
+
+async function doLogin(){
+  var employeeId = document.getElementById('loginEmployeeId').value.trim();
+  var password = document.getElementById('loginPassword').value;
+  var branchId = document.getElementById('loginBranchId').value.trim();
+  var errEl = document.getElementById('loginError');
+  if(!employeeId || !password){
+    errEl.textContent = 'กรุณากรอก Employee ID และ Password';
+    errEl.style.display = 'block';
+    return;
+  }
+  var btn = document.getElementById('loginSubmitBtn');
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  try{
+    var data = await apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ employee_id: employeeId, password: password, branch_id: branchId })
+    });
+    authToken = data.token;
+    authUser = {
+      employee_id: data.employee_id || data.user || employeeId,
+      role: data.role || '',
+      branch_id: data.branch_id || branchId,
+      branch_name: data.branch_name || ''
+    };
+    // FIX: เดิม authToken เป็นแค่ตัวแปรใน memory พอกด F5 หายหมด ต้อง login ใหม่ทุกครั้ง
+    // เก็บลง localStorage ไว้ด้วย เพื่อให้ตอนโหลดหน้าใหม่เช็คแล้วข้ามหน้า Login ได้เลย
+    try{
+      localStorage.setItem('bataAuditToken', authToken);
+      localStorage.setItem('bataAuditUser', JSON.stringify(authUser));
+    } catch(e){ /* localStorage อาจถูกบล็อค (private mode ฯลฯ) — ไม่ fatal แค่จะไม่จำ login ข้าม refresh */ }
+    document.getElementById('headerUserLabel').textContent = authUser.employee_id + (authUser.role ? ' · ' + authUser.role : '');
+    document.getElementById('headerAvatar').textContent = initialsFrom(authUser.employee_id);
+    hideLogin();
+    await loadRealData();
+    document.getElementById('assetSearch').focus();
+  } catch(e){
+    errEl.textContent = 'Sign in ไม่สำเร็จ: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+}
+
+function logout(){
+  authToken = null; authUser = null;
+  try{ localStorage.removeItem('bataAuditToken'); localStorage.removeItem('bataAuditUser'); } catch(e){}
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('headerUserLabel').textContent = '';
+  document.getElementById('headerAvatar').textContent = '—';
+  showLogin();
+}
+
+/* GET /hq/scans exists (confirmed from /docs) — this is the piece that lets us
+   derive real per-asset audit status instead of defaulting everything to Pending.
+   A scan record's qr_key tells us which master asset it belongs to; its
+   condition/serial_match tell us Verified vs Damaged vs Unmatched. Anything
+   in the master list with no matching scan is honestly "Pending" — it hasn't
+   been scanned, full stop, no guessing involved. */
+function statusFromScan(scan){
+  var condition = (scan.condition || scan.status || '').toString().toLowerCase();
+  var serialMatch = scan.serial_match;
+  if(serialMatch === false) return 'unmatched';
+  if(condition.indexOf('damage') > -1 || condition === 'bad' || condition === 'broken') return 'damaged';
+  return 'verified';
+}
+function scanTimeOf(scan){
+  return scan.scanned_at || scan.created_at || scan.time || scan.timestamp || '-';
+}
+function scanUserOf(scan){
+  return scan.employee_id || scan.user || scan.scanned_by || scan.auditor || 'Unknown';
+}
+function scanQrKeyOf(scan){
+  return scan.qr_key || scan.asset_qr || scan.qr || scan.asset_code || null;
+}
+function scanPhotoOf(scan){
+  return scan.photo_url || scan.photo || scan.image_url || scan.photo_path || null;
+}
+function scanIdOf(scan){
+  return scan.id != null ? scan.id : (scan.scan_id != null ? scan.scan_id : null);
+}
+/* dd/mm/yy — for the Last Scan column, a date is enough; the full timestamp is
+   still available in Activity Log where the exact time actually matters. */
+function formatDateShort(raw){
+  if(!raw || raw === '-') return '-';
+  var d = new Date(raw);
+  if(isNaN(d.getTime())) return String(raw).slice(0, 10);
+  var dd = String(d.getDate()).padStart(2, '0');
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = String(d.getFullYear()).slice(-2);
+  return dd + '/' + mm + '/' + yy;
+}
+function formatDateTime(raw){
+  if(!raw || raw === '-') return '-';
+  var d = new Date(raw);
+  if(isNaN(d.getTime())) return String(raw);
+  var dd = String(d.getDate()).padStart(2, '0');
+  var mm = String(d.getMonth() + 1).padStart(2, '0');
+  var yy = String(d.getFullYear()).slice(-2);
+  var hh = String(d.getHours()).padStart(2, '0');
+  var mi = String(d.getMinutes()).padStart(2, '0');
+  return dd + '/' + mm + '/' + yy + ' ' + hh + ':' + mi;
+}
+/* Real SEQ is just a 3-digit number (e.g. "SEQ064") — no extra padding/dash.
+   Real Asset Code, as it appears on the printed report, is AssetCode-SEQ
+   (e.g. "COM012020120002-064"), so that's what we build for the barcode field. */
+function seqDigitsOf(raw){
+  if(raw === null || raw === undefined || raw === '') return null;
+  var digits = String(raw).replace(/[^0-9]/g, '');
+  if(!digits) return null;
+  return digits.padStart(3, '0').slice(-3);
+}
+
+/* Static branch code -> Thai/English name lookup, from the official store list
+   export (source: บริษัท บาจา (ประเทศไทย) จำกัด, SPFA LOC report). The real
+   /hq/assets API confirmed it does NOT return a branch name field at all —
+   only location_code — so we keep this table locally rather than guessing
+   field names or adding an extra API call. */
+var STORE_NAMES_ALL_344 = {"0040000": "Factory", "0099999": "Office", "0060000": "NRSD", "0099996": "Resident", "0071205": "Infinic (Samut Prakan)", "0055951": "Big C Hadyai", "0071502": "Pata Pinklaow", "0072007": "Chaiyapong Pichit", "0072009": "Friday Uttaradit", "0072011": "Chareonphan Payao", "0073005": "Roi-et Plaza", "0073015": "Suenheng Srisakate", "0074004": "Hua Hin Shopping Mall", "0074009": "Klang 1 Assadang", "0074014": "Sahathai Petchburi", "0074017": "Eastern Chacheungsao", "0074023": "Kanockkarn Kanchanaburi", "0075011": "Siribun Trang", "0075012": "Vouge Krabi", "0075014": "Ocean Chumporn", "0064000": "Merchandising", "0055036": "Big C Trang", "0055037": "Lotus Chalong", "0055901": "Robinson Trung", "0055902": "Big C Nakhonsrithammarat", "0055905": "Phuket 3", "0055906": "Big C Satun", "0055946": "Lotus Nakornsrithammarat", "0055949": "Big C Suratthani", "0055009": "Big C Hadyai 2", "0055010": "Lotus Krabi", "0055040": "Lotus Jana", "0055041": "Lotus Hadyai", "0055042": "Lotus Songkla", "0055013": "Robinson", "0055014": "Big C Samui", "0055016": "Big C Krabi", "0055017": "Lotus Thungsong", "0055018": "Lotus Pattalung", "0055019": "Lotus Samui Lamai", "0055020": "Lotus Satun", "0055021": "Big C Chumporn", "0055022": "Big C Pung-Nga", "0055023": "Pattanee 1", "0055024": "Lotus Hadyai 2", "0055002": "Songkla 1", "0055004": "Lotus Thasala", "0055005": "Lotus Suratthani", "0055031": "Big C Phuket", "0055032": "Big C Pha-ngan", "0055033": "Lotus Vengsa", "0053032": "Robinson Sakonnakorn", "0053034": "Ptt Nangrong", "0053035": "Robinson Roi-et", "0053036": "Robinson Mukdahan", "0053037": "Assawan 2 Nongkai", "0053038": "Lotus Khonkean", "0053039": "Big C Burirum", "0053040": "Big C Nakhonratchasima2", "0053041": "Central Nakhonratchasima", "0053042": "Nakhonratchasima 3", "0053044": "Khonkean 3", "0053045": "Lotus Nangrong", "0053046": "Lotus Khonkeaen 2", "0053047": "Lotus Ubonratchathani", "0053048": "Lotus Chumpaer", "0053901": "Tukcom Khonkean", "0053902": "Lotus Loei", "0053903": "Nakhonphanom 2", "0053905": "Big C Loei", "0053944": "Mukdaharn", "0053947": "Big C Rayong", "0053948": "Big C Nakhonratchasima", "0053950": "Lotus Nakhonratchasima", "0053951": "Udonthani 1", "0053953": "Big C Ubolratchathani", "0053955": "Lotus Nongkai", "0053958": "Big C Khonkaen", "0054000": "0054000", "0054001": "Petchburi", "0054002": "Lotus Sattaheep", "0054004": "Big C Pattaya", "0054009": "Lotus Saraburi", "0054010": "Com City Pattaya", "0054012": "Big C Petchaburi", "0054013": "Big C Chacheungsao 2", "0054016": "Big C Cholburi (2)", "0054018": "Big C Ayutthaya", "0054019": "Big C Sakaew", "0054020": "Lotus Mahachai", "0054025": "Lotus Amatanakhon", "0054026": "Big C Pattaya 2", "0054027": "Big C Mahachai", "0054028": "Leamthong Bangsan", "0054029": "Harbor Mall", "0054030": "Big C Chonburi", "0054032": "Sukanan Park", "0054035": "Robinson Saraburi", "0054037": "Big C Kanchanaburi", "0054038": "Big C Srimahaphot", "0054039": "Lotus Nakhonnayok", "0054040": "Robinson Supanburi", "0054041": "Lotus Samutsakorn", "0054042": "Nakhonpathom", "0054043": "Mike Pattaya", "0054044": "Robinson Chachuengsao", "0054045": "Robinson Prachinburi", "0053026": "Fairy Khonkean", "0053027": "Sunee Ubol", "0053029": "Sermthai Complex", "0053030": "Big C Roi-et", "0054049": "Lotus Sampran", "0054092": "Lotus Prachinburi", "0054901": "Leamthong Rayong", "0054945": "Lotus Suphanburi", "0054947": "Lotus Nakhonpathom", "0054960": "Lotus Rajburi", "0051132": "Big C Lopburi", "0051184": "Royal Garden", "0051201": "Ck Plaza", "0051211": "Ptt Chiangkhan", "0000000": "0000000", "0051402": "Pantip Plaza", "0051411": "Sathorn", "0051412": "Big C Rattanatibet", "0051417": "Lotus Pakkred", "0051418": "Lotus Rangsit Klong 7", "0051419": "Lotus Navanakorn", "0051424": "Zeer Rangsit", "0051523": "Lotus Rama 2", "0051524": "Lotus Charansanitwong", "0051525": "The Mall 3", "0051527": "Big C Onnuch", "0051529": "Lotus Srinakarin", "0051530": "Big C Petkasem", "0051531": "Bangplee", "0051532": "Big C Omyai", "0051533": "Lotus Lumlookka", "0051534": "Big C Bangpakok", "0051535": "Big C Suwinthavong", "0051540": "Big C Ramindra", "0051542": "Supreme Samsen", "0051543": "Lotus Kratumban", "0051544": "Big C Sukhapiban 3", "0051545": "Robinson Samuthprakarn", "0051546": "Lotus Bangyai", "0051548": "Big C Bangplee", "0051549": "Big C Bangyai", "0051550": "Big C Suksawas", "0051560": "Ratchawong Pier", "0051442": "Nonthaburi 1", "0051445": "Big C Lamlukka2", "0051498": "Minburi Outlet", "0051506": "Imperial Samrong", "0051507": "Big C Srinakarin", "0051508": "Taprachan", "0051509": "Big C Ramkumheng", "0051510": "Yaowaraj", "0051514": "Big C Rama 4", "0051515": "Lotus Bangpoo", "0051516": "Big C Rama 2 (2)", "0051517": "Lotus Salaya", "0051901": "Big C Wongsawang", "0051903": "Imperial Ladplaow", "0051958": "Lotus Minburi", "0051960": "Big C Rama 2", "0051962": "Big C Samuthprakarn", "0051965": "Lotus Bangkapi", "0051968": "Lotus Rama 4", "0051409": "IT Laksi Plaza", "0051938": "Lotus Ladplaow", "0051939": "Lotus Chaengwattana", "0052005": "Big C Chiengmai", "0052006": "Chiangmai 1", "0052014": "Lotus Hangdong", "0052016": "Lotus Singburi", "0052017": "Lotus Maesot", "0052023": "Prae", "0052030": "Hongfha", "0051946": "Big C Rangsit", "0051948": "Lotus Laksi", "0052032": "Lotus Pitsanuloke 2", "0052033": "Happy Pichit", "0052038": "Chaisang Singburi", "0052039": "Ptt Lamphun", "0052040": "Big C Pitsanulok", "0052041": "The Walk Nakhonsawan", "0052042": "Uttaradit", "0052043": "Big C Petchaboon", "0052048": "Lotus Nan", "0052901": "Big C Kampengpech", "0052902": "Big C Chiangmai 2", "0052903": "Chiangrai 2", "0052942": "Big C Chiangrai", "0052943": "Big C Lampang", "0053002": "Big C Udornthani", "0053003": "Thaweekit Buriram 2", "0053005": "Lotus Sawangdandin", "0053006": "Lotus Thabor", "0053008": "Lotus Det Udom", "0052036": "Lotus Ruomchok", "0053010": "Surin Plaza", "0053011": "Kalasin Plaza", "0053016": "Lotus Chaiyapoom", "0053017": "Big C Yasothorn", "0053018": "Big C Warin Ubol", "0053020": "Big C Srisakate", "0053021": "Lotus Udonthani 2", "0053022": "Central Khonkaen", "0053012": "Central Udonthani", "0052037": "Central Cheingmai", "0053009": "The Mall Koraj", "0052035": "The Plaza", "0051954": "The Mall 5 Thapra", "0052031": "Central Lampang", "0052007": "Lotus Kamteing", "0052008": "Central Airport", "0052010": "Central Pitsanuloke", "0051944": "Maboonkrong", "0051410": "Central Bangna", "0052001": "Kadsuankaew", "0052002": "Central Chiengrai", "0052003": "Ayutthaya Park", "0051905": "Central Rama 2", "0051906": "Seacon Bangkae", "0051518": "Central Rama 3", "0051511": "The Mall 7 Bangkae", "0051512": "Seacon Square 1", "0051425": "Central Jeangwattana", "0051426": "Big C Rajdamri", "0051427": "Paradise Park", "0051428": "Maboonkrong 2", "0051429": "Seacon Square 2", "0051430": "Central Rama 9", "0051431": "Mega Bangna", "0051432": "Central Word", "0051433": "Central Salaya", "0051434": "Sukhumvit 15", "0051435": "Homepro Sunvannabhumi", "0051436": "Central Westgate", "0051438": "Central Pinklow", "0051415": "Central Ramindra", "0051416": "The Mall 8 Bangkapi", "0051403": "Future Park Rangsit", "0051404": "Fashion Island", "0051407": "The Mall 6 Ngamwongwan", "0051401": "Central Rattanatibet", "0055001": "Hua Hin Market Village", "0053031": "Central Ubolratchathani", "0054046": "Central Rayong", "0054021": "Central Pattaya Beach", "0054023": "Central Cholburi", "0054007": "Lotus Pattaya", "0054008": "Royal Garden Pattaya", "0055008": "Jungceylon Phuket", "0055030": "Central Suratthani", "0055043": "Central", "0055044": "Bluport Huahin", "0055012": "Central Phuket", "0054048": "Central Marina Pattaya", "0055035": "Central Hadyai", "0055950": "Lotus Phuket", "0055038": "Central Samui", "0051801": "Footin Market Village", "0051809": "Footin Bangkae", "0051810": "Footin Phuket", "0051811": "Footin Mall Koraj", "0051814": "Footin Homepro", "0051819": "Footin Future Park", "0051820": "Footin Big C Bangyai", "0051822": "Footin Seacon", "0051823": "Footin Royal Garden", "0051824": "Footin The Mall 8", "0051826": "Footin Maboonkrong", "0051828": "Footin Central Khonkaen", "0051830": "Footin The Mall 5 Thapra", "0051835": "Footin Carrefour Rama 4", "0051836": "Footin The Mall 7 Bangkae", "0051838": "Footin Nongkai", "0051839": "Footin Rajdamri", "0051840": "Footin Central Chiengrai", "0051842": "Footin Central Pitsanuloke", "0051843": "Footin Big C Chiengrai", "0051845": "Footin The Mall 6", "0051847": "Footin Mega Bangna", "0051849": "Footin Central Rama2", "0051851": "Footin Central Suratthani", "0051854": "Footin Central", "0051858": "Footin Lotus Pattaya North", "0051213": "Chokchai Outlet", "0052049": "Lotus Pitsanuloke Extra 2", "0052098": "Chiangmai Outlet", "0055034": "Hadyai", "0054034": "Pattaya", "0054047": "Harbor Mall Pattaya", "0099998": "Store Other", "0071206": "Robinson Sukhumvit", "0051208": "Home Pro Chaiyapoom", "0099997": "Store Warehouse", "0068000": "Warehouse", "0051446": "Lotus Rangsit Klong 4", "0099994": "IT", "0099995": "IT Tem", "0051171": "Bangplee Temporary", "0054022": "Central Mahachai", "0052018": "Robinson Kamphaengphet", "0054014": "Lotus Banpong", "0051447": "Central World", "0051521": "Lotus Bangpakok", "0054031": "Lotus Chanthaburi", "0052019": "Lotus Payao", "0053049": "Robinson Chaiyaphoom", "0051034": "Pacific Park Sriracha", "0054033": "Lotus Bansuan", "0051890": "Footin Bangplee Fair", "0052044": "Big C Nakornsawan 2", "0053023": "Top Phol Plaza", "0099993": "IT Hold", "0052020": "Lotus Tak", "0054003": "Bata Women CT Marina", "0051520": "Robinsan Srisamarn", "0055046": "Big C Phang-nga", "0053024": "Big C Pakchong", "0054017": "Robinson Kanchanaburi", "0051439": "Robinson Ladkabang", "0054005": "Central Sriracha", "0054011": "Central Ayuthaya", "0055047": "Robinson Thalang", "0052045": "Big C Lamphun", "0054024": "Big C Nakornpathom", "0053043": "Big C Amnatcharoen", "0051449": "Silom Complex", "0052024": "Lotus Petchaboon", "0055048": "Robinson Chalong", "0052025": "Maya Chiengmai", "0051450": "Central Westville", "0051078": "Central Ladprao POP UP", "0052026": "Central Nakornsawan", "0054094": "Central Nakornpathom", "0055049": "Lotus Yala", "0099910": "Store Temporary", "0054095": "Lotus Saraburi", "0052021": "Central Airport", "0051406": "Central Bangna"};
+
+
+var REAL_STORE_CODES = {"0051002": "Central Village Temp", "0051426": "Big C Ratchadamri", "0051428": "MBK 2", "0051436": "CentralPlaza Westgate", "0051438": "CentralPlaza Pinklao", "0051450": "Central Westville", "0051508": "Tha Phrachan", "0051510": "Yaowarat", "0051511": "The Mall 7", "0051514": "Big C Rama 4", "0051518": "CentralPlaza Rama 3", "0051521": "Lotus Bangpakok", "0051524": "Lotus Charan Sanit Wong", "0051530": "Big C Phetkasem", "0051534": "Big C Bangpakok", "0051542": "Supreme Complex", "0051546": "Lotus Bang Yai", "0051549": "Big C Bangyai", "0051550": "Big C Susawat", "0051905": "CentralPlaza Rama 2", "0051906": "Seacon Bang Khea", "0051944": "MBK", "0051960": "Big C Rama 2", "0051968": "Lotus Rama 4", "0051403": "Future Park", "0051404": "Fashion", "0051407": "The mall 6", "0051409": "IT Square", "0051415": "CentralPlaza Ram Intra", "0051416": "The Mall 8", "0051418": "Lotus Rangsit Klong 7", "0051419": "Lotus Navanakorn", "0051425": "CentralPlaza Chaeng Wattana", "0051430": "CentralPlaza Rama 9", "0051446": "Lotus Rangsit Klong 4", "0051498": "Minburi", "0051520": "Robinson Srisamarn", "0051533": "Lotus Lam Luk Ka Klong 2", "0051535": "Big C Suwinthawong", "0051540": "Big C Ram Intra", "0051903": "Imperial Lat Phrao", "0051938": "Lotus Lat Phrao", "0051939": "Lotus Chaeng Wattana", "0051946": "BC Rangsit", "0051948": "Lotus Lak Si", "0051965": "Lotus Bang Kapi", "0051201": "CK Plaza", "0051410": "CentralPlaza Bang Na", "0051427": "Paradise Park", "0051431": "Mega Bang Na", "0051435": "Homepro Suvarnabhumi", "0051439": "Robinson Ladkrabang", "0051512": "Seacon Square", "0051545": "Robinson Samut Prakan", "0051548": "Big C Bang Phli", "0053947": "Big C Rayong", "0054004": "Big C Pattaya", "0054005": "Central Siracha", "0054007": "Lotus North Pattaya", "0054016": "Big C Chonburi 2", "0054021": "Central Festival Pattaya Beach", "0054023": "CentralPlaza Chonburi", "0054029": "Harbor Mall", "0054030": "Big C Chonburi", "0054046": "CentralPlaza Rayong", "0054048": "Central Marina Pattaya", "0071205": "Infinite Mall", "0052002": "CentralPlaza Chiang Rai", "0052005": "Big C Chiang Mai", "0052007": "Lotus Chiang Mai", "0052008": "CentralPlaza Chiang Mai Airport", "0052010": "CentralPlaza Phitsanulok", "0052017": "Lotus Maesot", "0052018": "Robinson Kampangpetch", "0052019": "Lotus Payao", "0052023": "Phrae", "0052025": "Maya Chiengmai", "0052026": "Central Nakornsawan", "0052031": "CentralPlaza Lampang", "0052032": "Lotus Phitsanulok", "0052033": "Happy Plaza", "0052036": "Lotus Ruam Chok", "0052037": "Central Festival Chiang Mai", "0052040": "Big C Phitsanulok", "0052042": "Uttaradit", "0052048": "Lotus Nan", "0052098": "Chiang Mai Outlet", "0052901": "Big C Kamphaeng Phet", "0052902": "Big C Chiang Mai 2", "0052942": "Big C Chiang Rai", "0052943": "Big C Lampang", "0072007": "Chaipong Plaza", "0072011": "Charoenphan", "0052043": "Big C Phetchabun", "0053002": "Big C Udon Thani", "0053006": "Lotus Tha Bo", "0053011": "Kalasin Plaza", "0053012": "CentralPlaza Udon Thani", "0053021": "Lotus Udon Thani", "0053022": "CentralPlaza Khon Kaen", "0053023": "TOPS Plaza Phol", "0053026": "Fairy Plaza", "0053029": "Sermthai Complex", "0053030": "Big C Roi Et", "0053032": "Robinson Sakon Nakhon", "0053035": "Robinson Roi Et", "0053036": "Robinson Mukdahan", "0053037": "Asawann Nong Khai", "0053038": "Lotus Khon Kaen", "0053046": "Lotus Khonkaen 2", "0053048": "Lotus Chumphae", "0053049": "Robinson Chaiyapum", "0053905": "Big C Loei", "0053955": "Lotus Nong Khai", "0053958": "Big C Khon Kaen", "0073005": "Roi Et Plaza", "0051091": "Terminal 21Koraj Fair", "0051434": "Sukhumvit 15", "0051506": "Imperial Samrong", "0053003": "Taweekit 2", "0053008": "Lotus Det Udom", "0053009": "The Mall Korat", "0053010": "Surin Plaza", "0053018": "Big C Warin Chamrap", "0053020": "Big C Sisaket", "0053024": "Big C Pakchong", "0053031": "Central Ubon", "0053040": "Big C Korat 2", "0053041": "Central Koraj", "0053043": "Big C AMNATCHAROEN", "0053045": "Lotus Nangrong", "0053047": "Lotus Ubol", "0053948": "Big C Korat", "0053953": "Big C Ubon Ratchathani", "0054013": "Big C Chachoengsao", "0054019": "Big C Sa Kaeo", "0054038": "Big C Si Maha Phot", "0054039": "Lotus Nakhon Nayok", "0054044": "Robinson Chachoengsao", "0054045": "Robinson Prachinburi", "0073015": "Suenheng Plaza", "0051132": "Big C Lopburi", "0051433": "CentralPlaza Salaya", "0051517": "Lotus Salaya", "0051532": "Big C Omyai", "0052003": "Ayutthaya Park", "0054001": "Phetchaburi", "0054011": "Central Ayutthaya", "0054012": "Bic C phetchburi", "0054014": "Lotus Banpong", "0054017": "Robinson Kanchanaburi", "0054018": "Big C Ayutthaya", "0054022": "Central Mahachai", "0054024": "Big C Nakhonpathom", "0054027": "Big C Mahachai", "0054032": "Suk-anan Park", "0054035": "Robinson Saraburi", "0054040": "Robinson Suphan Buri", "0054042": "Nakhon Pathom", "0054094": "Central Nakornpathom", "0054945": "Lotus Suphan Buri", "0054947": "Lotus Nakhon Pathom  ปิด​31/3", "0054960": "Lotus Ratchaburi", "0055001": "Hua Hin Market Village", "0055044": "Huahin Bluport", "0074014": "Sahathai Phetchaburi", "0074023": "Kanokkan", "0055005": "Lotus Surat", "0055008": "Jungceylon", "0055009": "Big C Had Yai 2", "0055010": "Lotus Krabi", "0055012": "CentralPlaza Phuket", "0055018": "Lotus Phatthalung", "0055019": "Lotus Samui", "0055023": "Pattani 1", "0055024": "Lotus Had Yai 2", "0055030": "CentralPlaza Surat Thani", "0055031": "Big C Phuket", "0055033": "Lotus Wiang Sa", "0055035": "Central Festival Had Yai", "0055036": "Big C Trang", "0055038": "Central Festival Samui", "0055040": "Lotus Chana", "0055041": "Lotus Had Yai 1", "0055042": "Lotus Songkhla", "0055043": "Central Nakhonsithammarat", "0055046": "Big C Pang Nga", "0055049": "Lotus Yala", "0055901": "Robinson Trang", "0055902": "Big C Nakhon Si Thammarat", "0055906": "Big C Satun", "0055949": "Big C Surat Thani", "0055950": "Lotus Phuket", "0055951": "Big C Had Yai", "0075011": "Siriban Trang", "0075012": "Vogue Shopping Center", "0075014": "Ocean Shopping Mall"};
+
+/* The 344-code PDF export includes non-store admin locations (Factory, Office,
+   Warehouse, IT holding codes, etc.) mixed in with real retail branches. The
+   real Fixed Asset Audit universe is only the 197 codes in REAL_STORE_CODES
+   (confirmed by the business owner) — that's the authoritative branch list.
+   We still use the 344-list as a name fallback for any location_code that
+   shows up in real asset data but isn't in the 197 (so nothing silently
+   disappears), but only REAL_STORE_CODES defines what counts as a "real store"
+   for filling in empty/not-started branches. */
+var STORE_NAMES = Object.assign({}, STORE_NAMES_ALL_344, REAL_STORE_CODES);
+
+function buildStoresFromRealAssets(list, scansByQrKey){
+  scansByQrKey = scansByQrKey || {};
+  var grouped = {};
+  list.forEach(function(a){
+    var code = a.location_code || a.branch_id || a.branch_code || 'UNKNOWN';
+    var displayName = STORE_NAMES[code] || a.location_name || a.branch_name || a.store_name || a.location_desc || a.location_description || a.branch_desc || code;
+    if(!grouped[code]){ grouped[code] = { name: code, displayName: displayName, items: [] }; }
+    var qrKey = a.qr_key || a.asset_code;
+    var matchingScan = qrKey ? scansByQrKey[qrKey] : null;
+    var seqNum = seqDigitsOf(a.seq);
+    var baseCode = a.asset_code || a.qr_key || String(a.id != null ? a.id : '');
+    // Confirmed from a live /hq/assets record: is_scanned/scanned_at/scanned_by live
+    // directly on the asset itself — that's a more authoritative "has this been
+    // scanned" signal than our own qr_key join against /hq/scans. We still use the
+    // matched scan record (when we have one) for the finer-grained condition
+    // (Verified vs Damaged vs Unmatched); if is_scanned is true but we can't find
+    // a matching scan row, we fall back to Verified rather than wrongly saying Pending.
+    var wasScanned = (a.is_scanned === true) || !!a.scanned_at || !!matchingScan;
+    var status = 'pending';
+    if(wasScanned){
+      status = matchingScan ? statusFromScan(matchingScan) : 'verified';
+    }
+    grouped[code].items.push({
+      name: a.name || a.asset_name || ('Asset ' + baseCode),
+      seq: seqNum ? ('SEQ' + seqNum) : (a.qr_key || '—'),
+      barcode: baseCode + (seqNum ? ('SEQ' + seqNum) : ''),
+      rawAssetCode: baseCode,
+      category: a.category || 'Uncategorized',
+      location: a.location_detail || displayName,
+      status: status,
+      lastScan: a.scanned_at || (matchingScan ? scanTimeOf(matchingScan) : '-'),
+      remark: a.remark || '',
+      photo: matchingScan ? scanPhotoOf(matchingScan) : null,
+      scanId: matchingScan ? scanIdOf(matchingScan) : null,
+      qrKey: qrKey,
+      qty: (a.qty != null ? a.qty : (a.quantity != null ? a.quantity : 1)),
+      serial: a.serial_no || a.serial || '',
+      history: []
+    });
+  });
+
+  var newStores = Object.keys(grouped).map(function(code){
+    var g = grouped[code];
+    var total = g.items.length;
+    var scanned = g.items.filter(function(x){ return x.status === 'verified'; }).length;
+    var exceptions = g.items.filter(function(x){ return ['missing','damaged','unmatched'].indexOf(x.status) > -1; }).length;
+    var status = scanned === 0 ? 'notstarted' : (scanned === total ? 'completed' : 'progress');
+    return { name: g.name, displayName: g.displayName, total: total, scanned: scanned, exceptions: exceptions, status: status };
+  });
+
+  var newAssetsByStore = {};
+  Object.keys(grouped).forEach(function(code){ newAssetsByStore[grouped[code].name] = grouped[code].items; });
+
+  // The real audit universe is the 197 codes in REAL_STORE_CODES (confirmed by
+  // the business owner — the 344-code PDF export includes non-store admin
+  // locations like Factory/Office/Warehouse that aren't real audited branches).
+  // /hq/assets only returns branches that already have at least one asset
+  // tracked, so we add the rest in as genuinely-empty stores (0 assets, Not
+  // started) so the branch list matches the real 197, not more and not less.
+  Object.keys(REAL_STORE_CODES).forEach(function(code){
+    if(!grouped[code]){
+      newStores.push({ name: code, displayName: REAL_STORE_CODES[code], total: 0, scanned: 0, exceptions: 0, status: 'notstarted' });
+      newAssetsByStore[code] = [];
+    }
+  });
+
+  stores = newStores;
+  assetsByStore = newAssetsByStore;
+}
+
+function buildActivityLogFromScans(scans, assetsByQrKey){
+  return scans.map(function(sc){
+    var qrKey = scanQrKeyOf(sc);
+    var asset = qrKey ? assetsByQrKey[qrKey] : null;
+    var status = statusFromScan(sc);
+    var actionLabel = status === 'verified' ? 'Verified' : status === 'damaged' ? 'Damaged' : 'Unmatched';
+    return {
+      time: scanTimeOf(sc),
+      user: scanUserOf(sc),
+      store: (function(){ var lc = (asset && asset.location_code) || sc.branch_id || sc.location_code || null; return lc ? (STORE_NAMES[lc] || lc) : '—'; })(),
+      asset: (asset && (asset.name || asset.asset_name)) || qrKey || 'Unknown asset',
+      action: actionLabel,
+      detail: sc.remark || ''
+    };
+  }).sort(function(a, b){ return (b.time || '').localeCompare(a.time || ''); });
+}
+
+async function loadRealData(){
+  var banner = document.getElementById('overviewDataBanner');
+  var bannerText = document.getElementById('overviewDataBannerText');
+  var warnings = [];
+
+  var assetList = [];
+  try{
+    var rawAssets = await apiFetch('/hq/assets', { method: 'GET' });
+    assetList = Array.isArray(rawAssets) ? rawAssets : (rawAssets.assets || rawAssets.data || []);
+    if(!Array.isArray(assetList)) throw new Error('รูปแบบข้อมูลจาก /hq/assets ไม่ตรงที่คาดไว้ (ไม่ใช่ array)');
+  } catch(e){
+    bannerText.textContent = e.message;
+    banner.style.display = 'flex';
+    showToast('โหลดข้อมูลจริงไม่สำเร็จ');
+    return;
+  }
+
+  var scansByQrKey = {};
+  var assetsByQrKey = {};
+  assetList.forEach(function(a){ var k = a.qr_key || a.asset_code; if(k) assetsByQrKey[k] = a; });
+
+  var scanList = [];
+  try{
+    var rawScans = await apiFetch('/hq/scans', { method: 'GET' });
+    scanList = Array.isArray(rawScans) ? rawScans : (rawScans.scans || rawScans.data || []);
+    if(!Array.isArray(scanList)) throw new Error('รูปแบบข้อมูลไม่ตรงที่คาด');
+    scanList.forEach(function(sc){
+      var k = scanQrKeyOf(sc);
+      if(!k) return;
+      // keep the most recent scan per asset (list order isn't guaranteed sorted, so compare timestamps)
+      var existing = scansByQrKey[k];
+      if(!existing || (scanTimeOf(sc) > scanTimeOf(existing))) scansByQrKey[k] = sc;
+    });
+  } catch(e){
+    warnings.push('เชื่อมต่อ /hq/scans ไม่สำเร็จ (' + e.message + ') — Verified/Damaged/Unmatched จะยังไม่แม่นยำ ทุกรายการจะแสดงเป็น Pending ไปก่อน, Activity Log จะว่างเปล่า');
+  }
+
+  buildStoresFromRealAssets(assetList, scansByQrKey);
+  activityLog = buildActivityLogFromScans(scanList, assetsByQrKey);
+
+  // FIX: "Audit cycle: Q3 2026" เดิม hardcode ตายตัวในไฟล์ HTML ไม่เคยอัปเดตจริง
+  // ตอนนี้ดึง audit_sessions จริงจาก /dashboard/summary มาจัดกลุ่มตามสาขา เรียงตามวันที่เก่า->ใหม่
+  // เพื่อคำนวณว่าสาขานี้อยู่ "รอบที่ N" และผ่านมาแล้วกี่รอบ (นับจากที่ status = 'done')
+  try{
+    var summaryData = await apiFetch('/dashboard/summary', { method: 'GET' });
+    var allSessions = summaryData.sessions || [];
+    sessionsByBranch = {};
+    allSessions.forEach(function(s){
+      var bid = s.branch_id;
+      if(!bid) return;
+      if(!sessionsByBranch[bid]) sessionsByBranch[bid] = [];
+      sessionsByBranch[bid].push(s);
+    });
+    Object.keys(sessionsByBranch).forEach(function(bid){
+      sessionsByBranch[bid].sort(function(a,b){ return (a.audit_date||'').localeCompare(b.audit_date||''); });
+    });
+  } catch(e){
+    sessionsByBranch = {}; // ไม่ fatal — แค่ label รอบตรวจจะไม่ขึ้น ส่วนอื่นทำงานปกติ
+  }
+
+  if(assetList.length === 0){
+    warnings.push('/hq/assets ส่งกลับมา 0 รายการ');
+  }
+  if(warnings.length){
+    bannerText.textContent = warnings.join(' · ');
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+
+  if(!stores.length){ showToast('ไม่มีสาขาให้แสดง'); return; }
+  // FIX: เดิม reset กลับไปสาขาแรกในลิสต์เสมอ พอรวมกับ token ที่ไม่เคยจำ (F5 แล้ว login ใหม่)
+  // กลายเป็นต้องเลือกสาขาใหม่ทุกครั้ง ตอนนี้จำสาขาล่าสุดที่ดูค้างไว้จาก localStorage แทน
+  var savedStore = null;
+  try{ savedStore = localStorage.getItem('bataAuditStore'); } catch(e){}
+  currentStore = (savedStore && stores.some(function(s){ return s.name === savedStore; })) ? savedStore : stores[0].name;
+  currentHQFilter = 'all';
+  currentAssetFilter = 'all';
+  filterHQ('all');
+  populateStoreDatalist();
+  renderSummary();
+  renderFilterChips();
+  renderAssetList();
+
+  document.getElementById('asBranchFilter').innerHTML = '<option value="all">ทุกสาขา</option>';
+  asFirstLoadDone = false;
+
+  document.getElementById('alBranchFilter').innerHTML = '<option value="all">ทุกสาขา</option>';
+  renderActivityLog();
+
+  showToast('โหลดข้อมูลจริงสำเร็จ (' + assetList.length + ' assets, ' + scanList.length + ' scans)');
+}
+
+function tryRestoreSession(){
+  var savedToken, savedUser;
+  try{
+    savedToken = localStorage.getItem('bataAuditToken');
+    savedUser = JSON.parse(localStorage.getItem('bataAuditUser') || 'null');
+  } catch(e){ savedToken = null; savedUser = null; }
+  if(!savedToken || !savedUser){ showLogin(); document.getElementById('loginEmployeeId').focus(); return; }
+  authToken = savedToken;
+  authUser = savedUser;
+  document.getElementById('headerUserLabel').textContent = authUser.employee_id + (authUser.role ? ' · ' + authUser.role : '');
+  document.getElementById('headerAvatar').textContent = initialsFrom(authUser.employee_id);
+  hideLogin();
+  // ไม่เชื่อ token เดิมแบบ optimistic เฉยๆ — โหลดข้อมูลจริงทันที ถ้า token หมดอายุแล้ว
+  // apiFetch จะเจอ 401 แล้วเด้งกลับไปหน้า Login เองอัตโนมัติ (ดู apiFetch ด้านบน)
+  loadRealData();
+}
+tryRestoreSession();
+
+
+var currentStore = stores[0].name;
+var currentUser = "Praew T.";
+var activityLog = [];
+
+function logActivity(store, assetLabel, action, detail, user, time){
+  activityLog.unshift({
+    time: time || 'Just now',
+    user: user || currentUser,
+    store: STORE_NAMES[store] || store,
+    asset: assetLabel,
+    action: action,
+    detail: detail || ''
+  });
+}
+
+function seedActivityLogFromAssets(){
+  stores.forEach(function(s){
+    assetsByStore[s.name].forEach(function(a){
+      a.history.forEach(function(h){
+        activityLog.push({
+          time: h.time, user: h.by, store: s.name, asset: a.name, action: h.event, detail: h.detail || ''
+        });
+      });
+    });
+  });
+}
+var currentHQFilter = 'all';
+var currentAssetFilter = 'all';
+var editingAssetIndex = -1;
+var isAddMode = false;
+
+var statusMeta = {
+  completed:{label:"Completed 30", bar:"#1B7A3C"},
+  progress:{label:"In progress", bar:"#E8A317"},
+  notstarted:{label:"Not started", bar:"#9CA3AF"}
+};
+
+function filterHQ(key){
+  currentHQFilter = key;
+  document.querySelectorAll('.seg-btn').forEach(function(c){ c.classList.remove('active'); });
+  var el = key === 'completed' ? document.getElementById('hqCompleted') :
+           key === 'progress' ? document.getElementById('hqProgress') :
+           key === 'notstarted' ? document.getElementById('hqNotStarted') : document.getElementById('hqAll');
+  if(el) el.classList.add('active');
+  renderStoreChips();
+}
+
+function renderStoreChips(){
+  var list = stores.filter(function(s){ return currentHQFilter === 'all' || s.status === currentHQFilter; });
+  var wrap = document.getElementById('storeChips');
+  wrap.innerHTML = list.map(function(s){
+    return '<button class="store-chip ' + (s.name === currentStore ? 'active' : '') + '" onclick="selectStore(\'' + s.name + '\')">' + (s.displayName || s.name) + '</button>';
+  }).join('');
+  if(list.length && !list.some(function(s){ return s.name === currentStore; })){
+    selectStore(list[0].name);
+  }
+}
+
+function selectStore(name){
+  currentStore = name;
+  try{ localStorage.setItem('bataAuditStore', name); } catch(e){}
+  currentAssetFilter = 'all';
+  renderStoreChips();
+  renderSummary();
+  renderFilterChips();
+  renderAssetList();
+  document.getElementById('storeSwitchInput').value = '';
+}
+
+function populateStoreDatalist(){
+  var dl = document.getElementById('storeDatalist');
+  dl.innerHTML = stores.map(function(s){
+    var label = s.displayName && s.displayName !== s.name ? (s.displayName + ' (' + s.name + ')') : s.name;
+    return '<option value="' + label + '">';
+  }).join('');
+}
+
+function handleStoreSwitch(value){
+  if(!value) return;
+  var term = value.trim().toLowerCase();
+  if(!term) return;
+  var codeInParens = value.match(/\(([^)]+)\)\s*$/);
+  if(codeInParens) term = codeInParens[1].trim().toLowerCase();
+  var match = stores.filter(function(s){ return s.name.toLowerCase() === term || (s.displayName && s.displayName.toLowerCase() === term); })[0]
+           || stores.filter(function(s){ return s.name.toLowerCase().indexOf(term) > -1 || (s.displayName && s.displayName.toLowerCase().indexOf(term) > -1); })[0];
+  if(match){
+    filterHQ('all');
+    selectStore(match.name);
+    showToast('เปลี่ยนไปสาขา ' + (match.displayName || match.name));
+  } else {
+    showToast('ไม่พบสาขาที่ตรงกับ "' + value + '" — ในระบบจริงจะค้นจาก 200 สาขาผ่าน API');
+  }
+}
+
+function renderSummary(){
+  var s = stores.filter(function(x){ return x.name === currentStore; })[0];
+  var remaining = s.total - s.scanned;
+  var pct = s.total > 0 ? Math.round((s.scanned / s.total) * 100) : 0;
+  var display = s.displayName || s.name;
+  document.getElementById('sumStoreName').textContent = display + (display !== s.name ? ' (' + s.name + ')' : '');
+  document.getElementById('sumTotal').textContent = s.total.toLocaleString();
+  document.getElementById('sumScanned').textContent = s.scanned.toLocaleString();
+  document.getElementById('sumRemaining').textContent = remaining.toLocaleString();
+  document.getElementById('sumExceptions').textContent = s.exceptions;
+  document.getElementById('sumPct').textContent = pct + '%';
+  document.getElementById('sumBar').style.width = pct + '%';
+  document.getElementById('sumBar').style.background = statusMeta[s.status].bar;
+  document.getElementById('sumCaption').textContent = pct + '% complete';
+  document.getElementById('sumRemainCaption').textContent = remaining.toLocaleString() + ' assets remaining';
+  document.getElementById('sumCycle').textContent = cycleLabelFor(s.name);
+}
+
+function cycleLabelFor(branchCode){
+  var rounds = sessionsByBranch[branchCode] || [];
+  if(!rounds.length) return 'ยังไม่เคยเปิดรอบตรวจ';
+  var roundNo = rounds.length; // รอบล่าสุด = รอบปัจจุบัน (index สุดท้ายหลัง sort เก่า->ใหม่)
+  var current = rounds[rounds.length - 1];
+  var completedBefore = rounds.slice(0, -1).filter(function(r){ return r.status === 'done'; }).length;
+  var label = 'รอบที่ ' + roundNo + (current.status === 'done' ? ' — Complete แล้ว' : ' — กำลังตรวจ');
+  if(completedBefore > 0) label += ' (ผ่านมาแล้ว ' + completedBefore + ' รอบ)';
+  return label;
+}
+
+/* ---------- Branch Status Grid ----------
+   แบ่งสาขาเป็น 3 กลุ่มตาม status ของ session ล่าสุด:
+   on_process = กำลังทำอยู่, open (หรือยังไม่เคยเปิด session เลย) = ค้างงาน/ยังไม่เริ่ม, done = เสร็จแล้ว */
+function renderBranchGrid(){
+  var buckets = { on_process: [], open: [], done: [] };
+  stores.forEach(function(s){
+    var rounds = sessionsByBranch[s.name] || [];
+    var latest = rounds.length ? rounds[rounds.length - 1] : null;
+    var key = (latest && latest.status === 'on_process') ? 'on_process'
+            : (latest && latest.status === 'done') ? 'done'
+            : 'open';
+    buckets[key].push(s);
+  });
+  ['on_process','open','done'].forEach(function(k){
+    buckets[k].sort(function(a,b){ return (a.displayName||a.name).localeCompare(b.displayName||b.name); });
+  });
+
+  var cols = [
+    {key:'on_process', title:'🟡 กำลังทำอยู่', list:buckets.on_process},
+    {key:'open',       title:'🔴 ค้างงาน / ยังไม่เริ่ม', list:buckets.open},
+    {key:'done',       title:'🟢 ตรวจเสร็จแล้ว', list:buckets.done}
+  ];
+
+  document.getElementById('branchGridWrap').innerHTML = cols.map(function(col){
+    var cardsHtml = col.list.length ? col.list.map(function(s){
+      var pct = s.total > 0 ? Math.round((s.scanned / s.total) * 100) : 0;
+      var display = s.displayName || s.name;
+      var safeName = s.name.replace(/'/g, "\\'");
+      return '<div class="bg-card" onclick="goToStoreFromGrid(\'' + safeName + '\')">'
+        + '<div class="bg-card-name">' + display + '</div>'
+        + '<div class="bg-card-code">' + s.name + '</div>'
+        + '<div class="bg-card-stat">' + s.scanned.toLocaleString() + ' / ' + s.total.toLocaleString() + ' (' + pct + '%)</div>'
+        + '<div class="bg-card-stat">' + cycleLabelFor(s.name) + '</div>'
+      + '</div>';
+    }).join('') : '<div class="bg-card-empty">ไม่มีสาขาในกลุ่มนี้</div>';
+    return '<div class="bg-col ' + col.key + '">'
+      + '<div class="bg-col-title">' + col.title + ' <span class="bg-col-count">' + col.list.length + '</span></div>'
+      + '<div class="bg-cards">' + cardsHtml + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+function goToStoreFromGrid(name){
+  showPage('overview');
+  selectStore(name);
+}
+
+var filterDefs = [
+  {key:'all', label:'All'},
+  {key:'pending', label:'Pending'},
+  {key:'verified', label:'Verified'},
+  {key:'exceptions', label:'Exceptions'},
+  {key:'missing', label:'Missing'},
+  {key:'damaged', label:'Damaged'},
+  {key:'unmatched', label:'Unmatched'}
+];
+function renderFilterChips(){
+  document.getElementById('filterChips').innerHTML = filterDefs.map(function(f){
+    return '<button class="f-chip ' + (f.key === currentAssetFilter ? 'active' : '') + '" onclick="setAssetFilter(\'' + f.key + '\')">' + f.label + '</button>';
+  }).join('');
+}
+function setAssetFilter(key){
+  currentAssetFilter = key;
+  renderFilterChips();
+  renderAssetList();
+  document.querySelector('.asset-table').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderAssetList(){
+  var term = (document.getElementById('assetSearch').value || '').toLowerCase();
+  var exceptionStatuses = ['missing','damaged','unmatched'];
+  var list = assetsByStore[currentStore].filter(function(a, idx){
+    var matchesFilter = currentAssetFilter === 'all' ? true :
+      currentAssetFilter === 'exceptions' ? exceptionStatuses.indexOf(a.status) > -1 :
+      a.status === currentAssetFilter;
+    var matchesSearch = !term ||
+      a.name.toLowerCase().indexOf(term) > -1 ||
+      a.barcode.toLowerCase().indexOf(term) > -1 ||
+      (a.seq || '').toLowerCase().indexOf(term) > -1 ||
+      a.location.toLowerCase().indexOf(term) > -1;
+    return matchesFilter && matchesSearch;
+  });
+  lastOverviewExportList = list;
+  var s = stores.filter(function(x){ return x.name === currentStore; })[0];
+  var branchLabel = s ? ((s.displayName || s.name) + ' (' + s.name + ')') : currentStore;
+  document.getElementById('overviewPrintHeaderMeta').innerHTML =
+    'สาขา: <b>' + branchLabel + '</b> &nbsp;|&nbsp; วันที่พิมพ์: <b>' + formatDateTime(new Date().toISOString()) + '</b>'
+    + (term ? (' &nbsp;|&nbsp; ค้นหา: "' + document.getElementById('assetSearch').value + '"') : '')
+    + ' &nbsp;|&nbsp; จำนวน: <b>' + list.length.toLocaleString() + ' รายการ</b>';
+  var countEl = document.getElementById('assetResultCount');
+  countEl.textContent = term
+    ? ('พบ ' + list.length.toLocaleString() + ' รายการที่ตรงกับ "' + document.getElementById('assetSearch').value + '"')
+    : ('ทั้งหมด ' + list.length.toLocaleString() + ' รายการ');
+  var wrap = document.getElementById('assetRows');
+  if(list.length === 0){
+    wrap.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);">No assets match this filter.</div>';
+    return;
+  }
+  wrap.innerHTML = list.map(function(a){
+    var idx = assetsByStore[currentStore].indexOf(a);
+    var safeName = a.name.replace(/'/g, "\\'");
+    var safeCode = a.barcode.replace(/'/g, "\\'");
+    return '<div class="asset-row" onclick="openAssetDrawer(' + idx + ')">'
+      + '<div>' + (a.photo ? ('<img class="asset-thumb" src="' + a.photo + '" alt="">') : ('<div class="asset-thumb-placeholder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></div>')) + '</div>'
+      + '<div class="asset-name">' + a.barcode + '<span style="display:block;font-size:11px;color:var(--ink-3);font-weight:400;">' + a.name + '</span></div>'
+      + '<div>' + a.location + '</div>'
+      + '<div style="text-align:center;">' + (a.qty != null ? a.qty : 1) + '</div>'
+      + '<div>' + statusPillHtml(a.status) + '</div>'
+      + '<div class="row-time">' + formatDateShort(a.lastScan) + '</div>'
+      + '<div class="as-row-actions">'
+        + '<button class="as-act-btn" title="View" onclick="event.stopPropagation(); openAssetDrawer(' + idx + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg></button>'
+        + '<button class="as-act-btn" title="Edit" onclick="event.stopPropagation(); openAssetDrawer(' + idx + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
+        + '<button class="as-act-btn" title="Photo" onclick="event.stopPropagation(); openAssetDrawer(' + idx + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></button>'
+        + '<button class="as-act-btn row-more-trigger" title="More" onclick="event.stopPropagation(); openRowMore(this,\'overview\',\'' + safeName + '\',\'' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg></button>'
+      + '</div>'
+    + '</div>';
+  }).join('');
+}
+
+function openAssetDrawer(idx){
+  isAddMode = false;
+  editingAssetIndex = idx;
+  var a = assetsByStore[currentStore][idx];
+  document.getElementById('drawerTitle').textContent = a.name;
+  document.getElementById('seqGroup').style.display = 'block';
+  document.getElementById('fSeq').textContent = a.seq;
+  document.getElementById('fBarcode').value = a.barcode;
+  document.getElementById('fCategory').value = a.category;
+  document.getElementById('fLocation').value = a.location;
+  document.getElementById('fStatus').value = a.status === 'unmatched' ? 'duplicate' : a.status;
+  document.getElementById('fWriteOffReason').value = '';
+  toggleWriteOffReason();
+  document.getElementById('fRemark').value = a.remark || '';
+  document.getElementById('photoBox').innerHTML = a.photo ? '<img src="' + a.photo + '">' : photoPlaceholder();
+  document.getElementById('historyGroup').style.display = 'block';
+  document.getElementById('historyList').innerHTML = a.history.length ? a.history.map(function(h){
+    return '<div class="history-item"><div class="history-event">' + h.event + (h.detail ? ' <span style="font-weight:400;color:var(--ink-3);">— ' + h.detail + '</span>' : '') + '</div><div class="history-meta">' + h.by + ' · ' + h.time + '</div></div>';
+  }).join('') : '<p style="font-size:12.5px;color:var(--ink-3);">No history yet.</p>';
+  showDrawer();
+}
+
+function openAddDrawer(){
+  isAddMode = true;
+  editingAssetIndex = -1;
+  document.getElementById('drawerTitle').textContent = 'Add asset';
+  document.getElementById('seqGroup').style.display = 'none';
+  document.getElementById('fBarcode').value = '';
+  document.getElementById('fCategory').value = '';
+  document.getElementById('fLocation').value = '';
+  document.getElementById('fStatus').value = 'pending';
+  document.getElementById('fWriteOffReason').value = '';
+  toggleWriteOffReason();
+  document.getElementById('fRemark').value = '';
+  document.getElementById('photoBox').innerHTML = photoPlaceholder();
+  document.getElementById('historyGroup').style.display = 'none';
+  showDrawer();
+}
+
+function photoPlaceholder(){
+  return '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="14" rx="2" stroke-width="1.6"/><circle cx="9" cy="11" r="2" stroke-width="1.6"/><path d="M21 16l-5-5-4 4-3-3-6 6" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+}
+
+function handlePhoto(input){
+  if(!input.files || !input.files[0]) return;
+  var reader = new FileReader();
+  reader.onload = function(e){
+    document.getElementById('photoBox').innerHTML = '<img src="' + e.target.result + '">';
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function showDrawer(){
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
+}
+function closeDrawer(){
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('drawer').classList.remove('show');
+}
+
+var pendingImportRows = [];
+var pendingImportFileName = '';
+var pendingImportFile = null;
+
+function openImportDrawer(){
+  var s = stores.filter(function(x){ return x.name === currentStore; })[0];
+  document.getElementById('importStoreName').textContent = (s && s.displayName) ? (s.displayName + ' (' + s.name + ')') : currentStore;
+  document.getElementById('importStep1').style.display = 'block';
+  document.getElementById('importStep2').style.display = 'none';
+  document.getElementById('importConfirmBtn').disabled = true;
+  document.getElementById('importConfirmBtn').style.opacity = '.5';
+  document.getElementById('importOverlay').classList.add('show');
+  document.getElementById('importDrawer').classList.add('show');
+}
+function closeImportDrawer(){
+  document.getElementById('importOverlay').classList.remove('show');
+  document.getElementById('importDrawer').classList.remove('show');
+}
+
+function getField(row, names){
+  for(var i=0;i<names.length;i++){
+    if(row[names[i]] !== undefined && row[names[i]] !== null && String(row[names[i]]).trim() !== '') return row[names[i]];
+  }
+  return '';
+}
+
+function handleImportFile(input){
+  if(!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  pendingImportFileName = file.name;
+  pendingImportFile = file;
+
+  if(typeof XLSX === 'undefined'){
+    showToast('โหลด library อ่านไฟล์ไม่สำเร็จ (เช็คอินเทอร์เน็ต) — ลองใหม่อีกครั้ง');
+    return;
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var rawRows;
+    try{
+      var wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      rawRows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    } catch(err){
+      showToast('อ่านไฟล์ไม่สำเร็จ: ' + err.message);
+      return;
+    }
+
+    // Real Master List column headers (matches the actual export format used today).
+    var parsed = rawRows.map(function(row){
+      return {
+        assetCode: getField(row, ['รหัสสินทรัพย์', 'Asset Code', 'asset_code']),
+        seq: getField(row, ['ลำดับ', 'SEQ', 'seq']),
+        locationCode: getField(row, ['รหัสที่ตั้ง', 'Location Code', 'location_code']),
+        locationName: getField(row, ['ชื่อที่ตั้ง', 'Location Name', 'location_name']),
+        name: getField(row, ['รายละเอียดสินทรัพย์(อังกฤษ)', 'รายละเอียดสินทรัพย์', 'Asset Name', 'name']),
+        status: getField(row, ['สถานะสินทรัพย์', 'Status']),
+        serial: getField(row, ['เลขที่เครื่อง', 'Serial', 'serial_no']),
+        purchaseDate: getField(row, ['วันที่ซื้อ', 'Purchase Date']),
+        qty: getField(row, ['จำนวน', 'Qty']),
+        assetValue: getField(row, ['มูลค่าสินทรัพย์', 'Asset Value']),
+        bookValue: getField(row, ['มูลค่าทางบัญชี', 'Book Value'])
+      };
+    }).filter(function(r){
+      var code = String(r.assetCode).trim();
+      return code !== '' && code.toLowerCase() !== 'grand total';
+    });
+
+    if(parsed.length === 0){
+      showToast('ไม่พบแถวข้อมูลที่อ่านได้ในไฟล์นี้ — เช็คว่าหัวคอลัมน์ตรงกับ Master List ต้นฉบับไหม');
+      return;
+    }
+
+    var existingCodes = {};
+    (assetsByStore[currentStore] || []).forEach(function(a){ if(a.rawAssetCode) existingCodes[a.rawAssetCode] = true; });
+
+    var newRows = [], duplicateRows = [];
+    parsed.forEach(function(r){
+      if(existingCodes[String(r.assetCode).trim()]) duplicateRows.push(r); else newRows.push(r);
+    });
+    pendingImportRows = newRows;
+
+    var mismatchNote = '';
+    var firstLoc = String(parsed[0].locationCode || '').replace(/\.0$/, '').padStart(currentStore.length, '0');
+    if(parsed[0].locationCode && firstLoc !== currentStore){
+      mismatchNote = ' <span style="color:var(--red-fg);">— ⚠ ไฟล์นี้ดูเหมือนเป็นของสาขา ' + parsed[0].locationCode + ' ไม่ใช่ ' + currentStore + ' เช็คก่อน confirm</span>';
+    }
+
+    document.getElementById('importStep1').style.display = 'none';
+    document.getElementById('importStep2').style.display = 'block';
+    document.getElementById('importSummaryText').innerHTML =
+      'ไฟล์ <b>' + pendingImportFileName + '</b> — พบ <b>' + parsed.length + ' แถว</b>: '
+      + '<b>' + newRows.length + ' รายการใหม่</b>, '
+      + '<b>' + duplicateRows.length + ' รายการซ้ำกับ Master List เดิม (จะข้าม)</b>' + mismatchNote;
+    document.getElementById('importPreviewRows').innerHTML = newRows.map(function(r){
+      return '<tr><td>' + r.name + '</td><td>' + r.assetCode + '</td><td>' + r.serial + '</td><td>' + (r.locationName || r.locationCode) + '</td><td>' + r.status + '</td></tr>';
+    }).join('');
+    document.getElementById('importConfirmBtn').disabled = newRows.length === 0;
+    document.getElementById('importConfirmBtn').style.opacity = newRows.length === 0 ? '.5' : '1';
+  };
+  reader.onerror = function(){ showToast('อ่านไฟล์ไม่สำเร็จ'); };
+  reader.readAsArrayBuffer(file);
+}
+
+var lastImportBatchId = null;
+
+/* We don't know if /hq/assets/import/confirm returns a batch_id (Swagger only showed
+   a placeholder "string" example) — so instead of guessing that response shape, we
+   look up the real batch list right after, which is a GET we're already confident about. */
+async function lookUpAndOfferUndo(fileName){
+  try{
+    var raw = await apiFetch('/hq/assets/import-batches', { method: 'GET' });
+    var batches = Array.isArray(raw) ? raw : (raw.batches || raw.data || []);
+    if(!Array.isArray(batches) || batches.length === 0) return;
+    var sorted = batches.slice().sort(function(a, b){
+      var ta = a.created_at || a.imported_at || a.time || '';
+      var tb = b.created_at || b.imported_at || b.time || '';
+      return String(tb).localeCompare(String(ta));
+    });
+    var latest = sorted[0];
+    lastImportBatchId = latest.id != null ? latest.id : (latest.batch_id != null ? latest.batch_id : null);
+    if(lastImportBatchId == null) return;
+    document.getElementById('importUndoBannerText').textContent =
+      'Import "' + fileName + '" สำเร็จ (batch #' + lastImportBatchId + ') — ถ้า import ผิด กด Undo ได้ภายในตอนนี้';
+    document.getElementById('importUndoBanner').style.display = 'flex';
+  } catch(e){
+    // Can't confirm a batch to undo — say so instead of showing a button that might not work.
+    showToast('Import สำเร็จ แต่หา batch สำหรับ Undo ไม่เจอ (' + e.message + ') — เช็ค /hq/assets/import-batches เองใน /docs ถ้าต้องยกเลิก');
+  }
+}
+
+async function undoLastImport(){
+  if(lastImportBatchId == null){ showToast('ไม่พบ batch ที่จะ undo'); return; }
+  var batchId = lastImportBatchId;
+  try{
+    await apiFetch('/hq/assets/import-batches/' + batchId + '/undo', { method: 'POST' });
+    document.getElementById('importUndoBanner').style.display = 'none';
+    lastImportBatchId = null;
+    showToast('Undo import สำเร็จ — กำลังโหลดข้อมูลล่าสุด...');
+    var storeBeforeUndo = currentStore;
+    await loadRealData();
+    if(stores.some(function(s){ return s.name === storeBeforeUndo; })) selectStore(storeBeforeUndo);
+  } catch(e){
+    showToast('Undo ไม่สำเร็จ: ' + e.message);
+  }
+}
+
+async function confirmImport(){
+  if(!pendingImportFile){ showToast('ไม่พบไฟล์ที่จะ import — เลือกไฟล์ใหม่อีกครั้ง'); return; }
+  var btn = document.getElementById('importConfirmBtn');
+  btn.disabled = true;
+  var originalLabel = btn.textContent;
+  btn.textContent = 'Importing...';
+
+  var expectedCount = pendingImportRows.length;
+  var fileToSend = pendingImportFile;
+  var fileNameToSend = pendingImportFileName;
+  // FIX: เดิม ignore response ของ /hq/assets/import/confirm ทิ้งไปเลย (แค่ await เฉยๆ)
+  // ทำให้ต่อให้ backend insert ได้ 0 แถวจริง (เช่น asset_code+seq ซ้ำกับที่มีอยู่แล้ว
+  // ทั้งหมด — ON CONFLICT DO NOTHING) ผู้ใช้ก็ยังเห็นข้อความ "Import สำเร็จ" เหมือนเดิม
+  // เลยงงว่า import ไปแล้วทำไมหาไม่เจอ ตอนนี้อ่านตัวเลข inserted/skipped จริงมาแจ้งด้วย
+  var distinctLocations = {};
+  pendingImportRows.forEach(function(r){
+    var loc = String(r.locationCode || '').trim();
+    if(loc) distinctLocations[loc] = (r.locationName || loc);
+  });
+  var locList = Object.keys(distinctLocations).map(function(code){ return code + ' (' + distinctLocations[code] + ')'; }).join(', ');
+
+  try{
+    var fd = new FormData();
+    fd.append('file', fileToSend);
+    var result = await apiFetch('/hq/assets/import/confirm', { method: 'POST', body: fd });
+    var inserted = result.inserted != null ? result.inserted : 0;
+    var skipped = result.skipped_duplicates != null ? result.skipped_duplicates : 0;
+
+    if(inserted === 0){
+      showToast('⚠ Import เสร็จแต่ไม่มีแถวใหม่เข้าระบบเลย (' + skipped + ' แถวถูกข้ามเพราะรหัสสินทรัพย์ซ้ำกับที่มีอยู่แล้ว) — เช็คว่าไฟล์นี้เคย import ไปแล้วหรือไม่');
+    } else {
+      showToast('Import สำเร็จ: เพิ่มใหม่ ' + inserted + ' แถว, ข้ามซ้ำ ' + skipped + ' แถว — เข้าไปดูที่สาขา ' + (locList || currentStore) + ' ในหน้า Overview');
+    }
+    logActivity(currentStore, fileNameToSend, 'Imported', 'inserted=' + inserted + ', skipped_duplicates=' + skipped + ' (คาดไว้ ' + expectedCount + ' แถวจาก preview)');
+    var storeBeingImportedTo = currentStore;
+    closeImportDrawer();
+    await loadRealData();
+    // ถ้า import เข้าสาขาที่ไม่ใช่สาขาที่เลือกอยู่ตอนนี้ ให้พาไปสาขานั้นเลย ไม่ต้องให้ผู้ใช้หาเอง
+    var targetStore = distinctLocations[storeBeingImportedTo] ? storeBeingImportedTo : Object.keys(distinctLocations)[0];
+    if(targetStore && stores.some(function(s){ return s.name === targetStore; })){
+      selectStore(targetStore);
+    } else if(stores.some(function(s){ return s.name === storeBeingImportedTo; })){
+      selectStore(storeBeingImportedTo);
+    }
+    await lookUpAndOfferUndo(fileNameToSend);
+  } catch(e){
+    showToast('Import ไม่สำเร็จ: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+/* Best-effort mapping from our internal status to the scan's `condition` field.
+   'good'/'damaged' are confirmed by the scan_logs schema notes from earlier;
+   the rest (missing/duplicate/wrong_location/disposed) are our best guess and
+   need to be verified live — if the backend rejects one, the error banner
+   below will say so rather than silently pretending it worked. */
+function statusToCondition(status){
+  var map = { verified: 'good', pending: 'pending', missing: 'missing', damaged: 'damaged',
+              duplicate: 'duplicate', wrong_location: 'wrong_location', disposed: 'disposed' };
+  return map[status] || status;
+}
+
+async function saveDrawer(){
+  var barcode = document.getElementById('fBarcode').value.trim();
+  var category = document.getElementById('fCategory').value.trim();
+  var location = document.getElementById('fLocation').value.trim();
+  var status = document.getElementById('fStatus').value;
+  var remark = document.getElementById('fRemark').value.trim();
+  var photoImg = document.querySelector('#photoBox img');
+  var photo = photoImg ? photoImg.getAttribute('src') : null;
+
+  var reasonLabels = {sold:'ขายแล้ว', donated:'บริจาค', damaged_beyond_repair:'เสียหายจนซ่อมไม่ได้', lost:'สูญหาย', other:'อื่นๆ'};
+  var reasonVal = '';
+  if(status === 'disposed'){
+    reasonVal = document.getElementById('fWriteOffReason').value;
+    if(!reasonVal){ showToast('กรุณาเลือกเหตุผลที่ Write off ก่อนบันทึก'); return; }
+    if(reasonVal === 'other' && !remark){ showToast('กรุณาระบุรายละเอียดใน Remark สำหรับเหตุผล "อื่นๆ"'); return; }
+  }
+  if(isAddMode && !barcode){ showToast('Barcode is required'); return; }
+
+  var saveBtn = document.getElementById('drawerSaveBtn');
+  saveBtn.disabled = true;
+  saveBtn.textContent = 'Saving...';
+
+  if(isAddMode){
+    // Adding a brand-new asset has no confirmed backend endpoint yet (see checklist) —
+    // stays local-only for now, clearly labeled as such.
+    setTimeout(function(){
+      var newName = category || 'New asset';
+      assetsByStore[currentStore].unshift({
+        name: newName, seq: nextSeqFor(currentStore), barcode: barcode, category: category || 'Uncategorized',
+        location: location || 'Unassigned', status: status, lastScan: '-', remark: remark, photo: photo,
+        history: [{event:'Added', by: currentUser, time:'Just now'}]
+      });
+      logActivity(currentStore, newName, 'Added', '');
+      showToast('เพิ่มในหน้าจอนี้แล้ว (ยังไม่มี endpoint สำหรับสร้าง asset เดี่ยว ๆ จริง — ไม่ persist ถาวร)');
+      saveBtn.textContent = '✔ Saved';
+      setTimeout(function(){
+        closeDrawer(); renderAssetList();
+        saveBtn.disabled = false; saveBtn.textContent = 'Save';
+      }, 450);
+    }, 300);
+    return;
+  }
+
+  var a = assetsByStore[currentStore][editingAssetIndex];
+
+  if(!a.scanId){
+    // Never been scanned — updating status would mean creating a new scan
+    // (POST /scans), which needs an active audit session. Not wired yet.
+    showToast('Asset นี้ยังไม่เคยถูกสแกน — บันทึกสถานะยังทำไม่ได้จริง (ต้องมี session การตรวจก่อน) รอเชื่อม POST /scans');
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+    return;
+  }
+
+  var fullRemark = remark;
+  if(status === 'disposed'){
+    fullRemark = 'Write off — เหตุผล: ' + (reasonLabels[reasonVal] || reasonVal) + (remark ? (' — ' + remark) : '');
+  }
+
+  try{
+    await apiFetch('/hq/scans/' + a.scanId, {
+      method: 'PATCH',
+      body: JSON.stringify({ condition: statusToCondition(status), remark: fullRemark })
+    });
+    // Trust the server, not our own optimism — reload real data so the drawer
+    // and every list reflect what's actually saved.
+    var storeBeingEdited = currentStore;
+    closeDrawer();
+    await loadRealData();
+    if(stores.some(function(s){ return s.name === storeBeingEdited; })) selectStore(storeBeingEdited);
+    showToast('บันทึกเข้า production จริงแล้ว');
+  } catch(e){
+    showToast('บันทึกไม่สำเร็จ: ' + e.message + ' — ลองเช็ค PATCH /hq/scans/{id} ใน /docs ว่า field ตรงกันไหม');
+    saveBtn.disabled = false;
+    saveBtn.textContent = 'Save';
+  }
+}
+
+function toggleWriteOffReason(){
+  var isDisposed = document.getElementById('fStatus').value === 'disposed';
+  document.getElementById('writeOffGroup').style.display = isDisposed ? 'block' : 'none';
+}
+
+function nextSeqFor(storeName){
+  var idx = stores.map(function(s){ return s.name; }).indexOf(storeName);
+  var count = assetsByStore[storeName].length + 1;
+  return "SEQ" + String((idx * 300 + count) % 1000).padStart(3, "0");
+}
+
+var toastTimer;
+function showToast(msg){
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2000);
+}
+
+function showPage(name){
+  document.querySelectorAll('.screen2').forEach(function(s){ s.classList.remove('active'); });
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  if(name === 'branchGrid'){
+    document.getElementById('pageBranchGrid').classList.add('active');
+    document.getElementById('navBranchGrid').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'สถานะสาขา';
+    renderBranchGrid();
+  } else if(name === 'overview'){
+    document.getElementById('pageOverview').classList.add('active');
+    document.getElementById('navOverview').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'Overview';
+    setTimeout(function(){ document.getElementById('assetSearch').focus(); }, 0);
+  } else if(name === 'assetSummary'){
+    document.getElementById('pageAssetSummary').classList.add('active');
+    document.getElementById('navAssetSummary').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'Asset Summary';
+    if(!asFirstLoadDone){
+      asLoading = true;
+      renderAssetSummary();
+      setTimeout(function(){ asLoading = false; asFirstLoadDone = true; renderAssetSummary(); }, 700);
+    } else {
+      renderAssetSummary();
+    }
+    setTimeout(function(){ document.getElementById('asSearch').focus(); }, 0);
+  } else if(name === 'activityLog'){
+    document.getElementById('pageActivityLog').classList.add('active');
+    document.getElementById('navActivityLog').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'Activity Log';
+    renderActivityLog();
+  }
+}
+
+function allAssetsFlat(){
+  var flat = [];
+  stores.forEach(function(s){
+    assetsByStore[s.name].forEach(function(a){
+      flat.push({
+        code: a.barcode, seq: a.seq, name: a.name, branch: (s.displayName || s.name), serial: (a.serial && a.serial.length) ? a.serial : a.barcode.replace('SFU', 'SN'),
+        status: a.status, scanTime: a.lastScan, qty: a.qty != null ? a.qty : 1, scanId: a.scanId
+      });
+    });
+  });
+  return flat;
+}
+
+function populateBranchFilter(){
+  var sel = document.getElementById('asBranchFilter');
+  if(sel.options.length > 1) return;
+  stores.forEach(function(s){
+    var opt = document.createElement('option');
+    var label = s.displayName || s.name;
+    opt.value = label; opt.textContent = label;
+    sel.appendChild(opt);
+  });
+}
+
+var asKpiFilter = 'all';
+var asDeletedCodes = {};
+var asLoading = false;
+var asFirstLoadDone = false;
+var asPendingDeleteCode = null;
+
+function setAsKpiFilter(key){
+  asKpiFilter = key;
+  document.querySelectorAll('#asKpiGrid .as-kpi-card').forEach(function(c){ c.classList.remove('kpi-active'); });
+  document.querySelector('#asKpiGrid [data-as-filter="' + key + '"]').classList.add('kpi-active');
+  renderAssetSummary();
+}
+
+function refreshAssetSummary(){
+  asLoading = true;
+  renderAssetSummary();
+  setTimeout(function(){
+    asLoading = false;
+    renderAssetSummary();
+    document.getElementById('asLastSync').textContent = 'just now';
+    showToast('Refreshed');
+  }, 600);
+}
+
+function asSkeletonRows(n){
+  var html = '';
+  for(var i=0;i<n;i++){
+    html += '<tr>'
+      + '<td><span class="as-skel" style="width:14px;"></span></td>'
+      + '<td><span class="as-skel" style="width:70px;"></span></td>'
+      + '<td><span class="as-skel" style="width:60px;"></span></td>'
+      + '<td><span class="as-skel" style="width:140px;"></span></td>'
+      + '<td><span class="as-skel" style="width:90px;"></span></td>'
+      + '<td><span class="as-skel" style="width:80px;"></span></td>'
+      + '<td><span class="as-skel" style="width:70px;border-radius:20px;"></span></td>'
+      + '<td><span class="as-skel" style="width:60px;"></span></td>'
+      + '<td><span class="as-skel" style="width:70px;"></span></td>'
+    + '</tr>';
+  }
+  return html;
+}
+
+function asEmptyStateHtml(){
+  return '<tr><td colspan="9"><div class="as-empty">'
+    + '<div class="as-empty-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>'
+    + '<div class="as-empty-title">No Asset Found</div>'
+    + '<div class="as-empty-sub">Try another keyword, or check the branch/status filter</div>'
+    + '<button class="add-btn" onclick="showToast(\'เปิดฟอร์มเพิ่ม Asset\')">+ Add Asset</button>'
+    + '</div></td></tr>';
+}
+
+function renderAssetSummary(){
+  populateBranchFilter();
+  var all = allAssetsFlat().filter(function(a){ return !asDeletedCodes[a.code]; });
+
+  document.getElementById('asTotal').textContent = all.length.toLocaleString();
+  document.getElementById('asVerified').textContent = all.filter(function(a){ return a.status === 'verified'; }).length.toLocaleString();
+  document.getElementById('asPending').textContent = all.filter(function(a){ return a.status === 'pending'; }).length.toLocaleString();
+  document.getElementById('asMissing').textContent = all.filter(function(a){ return a.status === 'missing'; }).length.toLocaleString();
+
+  var tbody = document.getElementById('asRows');
+  if(asLoading){
+    tbody.innerHTML = asSkeletonRows(6);
+    return;
+  }
+
+  var term = (document.getElementById('asSearch').value || '').toLowerCase();
+  var branchF = document.getElementById('asBranchFilter').value;
+  var statusF = document.getElementById('asStatusFilter').value;
+
+  var filtered = all.filter(function(a){
+    var mKpi = asKpiFilter === 'all' || a.status === asKpiFilter;
+    var mBranch = branchF === 'all' || a.branch === branchF;
+    var mStatus = statusF === 'all' || a.status === statusF;
+    var mSearch = !term || a.code.toLowerCase().indexOf(term) > -1 || a.seq.toLowerCase().indexOf(term) > -1 || a.name.toLowerCase().indexOf(term) > -1 || a.serial.toLowerCase().indexOf(term) > -1;
+    return mKpi && mBranch && mStatus && mSearch;
+  });
+  lastAssetSummaryExportList = filtered;
+
+  var branchesInResult = {};
+  filtered.forEach(function(a){ branchesInResult[a.branch] = (branchesInResult[a.branch] || 0) + 1; });
+  var branchNames = Object.keys(branchesInResult);
+  var branchSummaryForPrint = branchNames.length === 1 ? branchNames[0] : (branchNames.length + ' สาขา');
+  document.getElementById('asPrintHeaderMeta').innerHTML =
+    'สาขา: <b>' + branchSummaryForPrint + '</b> &nbsp;|&nbsp; วันที่พิมพ์: <b>' + formatDateTime(new Date().toISOString()) + '</b>'
+    + ' &nbsp;|&nbsp; จำนวน: <b>' + filtered.length.toLocaleString() + ' รายการ</b>';
+  var countEl = document.getElementById('asResultCount');
+  if(filtered.length === 0){
+    countEl.textContent = '';
+  } else if(branchNames.length === 1){
+    countEl.textContent = 'พบ ' + filtered.length.toLocaleString() + ' รายการ จากสาขา ' + branchNames[0];
+  } else {
+    countEl.textContent = 'พบ ' + filtered.length.toLocaleString() + ' รายการ จาก ' + branchNames.length + ' สาขา ('
+      + branchNames.slice(0, 5).map(function(b){ return b + ' ' + branchesInResult[b]; }).join(', ')
+      + (branchNames.length > 5 ? ', ...' : '') + ')';
+  }
+
+  if(filtered.length === 0){
+    tbody.innerHTML = asEmptyStateHtml();
+    return;
+  }
+  tbody.innerHTML = filtered.slice(0, 25).map(function(a, i){
+    var safeCode = a.code.replace(/'/g, "\\'");
+    var safeName = a.name.replace(/'/g, "\\'");
+    return '<tr>'
+      + '<td>' + (i+1) + '</td>'
+      + '<td>' + a.code + '</td>'
+      + '<td style="font-family:monospace;font-size:12px;color:var(--ink-2);">' + a.seq + '</td>'
+      + '<td>' + a.name + '</td>'
+      + '<td>' + a.branch + '</td>'
+      + '<td>' + a.serial + '</td>'
+      + '<td style="text-align:center;">' + (a.qty != null ? a.qty : 1) + '</td>'
+      + '<td>' + statusPillHtml(a.status) + '</td>'
+      + '<td>' + formatDateShort(a.scanTime) + '</td>'
+      + '<td><div class="as-row-actions">'
+        + '<button class="as-act-btn" title="View" onclick="showToast(\'View: ' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg></button>'
+        + '<button class="as-act-btn" title="Edit" onclick="showToast(\'Editing ' + safeCode + '…\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
+        + '<button class="as-act-btn" title="Photo" onclick="showToast(\'Opening photo: ' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></button>'
+        + '<button class="as-act-btn row-more-trigger" title="More" onclick="openRowMore(this,\'assetSummary\',\'' + safeName + '\',\'' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg></button>'
+      + '</div></td>'
+    + '</tr>';
+  }).join('');
+}
+
+/* ---------- Generic delete-confirm modal (shared by Overview table & Asset Summary table) ---------- */
+var pendingDeleteCallback = null;
+function openDeleteConfirm(name, code, onConfirm){
+  pendingDeleteCallback = onConfirm;
+  document.getElementById('asModalName').textContent = name;
+  document.getElementById('asModalCode').textContent = code;
+  document.getElementById('asModalOverlay').classList.add('show');
+}
+function closeAsModal(){
+  document.getElementById('asModalOverlay').classList.remove('show');
+  pendingDeleteCallback = null;
+}
+function confirmAsDelete(){
+  if(pendingDeleteCallback) pendingDeleteCallback();
+  closeAsModal();
+}
+document.getElementById('asModalOverlay').addEventListener('click', function(e){
+  if(e.target === e.currentTarget) closeAsModal();
+});
+
+/* Kept for compatibility: Asset Summary row calls this directly
+   FIX: เดิมลบแค่ asDeletedCodes ในเครื่อง ไม่เคยยิง API จริง พอโหลดข้อมูลใหม่รายการก็กลับมา
+   ตอนนี้ยิง DELETE /hq/scans/{scanId} จริง (hard delete + backend บันทึก audit log ให้อัตโนมัติ) */
+function openAsDeleteModal(code, name){
+  openDeleteConfirm(name, code, function(){
+    deleteAssetByCode(code, 'assetSummary');
+  });
+}
+
+async function deleteAssetByCode(code, context){
+  var list = context === 'overview' ? assetsByStore[currentStore] : allAssetsFlat();
+  var asset = list.find(function(a){ return (a.barcode || a.code) === code; });
+  if(!asset || !asset.scanId){
+    showToast('ลบไม่ได้: asset นี้ยังไม่เคยถูกสแกน (ไม่มี scan record ให้ลบใน production)');
+    return;
+  }
+  try{
+    await apiFetch('/hq/scans/' + asset.scanId, { method: 'DELETE' });
+    showToast('ลบออกจาก production แล้ว (มี audit log บันทึกไว้)');
+    var storeBeingEdited = currentStore;
+    await loadRealData();
+    if(stores.some(function(s){ return s.name === storeBeingEdited; })) selectStore(storeBeingEdited);
+  } catch(e){
+    showToast('ลบไม่สำเร็จ: ' + e.message);
+  }
+}
+
+function deleteOverviewAsset(code){
+  deleteAssetByCode(code, 'overview');
+}
+
+/* ---------- Shared row "More" popover (⋮) — Duplicate / Delete ---------- */
+function openRowMore(btnEl, context, name, code){
+  var menu = document.getElementById('rowMoreMenu');
+  var rect = btnEl.getBoundingClientRect();
+  menu.style.top = (rect.bottom + 6) + 'px';
+  menu.style.left = Math.max(8, rect.right - 150) + 'px';
+  menu.style.display = 'block';
+  document.getElementById('rowMoreDupBtn').onclick = function(){
+    closeRowMore();
+    showToast('Duplicated ' + code);
+  };
+  document.getElementById('rowMoreDeleteBtn').onclick = function(){
+    closeRowMore();
+    openDeleteConfirm(name, code, function(){ deleteAssetByCode(code, context); });
+  };
+}
+function closeRowMore(){
+  document.getElementById('rowMoreMenu').style.display = 'none';
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.row-more-menu') && !e.target.closest('.row-more-trigger')) closeRowMore();
+});
+
+/* ---------- Shared status-pill renderer: icon dot + text, never color alone ---------- */
+function statusPillHtml(status){
+  var label = status.charAt(0).toUpperCase() + status.slice(1);
+  return '<span class="status-pill ' + status + '"><span class="sp-dot"></span>' + label + '</span>';
+}
+
+
+function populateActivityBranchFilter(){
+  var sel = document.getElementById('alBranchFilter');
+  if(sel.options.length > 1) return;
+  stores.forEach(function(s){
+    var opt = document.createElement('option');
+    var label = s.displayName || s.name;
+    opt.value = label; opt.textContent = label;
+    sel.appendChild(opt);
+  });
+}
+
+function renderActivityLog(){
+  populateActivityBranchFilter();
+  var term = (document.getElementById('alSearch').value || '').toLowerCase();
+  var branchF = document.getElementById('alBranchFilter').value;
+  var actionF = document.getElementById('alActionFilter').value;
+
+  var filtered = activityLog.filter(function(e){
+    var mBranch = branchF === 'all' || e.store === branchF;
+    var mAction = actionF === 'all' || e.action.indexOf(actionF) > -1;
+    var mSearch = !term ||
+      e.user.toLowerCase().indexOf(term) > -1 ||
+      e.asset.toLowerCase().indexOf(term) > -1 ||
+      e.store.toLowerCase().indexOf(term) > -1;
+    return mBranch && mAction && mSearch;
+  });
+
+  var tbody = document.getElementById('alRows');
+  if(filtered.length === 0){
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--ink-3);padding:30px;">ไม่พบรายการที่ตรงกับตัวกรอง</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.slice(0, 60).map(function(e){
+    return '<tr>'
+      + '<td>' + formatDateTime(e.time) + '</td>'
+      + '<td>' + e.user + '</td>'
+      + '<td>' + e.store + '</td>'
+      + '<td>' + e.asset + '</td>'
+      + '<td>' + e.action + (e.detail ? ' <span style="color:var(--ink-3);">— ' + e.detail + '</span>' : '') + '</td>'
+    + '</tr>';
+  }).join('');
+}
+
+filterHQ('all');
+populateStoreDatalist();
+seedActivityLogFromAssets();
+renderSummary();
+renderFilterChips();
+renderAssetList();
+document.getElementById('assetSearch').focus();
+</script>
+</body>
+</html>
