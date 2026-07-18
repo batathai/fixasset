@@ -25,7 +25,7 @@
 - มีการแก้ไข "6 ข้อ" ล่าสุดที่ยังไม่ได้สรุปลง `docs/changelog.md` อย่างเป็นทางการ (ดูรายละเอียดใน `CHANGES_README.md` ที่ root) ได้แก่: ระบบรอบตรวจแบบคำนวณอัตโนมัติ, PDF log อัตโนมัติตอนปิดงาน, แก้บั๊กลบข้อมูลทั้งฝั่งแอพสแกนและ Dashboard ให้ลบที่ server จริง, เพิ่ม audit log การลบ (`scan_delete_logs`), และจำ login ข้าม F5
 - **ยังไม่ได้แก้ (ทราบปัญหาแล้ว แต่ยังไม่ทำ):** auth session เก็บใน memory ของ backend (ดูหัวข้อ 6)
 
-> ⚠️ **สำคัญ:** เอกสารใน `docs/` (โดยเฉพาะ `docs/README.md`, `docs/API.md`, `docs/FLOW.md`) เป็นเอกสารออกแบบระบบรุ่นแรกๆ และ **มีบางจุดไม่ตรงกับโค้ดจริงในปัจจุบันแล้ว** ดูหัวข้อ "จุดที่ต้องระวัง" ข้อ 1 ก่อนเชื่อเอกสารเหล่านั้น 100% ควรตรวจกับ `main.py` เสมอเมื่อไม่แน่ใจ
+> ⚠️ **สำคัญ:** เดิม `docs/` มีเอกสารออกแบบรุ่นแรกๆ ที่ไม่ตรงกับโค้ดจริงอยู่หลายไฟล์ (`README.md`, `architecture.md`, `API.md`, `FLOW.md`, `deployment.md`) แต่ถูกลบออกไปแล้วเมื่อ 2026-07-18 (ดูหัวข้อ "จุดที่ต้องระวัง" ข้อ 1) ตอนนี้ `docs/` เหลือแค่ไฟล์ที่ตรงกับโค้ดจริง (`database.md`, `changelog.md`) — ถ้าไม่แน่ใจเรื่อง endpoint ให้ตรวจกับ `main.py` เสมอ
 
 ---
 
@@ -45,13 +45,11 @@
 ├── bata_logo.png                   # โลโก้ที่ใช้ในหน้าเว็บ
 ├── CHANGES_README.md               # สรุปแก้ไข "6 ข้อ" ล่าสุด (ใหม่กว่า docs/changelog.md — ยังไม่ถูกรวมเข้า changelog อย่างเป็นทางการ)
 └── docs/
-    ├── README.md          # ภาพรวมการใช้งาน + tech stack ฝั่ง frontend (บางส่วนล้าสมัย ดูข้อ 6)
-    ├── architecture.md    # ภาพรวมสถาปัตยกรรมระบบ + เหตุผลการออกแบบ (บางจุดล้าสมัย ดูข้อ 6)
-    ├── API.md             # เอกสาร API endpoints — เป็น "แบบร่างตอนออกแบบ" ไม่ตรงกับ endpoint จริงทั้งหมด (ดูข้อ 6)
-    ├── FLOW.md            # Flow การสแกน/multi-scanner ที่ออกแบบไว้ตอนแรก (แนวคิดยังใช้ได้ แต่รายละเอียด endpoint อาจคลาดเคลื่อน)
-    ├── database.md        # Schema ฐานข้อมูลจริง + ประวัติการแก้ schema — ค่อนข้างตรงกับปัจจุบันที่สุด อัปเดตล่าสุด 2026-06-30
-    └── deployment.md       # วิธี deploy 3 ส่วน — ⚠️ ส่วน "รูปถ่ายเก็บใน Supabase Storage" ล้าสมัยแล้ว (ปัจจุบันใช้ Cloudinary จริง)
+    ├── database.md        # Schema ฐานข้อมูลจริง + ประวัติการแก้ schema — ตรงกับปัจจุบันที่สุด อัปเดตล่าสุด 2026-06-30
+    └── changelog.md       # ประวัติการพัฒนาระบบตั้งแต่ v0.1–v0.8
 ```
+
+> **หมายเหตุ (2026-07-18):** เดิม `docs/` มีไฟล์ `README.md`, `architecture.md`, `API.md`, `deployment.md`, `FLOW.md` ด้วย แต่ถูกลบออกแล้วเพราะเป็นเอกสารออกแบบรุ่นแรกๆ ที่ไม่ตรงกับโค้ดจริง (เช่น บอกว่า scanner ใช้ `html5-qrcode` กล้อง ทั้งที่จริงใช้เครื่องสแกน Urovo, บอกว่ารูปเก็บใน Supabase Storage ทั้งที่จริงใช้ Cloudinary) เนื้อหาที่ยังใช้ได้ถูกย้าย/สรุปมาไว้ใน `CLAUDE.md` ฉบับนี้แล้ว ถ้าต้องการ endpoint reference แบบละเอียด ให้ดูจาก `main.py` โดยตรง หรือเปิด Swagger UI ที่ `/docs` ของ backend ที่ deploy จริง
 
 **ไม่มีโฟลเดอร์ `src/`, ไม่มี build step, ไม่มี package.json** — ทั้งหมดเป็นไฟล์ static/สคริปต์เดี่ยวๆ ตามเจตนาการออกแบบ (ดูข้อ 5)
 
@@ -74,7 +72,7 @@
 **Frontend**
 - **Vanilla HTML/CSS/JavaScript ล้วน ไม่มี framework** ไม่มี build step, ไฟล์เดียวจบต่อหน้า
 - ฟอนต์: Barlow, Barlow Condensed, DM Mono (Google Fonts)
-- Input หลักของแอพสแกน: **เครื่องสแกนบาร์โค้ด Urovo (HID keyboard emulation)** ดักจับด้วย `keydown` listener ใน `initUrovoScanner()` — **ไม่ได้ใช้กล้องอ่าน QR (`html5-qrcode`) ตามที่ `docs/architecture.md` เขียนไว้**
+- Input หลักของแอพสแกน: **เครื่องสแกนบาร์โค้ด Urovo (HID keyboard emulation)** ดักจับด้วย `keydown` listener ใน `initUrovoScanner()` — ไม่ได้ใช้กล้องอ่าน QR (`html5-qrcode`) แต่อย่างใด
 - เก็บ state ฝั่ง client ด้วย `localStorage` (token, session ที่เลือกไว้, offline queue)
 - Export ฝั่ง dashboard: `xlsx` (SheetJS, จาก cdnjs) สำหรับ export ง่ายๆ, ส่วน export "branded" (มีโลโก้/สี Bata) ให้ backend สร้างไฟล์ด้วย `openpyxl` แล้วส่งกลับผ่าน `/hq/export/excel`
 - Host: **GitHub Pages** ของ repo นี้เอง (`fixasset`) ผ่าน custom domain `fixasset.batathai.com` (ดูไฟล์ `CNAME`)
@@ -99,11 +97,7 @@
 
 ## 6. จุดที่ต้องระวัง / Known Issues
 
-1. **เอกสารใน `docs/` ไม่ตรงกับโค้ดจริงหลายจุด** — ตรวจสอบแล้วพบว่า:
-   - `docs/architecture.md` และ `docs/README.md` บอกว่า scanner ใช้ไลบรารี `html5-qrcode` อ่าน QR ผ่านกล้อง — **ของจริงในโค้ด (`index.html`) ใช้เครื่องสแกน Urovo แบบ HID keyboard emulation** ไม่มีการเรียกกล้องอ่าน QR เลย
-   - `docs/deployment.md` บอกว่ารูปถ่ายเก็บใน **Supabase Storage** — **ของจริงในโค้ด (`main.py` และ `index.html`) อัปโหลดขึ้น Cloudinary ทั้งหมด** ไม่มี Supabase อยู่ใน dependency หรือ environment variable ใดๆ ของ backend เลย
-   - `docs/API.md` และ `docs/FLOW.md` อธิบาย endpoint บางตัวที่ไม่ตรงกับที่มีจริงใน `main.py` (เช่น path/response บางส่วนต่างกัน) — **ให้ยึด `main.py` เป็นความจริงเสมอเมื่อขัดแย้งกับเอกสาร**
-   - **สรุป: ก่อนแก้โค้ดหรือเขียนเอกสารเพิ่ม ให้เช็คกับ `main.py`/`index.html`/`dashboard.html` จริงก่อนเชื่อ `docs/` 100%** ควรพิจารณาปรับปรุง docs ให้ตรงกับโค้ดจริงเมื่อมีโอกาส
+1. **เอกสารเก่าที่เคยไม่ตรงกับโค้ดจริงถูกลบไปแล้ว (2026-07-18)** — `docs/architecture.md`, `docs/README.md`, `docs/API.md`, `docs/FLOW.md`, `docs/deployment.md` เคยมีจุดที่ล้าสมัย (เช่น บอกว่า scanner ใช้กล้อง `html5-qrcode` ทั้งที่จริงใช้เครื่องสแกน Urovo, บอกว่ารูปเก็บใน Supabase Storage ทั้งที่จริงใช้ Cloudinary) จึงถูกลบออกจาก repo แล้วเพื่อไม่ให้สับสน เนื้อหาที่ยังถูกต้องถูกสรุปไว้ใน `CLAUDE.md` ฉบับนี้แทน — **ถ้าจะเขียนเอกสารเพิ่มในอนาคต ให้ยึด `main.py`/`index.html`/`dashboard.html` เป็นความจริงเสมอ อย่าคัดลอกจากเอกสารเก่าที่อาจ outdated โดยไม่ตรวจกับโค้ดก่อน**
 2. **Auth session เก็บใน memory (`sessions = {}` ใน `main.py`)** — ถ้า Railway restart/redeploy token ของทุกคนจะหลุดพร้อมกันหมดทันที ต่อให้ frontend จำ token ไว้ใน `localStorage` แล้วก็ตาม (เพราะ backend ลืม token นั้นไปแล้ว) ผู้ใช้ต้อง login ใหม่ทุกครั้งหลัง deploy — ยังไม่ได้แก้ ถ้าจะแก้ถาวรต้องเปลี่ยนไปเก็บ session ลง DB หรือใช้ JWT
 3. **Password hash เป็น SHA-256 ธรรมดา ไม่มี salt** — ไม่ใช่ bcrypt/argon2 ความปลอดภัยต่ำกว่ามาตรฐานปัจจุบัน ถ้าจะแก้ต้องมี migration path สำหรับ password hash เดิมของ user ที่มีอยู่แล้วด้วย
 4. **`migration_session_uniqueness.sql` ถูกอ้างถึงใน comment ของ `main.py`** (endpoint `POST /sessions`, partial unique index `idx_unique_open_session_per_branch_day`) **แต่ไม่มีไฟล์นี้อยู่จริงใน repo** — เป็นไปได้ว่าไฟล์นี้ถูกรันตรงใน Neon SQL editor แล้วไม่ได้ commit เก็บไว้ ถ้าจะ reproduce schema นี้ในฐานข้อมูลใหม่ ต้องสร้าง unique index นี้เองตามที่ comment อธิบาย
@@ -162,3 +156,4 @@ Environment variables ที่ backend ต้องการ:
 ## 8. Changelog
 
 - **2026-07-18** — สร้างไฟล์นี้ครั้งแรก (โดย Claude อ่านโค้ดทั้งหมดใน repo ณ ขณะนั้น รวมถึง `main.py`, `index.html`, `dashboard.html`, ไฟล์ config และเอกสารทั้งหมดใน `docs/` เพื่อสรุปเป็น `CLAUDE.md` ฉบับนี้)
+- **2026-07-18** — ลบเอกสารล้าสมัยที่ไม่ตรงกับโค้ดจริงออกจาก `docs/` (`README.md`, `architecture.md`, `API.md`, `FLOW.md`, `deployment.md`) ตามคำขอของผู้ดูแล repo หลังยืนยันว่าเนื้อหาที่ยังถูกต้องถูกสรุปไว้ใน `CLAUDE.md` แล้ว เหลือเก็บไว้เฉพาะ `docs/database.md` และ `docs/changelog.md`
