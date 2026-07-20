@@ -49,6 +49,18 @@
   .screen2{display:none;}
   .screen2.active{display:block;}
 
+  .bata-loading-overlay{position:fixed;inset:0;background:rgba(17,19,24,.55);z-index:900;display:none;align-items:center;justify-content:center;}
+  .bata-loading-overlay.show{display:flex;}
+  .bata-loading-box{background:#FFFFFF;border-radius:14px;border-top:5px solid #C8102E;padding:0 0 26px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 12px 40px rgba(0,0,0,.28);min-width:230px;overflow:hidden;}
+  .bata-loading-wordmark{display:flex;align-items:baseline;gap:7px;margin:22px 0 2px;}
+  .bata-loading-wordmark-bata{font-size:24px;font-weight:800;color:#AB0D27;font-family:Arial,sans-serif;letter-spacing:.5px;}
+  .bata-loading-wordmark-thailand{font-size:11px;font-weight:600;color:#8A8D93;font-family:Arial,sans-serif;letter-spacing:1.8px;}
+  .bata-loading-bar{width:120px;height:4px;background:#F3D4D9;border-radius:4px;overflow:hidden;margin-top:14px;}
+  .bata-loading-bar::after{content:'';display:block;width:40%;height:100%;background:#C8102E;border-radius:4px;animation:bataBarMove 1s ease-in-out infinite;}
+  @keyframes bataBarMove{0%{margin-left:-40%;}50%{margin-left:60%;}100%{margin-left:-40%;}}
+  .bata-loading-txt{font-size:13.5px;font-weight:700;color:#AB0D27;letter-spacing:.2px;margin-top:14px;}
+  .bata-loading-sub{font-size:11px;color:#9297A3;}
+
   .login-overlay{position:fixed;inset:0;background:var(--surface-1);z-index:500;display:flex;align-items:center;justify-content:center;}
   .login-box{width:360px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg);padding:26px 26px 20px;}
   .login-brand{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
@@ -196,8 +208,8 @@
 
   /* ASSET LIST */
   .asset-table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);}
-  .asset-head{display:grid;grid-template-columns:52px 1.3fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;}
-  .asset-row{display:grid;grid-template-columns:52px 1.3fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;}
+  .asset-head{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;}
+  .asset-row{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;}
   .asset-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;display:block;background:var(--surface-2);}
   .asset-thumb-placeholder{width:40px;height:40px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-4);}
   .asset-row:last-child{border-bottom:none;}
@@ -289,6 +301,16 @@
 </style>
 </head>
 <body>
+
+<!-- ============ BATA LOADING OVERLAY (แสดงระหว่างโหลด/รอข้อมูลจาก API) ============ -->
+<div class="bata-loading-overlay" id="bataLoadingOverlay">
+  <div class="bata-loading-box">
+    <div class="bata-loading-wordmark"><span class="bata-loading-wordmark-bata">BATA</span><span class="bata-loading-wordmark-thailand">THAILAND</span></div>
+    <div class="bata-loading-bar"></div>
+    <div class="bata-loading-txt" id="bataLoadingTxt">Bata Loading...</div>
+    <div class="bata-loading-sub">กรุณารอสักครู่</div>
+  </div>
+</div>
 
 <!-- ============ LOGIN OVERLAY (real system — /auth/login) ============ -->
 <div class="login-overlay" id="loginOverlay">
@@ -426,7 +448,7 @@
         <div class="filter-chips" id="filterChips" style="margin-bottom:14px;"></div>
 
         <div class="asset-table">
-          <div class="asset-head"><span>Photo</span><span>Asset</span><span>Location</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span></div>
+          <div class="asset-head"><span>Photo</span><span>Asset</span><span>Serial</span><span>Location</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span></div>
           <div id="assetRows"></div>
         </div>
 
@@ -699,6 +721,7 @@ function seedAssets(store, storeIndex){
       name: names[i % names.length] + " " + (100+i),
       seq: "SEQ-" + String(storeIndex * 300 + i + 1).padStart(6, "0"),
       barcode: "SFU0420260" + (6000+i),
+      serial: "SN" + String(storeIndex * 300 + i + 1).padStart(6, "0"),
       category: i % 2 === 0 ? "Equipment" : "Fixture",
       location: locations[i % locations.length],
       status: st,
@@ -811,10 +834,10 @@ function currentAssetSummaryBranchLabel(){
   return names.length === 1 ? names[0] : (names.length + ' สาขา: ' + names.slice(0, 10).join(', ') + (names.length > 10 ? ', ...' : ''));
 }
 
-var OVERVIEW_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Location', 'Qty', 'Status', 'Last Scan'];
+var OVERVIEW_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Serial No.', 'Location', 'Qty', 'Status', 'Last Scan'];
 function overviewExportRows(){
   return lastOverviewExportList.map(function(a){
-    return [a.barcode, a.name, a.location, (a.qty != null ? a.qty : 1), a.status, formatDateShort(a.lastScan)];
+    return [a.barcode, a.name, (a.serial || ''), a.location, (a.qty != null ? a.qty : 1), a.status, formatDateShort(a.lastScan)];
   });
 }
 function exportOverviewCSV(){
@@ -898,6 +921,22 @@ function initialsFrom(text){
   return clean.slice(0, 2).toUpperCase();
 }
 
+var bataLoadingCount = 0;
+function showBataLoading(msg){
+  bataLoadingCount++;
+  var el = document.getElementById('bataLoadingOverlay');
+  var txt = document.getElementById('bataLoadingTxt');
+  if(txt) txt.textContent = msg || 'Bata Loading...';
+  if(el) el.classList.add('show');
+}
+function hideBataLoading(){
+  bataLoadingCount = Math.max(0, bataLoadingCount - 1);
+  if(bataLoadingCount === 0){
+    var el = document.getElementById('bataLoadingOverlay');
+    if(el) el.classList.remove('show');
+  }
+}
+
 async function apiFetch(path, options){
   options = options || {};
   options.headers = Object.assign({}, options.headers || {}, authToken ? {'Authorization':'Bearer ' + authToken} : {});
@@ -976,6 +1015,7 @@ async function doLogin(){
   }
   var btn = document.getElementById('loginSubmitBtn');
   btn.disabled = true; btn.textContent = 'Signing in...';
+  showBataLoading('Bata Loading... กำลังเข้าสู่ระบบ');
   try{
     var data = await apiFetch('/auth/login', {
       method: 'POST',
@@ -1184,6 +1224,8 @@ function buildActivityLogFromScans(scans, assetsByQrKey){
 }
 
 async function loadRealData(){
+  showBataLoading('กำลังโหลดข้อมูล Asset...');
+  try{
   var banner = document.getElementById('overviewDataBanner');
   var bannerText = document.getElementById('overviewDataBannerText');
   var warnings = [];
@@ -1274,6 +1316,9 @@ async function loadRealData(){
   renderActivityLog();
 
   showToast('โหลดข้อมูลจริงสำเร็จ (' + assetList.length + ' assets, ' + scanList.length + ' scans)');
+  } finally {
+    hideBataLoading();
+  }
 }
 
 function tryRestoreSession(){
@@ -1523,6 +1568,7 @@ function renderAssetList(){
     return '<div class="asset-row" onclick="openAssetDrawer(' + idx + ')">'
       + '<div>' + (a.photo ? ('<img class="asset-thumb" src="' + a.photo + '" alt="">') : ('<div class="asset-thumb-placeholder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></div>')) + '</div>'
       + '<div class="asset-name">' + a.barcode + '<span style="display:block;font-size:11px;color:var(--ink-3);font-weight:400;">' + a.name + '</span></div>'
+      + '<div style="font-family:monospace;font-size:12px;color:var(--ink-2);">' + (a.serial || '—') + '</div>'
       + '<div>' + a.location + '</div>'
       + '<div style="text-align:center;">' + (a.qty != null ? a.qty : 1) + '</div>'
       + '<div>' + statusPillHtml(a.status) + '</div>'
