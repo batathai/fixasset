@@ -174,6 +174,18 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .upload-spin{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--red);border-radius:50%;animation:spin .7s linear infinite;}
 .upload-txt{font-size:14px;font-weight:600;color:var(--gray1);}
 .upload-sub{font-size:12px;color:var(--gray3);}
+/* ── BATA LOADING OVERLAY (ทรีมขาว-แดง ทางการ ใช้ตอนกำลังโหลด/รอ API) ── */
+.bata-loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:none;align-items:center;justify-content:center;}
+.bata-loading-overlay.show{display:flex;}
+.bata-loading-box{background:var(--white);border-radius:16px;border-top:5px solid var(--red);padding:0 0 26px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 12px 40px rgba(0,0,0,.3);min-width:220px;overflow:hidden;}
+.bata-loading-wordmark{display:flex;align-items:baseline;gap:7px;margin:22px 0 2px;}
+.bata-loading-wordmark-bata{font-size:24px;font-weight:800;color:var(--red-d);font-family:Arial,sans-serif;letter-spacing:.5px;}
+.bata-loading-wordmark-thailand{font-size:11px;font-weight:600;color:var(--gray3);font-family:Arial,sans-serif;letter-spacing:1.8px;}
+.bata-loading-bar{width:110px;height:4px;background:var(--red-bd);border-radius:4px;overflow:hidden;margin-top:14px;}
+.bata-loading-bar::after{content:'';display:block;width:40%;height:100%;background:var(--red);border-radius:4px;animation:bataBarMove 1s ease-in-out infinite;}
+@keyframes bataBarMove{0%{margin-left:-40%;}50%{margin-left:60%;}100%{margin-left:-40%;}}
+.bata-loading-txt{font-size:13px;font-weight:700;color:var(--red-d);letter-spacing:.2px;margin-top:14px;}
+.bata-loading-sub{font-size:11px;color:var(--gray3);}
 /* ── CLOSE SESSION BUTTON ── */
 .btn-close-session{width:100%;padding:14px;background:var(--gray1);border:none;border-radius:var(--rs);color:var(--white);font-family:var(--cond);font-size:16px;font-weight:700;letter-spacing:.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s;}
 .btn-close-session:active{background:#333;}
@@ -187,7 +199,9 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .back-hdr{background:var(--red);display:flex;align-items:center;justify-content:space-between;padding:12px 16px;position:sticky;top:0;z-index:50;}
 .back-title{font-family:var(--cond);font-size:18px;font-weight:700;color:var(--white);letter-spacing:.5px;}
 .back-sub{font-size:11px;color:rgba(255,255,255,.7);}
-.stat-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;}
+.stat-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;user-select:none;}
+.stat-card:active{transform:scale(.97);}
+.stat-card.act{border-color:var(--red);box-shadow:0 0 0 1.5px var(--red) inset;}
 .stat-label{font-size:11px;font-weight:600;color:var(--gray3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:4px;}
 .stat-val{font-size:26px;font-weight:700;font-family:var(--cond);}
 /* ── ROUND CLOSE REPORT (สำหรับ Print / Save as PDF อัตโนมัติหลังกดปิดงาน) ── */
@@ -458,6 +472,16 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 </div>
 
 <!-- UPLOAD OVERLAY -->
+<!-- BATA LOADING OVERLAY -->
+<div class="bata-loading-overlay" id="bata-loading-overlay">
+  <div class="bata-loading-box">
+    <div class="bata-loading-wordmark"><span class="bata-loading-wordmark-bata">BATA</span><span class="bata-loading-wordmark-thailand">THAILAND</span></div>
+    <div class="bata-loading-bar"></div>
+    <div class="bata-loading-txt" id="bata-loading-txt">Bata Loading...</div>
+    <div class="bata-loading-sub">กรุณารอสักครู่</div>
+  </div>
+</div>
+
 <div class="upload-overlay" id="upload-overlay">
   <div class="upload-box">
     <div class="upload-spin"></div>
@@ -696,6 +720,23 @@ function selectBranch(code, name) {
 //  เพราะตอนนี้ backend ทำ find-or-create ด้วย branch_id+audit_date ให้อัตโนมัติ
 //  ทุกคนที่ login เข้าสาขา+วันเดียวกัน จะได้ session_id เดียวกันเองโดยไม่ต้องมี PIN)
 
+// ── BATA LOADING OVERLAY ────────────────────────────────────────
+var bataLoadingCount = 0;
+function showBataLoading(msg) {
+  bataLoadingCount++;
+  const el = document.getElementById('bata-loading-overlay');
+  const txt = document.getElementById('bata-loading-txt');
+  if (txt) txt.textContent = msg || 'Bata Loading...';
+  if (el) el.classList.add('show');
+}
+function hideBataLoading() {
+  bataLoadingCount = Math.max(0, bataLoadingCount - 1);
+  if (bataLoadingCount === 0) {
+    const el = document.getElementById('bata-loading-overlay');
+    if (el) el.classList.remove('show');
+  }
+}
+
 async function doLogin() {
   const id = document.getElementById('li').value.trim();
   const pw = document.getElementById('lp').value;
@@ -712,6 +753,7 @@ async function doLogin() {
 
   const btn = document.getElementById('login-btn') || document.querySelector('.btn-login');
   btn.textContent = 'Signing in...'; btn.disabled = true;
+  showBataLoading('Bata Loading... กำลังเข้าสู่ระบบ');
 
   try {
     const res = await fetch(API + '/auth/login', {
@@ -743,6 +785,7 @@ async function doLogin() {
     showErr(e.message);
   } finally {
     btn.textContent = 'SIGN IN'; btn.disabled = false;
+    hideBataLoading();
   }
 }
 function showErr(m) {
@@ -782,7 +825,14 @@ function restoreSession() {
 window.addEventListener('load', async () => {
   if (restoreSession()) {
     go('ss'); initUrovoScanner();
-    if (S.token) { await loadChecklist(S.branch); await syncProgressFromDB(); }
+    if (S.token) {
+      showBataLoading('Bata Loading...');
+      try {
+        await loadChecklist(S.branch); await syncProgressFromDB();
+      } finally {
+        hideBataLoading();
+      }
+    }
     updatePB(); renderList(); startAutoRefresh();
     // ทุกคนที่ login เข้าสาขาเดียวกัน ปิดงานได้เท่ากันหมด ไม่ต้องเช็ค role ตรงนี้
     if (sessionClosed) {
@@ -1319,7 +1369,17 @@ function showLog() {
     :'<div style="text-align:center;padding:40px;color:var(--gray4);font-size:13px;">No scans yet</div>';
   go('slog');
 }
+let sumFilter = 'all';
 function showSum() {
+  sumFilter = 'all';
+  renderSumScreen();
+  go('ssum');
+}
+function filterSum(key) {
+  sumFilter = key;
+  renderSumScreen();
+}
+function renderSumScreen() {
   const matched=S.log.filter(s=>s.type==='matched').length;
   const mism=S.log.filter(s=>s.type==='mismatch').length;
   const unm=S.log.filter(s=>s.type==='unmatched').length;
@@ -1327,22 +1387,44 @@ function showSum() {
   const pend=Math.max(0,S.total-tot);
   const pct=S.total?Math.round(tot/S.total*100):0;
   document.getElementById('sum-stats').innerHTML=
-    sc('Scanned',tot,'var(--red)')+sc('Verified',matched,'var(--green)')+
-    sc('Flagged',mism,'var(--red)')+sc('Unmatched',unm,'var(--amber)')+
-    sc('Pending',pend,'var(--gray3)')+sc('Total',S.total,'var(--gray3)');
-  const logRows = S.log.map((s,i)=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
-      <div class="sd ${s.type==='matched'?'sd-m':s.type==='unmatched'?'sd-u':'sd-x'}" style="flex-shrink:0;"></div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:11px;font-family:var(--mono);color:var(--gray3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.k}</div>
-        <div style="font-size:13px;font-weight:500;">${s.n}</div>
-        ${s.remark?`<div style="font-size:11px;color:var(--gray3);">Note: ${s.remark}</div>`:''}
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-        <span style="font-size:10px;font-family:var(--mono);color:var(--gray4);">${s.t}</span>
-        <button onclick="openEditModal(${i})" style="background:var(--offwhite);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--gray2);cursor:pointer;">✏ แก้ไข</button>
-      </div>
-    </div>`).join('');
+    sc('Scanned',tot,'var(--red)','scanned')+sc('Verified',matched,'var(--green)','matched')+
+    sc('Flagged',mism,'var(--red)','mismatch')+sc('Unmatched',unm,'var(--amber)','unmatched')+
+    sc('Pending',pend,'var(--gray3)','pending')+sc('Total',S.total,'var(--gray3)','all');
+
+  // รายการที่แสดงด้านล่าง ขึ้นกับ filter ที่เลือก:
+  // - 'pending' มาจาก checklist (asset ที่ยังไม่สแกน) ไม่ใช่ S.log
+  // - อื่นๆ กรองจาก S.log ตาม type (all = ทั้งหมด, scanned = ทุกอันที่สแกนแล้วไม่ว่าผลจะเป็นอะไร)
+  let listTitle = 'รายการที่สแกน (แตะ ✏ เพื่อแก้ไข)';
+  let bodyHtml;
+  if (sumFilter === 'pending') {
+    listTitle = 'รายการที่ยังไม่ได้สแกน';
+    const pendingItems = (typeof CHECKLIST !== 'undefined' ? CHECKLIST : []).filter(i=>i.status==='pending');
+    bodyHtml = pendingItems.map(item=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+        <div class="sd sd-x" style="flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--gray3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.qr_key||'—'}</div>
+          <div style="font-size:13px;font-weight:500;">${item.name||'Unknown'}</div>
+        </div>
+      </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">✓ สแกนครบทุกรายการแล้ว</div>';
+  } else {
+    const filtered = sumFilter==='all' ? S.log
+      : sumFilter==='scanned' ? S.log
+      : S.log.filter(s=>s.type===sumFilter);
+    bodyHtml = filtered.map((s,i)=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+        <div class="sd ${s.type==='matched'?'sd-m':s.type==='unmatched'?'sd-u':'sd-x'}" style="flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:11px;font-family:var(--mono);color:var(--gray3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.k}</div>
+          <div style="font-size:13px;font-weight:500;">${s.n}</div>
+          ${s.remark?`<div style="font-size:11px;color:var(--gray3);">Note: ${s.remark}</div>`:''}
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+          <span style="font-size:10px;font-family:var(--mono);color:var(--gray4);">${s.t}</span>
+          <button onclick="openEditModal(${S.log.indexOf(s)})" style="background:var(--offwhite);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--gray2);cursor:pointer;">✏ แก้ไข</button>
+        </div>
+      </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">ไม่มีรายการในหมวดนี้</div>';
+  }
 
   document.getElementById('sum-info').innerHTML=`
     <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;font-size:13px;color:var(--gray3);line-height:2.2;margin-bottom:10px;">
@@ -1353,13 +1435,15 @@ function showSum() {
         ${pend>0?'⚠ '+pend+' ASSET(S) NOT YET SCANNED':'✓ ALL ASSETS SCANNED'}
       </div>
     </div>
-    <div class="sec-t" style="margin-bottom:6px;">รายการที่สแกน (แตะ ✏ เพื่อแก้ไข)</div>
+    <div class="sec-t" style="margin-bottom:6px;">${listTitle}</div>
     <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;">
-      ${logRows || '<div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">ยังไม่มีรายการ</div>'}
+      ${bodyHtml}
     </div>`;
-  go('ssum');
 }
-function sc(l,v,c){return`<div class="stat-card"><div class="stat-label">${l}</div><div class="stat-val" style="color:${c};">${v}</div></div>`;}
+function sc(l,v,c,key){
+  const active = sumFilter===key;
+  return `<div class="stat-card${active?' act':''}" onclick="filterSum('${key}')"><div class="stat-label">${l}</div><div class="stat-val" style="color:${c};">${v}</div></div>`;
+}
 
 // ── API CALLS ────────────────────────────────────────────────
 async function warmupAPI() {
@@ -1906,7 +1990,7 @@ async function saveEdit() {
   toast('แก้ไขแล้ว ✓');
   closeEditModal();
   if (document.getElementById('slog')?.classList.contains('active')) showLog();
-  if (document.getElementById('ssum')?.classList.contains('active')) showSum();
+  if (document.getElementById('ssum')?.classList.contains('active')) renderSumScreen();
 }
 async function deleteEntry(idx) {
   if (!confirm('ลบรายการนี้ออกจาก log?')) return;
@@ -1946,7 +2030,7 @@ async function deleteEntry(idx) {
   updatePB(); updateChecklist(); saveSession();
   toast('ลบแล้ว');
   if (document.getElementById('slog')?.classList.contains('active')) showLog();
-  if (document.getElementById('ssum')?.classList.contains('active')) showSum();
+  if (document.getElementById('ssum')?.classList.contains('active')) renderSumScreen();
 }
 
 // ── TOAST ────────────────────────────────────────────────────
