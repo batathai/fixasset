@@ -21,7 +21,7 @@
 
 - เวอร์ชัน backend ปัจจุบัน (ตาม `main.py`): **1.2.0**, ผ่านการพัฒนาไปแล้วถึง **v0.8** ตาม `docs/changelog.md`
 - ระบบใช้งานจริงอยู่แล้ว (production) มี login จริง มี asset master import จริง ไม่ใช่ prototype
-- คอมมิตล่าสุดใน repo นี้ (branch `main`): **2026-07-16**
+- คอมมิตล่าสุดใน repo นี้ (branch `main`): **2026-07-20**
 - มีการแก้ไข "6 ข้อ" ล่าสุดที่ยังไม่ได้สรุปลง `docs/changelog.md` อย่างเป็นทางการ (ดูรายละเอียดใน `CHANGES_README.md` ที่ root) ได้แก่: ระบบรอบตรวจแบบคำนวณอัตโนมัติ, PDF log อัตโนมัติตอนปิดงาน, แก้บั๊กลบข้อมูลทั้งฝั่งแอพสแกนและ Dashboard ให้ลบที่ server จริง, เพิ่ม audit log การลบ (`scan_delete_logs`), และจำ login ข้าม F5
 - **ยังไม่ได้แก้ (ทราบปัญหาแล้ว แต่ยังไม่ทำ):** auth session เก็บใน memory ของ backend (ดูหัวข้อ 6)
 
@@ -39,8 +39,8 @@
 ├── railway.toml                    # Railway build/deploy config (Nixpacks)
 ├── seed_users.py                   # Script รันครั้งเดียวเพื่อสร้าง user/สาขาทดสอบเริ่มต้น
 ├── migration_scan_delete_log.sql   # Migration SQL ล่าสุด (ตาราง scan_delete_logs) ต้องรันเองใน Neon ก่อน deploy main.py เวอร์ชันที่ใช้ตารางนี้
-├── index.html                      # Frontend: แอพสแกนหน้าสาขา (static, ไฟล์เดียว, ~144KB) host บน GitHub Pages
-├── dashboard.html                  # Frontend: HQ Dashboard (static, ไฟล์เดียว, ~120KB) host บน GitHub Pages
+├── index.html                      # Frontend: แอพสแกนหน้าสาขา (static, ไฟล์เดียว, ~123KB) host บน GitHub Pages
+├── dashboard.html                  # Frontend: HQ Dashboard (static, ไฟล์เดียว, ~144KB) host บน GitHub Pages
 ├── CNAME                           # Custom domain ของ GitHub Pages: fixasset.batathai.com
 ├── bata_logo.png                   # โลโก้ที่ใช้ในหน้าเว็บ
 ├── CHANGES_README.md               # สรุปแก้ไข "6 ข้อ" ล่าสุด (ใหม่กว่า docs/changelog.md — ยังไม่ถูกรวมเข้า changelog อย่างเป็นทางการ)
@@ -102,7 +102,7 @@
 3. **Password hash เป็น SHA-256 ธรรมดา ไม่มี salt** — ไม่ใช่ bcrypt/argon2 ความปลอดภัยต่ำกว่ามาตรฐานปัจจุบัน ถ้าจะแก้ต้องมี migration path สำหรับ password hash เดิมของ user ที่มีอยู่แล้วด้วย
 4. **`migration_session_uniqueness.sql` ถูกอ้างถึงใน comment ของ `main.py`** (endpoint `POST /sessions`, partial unique index `idx_unique_open_session_per_branch_day`) **แต่ไม่มีไฟล์นี้อยู่จริงใน repo** — เป็นไปได้ว่าไฟล์นี้ถูกรันตรงใน Neon SQL editor แล้วไม่ได้ commit เก็บไว้ ถ้าจะ reproduce schema นี้ในฐานข้อมูลใหม่ ต้องสร้าง unique index นี้เองตามที่ comment อธิบาย
 5. **ต้องรัน SQL migration ก่อน deploy เสมอเมื่อโค้ดอ้างถึง column/ตารางใหม่** — ไม่งั้นจะเจอ error แบบ `psycopg2.errors.UndefinedColumn` (เคยเกิดขึ้นจริงกับ `s.scheduled_date`) ตัวอย่างล่าสุดคือต้องรัน `migration_scan_delete_log.sql` ก่อน deploy ฟีเจอร์ audit log การลบ
-6. **`index.html` และ `dashboard.html` ใหญ่มาก (144KB และ 120KB ต่อไฟล์)** — เป็นไฟล์เดียวรวม HTML/CSS/JS ทั้งหมด แก้ไขต้องระวังเรื่อง scope ของตัวแปร/ฟังก์ชันชนกัน และควรทดสอบทั้งหน้าหลังแก้เสมอ เพราะไม่มี build/test process ใดๆ ช่วยตรวจสอบ syntax error ก่อน deploy
+6. **`index.html` และ `dashboard.html` ใหญ่มาก (~123KB และ ~144KB ต่อไฟล์)** — เป็นไฟล์เดียวรวม HTML/CSS/JS ทั้งหมด แก้ไขต้องระวังเรื่อง scope ของตัวแปร/ฟังก์ชันชนกัน และควรทดสอบทั้งหน้าหลังแก้เสมอ เพราะไม่มี build/test process ใดๆ ช่วยตรวจสอบ syntax error ก่อน deploy — ไฟล์ใหญ่ขนาดนี้ยังทำให้การ push ผ่าน GitHub API (เมื่อไม่มี git credential ในเครื่องมือแก้โค้ด) กิน token/เวลามากตามไปด้วย เพราะต้องส่งเนื้อหาทั้งไฟล์ทุกครั้งที่แก้ ไม่ใช่แค่ diff
 7. **Cloudinary upload preset (`bata_audit`) เป็นแบบ unsigned ฝั่ง client** — หมายความว่าใครก็ตามที่มี cloud name + preset name (มองเห็นได้จาก source code ของ `index.html`) สามารถอัปโหลดไฟล์เข้า Cloudinary account นี้ได้โดยไม่ต้องผ่าน backend เลย ควรพิจารณาตั้งค่าจำกัดขนาด/ประเภทไฟล์ที่ฝั่ง Cloudinary preset เองด้วย ไม่ใช่พึ่งแค่ frontend validate
 8. **Excel status/date parsing มีจุดเปราะบาง** — ถ้าไฟล์ Excel ที่ HQ ส่งมาเปลี่ยนรูปแบบ (คอลัมน์สลับตำแหน่ง, รหัสสถานะใหม่ที่ไม่อยู่ใน `_STATUS_CODE_MAP`, รูปแบบวันที่ใหม่) ระบบจะ fallback เป็นค่า default (`active`, `purchase_date = NULL`) แทนที่จะ error แบบชัดเจนในทุกกรณี ควรตรวจสอบผลลัพธ์ preview (`/hq/assets/import/preview`) ก่อน confirm import จริงเสมอ
 
@@ -157,3 +157,8 @@ Environment variables ที่ backend ต้องการ:
 
 - **2026-07-18** — สร้างไฟล์นี้ครั้งแรก (โดย Claude อ่านโค้ดทั้งหมดใน repo ณ ขณะนั้น รวมถึง `main.py`, `index.html`, `dashboard.html`, ไฟล์ config และเอกสารทั้งหมดใน `docs/` เพื่อสรุปเป็น `CLAUDE.md` ฉบับนี้)
 - **2026-07-18** — ลบเอกสารล้าสมัยที่ไม่ตรงกับโค้ดจริงออกจาก `docs/` (`README.md`, `architecture.md`, `API.md`, `FLOW.md`, `deployment.md`) ตามคำขอของผู้ดูแล repo หลังยืนยันว่าเนื้อหาที่ยังถูกต้องถูกสรุปไว้ใน `CLAUDE.md` แล้ว เหลือเก็บไว้เฉพาะ `docs/database.md` และ `docs/changelog.md`
+- **2026-07-20** — เพิ่ม 3 ฟีเจอร์ UI ในทั้ง `index.html` และ `dashboard.html`:
+  1. **Popup "Bata Loading..." ธีมขาว-แดง (official brand)** — แสดงระหว่างรอ API ตอน login/โหลดข้อมูล ใช้โลโก้คำ "BATA THAILAND" สีแดงเข้ม + แถบโหลด (bar) สีแดงวิ่งบนพื้นชมพูอ่อน แทนที่ spinner ธรรมดารุ่นแรก มี reference-counter (`bataLoadingCount`) กันปัญหา nested show/hide ซ้อนกันแล้วปิดก่อนเวลา
+  2. **คอลัม Serial ในตาราง Overview ของ `dashboard.html`** — เดิมมีแค่ใน Asset Summary เพิ่มให้ Overview ด้วยเพื่อให้ดู serial number ได้ทั้งสองหน้าจอ รวมถึงใน export CSV/Excel (`OVERVIEW_EXPORT_HEADERS`) ด้วย
+  3. **หน้า Summary ของ `index.html` กดดู Verified/Pending แยกรายการได้** — stat card (Scanned/Verified/Flagged/Unmatched/Pending/Total) กดได้แล้ว (`filterSum()`) กรองรายการด้านล่างตามหมวดที่เลือก โดย "Pending" ดึงจาก `CHECKLIST` (asset ที่ยังไม่สแกนจริง) ไม่ใช่แค่ log ที่สแกนไปแล้ว
+  - **หมายเหตุระหว่างทำงาน:** ตอน push `dashboard.html` ขึ้น GitHub ผ่าน GitHub MCP tool (ไม่มี git credential ในเครื่องมือแก้โค้ดตอนนั้น) เกิดพลาดใส่เนื้อหาไม่ครบ 2 ครั้งติดกัน (ไฟล์ถูก truncate เหลือแค่ CSS บางส่วน) ก่อนจะแก้ให้ถูกต้องสมบูรณ์ในคอมมิตสุดท้าย — ถ้าเจอ `dashboard.html` บน `main` ที่ขนาดเล็กผิดปกติ (ไม่ถึง 100KB) ให้สงสัยว่าเกิดปัญหานี้ซ้ำ และเช็ค `git log`/commit history เพื่อ revert ไปคอมมิตล่าสุดที่ขนาดไฟล์ถูกต้อง
