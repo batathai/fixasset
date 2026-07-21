@@ -319,12 +319,12 @@
     <p class="login-title">Sign in</p>
     <div class="login-error" id="loginError" style="display:none;"></div>
     <label class="login-label">Employee ID</label>
-    <input class="login-input" id="loginEmployeeId" type="text" placeholder="เช่น ADMIN01" onkeydown="if(event.key==='Enter') doLogin()">
+    <input class="login-input" id="loginEmployeeId" type="text" placeholder="เช่น ADMIN01" onkeydown="if(event.key==='Enter') ">
     <label class="login-label">Password</label>
-    <input class="login-input" id="loginPassword" type="password" onkeydown="if(event.key==='Enter') doLogin()">
+    <input class="login-input" id="loginPassword" type="password" onkeydown="if(event.key==='Enter') ">
     <label class="login-label">Branch ID <span style="color:var(--ink-3);font-weight:400;">(HQ เว้นว่างได้ถ้าไม่บังคับ)</span></label>
-    <input class="login-input" id="loginBranchId" type="text" placeholder="เช่น HQ หรือรหัสสาขา" onkeydown="if(event.key==='Enter') doLogin()">
-    <button class="add-btn" style="width:100%;margin-top:6px;" id="loginSubmitBtn" onclick="doLogin()">Sign in</button>
+    <input class="login-input" id="loginBranchId" type="text" placeholder="เช่น HQ หรือรหัสสาขา" onkeydown="if(event.key==='Enter') ">
+    <button class="add-btn" style="width:100%;margin-top:6px;" id="loginSubmitBtn" onclick="">Sign in</button>
     <p class="login-sub">เชื่อมต่อ API: <code id="loginApiBase"></code></p>
   </div>
 </div>
@@ -1044,6 +1044,7 @@ async function doLogin(){
     errEl.style.display = 'block';
   } finally {
     btn.disabled = false; btn.textContent = 'Sign in';
+    hideBataLoading();
   }
 }
 
