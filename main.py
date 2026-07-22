@@ -58,6 +58,8 @@ class ScanLogCreate(BaseModel):
     photo_url: Optional[str] = None
     scanned_department: Optional[str] = None  # Office scan — แผนกที่ auditor ยืนยัน (auto-fill จาก master ได้ แต่แก้ไขได้)
     dept_note: Optional[str] = None            # เหตุผลถ้าแก้ไขแผนกจน mismatch กับ master
+    assigned_employee_id: Optional[str] = None    # Office scan — พนักงานที่ asset ชิ้นนี้ถูก assign ให้ (อ้างอิง employees.employee_id)
+    assigned_employee_name: Optional[str] = None  # เก็บชื่อ denormalized ไว้ด้วย กันต้อง join ทุกครั้งตอนแสดงผล (ตาม convention เดิมของไฟล์นี้)
 
 class UnmatchedCreate(BaseModel):
     session_id: int
@@ -79,6 +81,8 @@ class ScanLogUpdate(BaseModel):
     hq_note: Optional[str] = None
     scanned_department: Optional[str] = None
     dept_mismatch: Optional[bool] = None
+    assigned_employee_id: Optional[str] = None
+    assigned_employee_name: Optional[str] = None
 
 class ScanLogPatchByQR(BaseModel):
     photo_url: Optional[str] = None
@@ -88,6 +92,8 @@ class ScanLogPatchByQR(BaseModel):
     condition: Optional[str] = None
     scanned_department: Optional[str] = None
     dept_note: Optional[str] = None
+    assigned_employee_id: Optional[str] = None
+    assigned_employee_name: Optional[str] = None
 
 class UnmatchedUpdate(BaseModel):
     status: str
@@ -106,6 +112,12 @@ class ExportExcelRequest(BaseModel):
     headers: List[str]
     rows: List[List[Any]]
     filename: str                  # เช่น "overview-0051435-20260716.xlsx"
+
+class EmployeeUpdate(BaseModel):
+    full_name: Optional[str] = None
+    position: Optional[str] = None
+    department: Optional[str] = None
+    is_active: Optional[bool] = None
 
 # ════════════════════════════════════════════════════════════════
 # CLOUDINARY HELPERS
@@ -237,6 +249,191 @@ def departments_by_branch(branch_id: str, db=Depends(get_db), user=Depends(get_c
     return {"departments": [r["department"] for r in cur.fetchall()]}
 
 # ════════════════════════════════════════════════════════════════
+# EMPLOYEES
+# ต้องรัน migration_employees.sql ใน Neon ก่อน endpoint กลุ่มนี้ถึงจะใช้ได้
+# (สร้างตาราง employees + employee_import_batches + เพิ่มคอลัมน์
+#  assigned_employee_id / assigned_employee_name ใน scan_logs)
+#
+# ใช้แยกจากตาราง assets/department โดยสิ้นเชิง — office.html เลือก "แผนก" ก่อน
+# (จาก dropdown แผนกคงที่ใน office.html) แล้วค่อยเลือก "พนักงาน" ที่กรองตามแผนกนั้น
+# จากตารางนี้ เพื่อบันทึกว่า asset ชิ้นนี้ถูก assign ให้ใคร
+# ════════════════════════════════════════════════════════════════
+EMPLOYEE_EXPECTED_COLUMNS = ["Employee ID", "Name", "Position", "Department", "Department Code"]
+
+def _parse_employee_excel(content: bytes, filename: str):
+    """อ่านไฟล์ .xls/.xlsx รายชื่อพนักงาน (Employee ID, Name, Position, Department, Department Code)
+    คืน list of dict ที่ map เป็นชื่อ column ของตาราง employees แล้ว"""
+    rows_out = []
+
+    def _row_to_dict(values):
+        if not values or not str(values[0]).strip():
+            return None
+        if str(values[0]).strip().lower() in ("grand total", "employee id"):
+            return None
+        employee_id = str(values[0]).strip()
+        full_name   = str(values[1]).strip() if len(values) > 1 and values[1] else ""
+        position    = str(values[2]).strip() if len(values) > 2 and values[2] else None
+        department  = str(values[3]).strip() if len(values) > 3 and values[3] else None
+        department_code = str(values[4]).strip() if len(values) > 4 and values[4] not in (None, "") else None
+        if not employee_id:
+            return None
+        return {
+            "employee_id": employee_id, "full_name": full_name, "position": position,
+            "department": department, "department_code": department_code,
+        }
+
+    if filename.lower().endswith(".xls"):
+        wb = xlrd.open_workbook(file_contents=content)
+        sheet = wb.sheet_by_index(0)
+        for r in range(1, sheet.nrows):
+            d = _row_to_dict(sheet.row_values(r))
+            if d:
+                rows_out.append(d)
+    elif filename.lower().endswith(".xlsx"):
+        wb = openpyxl.load_workbook(io.BytesIO(content), data_only=True)
+        sheet = wb.worksheets[0]
+        for row in sheet.iter_rows(min_row=2, values_only=True):
+            d = _row_to_dict(list(row))
+            if d:
+                rows_out.append(d)
+    else:
+        raise HTTPException(status_code=400, detail="รองรับเฉพาะไฟล์ .xls หรือ .xlsx เท่านั้น")
+
+    if not rows_out:
+        raise HTTPException(status_code=400, detail="ไม่พบข้อมูลในไฟล์ (หรือไฟล์ว่างเปล่า)")
+    return rows_out
+
+
+@app.get("/employees/department/{department}")
+def employees_by_department(department: str, db=Depends(get_db), user=Depends(get_current_user)):
+    """รายชื่อพนักงานในแผนกนี้ — ใช้ทำ dropdown ที่ 2 ในหน้า Office Scan
+    (dropdown แรกเลือกแผนกก่อน แล้วค่อยกรองพนักงานด้วย endpoint นี้)"""
+    cur = db.cursor()
+    cur.execute("""
+        SELECT employee_id, full_name, position FROM employees
+        WHERE department = %s AND COALESCE(is_active, true) = true
+        ORDER BY full_name
+    """, (department,))
+    return {"employees": [dict(r) for r in cur.fetchall()]}
+
+
+@app.get("/hq/employees")
+def hq_get_all_employees(db=Depends(get_db), user=Depends(get_current_user)):
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    cur = db.cursor()
+    cur.execute("""
+        SELECT id, employee_id, full_name, position, department, department_code,
+               is_active, imported_at
+        FROM employees
+        ORDER BY department, full_name
+    """)
+    rows = [dict(r) for r in cur.fetchall()]
+    return {"total": len(rows), "employees": rows}
+
+
+@app.patch("/hq/employees/{employee_id}")
+def hq_update_employee(employee_id: str, req: EmployeeUpdate, db=Depends(get_db), user=Depends(get_current_user)):
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    cur = db.cursor()
+    fields, values = [], []
+    if req.full_name is not None: fields.append("full_name = %s"); values.append(req.full_name)
+    if req.position is not None: fields.append("position = %s"); values.append(req.position)
+    if req.department is not None: fields.append("department = %s"); values.append(req.department)
+    if req.is_active is not None: fields.append("is_active = %s"); values.append(req.is_active)
+    if not fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+    values.append(employee_id)
+    cur.execute(f"UPDATE employees SET {', '.join(fields)} WHERE employee_id = %s RETURNING id", values)
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Employee not found")
+    db.commit()
+    return {"ok": True, "employee_id": employee_id}
+
+
+@app.delete("/hq/employees/{employee_id}")
+def hq_deactivate_employee(employee_id: str, db=Depends(get_db), user=Depends(get_current_user)):
+    """Soft delete เท่านั้น (is_active=false) — ตาม convention เดียวกับ asset undo import
+    เพื่อไม่ให้ scan_logs.assigned_employee_id ที่อ้างอิงพนักงานคนนี้กลายเป็น dangling reference"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    cur = db.cursor()
+    cur.execute("UPDATE employees SET is_active = false WHERE employee_id = %s RETURNING id", (employee_id,))
+    if not cur.fetchone():
+        raise HTTPException(status_code=404, detail="Employee not found")
+    db.commit()
+    return {"ok": True, "employee_id": employee_id}
+
+
+@app.post("/hq/employees/import/preview")
+async def hq_import_employees_preview(file: UploadFile = File(...), user=Depends(get_current_user), db=Depends(get_db)):
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    content = await _read_upload_with_size_limit(file)
+    rows = _parse_employee_excel(content, file.filename)
+
+    cur = db.cursor()
+    ids = [r["employee_id"] for r in rows]
+    if ids:
+        cur.execute("SELECT employee_id FROM employees WHERE employee_id IN %s AND COALESCE(is_active, true) = true", (tuple(ids),))
+        existing = {r["employee_id"] for r in cur.fetchall()}
+    else:
+        existing = set()
+
+    preview = [{**r, "duplicate": r["employee_id"] in existing} for r in rows]
+    depts = sorted({r["department"] for r in rows if r["department"]})
+
+    return {"file_name": file.filename, "total_rows": len(rows),
+            "duplicate_count": sum(1 for p in preview if p["duplicate"]),
+            "departments_found": depts,
+            "rows": preview}
+
+
+@app.post("/hq/employees/import/confirm")
+async def hq_import_employees_confirm(file: UploadFile = File(...), user=Depends(get_current_user), db=Depends(get_db)):
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    content = await _read_upload_with_size_limit(file)
+    rows = _parse_employee_excel(content, file.filename)
+
+    batch_id = uuid.uuid4().hex
+    cur = db.cursor()
+    inserted = updated = 0
+    try:
+        for r in rows:
+            cur.execute("""
+                INSERT INTO employees
+                    (employee_id, full_name, position, department, department_code,
+                     import_batch_id, is_active, imported_at)
+                VALUES (%s,%s,%s,%s,%s,%s,true,NOW())
+                ON CONFLICT (employee_id) DO UPDATE SET
+                    full_name = EXCLUDED.full_name,
+                    position = EXCLUDED.position,
+                    department = EXCLUDED.department,
+                    department_code = EXCLUDED.department_code,
+                    import_batch_id = EXCLUDED.import_batch_id,
+                    is_active = true,
+                    imported_at = NOW()
+            """, (r["employee_id"], r["full_name"], r["position"], r["department"],
+                  r["department_code"], batch_id))
+            # rowcount ไม่แยกชัดเจนว่า insert หรือ update ตอน ON CONFLICT DO UPDATE
+            # (Postgres คืน 1 เสมอไม่ว่ากรณีไหน) เลยนับรวมเป็น "processed" แทนแยก inserted/updated
+            inserted += 1
+
+        cur.execute("""
+            INSERT INTO employee_import_batches (batch_id, file_name, row_count, imported_by, status)
+            VALUES (%s,%s,%s,%s,'active')
+        """, (batch_id, file.filename, inserted, user["employee_id"]))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Import ล้มเหลว ไม่มีข้อมูลเข้าระบบ: {e}")
+
+    return {"ok": True, "batch_id": batch_id, "processed": inserted}
+
+
+# ════════════════════════════════════════════════════════════════
 # AUDIT SESSIONS
 # audit_sessions columns: id, name, branch_id, audit_date,
 #                         started_by, status, created_at, closed_at
@@ -357,11 +554,12 @@ def create_scan(req: ScanLogCreate, db=Depends(get_db), user=Depends(get_current
     cur.execute("""
         INSERT INTO scan_logs
             (session_id, asset_id, scanned_by, serial_found, serial_match, condition, remark, photo_url,
-             scanned_department, dept_mismatch, dept_note)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id
+             scanned_department, dept_mismatch, dept_note, assigned_employee_id, assigned_employee_name)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id
     """, (req.session_id, asset["id"], user["user_id"], req.serial_found,
           req.serial_match, req.condition, req.remark, req.photo_url,
-          req.scanned_department, dept_mismatch, req.dept_note))
+          req.scanned_department, dept_mismatch, req.dept_note,
+          req.assigned_employee_id, req.assigned_employee_name))
     scan_id = cur.fetchone()["id"]
     cur.execute("UPDATE audit_sessions SET status = 'on_process' WHERE id = %s AND status = 'open'", (req.session_id,))
     db.commit()
@@ -373,6 +571,7 @@ def get_scans(session_id: int, db=Depends(get_db), user=Depends(get_current_user
     cur.execute("""
         SELECT sl.id, sl.scanned_at, sl.serial_match, sl.condition, sl.remark, sl.photo_url,
                sl.scanned_department, sl.dept_mismatch, sl.dept_note,
+               sl.assigned_employee_id, sl.assigned_employee_name,
                a.qr_key, a.name, a.serial_no, a.department AS master_department
         FROM scan_logs sl
         JOIN assets a ON a.id = sl.asset_id
@@ -474,6 +673,7 @@ def hq_get_scans(db=Depends(get_db), user=Depends(get_current_user)):
     cur.execute("""
         SELECT sl.id, sl.condition, sl.serial_found, sl.serial_match, sl.photo_url,
                sl.scanned_at, sl.hq_note, sl.scanned_department, sl.dept_mismatch, sl.dept_note,
+               sl.assigned_employee_id, sl.assigned_employee_name,
                a.asset_code, a.seq, a.qr_key,
                a.name AS asset_name, a.serial_no AS serial_master, a.department AS master_department,
                u.email AS auditor,
@@ -503,6 +703,10 @@ def hq_update_scan(scan_id: int, req: ScanLogUpdate, db=Depends(get_db), user=De
         fields.append("scanned_department = %s"); values.append(req.scanned_department)
     if req.dept_mismatch is not None:
         fields.append("dept_mismatch = %s"); values.append(req.dept_mismatch)
+    if req.assigned_employee_id is not None:
+        fields.append("assigned_employee_id = %s"); values.append(req.assigned_employee_id)
+    if req.assigned_employee_name is not None:
+        fields.append("assigned_employee_name = %s"); values.append(req.assigned_employee_name)
     if not fields:
         raise HTTPException(status_code=400, detail="No fields to update")
     fields.append("updated_at = NOW()")
@@ -618,6 +822,8 @@ def update_scan_by_qr(session_id: int, qr_key: str, req: ScanLogPatchByQR,
         mismatch = bool(master_dept and scanned_dept and master_dept != scanned_dept)
         fields.append("dept_mismatch = %s"); values.append(mismatch)
     if req.dept_note is not None: fields.append("dept_note = %s"); values.append(req.dept_note)
+    if req.assigned_employee_id is not None: fields.append("assigned_employee_id = %s"); values.append(req.assigned_employee_id)
+    if req.assigned_employee_name is not None: fields.append("assigned_employee_name = %s"); values.append(req.assigned_employee_name)
     if not fields:
         raise HTTPException(status_code=400, detail="No fields to update")
     fields.append("updated_at = NOW()")
