@@ -574,6 +574,34 @@ const API = 'https://bata-asset-api-production.up.railway.app';
 let S = { user:null, branch:null, branchName:null, sid:null, token:null,
           scanned:new Set(), log:[], total:0, cd:false };
 const assetCache = new Map();
+// เก็บ mapping employee_id -> full_name ต่อการ์ด (key คือ qr_key ของ asset ที่กำลังสแกน)
+// ใช้ตอนกด SAVE เพื่อดึงชื่อพนักงานมาเก็บคู่กับ id (denormalized ตาม convention เดิม)
+const employeeCacheByCard = {};
+// โหลดรายชื่อพนักงานตามแผนกที่เลือก มาใส่ dropdown ที่ 2 (เรียกตอนเลือกแผนก หรือตอน auto-fill แผนกจาก master)
+async function loadEmployeesForDept(k, dept, selectId) {
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
+  if (!dept) {
+    sel.innerHTML = '<option value="">— เลือกแผนกก่อน —</option>';
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = true;
+  sel.innerHTML = '<option value="">กำลังโหลด...</option>';
+  try {
+    const res = await fetch(API+'/employees/department/'+encodeURIComponent(dept), {headers:{'Authorization':'Bearer '+S.token}});
+    const data = await res.json();
+    const emps = data.employees || [];
+    employeeCacheByCard[k] = {};
+    emps.forEach(e => { employeeCacheByCard[k][e.employee_id] = e.full_name; });
+    sel.innerHTML = '<option value="">— เลือกพนักงาน —</option>' +
+      emps.map(e => `<option value="${e.employee_id}">${e.full_name}${e.position ? ' ('+e.position+')' : ''}</option>`).join('');
+  } catch(e) {
+    sel.innerHTML = '<option value="">โหลดรายชื่อไม่สำเร็จ — ลองเลือกแผนกใหม่</option>';
+  } finally {
+    sel.disabled = false;
+  }
+}
 let scanQueue = [], isSyncing = false;
 const photoBlobs = {};
 let pendingUpload = false;
@@ -927,7 +955,9 @@ async function flushQueue() {
           // เลยได้แค่ scan record เปล่าๆ ไม่มีรูปติดไปเลย (เจอจากหน้างานที่ถ่ายรูปแล้วรูปหายไปตอนดูใน Dashboard)
           photo_url:item.extra.photo_url||null,
           scanned_by:S.user||null,
-          scanned_department:item.extra.scanned_department||null
+          scanned_department:item.extra.scanned_department||null,
+          assigned_employee_id:item.extra.assigned_employee_id||null,
+          assigned_employee_name:item.extra.assigned_employee_name||null
         })
       });
       const data = await res.json().catch(() => ({}));
@@ -1055,9 +1085,11 @@ function showAssetResult(key, asset, area) {
   };
   if (isComputer && a.serial) {
     area.innerHTML = rSerial(key, a);
+    if (a.dept) loadEmployeesForDept(key, a.dept, 'emp-'+key); // auto-fill แผนกมาแล้ว โหลดรายชื่อพนักงานทันที ไม่ต้องรอผู้ใช้เลือกแผนกเอง
     speak(VOICE.serialCheck);   // 🔊 "กรุณาตรวจสอบซีเรียลนัมเบอร์"
   } else {
     area.innerHTML = rMatch(key, a);
+    if (a.dept) loadEmployeesForDept(key, a.dept, 'emp-'+key);
     commit(key, a.name, 'matched', {scanned_department:a.dept});
     queueScanLog(key, 'matched', {scanned_department:a.dept});
     speak(VOICE.matched);       // 🔊 "สแกนสำเร็จ"
@@ -1086,7 +1118,8 @@ function rMatch(k,a){ return `
     ${a.date?`<div class="ir"><span class="il">Purchase date</span><span class="iv">${a.date}</span></div>`:''}
     ${a.serial?`<div class="ir"><span class="il">Serial no.</span><span class="iv">${a.serial}</span></div>`:''}
     <div class="dv"></div>
-    <div class="fg"><div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div><select class="fi" id="dp-${k}">${deptOptionsHTML(a.dept)}</select></div>
+    <div class="fg"><div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div><select class="fi" id="dp-${k}" onchange="loadEmployeesForDept('${k}',this.value,'emp-${k}')">${deptOptionsHTML(a.dept)}</select></div>
+    <div class="fg"><div class="fl">มอบหมายให้พนักงาน (เลือกแผนกก่อน)</div><select class="fi" id="emp-${k}" disabled><option value="">— เลือกแผนกก่อน —</option></select></div>
     <div class="fg">
       <div class="fl">Photo (optional)</div>
       <div class="ph-area" onclick="document.getElementById('pm-${k}').click()" style="padding:12px;display:flex;align-items:center;gap:10px;text-align:left;">
@@ -1113,7 +1146,8 @@ function rSerial(k,a){ return `
     <div class="ir"><span class="il">Serial (master)</span><span class="iv ac">${a.serial||'—'}</span></div>
     <div class="dv"></div>
     <div class="fg"><div class="fl">Serial no. on device</div><input class="fi" id="sr-${k}" placeholder="${a.serial||'Enter serial no.'}"/></div>
-    <div class="fg"><div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div><select class="fi" id="dp-${k}">${deptOptionsHTML(a.dept)}</select></div>
+    <div class="fg"><div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div><select class="fi" id="dp-${k}" onchange="loadEmployeesForDept('${k}',this.value,'emp-${k}')">${deptOptionsHTML(a.dept)}</select></div>
+    <div class="fg"><div class="fl">มอบหมายให้พนักงาน (เลือกแผนกก่อน)</div><select class="fi" id="emp-${k}" disabled><option value="">— เลือกแผนกก่อน —</option></select></div>
     <div class="fg">
       <div class="fl">Photo (ถ่ายรูป Serial Label)</div>
       <div class="ph-area" onclick="document.getElementById('sp-${k}').click()" style="padding:12px;display:flex;align-items:center;gap:10px;text-align:left;">
@@ -1179,7 +1213,9 @@ async function updateScanLog(qrKey, extra={}) {
         serial_found: extra.serial_found ?? null,
         serial_match: extra.serial_match ?? null,
         condition: extra.condition ?? null,
-        scanned_department: extra.scanned_department ?? null
+        scanned_department: extra.scanned_department ?? null,
+        assigned_employee_id: extra.assigned_employee_id ?? null,
+        assigned_employee_name: extra.assigned_employee_name ?? null
       })
     });
   } catch(e) {
@@ -1191,6 +1227,8 @@ async function updateScanLog(qrKey, extra={}) {
 async function saveRemark(k,n) {
   const r = document.getElementById('rm-'+k)?.value||'';
   const dept = document.getElementById('dp-'+k)?.value||'';
+  const empId = document.getElementById('emp-'+k)?.value||'';
+  const empName = (employeeCacheByCard[k] && employeeCacheByCard[k][empId]) || '';
   const fileInp = document.getElementById('pm-'+k);
   const file = fileInp?.files[0] || null;
   if (file) {
@@ -1199,12 +1237,12 @@ async function saveRemark(k,n) {
     speak(VOICE.uploading);   // 🔊 "กำลังอัปโหลดรูปภาพ กรุณารอสักครู่"
     try {
       const url = await uploadToCloudinary(file, S.branch||'unknown');
-      commit(k, n, 'matched', {remark:r, photo_url:url, scanned_department:dept});
-      await updateScanLog(k, {remark:r, photo_url:url, scanned_department:dept});
+      commit(k, n, 'matched', {remark:r, photo_url:url, scanned_department:dept, assigned_employee_id:empId, assigned_employee_name:empName});
+      await updateScanLog(k, {remark:r, photo_url:url, scanned_department:dept, assigned_employee_id:empId||null, assigned_employee_name:empName||null});
       speak(VOICE.saved);     // 🔊 "บันทึกเรียบร้อย"
     } catch(e) {
-      commit(k, n, 'matched', {remark:r, scanned_department:dept});
-      await updateScanLog(k, {remark:r, scanned_department:dept});
+      commit(k, n, 'matched', {remark:r, scanned_department:dept, assigned_employee_id:empId, assigned_employee_name:empName});
+      await updateScanLog(k, {remark:r, scanned_department:dept, assigned_employee_id:empId||null, assigned_employee_name:empName||null});
       speak(VOICE.saved);
       toast('⚠ Upload รูปล้มเหลว — บันทึกโดยไม่มีรูป');
     } finally {
@@ -1213,8 +1251,8 @@ async function saveRemark(k,n) {
     }
   } else {
     // แผนกอาจถูกแก้ (แม้ไม่มีรูป/remark ใหม่) ต้องอัปเดต record เดิมเสมอเพื่อให้ mismatch flag ถูกต้อง
-    commit(k,n,'matched',{remark:r, scanned_department:dept});
-    await updateScanLog(k, {remark:r||null, scanned_department:dept});
+    commit(k,n,'matched',{remark:r, scanned_department:dept, assigned_employee_id:empId, assigned_employee_name:empName});
+    await updateScanLog(k, {remark:r||null, scanned_department:dept, assigned_employee_id:empId||null, assigned_employee_name:empName||null});
     speak(VOICE.saved);       // 🔊 "บันทึกเรียบร้อย"
   }
   hideR();
@@ -1224,6 +1262,8 @@ async function doSerial(k,n,exp,match) {
   const found  = document.getElementById('sr-'+k)?.value||'';
   const remark = document.getElementById('rm-'+k)?.value||'';
   const dept   = document.getElementById('dp-'+k)?.value||'';
+  const empId  = document.getElementById('emp-'+k)?.value||'';
+  const empName = (employeeCacheByCard[k] && employeeCacheByCard[k][empId]) || '';
   const fileInp = document.getElementById('sp-'+k);
   const file = fileInp?.files[0] || null;
   if (file) {
@@ -1232,19 +1272,19 @@ async function doSerial(k,n,exp,match) {
     speak(VOICE.uploading);
     try {
       const url = await uploadToCloudinary(file, S.branch||'unknown');
-      commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,photo_url:url,scanned_department:dept});
-      queueScanLog(k,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,photo_url:url,scanned_department:dept});
+      commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,photo_url:url,scanned_department:dept,assigned_employee_id:empId,assigned_employee_name:empName});
+      queueScanLog(k,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,photo_url:url,scanned_department:dept,assigned_employee_id:empId,assigned_employee_name:empName});
     } catch(e) {
-      commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,scanned_department:dept});
-      queueScanLog(k,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,scanned_department:dept});
+      commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,scanned_department:dept,assigned_employee_id:empId,assigned_employee_name:empName});
+      queueScanLog(k,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,scanned_department:dept,assigned_employee_id:empId,assigned_employee_name:empName});
       toast('⚠ Upload รูปล้มเหลว — บันทึกโดยไม่มีรูป');
     } finally {
       pendingUpload = false;
       showUploadOverlay(false);
     }
   } else {
-    commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,scanned_department:dept});
-    queueScanLog(k,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,scanned_department:dept});
+    commit(k,n,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,scanned_department:dept,assigned_employee_id:empId,assigned_employee_name:empName});
+    queueScanLog(k,match?'matched':'mismatch',{serial_found:found,serial_match:match,remark,scanned_department:dept,assigned_employee_id:empId,assigned_employee_name:empName});
   }
   // 🔊 เสียงตาม serial match/mismatch
   speak(match ? VOICE.serialOk : VOICE.serialFail);
