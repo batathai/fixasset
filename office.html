@@ -1176,7 +1176,8 @@ function rUnmatch(k){ return `
     <div class="dv"></div>
     <div class="fg"><div class="fl">Serial no. (from device)</div><input class="fi" id="us-${k}" placeholder="e.g. 7TK4B63"/></div>
     <div class="fg"><div class="fl">Device description</div><input class="fi" id="un-${k}" placeholder="e.g. Dell Monitor 24 inch"/></div>
-    <div class="fg"><div class="fl">แผนกที่พบของชิ้นนี้ (เลือกจากรายชื่อ)</div><select class="fi" id="dg-${k}">${deptOptionsHTML('')}</select></div>
+    <div class="fg"><div class="fl">แผนกที่พบของชิ้นนี้ (เลือกจากรายชื่อ)</div><select class="fi" id="dg-${k}" onchange="loadEmployeesForDept('${k}',this.value,'empg-${k}')">${deptOptionsHTML('')}</select></div>
+    <div class="fg"><div class="fl">มอบหมายให้พนักงาน (เลือกแผนกก่อน)</div><select class="fi" id="empg-${k}" disabled><option value="">— เลือกแผนกก่อน —</option></select></div>
     <div class="fg">
       <div class="ph-area"><input type="file" accept="image/*" capture="environment" onchange="prevPhoto(this,'${k}')"><img id="pv-${k}" class="ph-prev"><div id="pp-${k}"><div class="ph-ico">📷</div><div class="ph-txt">Tap to take photo</div></div></div>
     </div>
@@ -1297,8 +1298,10 @@ async function doUnmatch(k) {
   const s = document.getElementById('us-'+k)?.value||'';
   const r = document.getElementById('ur-'+k)?.value||'';
   const dept = document.getElementById('dg-'+k)?.value||'';
-  commit(k,n,'unmatched',{serial_no:s,remark:r,scanned_department:dept});
-  await saveUnmatched(k,{serial_no:s,name:n,remark:r,department_guess:dept});
+  const empId = document.getElementById('empg-'+k)?.value||'';
+  const empName = (employeeCacheByCard[k] && employeeCacheByCard[k][empId]) || '';
+  commit(k,n,'unmatched',{serial_no:s,remark:r,scanned_department:dept,assigned_employee_id:empId,assigned_employee_name:empName});
+  await saveUnmatched(k,{serial_no:s,name:n,remark:r,department_guess:dept,assigned_employee_id:empId,assigned_employee_name:empName});
   speak(VOICE.notFound);    // 🔊 "ไม่พบข้อมูลในระบบ"
   toast('Sent to HQ for review');
   hideR();
@@ -1585,7 +1588,9 @@ async function saveUnmatched(qrKey, extra={}) {
   if (!S.sid||!S.token) { toast('⚠️ ยังไม่ได้เชื่อมต่อ session — รายการนี้จะไม่ถูกบันทึก'); return; }
   await reliableSend(API+'/unmatched', {session_id:S.sid, scanned_qr:qrKey,
     serial_no:extra.serial_no||null, name_guess:extra.name||null, remark:extra.remark||null,
-    department_guess:extra.department_guess||null});
+    department_guess:extra.department_guess||null,
+    assigned_employee_id:extra.assigned_employee_id||null,
+    assigned_employee_name:extra.assigned_employee_name||null});
 }
 async function syncProgressFromDB() {
   if (!S.sid||!S.token) return;
