@@ -350,6 +350,10 @@
       <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
       Asset Summary
     </div>
+    <div class="nav-item" id="navEmployees" onclick="showPage('employees')">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 14.3c2.4.4 4 2.4 4 5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+      พนักงาน
+    </div>
     <div class="nav-item" id="navActivityLog" onclick="showPage('activityLog')">
       <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
       Activity Log
@@ -533,6 +537,32 @@
 
       </section>
 
+      <!-- ============ SCREEN: EMPLOYEES (HR master list) ============ -->
+      <section class="screen2" id="pageEmployees">
+
+        <div class="as-toolbar">
+          <p class="as-toolbar-title">รายชื่อพนักงาน <span style="font-weight:400;color:var(--ink-3);">— ใช้เลือกตอน assign asset ในหน้า Office Scan</span></p>
+          <div class="search-box" style="width:220px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" id="empSearch" placeholder="ค้นหา Employee ID / ชื่อ" oninput="renderEmployeeList()">
+          </div>
+          <select class="as-select" id="empDeptFilter" onchange="renderEmployeeList()"><option value="all">ทุกแผนก</option></select>
+          <button class="as-refresh" onclick="loadEmployees()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Refresh
+          </button>
+          <button class="import-btn" onclick="openEmployeeImportDrawer()">⬆ Import พนักงาน</button>
+        </div>
+        <p id="empResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
+        <div class="as-table-wrap">
+          <table class="as-table">
+            <thead><tr><th>#</th><th>Employee ID</th><th>ชื่อ</th><th>ตำแหน่ง</th><th>แผนก</th><th>สถานะ</th><th>Actions</th></tr></thead>
+            <tbody id="empRows"></tbody>
+          </table>
+        </div>
+
+      </section>
+
       <!-- Shared row "more" popover (View/Edit/Photo/More actions on any table row) -->
       <div class="row-more-menu" id="rowMoreMenu">
         <button class="row-more-item" id="rowMoreDupBtn">📄 Duplicate</button>
@@ -691,6 +721,40 @@
   <div class="drawer-footer">
     <button class="btn-cancel" onclick="closeImportDrawer()">Cancel</button>
     <button class="btn-save" id="importConfirmBtn" onclick="confirmImport()" disabled style="opacity:.5;">Confirm Import</button>
+  </div>
+</div>
+
+<div class="overlay" id="employeeImportOverlay" onclick="closeEmployeeImportDrawer()"></div>
+<div class="drawer" id="employeeImportDrawer">
+  <div class="drawer-head">
+    <p class="drawer-title">Import รายชื่อพนักงาน</p>
+    <button class="drawer-close" onclick="closeEmployeeImportDrawer()" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body">
+    <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 14px;">อัปโหลดไฟล์ Excel รายชื่อพนักงาน (คอลัมน์: Employee ID, Name, Position, Department, Department Code) — ระบบจะตรวจสอบซ้ำก่อนบันทึกจริง คนที่ Employee ID ซ้ำจะถูกอัปเดตข้อมูลทับของเดิม ไม่สร้างซ้ำ</p>
+
+    <div id="empImportStep1">
+      <div class="dropzone">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <p style="font-size:12.5px;margin:8px 0 0;">ลากไฟล์มาวาง หรือ</p>
+        <button class="dropzone-btn" onclick="document.getElementById('empImportFileInput').click()">เลือกไฟล์ Excel</button>
+        <input type="file" id="empImportFileInput" accept=".xls,.xlsx" style="display:none" onchange="handleEmployeeImportFile(this)">
+      </div>
+    </div>
+
+    <div id="empImportStep2" style="display:none;">
+      <div class="import-summary" id="empImportSummaryText"></div>
+      <table class="import-preview">
+        <thead><tr><th>Employee ID</th><th>ชื่อ</th><th>ตำแหน่ง</th><th>แผนก</th></tr></thead>
+        <tbody id="empImportPreviewRows"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn-cancel" onclick="closeEmployeeImportDrawer()">Cancel</button>
+    <button class="btn-save" id="empImportConfirmBtn" onclick="confirmEmployeeImport()" disabled style="opacity:.5;">Confirm Import</button>
   </div>
 </div>
 
@@ -1845,6 +1909,149 @@ async function confirmImport(){
   }
 }
 
+/* ---------- EMPLOYEES (HR master list) ----------
+   ตารางแยกจาก assets โดยสิ้นเชิง — ใช้เก็บรายชื่อพนักงานที่ office.html
+   ดึงไปทำ dropdown ที่ 2 ตอน assign asset ให้คนที่สแกนแผนกนั้นๆ */
+var employees = [];
+var pendingEmployeeImportFile = null;
+
+function openEmployeeImportDrawer(){
+  document.getElementById('empImportStep1').style.display = 'block';
+  document.getElementById('empImportStep2').style.display = 'none';
+  document.getElementById('empImportConfirmBtn').disabled = true;
+  document.getElementById('empImportConfirmBtn').style.opacity = '.5';
+  document.getElementById('empImportFileInput').value = '';
+  document.getElementById('employeeImportOverlay').classList.add('show');
+  document.getElementById('employeeImportDrawer').classList.add('show');
+}
+function closeEmployeeImportDrawer(){
+  document.getElementById('employeeImportOverlay').classList.remove('show');
+  document.getElementById('employeeImportDrawer').classList.remove('show');
+}
+
+async function handleEmployeeImportFile(input){
+  if(!input.files || !input.files[0]) return;
+  var file = input.files[0];
+  pendingEmployeeImportFile = file;
+  showBataLoading('กำลังตรวจสอบไฟล์...');
+  try{
+    var fd = new FormData();
+    fd.append('file', file);
+    var result = await apiFetch('/hq/employees/import/preview', { method: 'POST', body: fd });
+    var rows = result.rows || [];
+    document.getElementById('empImportStep1').style.display = 'none';
+    document.getElementById('empImportStep2').style.display = 'block';
+    document.getElementById('empImportSummaryText').innerHTML =
+      'ไฟล์ <b>' + file.name + '</b> — พบ <b>' + result.total_rows + ' แถว</b>: '
+      + '<b>' + result.duplicate_count + ' คนซ้ำกับที่มีอยู่แล้ว (จะอัปเดตทับข้อมูลเดิม)</b>'
+      + (result.departments_found && result.departments_found.length ? (', แผนกที่พบในไฟล์: ' + result.departments_found.join(', ')) : '');
+    document.getElementById('empImportPreviewRows').innerHTML = rows.slice(0, 200).map(function(r){
+      var rowStyle = r.duplicate ? ' style="background:var(--amber-bg);"' : '';
+      return '<tr' + rowStyle + '><td>' + r.employee_id + '</td><td>' + r.full_name + '</td><td>' + (r.position || '—') + '</td><td>' + (r.department || '—') + '</td></tr>';
+    }).join('');
+    document.getElementById('empImportConfirmBtn').disabled = false;
+    document.getElementById('empImportConfirmBtn').style.opacity = '1';
+  } catch(e){
+    showToast('ตรวจสอบไฟล์ไม่สำเร็จ: ' + e.message);
+  } finally {
+    hideBataLoading();
+  }
+}
+
+async function confirmEmployeeImport(){
+  if(!pendingEmployeeImportFile){ showToast('ไม่พบไฟล์ที่จะ import — เลือกไฟล์ใหม่อีกครั้ง'); return; }
+  var btn = document.getElementById('empImportConfirmBtn');
+  btn.disabled = true;
+  var originalLabel = btn.textContent;
+  btn.textContent = 'Importing...';
+  try{
+    var fd = new FormData();
+    fd.append('file', pendingEmployeeImportFile);
+    var result = await apiFetch('/hq/employees/import/confirm', { method: 'POST', body: fd });
+    showToast('Import พนักงานสำเร็จ: ' + (result.processed != null ? result.processed : 0) + ' แถว');
+    closeEmployeeImportDrawer();
+    await loadEmployees();
+  } catch(e){
+    showToast('Import ไม่สำเร็จ: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }
+}
+
+async function loadEmployees(){
+  showBataLoading('กำลังโหลดรายชื่อพนักงาน...');
+  try{
+    var result = await apiFetch('/hq/employees', { method: 'GET' });
+    employees = result.employees || [];
+    populateEmployeeDeptFilter();
+    renderEmployeeList();
+  } catch(e){
+    showToast('โหลดรายชื่อพนักงานไม่สำเร็จ: ' + e.message + ' — เช็คว่ารัน migration_employees.sql แล้วหรือยัง');
+    employees = [];
+    renderEmployeeList();
+  } finally {
+    hideBataLoading();
+  }
+}
+
+function populateEmployeeDeptFilter(){
+  var sel = document.getElementById('empDeptFilter');
+  var currentVal = sel.value || 'all';
+  var depts = [];
+  employees.forEach(function(e){ if(e.department && depts.indexOf(e.department) === -1) depts.push(e.department); });
+  depts.sort();
+  sel.innerHTML = '<option value="all">ทุกแผนก</option>' + depts.map(function(d){ return '<option value="' + d + '">' + d + '</option>'; }).join('');
+  if(depts.indexOf(currentVal) > -1) sel.value = currentVal;
+}
+
+function renderEmployeeList(){
+  var term = (document.getElementById('empSearch').value || '').toLowerCase();
+  var deptF = document.getElementById('empDeptFilter').value;
+  var filtered = employees.filter(function(e){
+    var mDept = deptF === 'all' || e.department === deptF;
+    var mSearch = !term ||
+      (e.employee_id || '').toLowerCase().indexOf(term) > -1 ||
+      (e.full_name || '').toLowerCase().indexOf(term) > -1;
+    return mDept && mSearch;
+  });
+  document.getElementById('empResultCount').textContent =
+    'พบ ' + filtered.length.toLocaleString() + ' คน จากทั้งหมด ' + employees.length.toLocaleString() + ' คน';
+  var tbody = document.getElementById('empRows');
+  if(!filtered.length){
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:30px;">ไม่พบพนักงานที่ตรงกับตัวกรอง (หรือยังไม่เคย import ไฟล์)</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(function(e, i){
+    var isActive = e.is_active !== false;
+    var safeId = String(e.employee_id).replace(/'/g, "\\'");
+    return '<tr>'
+      + '<td>' + (i + 1) + '</td>'
+      + '<td>' + e.employee_id + '</td>'
+      + '<td>' + e.full_name + '</td>'
+      + '<td>' + (e.position || '—') + '</td>'
+      + '<td>' + (e.department || '—') + '</td>'
+      + '<td>' + (isActive ? '<span class="status-pill verified"><span class="sp-dot"></span>Active</span>' : '<span class="status-pill missing"><span class="sp-dot"></span>ปิดใช้งาน</span>') + '</td>'
+      + '<td><button class="row-action" onclick="toggleEmployeeActive(\'' + safeId + '\', ' + isActive + ')">' + (isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน') + '</button></td>'
+    + '</tr>';
+  }).join('');
+}
+
+async function toggleEmployeeActive(employeeId, currentlyActive){
+  try{
+    if(currentlyActive){
+      await apiFetch('/hq/employees/' + encodeURIComponent(employeeId), { method: 'DELETE' });
+      showToast('ปิดใช้งานพนักงาน ' + employeeId + ' แล้ว');
+    } else {
+      await apiFetch('/hq/employees/' + encodeURIComponent(employeeId), { method: 'PATCH', body: JSON.stringify({ is_active: true }) });
+      showToast('เปิดใช้งานพนักงาน ' + employeeId + ' แล้ว');
+    }
+    await loadEmployees();
+  } catch(e){
+    showToast('ทำรายการไม่สำเร็จ: ' + e.message);
+  }
+}
+
 /* Best-effort mapping from our internal status to the scan's `condition` field.
    'good'/'damaged' are confirmed by the scan_logs schema notes from earlier;
    the rest (missing/duplicate/wrong_location/disposed) are our best guess and
@@ -1979,6 +2186,12 @@ function showPage(name){
       renderAssetSummary();
     }
     setTimeout(function(){ document.getElementById('asSearch').focus(); }, 0);
+  } else if(name === 'employees'){
+    document.getElementById('pageEmployees').classList.add('active');
+    document.getElementById('navEmployees').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'พนักงาน';
+    loadEmployees();
+    setTimeout(function(){ document.getElementById('empSearch').focus(); }, 0);
   } else if(name === 'activityLog'){
     document.getElementById('pageActivityLog').classList.add('active');
     document.getElementById('navActivityLog').classList.add('active');
