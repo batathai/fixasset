@@ -78,6 +78,8 @@ class UnmatchedCreate(BaseModel):
     photo_url: Optional[str] = None
     remark: Optional[str] = None
     department_guess: Optional[str] = None  # Office scan — asset ไม่มีใน master auditor กรอกแผนกเอง
+    assigned_employee_id: Optional[str] = None    # Office scan — พนักงานที่ของชิ้นนี้ถูก assign ให้ (แม้ยังไม่ match กับ asset จริง)
+    assigned_employee_name: Optional[str] = None
 
 class SessionCreate(BaseModel):
     branch_id: str
@@ -601,10 +603,12 @@ def create_unmatched(req: UnmatchedCreate, db=Depends(get_db), user=Depends(get_
     cur = db.cursor()
     cur.execute("""
         INSERT INTO unmatched_assets
-            (session_id, scanned_qr, serial_no, name_guess, photo_url, scanned_by, branch_id, department_guess)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id
+            (session_id, scanned_qr, serial_no, name_guess, photo_url, scanned_by, branch_id,
+             department_guess, assigned_employee_id, assigned_employee_name)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id
     """, (req.session_id, req.scanned_qr, req.serial_no, req.name_guess,
-          req.photo_url, user["user_id"], user["branch_id"], req.department_guess))
+          req.photo_url, user["user_id"], user["branch_id"], req.department_guess,
+          req.assigned_employee_id, req.assigned_employee_name))
     uid = cur.fetchone()["id"]
     db.commit()
     return {"unmatched_id": uid}
@@ -980,6 +984,7 @@ def hq_get_unmatched(db=Depends(get_db), user=Depends(get_current_user)):
     cur.execute("""
         SELECT ua.id, ua.scanned_qr, ua.name_guess, ua.serial_no, ua.photo_url,
                ua.scanned_at, ua.status, ua.hq_note, ua.matched_asset_code, ua.department_guess,
+               ua.assigned_employee_id, ua.assigned_employee_name,
                u.email AS auditor, b.id AS branch_id, b.name AS branch_name
         FROM unmatched_assets ua
         LEFT JOIN users u ON u.id = ua.scanned_by
