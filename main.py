@@ -17,7 +17,16 @@ app = FastAPI(title="Bata Asset Audit API", version="1.2.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://batathai.github.io","http://localhost","http://127.0.0.1","https://fixasset.batathai.com"],
+    allow_origins=[
+        "https://batathai.github.io","https://fixasset.batathai.com",
+        "http://localhost","http://127.0.0.1",
+        # เพิ่ม origin สำหรับทดสอบผ่าน local web server บนเครื่อง (เช่น python3 -m http.server)
+        # เดิมมีแค่ "http://localhost" เปล่าๆ (ไม่มี port) ซึ่งเบราว์เซอร์ไม่ถือว่า match กับ
+        # "http://localhost:8000" เพราะ CORS เทียบ origin ต้องตรงกันทั้ง scheme+host+port
+        "http://localhost:8000","http://127.0.0.1:8000",
+        "http://localhost:5500","http://127.0.0.1:5500",  # VSCode Live Server default port
+        "http://localhost:3000","http://127.0.0.1:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
