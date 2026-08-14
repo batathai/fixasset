@@ -747,7 +747,20 @@ function deptOptionsHTML(selected) {
   return html;
 }
 
-// ── LOGIN ────────────────────────────────────────────────────
+// ตรวจว่าแผนกที่เลือกตอนนี้ต่างจากแผนกเดิมใน master ไหม โชว์/ซ่อนคำเตือนให้เห็นทันที
+// ก่อนกดบันทึก (ไม่ต้องรอ backend คำนวณ dept_mismatch ทีหลังถึงจะรู้)
+function checkDeptChange(k, masterDept, selectEl) {
+  const warnEl = document.getElementById('dept-warn-'+k);
+  if (!warnEl) return;
+  const master = (masterDept || '').trim();
+  const chosen = (selectEl.value || '').trim();
+  if (master && chosen && master !== chosen) {
+    warnEl.style.display = 'block';
+    warnEl.textContent = `⚠ ต่างจากแผนกเดิมในระบบ (${master}) — จะบันทึกว่าของถูกย้ายมาแผนก "${chosen}" แล้วแจ้ง HQ`;
+  } else {
+    warnEl.style.display = 'none';
+  }
+}
 // (เดิมมีโหมด "เข้าร่วม Session" ด้วย PIN แยกไว้ — ตัดออกแล้ว
 //  เพราะตอนนี้ backend ทำ find-or-create ด้วย branch_id+audit_date ให้อัตโนมัติ
 //  ทุกคนที่ login เข้าสาขา+วันเดียวกัน จะได้ session_id เดียวกันเองโดยไม่ต้องมี PIN)
@@ -1198,7 +1211,12 @@ function rMatch(k,a){ return `
     ${a.date?`<div class="ir"><span class="il">Purchase date</span><span class="iv">${a.date}</span></div>`:''}
     ${a.serial?`<div class="ir"><span class="il">Serial no.</span><span class="iv">${a.serial}</span></div>`:''}
     <div class="dv"></div>
-    <div class="fg"><div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div><select class="fi" id="dp-${k}" onchange="loadEmployeesForDept('${k}',this.value,'emp-${k}')">${deptOptionsHTML(a.dept)}</select></div>
+    <div class="fg">
+      <div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div>
+      ${a.dept ? `<div style="font-size:11px;color:var(--gray3);">แผนกเดิมในระบบ: <b style="color:var(--gray2);">${a.dept}</b></div>` : ''}
+      <select class="fi" id="dp-${k}" onchange="loadEmployeesForDept('${k}',this.value,'emp-${k}');checkDeptChange('${k}','${(a.dept||'').replace(/'/g,"\\'")}',this)">${deptOptionsHTML(a.dept)}</select>
+      <div id="dept-warn-${k}" style="display:none;font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:6px;padding:6px 8px;"></div>
+    </div>
     <div class="fg"><div class="fl">มอบหมายให้พนักงาน (เลือกแผนกก่อน)</div><select class="fi" id="emp-${k}" disabled><option value="">— เลือกแผนกก่อน —</option></select></div>
     <div class="fg">
       <div class="fl">Photo (optional)</div>
@@ -1226,7 +1244,12 @@ function rSerial(k,a){ return `
     <div class="ir"><span class="il">Serial (master)</span><span class="iv ac">${a.serial||'—'}</span></div>
     <div class="dv"></div>
     <div class="fg"><div class="fl">Serial no. on device</div><input class="fi" id="sr-${k}" placeholder="${a.serial||'Enter serial no.'}"/></div>
-    <div class="fg"><div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div><select class="fi" id="dp-${k}" onchange="loadEmployeesForDept('${k}',this.value,'emp-${k}')">${deptOptionsHTML(a.dept)}</select></div>
+    <div class="fg">
+      <div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div>
+      ${a.dept ? `<div style="font-size:11px;color:var(--gray3);">แผนกเดิมในระบบ: <b style="color:var(--gray2);">${a.dept}</b></div>` : ''}
+      <select class="fi" id="dp-${k}" onchange="loadEmployeesForDept('${k}',this.value,'emp-${k}');checkDeptChange('${k}','${(a.dept||'').replace(/'/g,"\\'")}',this)">${deptOptionsHTML(a.dept)}</select>
+      <div id="dept-warn-${k}" style="display:none;font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:6px;padding:6px 8px;"></div>
+    </div>
     <div class="fg"><div class="fl">มอบหมายให้พนักงาน (เลือกแผนกก่อน)</div><select class="fi" id="emp-${k}" disabled><option value="">— เลือกแผนกก่อน —</option></select></div>
     <div class="fg">
       <div class="fl">Photo (ถ่ายรูป Serial Label)</div>
