@@ -1213,7 +1213,7 @@ function rMatch(k,a){ return `
     <div class="dv"></div>
     <div class="fg">
       <div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div>
-      ${a.dept ? `<div style="font-size:11px;color:var(--gray3);">แผนกเดิมในระบบ: <b style="color:var(--gray2);">${a.dept}</b></div>` : ''}
+      ${a.dept ? `<div style="font-size:11px;color:var(--gray3);">แผนกเดิมในระบบ: <b style="color:var(--gray2);">${a.dept}</b></div>` : `<div style="font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:6px;padding:4px 8px;">⚠ ไม่มีข้อมูลแผนกในระบบ — กรุณาเลือกเอง</div>`}
       <select class="fi" id="dp-${k}" onchange="loadEmployeesForDept('${k}',this.value,'emp-${k}');checkDeptChange('${k}','${(a.dept||'').replace(/'/g,"\\'")}',this)">${deptOptionsHTML(a.dept)}</select>
       <div id="dept-warn-${k}" style="display:none;font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:6px;padding:6px 8px;"></div>
     </div>
@@ -1246,7 +1246,7 @@ function rSerial(k,a){ return `
     <div class="fg"><div class="fl">Serial no. on device</div><input class="fi" id="sr-${k}" placeholder="${a.serial||'Enter serial no.'}"/></div>
     <div class="fg">
       <div class="fl">แผนก (เลือกจากรายชื่อ — แก้ไขได้ถ้าของถูกย้ายจริง)</div>
-      ${a.dept ? `<div style="font-size:11px;color:var(--gray3);">แผนกเดิมในระบบ: <b style="color:var(--gray2);">${a.dept}</b></div>` : ''}
+      ${a.dept ? `<div style="font-size:11px;color:var(--gray3);">แผนกเดิมในระบบ: <b style="color:var(--gray2);">${a.dept}</b></div>` : `<div style="font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:6px;padding:4px 8px;">⚠ ไม่มีข้อมูลแผนกในระบบ — กรุณาเลือกเอง</div>`}
       <select class="fi" id="dp-${k}" onchange="loadEmployeesForDept('${k}',this.value,'emp-${k}');checkDeptChange('${k}','${(a.dept||'').replace(/'/g,"\\'")}',this)">${deptOptionsHTML(a.dept)}</select>
       <div id="dept-warn-${k}" style="display:none;font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid var(--amber-bd);border-radius:6px;padding:6px 8px;"></div>
     </div>
