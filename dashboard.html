@@ -210,6 +210,10 @@
   .asset-table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);}
   .asset-head{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;}
   .asset-row{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;}
+  /* Office/IT Hold view — เพิ่มคอลัมน์ แผนก + พนักงาน หลัง Location */
+  .asset-table.office-view .asset-head,
+  .asset-table.office-view .asset-row{grid-template-columns:52px 1.1fr .8fr .7fr .8fr .9fr 50px .8fr 80px 120px;}
+  .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 7px;margin-left:5px;white-space:nowrap;}
   .asset-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;display:block;background:var(--surface-2);}
   .asset-thumb-placeholder{width:40px;height:40px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-4);}
   .asset-row:last-child{border-bottom:none;}
@@ -451,8 +455,8 @@
 
         <div class="filter-chips" id="filterChips" style="margin-bottom:14px;"></div>
 
-        <div class="asset-table">
-          <div class="asset-head"><span>Photo</span><span>Asset</span><span>Serial</span><span>Location</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span></div>
+        <div class="asset-table" id="assetTableWrap">
+          <div class="asset-head" id="assetHead"><span>Photo</span><span>Asset</span><span>Serial</span><span>Location</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span></div>
           <div id="assetRows"></div>
         </div>
 
@@ -774,6 +778,9 @@ var stores = [
 
 var assetsByStore = {};
 var sessionsByBranch = {}; // branch_id(location_code) -> [audit_sessions...] sorted oldest-first, ใช้คำนวณ "รอบที่ N"
+// Office (0099999) + IT Hold (0099993) เป็น location เดียวกันในของจริงที่มีข้อมูลแผนก/พนักงานผู้ถือครอง
+// (ตาม office.html) — ใช้เช็คว่าควรโชว์คอลัมน์ "แผนก"/"พนักงาน" เพิ่มในตาราง Overview หรือไม่
+var OFFICE_VIEW_CODES = ['0099999', '0099993'];
 function seedAssets(store, storeIndex){
   var names = ["Printer","Laptop","Chair","Monitor","Desk","Air conditioner","Shelving unit","CCTV camera","POS terminal","Router","Whiteboard","Filing cabinet"];
   var locations = ["Office","Meeting room","Stockroom","Floor 1","Floor 2","Reception"];
@@ -1223,6 +1230,14 @@ function buildStoresFromRealAssets(list, scansByQrKey){
     if(wasScanned){
       status = matchingScan ? statusFromScan(matchingScan) : 'verified';
     }
+    // แผนก: ใช้ค่าที่ auditor ยืนยันตอนสแกน (scanned_department) ถ้ามี ไม่งั้น fallback ไปแผนกจาก
+    // master data (a.department) — asset ที่ยังไม่สแกนเลยจะเห็นได้แค่แผนกจาก master เท่านั้น
+    // ส่วนพนักงานผู้ถือครอง (assigned_employee_name) มีได้ก็ต่อเมื่อถูกสแกนแล้วเท่านั้น เพราะเป็นข้อมูล
+    // ที่ auditor เลือกตอนสแกนจริง ไม่มีทางรู้ล่วงหน้าว่าใครถือของที่ยังไม่ถูกตรวจ
+    var masterDept = a.department || '';
+    var scannedDept = matchingScan ? (matchingScan.scanned_department || '') : '';
+    var department = scannedDept || masterDept || '—';
+    var deptMismatch = !!(matchingScan && matchingScan.dept_mismatch);
     grouped[code].items.push({
       name: a.name || a.asset_name || ('Asset ' + baseCode),
       seq: seqNum ? ('SEQ' + seqNum) : (a.qr_key || '—'),
@@ -1238,6 +1253,10 @@ function buildStoresFromRealAssets(list, scansByQrKey){
       qrKey: qrKey,
       qty: (a.qty != null ? a.qty : (a.quantity != null ? a.quantity : 1)),
       serial: a.serial_no || a.serial || '',
+      department: department,
+      masterDept: masterDept,
+      deptMismatch: deptMismatch,
+      employeeName: matchingScan ? (matchingScan.assigned_employee_name || '—') : '—',
       history: []
     });
   });
@@ -1599,6 +1618,11 @@ function setAssetFilter(key){
 function renderAssetList(){
   var term = (document.getElementById('assetSearch').value || '').toLowerCase();
   var exceptionStatuses = ['missing','damaged','unmatched'];
+  var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
+  document.getElementById('assetTableWrap').classList.toggle('office-view', isOfficeView);
+  document.getElementById('assetHead').innerHTML = isOfficeView
+    ? '<span>Photo</span><span>Asset</span><span>Serial</span><span>Location</span><span>Department</span><span>Employee</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span>'
+    : '<span>Photo</span><span>Asset</span><span>Serial</span><span>Location</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span>';
   var list = assetsByStore[currentStore].filter(function(a, idx){
     var matchesFilter = currentAssetFilter === 'all' ? true :
       currentAssetFilter === 'exceptions' ? exceptionStatuses.indexOf(a.status) > -1 :
@@ -1607,7 +1631,9 @@ function renderAssetList(){
       a.name.toLowerCase().indexOf(term) > -1 ||
       a.barcode.toLowerCase().indexOf(term) > -1 ||
       (a.seq || '').toLowerCase().indexOf(term) > -1 ||
-      a.location.toLowerCase().indexOf(term) > -1;
+      a.location.toLowerCase().indexOf(term) > -1 ||
+      (isOfficeView && a.department.toLowerCase().indexOf(term) > -1) ||
+      (isOfficeView && a.employeeName.toLowerCase().indexOf(term) > -1);
     return matchesFilter && matchesSearch;
   });
   lastOverviewExportList = list;
@@ -1635,6 +1661,8 @@ function renderAssetList(){
       + '<div class="asset-name">' + a.barcode + '<span style="display:block;font-size:11px;color:var(--ink-3);font-weight:400;">' + a.name + '</span></div>'
       + '<div style="font-family:monospace;font-size:12px;color:var(--ink-2);">' + (a.serial || '—') + '</div>'
       + '<div>' + a.location + '</div>'
+      + (isOfficeView ? ('<div>' + a.department + (a.deptMismatch ? ('<span class="dept-warn-badge" title="แผนกที่สแกนต่างจาก master (' + a.masterDept + ')">⚠ ย้ายแผนก</span>') : '') + '</div>'
+        + '<div style="font-size:12.5px;color:var(--ink-2);">' + a.employeeName + '</div>') : '')
       + '<div style="text-align:center;">' + (a.qty != null ? a.qty : 1) + '</div>'
       + '<div>' + statusPillHtml(a.status) + '</div>'
       + '<div class="row-time">' + formatDateShort(a.lastScan) + '</div>'
