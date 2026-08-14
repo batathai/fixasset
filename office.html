@@ -714,6 +714,10 @@ const VOICE = {
 // Office Scan — ยึด location เดียว (ไม่มีให้เลือกสาขาเหมือน index.html)
 // รหัส/ชื่อนี้ต้อง match กับ location_code/location_name ที่ import เข้า asset master จริง
 const OFFICE_CODE = '0099999';
+// IT Hold (0099993) เป็น location แยกในระบบบัญชี แต่ของจริงเก็บปนอยู่ในพื้นที่ office เดียวกัน —
+// พนักงานสแกนของจาก location นี้แล้วหาไม่เจอ เพราะ endpoint เดิมกรองแค่ OFFICE_CODE เท่านั้น
+// เพิ่ม location code ที่ 2 นี้ให้ office.html โหลดมารวมด้วย โดยยิง endpoint เดิมซ้ำ (ไม่แก้ backend เลย)
+const OFFICE_EXTRA_LOCATION_CODES = ['0099993'];
 const OFFICE_NAME = 'Office';
 
 // Master List แผนกของ Office — fix รายชื่อตายตัวตาม org structure จริง (จากไฟล์ HR)
@@ -1131,9 +1135,14 @@ function searchBySerial() {
   const area = document.getElementById('ra');
   if (!term) { toast('กรุณากรอก Serial No. ที่จะค้นหา'); return; }
 
-  const matches = [...assetCache.values()].filter(a =>
-    a.serial_no && a.serial_no.toUpperCase().includes(term)
-  );
+  // ค้นแบบ "ตรงกันสองทาง" — บางเครื่อง (เจอบ่อยกับ Lenovo) serial ใน master กับบนตัวเครื่องจริง
+  // ขาด/เกินตัวอักษรนำหน้าไม่ตรงกัน (เช่น master เก็บ "SPF4NDYLL" แต่ป้ายจริงอ่านได้แค่ "PF4NDYLL")
+  // เช็คทั้ง master.includes(term) และ term.includes(master) เพื่อจับได้ทั้งสองทิศทาง
+  const matches = [...assetCache.values()].filter(a => {
+    if (!a.serial_no) return false;
+    const master = a.serial_no.toUpperCase();
+    return master.includes(term) || term.includes(master);
+  });
 
   if (matches.length === 0) {
     area.style.display = 'block';
@@ -1702,11 +1711,22 @@ async function loadChecklist(branchId) {
   document.getElementById('cl-branch-label').textContent = branchId;
   document.getElementById('cl-remain').textContent = 'Loading...';
   try {
-    const res = await fetch(API+'/assets/branch/'+branchId, {headers:{'Authorization':'Bearer '+S.token}});
-    const data = await res.json();
-    CHECKLIST = (data.assets||[]).map(a=>({qr_key:a.qr_key,name:a.name,serial:a.serial_no,status:'pending'}));
+    const allLocationCodes = [branchId, ...OFFICE_EXTRA_LOCATION_CODES];
+    const results = await Promise.all(
+      allLocationCodes.map(code =>
+        fetch(API+'/assets/branch/'+code, {headers:{'Authorization':'Bearer '+S.token}})
+          .then(res => res.json())
+          .catch(() => ({assets:[]})) // location เดียวโหลดพังไม่ควรทำให้ location อื่นพังตาม
+      )
+    );
+    // รวม asset จากทุก location เข้าด้วยกัน กัน qr_key ซ้ำ (เผื่อ location ไหนคืนของซ้ำกันมาโดยบังเอิญ)
+    const mergedByQrKey = new Map();
+    results.forEach(data => (data.assets || []).forEach(a => mergedByQrKey.set(a.qr_key, a)));
+    const allAssets = [...mergedByQrKey.values()];
+
+    CHECKLIST = allAssets.map(a=>({qr_key:a.qr_key,name:a.name,serial:a.serial_no,status:'pending'}));
     S.total = CHECKLIST.length;
-    buildCache(data.assets||[]);
+    buildCache(allAssets);
   } catch(e) { CHECKLIST=[]; S.total=0; }
   updateChecklist();
 }
