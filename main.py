@@ -999,17 +999,26 @@ def hq_get_all_assets(db=Depends(get_db), user=Depends(get_current_user)):
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     cur = db.cursor()
+    # DISTINCT ON (a.id) ที่นี่สำคัญมาก: scan_logs มี unique constraint แค่ (session_id, asset_id)
+    # ไม่ใช่ (asset_id) เดี่ยวๆ ดังนั้น asset ที่ถูกตรวจนับซ้ำหลายรอบ (audit session คนละวัน) จะมี
+    # scan_logs หลายแถว ถ้า JOIN ตรงๆ แบบเดิมจะได้ asset แถวเดียวกันซ้ำ 1 ครั้งต่อ 1 scan_log
+    # (เจอจริงใน production 2026-08-17 — ของที่สแกนคนละวันโผล่ซ้ำในหน้า Overview) ใช้ DISTINCT ON
+    # เลือกมาแค่ scan ล่าสุด (scanned_at DESC) ต่อ asset 1 ชิ้น ให้เหลือ 1 แถวต่อ asset เสมอ
     cur.execute("""
-        SELECT a.id, a.qr_key, a.asset_code, a.seq, a.name, a.serial_no,
-               a.location_code, a.department, a.purchase_date, a.status, a.qty,
-               CASE WHEN sl.id IS NOT NULL THEN true ELSE false END AS is_scanned,
-               sl.scanned_at, u.email AS scanned_by, s.branch_id
-        FROM assets a
-        LEFT JOIN scan_logs sl ON sl.asset_id = a.id
-        LEFT JOIN users u ON u.id = sl.scanned_by
-        LEFT JOIN audit_sessions s ON s.id = sl.session_id
-        WHERE a.status = 'active' AND COALESCE(a.is_active, true) = true
-        ORDER BY a.location_code, a.asset_code, a.seq
+        SELECT * FROM (
+            SELECT DISTINCT ON (a.id)
+                   a.id, a.qr_key, a.asset_code, a.seq, a.name, a.serial_no,
+                   a.location_code, a.department, a.purchase_date, a.status, a.qty,
+                   CASE WHEN sl.id IS NOT NULL THEN true ELSE false END AS is_scanned,
+                   sl.scanned_at, u.email AS scanned_by, s.branch_id
+            FROM assets a
+            LEFT JOIN scan_logs sl ON sl.asset_id = a.id
+            LEFT JOIN users u ON u.id = sl.scanned_by
+            LEFT JOIN audit_sessions s ON s.id = sl.session_id
+            WHERE a.status = 'active' AND COALESCE(a.is_active, true) = true
+            ORDER BY a.id, sl.scanned_at DESC NULLS LAST
+        ) t
+        ORDER BY t.location_code, t.asset_code, t.seq
     """)
     assets = [dict(r) for r in cur.fetchall()]
     total   = len(assets)
