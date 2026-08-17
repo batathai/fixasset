@@ -906,22 +906,33 @@ function currentAssetSummaryBranchLabel(){
 }
 
 var OVERVIEW_EXPORT_HEADERS = ['Asset Code', 'Asset Name', 'Serial No.', 'Location', 'Qty', 'Status', 'Last Scan'];
+var OVERVIEW_EXPORT_HEADERS_OFFICE = ['Asset Code', 'Asset Name', 'Serial No.', 'Location', 'Department', 'Employee', 'Qty', 'Status', 'Last Scan'];
+function overviewExportHeaders(){
+  var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
+  return isOfficeView ? OVERVIEW_EXPORT_HEADERS_OFFICE : OVERVIEW_EXPORT_HEADERS;
+}
 function overviewExportRows(){
+  var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
   return lastOverviewExportList.map(function(a){
-    return [a.barcode, a.name, (a.serial || ''), a.location, (a.qty != null ? a.qty : 1), a.status, formatDateShort(a.lastScan)];
+    var row = [a.barcode, a.name, (a.serial || ''), a.location];
+    if(isOfficeView) row.push(a.department + (a.deptMismatch ? ' (ย้ายแผนก)' : ''), a.employeeName);
+    row.push((a.qty != null ? a.qty : 1), a.status, formatDateShort(a.lastScan));
+    return row;
   });
 }
 function exportOverviewCSV(){
   closeAllExportMenus();
   var rows = overviewExportRows();
+  var headers = overviewExportHeaders();
   var branchLabel = currentOverviewBranchLabel();
   var meta = buildMetaCSVBlock('Bata Fixed Asset Audit - Overview Report', branchLabel, rows.length);
-  downloadFile('overview-' + currentStore + '-' + todayStamp() + '.csv', meta + toCSV(OVERVIEW_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
+  downloadFile('overview-' + currentStore + '-' + todayStamp() + '.csv', meta + toCSV(headers, rows), 'text/csv;charset=utf-8;');
   showToast('Export CSV สำเร็จ (' + rows.length + ' รายการ)');
 }
 async function exportOverviewExcel(){
   closeAllExportMenus();
   var rows = overviewExportRows();
+  var headers = overviewExportHeaders();
   var branchLabel = currentOverviewBranchLabel();
   showToast('กำลังสร้างไฟล์ Excel...');
   try{
@@ -930,7 +941,7 @@ async function exportOverviewExcel(){
       body: JSON.stringify({
         title: 'Overview Report',
         branch_label: branchLabel,
-        headers: OVERVIEW_EXPORT_HEADERS,
+        headers: headers,
         rows: rows,
         filename: 'overview-' + currentStore + '-' + todayStamp() + '.xlsx'
       })
