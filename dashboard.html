@@ -214,6 +214,8 @@
   .asset-table.office-view .asset-head,
   .asset-table.office-view .asset-row{grid-template-columns:52px 1.1fr .8fr .7fr .8fr .9fr 50px .8fr 80px 120px;}
   .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 7px;margin-left:5px;white-space:nowrap;}
+  .sortable-col{cursor:pointer;user-select:none;}
+  .sortable-col:hover{color:var(--ink);}
   .asset-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;display:block;background:var(--surface-2);}
   .asset-thumb-placeholder{width:40px;height:40px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-4);}
   .asset-row:last-child{border-bottom:none;}
@@ -1466,6 +1468,58 @@ var currentAssetFilter = 'all';
 var editingAssetIndex = -1;
 var isAddMode = false;
 
+// ── OVERVIEW TABLE — CLICK-TO-SORT COLUMNS ──────────────────────────
+var overviewSortKey = null;   // null = default order (location_code, asset_code, seq จาก backend)
+var overviewSortDir = 'asc';
+var OVERVIEW_SORT_COLUMNS = [
+  ['photo', 'Photo'], ['asset', 'Asset'], ['serial', 'Serial'], ['location', 'Location'],
+  ['department', 'Department'], ['employee', 'Employee'],
+  ['qty', 'Qty'], ['status', 'Status'], ['lastscan', 'Last scan']
+];
+function setOverviewSort(key){
+  if(overviewSortKey === key){
+    overviewSortDir = overviewSortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    overviewSortKey = key;
+    overviewSortDir = 'asc';
+  }
+  renderAssetList();
+}
+function overviewSortValue(a, key){
+  switch(key){
+    case 'photo': return a.photo ? 1 : 0;
+    case 'asset': return (a.name || '').toLowerCase();
+    case 'serial': return (a.serial || '').toLowerCase();
+    case 'location': return (a.location || '').toLowerCase();
+    case 'department': return (a.department || '').toLowerCase();
+    case 'employee': return (a.employeeName || '').toLowerCase();
+    case 'qty': return (a.qty != null ? a.qty : 0);
+    case 'status': return (a.status || '').toLowerCase();
+    case 'lastscan': return (a.lastScan && a.lastScan !== '-') ? new Date(a.lastScan).getTime() : null;
+    default: return null;
+  }
+}
+// รายการที่ไม่มีค่า (เช่นยังไม่สแกนเลยไม่มี Last scan, ไม่มี Serial) จะอยู่ท้ายสุดเสมอไม่ว่าจะ
+// เรียง asc หรือ desc — กันไม่ให้แถวว่างๆ กระโดดขึ้นบนสุดตอนกด desc ซึ่งจะดูสับสน
+function applyOverviewSort(list){
+  if(!overviewSortKey) return list;
+  var key = overviewSortKey, dir = overviewSortDir === 'desc' ? -1 : 1;
+  return list.slice().sort(function(a, b){
+    var va = overviewSortValue(a, key), vb = overviewSortValue(b, key);
+    // '—' คือ placeholder "ไม่มีข้อมูล" ของคอลัมน์ Department/Employee (ดู buildStoresFromRealAssets)
+    // ไม่ใช่ string ว่างจริงๆ ต้องนับเป็น "ไม่มีค่า" ด้วย ไม่งั้นตอนกด desc จะโดดขึ้นบนสุดเพราะ
+    // โค้ด em dash (U+2014) มีค่าตัวอักษรสูงกว่า a-z ทุกตัว
+    var aEmpty = (va === null || va === '' || va === undefined || va === '—');
+    var bEmpty = (vb === null || vb === '' || vb === undefined || vb === '—');
+    if(aEmpty && bEmpty) return 0;
+    if(aEmpty) return 1;
+    if(bEmpty) return -1;
+    if(va < vb) return -1 * dir;
+    if(va > vb) return 1 * dir;
+    return 0;
+  });
+}
+
 var statusMeta = {
   completed:{label:"Completed 30", bar:"#1B7A3C"},
   progress:{label:"In progress", bar:"#E8A317"},
@@ -1631,9 +1685,13 @@ function renderAssetList(){
   var exceptionStatuses = ['missing','damaged','unmatched'];
   var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
   document.getElementById('assetTableWrap').classList.toggle('office-view', isOfficeView);
-  document.getElementById('assetHead').innerHTML = isOfficeView
-    ? '<span>Photo</span><span>Asset</span><span>Serial</span><span>Location</span><span>Department</span><span>Employee</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span>'
-    : '<span>Photo</span><span>Asset</span><span>Serial</span><span>Location</span><span>Qty</span><span>Status</span><span>Last scan</span><span></span>';
+  document.getElementById('assetHead').innerHTML = OVERVIEW_SORT_COLUMNS
+    .filter(function(c){ return isOfficeView || (c[0] !== 'department' && c[0] !== 'employee'); })
+    .map(function(c){
+      var key = c[0], label = c[1];
+      var arrow = overviewSortKey === key ? (overviewSortDir === 'asc' ? ' ▲' : ' ▼') : '';
+      return '<span class="sortable-col" onclick="setOverviewSort(\'' + key + '\')" title="เรียงตาม ' + label + '">' + label + arrow + '</span>';
+    }).join('') + '<span></span>';
   var list = assetsByStore[currentStore].filter(function(a, idx){
     var matchesFilter = currentAssetFilter === 'all' ? true :
       currentAssetFilter === 'exceptions' ? exceptionStatuses.indexOf(a.status) > -1 :
@@ -1647,6 +1705,7 @@ function renderAssetList(){
       (isOfficeView && a.employeeName.toLowerCase().indexOf(term) > -1);
     return matchesFilter && matchesSearch;
   });
+  list = applyOverviewSort(list);
   lastOverviewExportList = list;
   var s = stores.filter(function(x){ return x.name === currentStore; })[0];
   var branchLabel = s ? ((s.displayName || s.name) + ' (' + s.name + ')') : currentStore;
