@@ -1845,6 +1845,11 @@ function handlePhoto(input){
 function showDrawer(){
   document.getElementById('overlay').classList.add('show');
   document.getElementById('drawer').classList.add('show');
+  // saveDrawer() ทิ้ง drawerSaveBtn ไว้เป็น disabled + "Saving..." หลัง save สำเร็จ (reset แค่ตอน
+  // error) ถ้าไม่ reset ตรงนี้ตอนเปิด drawer รอบใหม่ ปุ่ม Save จะกดไม่ติดอีกเลยหลังบันทึกสำเร็จครั้งแรก
+  var saveBtn = document.getElementById('drawerSaveBtn');
+  saveBtn.disabled = false;
+  saveBtn.textContent = 'Save';
 }
 function closeDrawer(){
   document.getElementById('overlay').classList.remove('show');
