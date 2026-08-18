@@ -655,6 +655,11 @@
       <p class="field-label">Location</p>
       <input class="field-input" id="fLocation" placeholder="e.g. Office, Floor 1">
     </div>
+    <div class="field-group" id="departmentGroup" style="display:none;">
+      <p class="field-label">Department</p>
+      <select class="field-select" id="fDepartment" onchange="checkDrawerDeptMismatch()"></select>
+      <p id="fDepartmentWarn" style="display:none;font-size:11.5px;color:var(--amber-fg);margin:6px 0 0;"></p>
+    </div>
     <div class="field-group">
       <p class="field-label">Status</p>
       <select class="field-select" id="fStatus" onchange="toggleWriteOffReason()">
@@ -783,6 +788,22 @@ var sessionsByBranch = {}; // branch_id(location_code) -> [audit_sessions...] so
 // Office (0099999) + IT Hold (0099993) เป็น location เดียวกันในของจริงที่มีข้อมูลแผนก/พนักงานผู้ถือครอง
 // (ตาม office.html) — ใช้เช็คว่าควรโชว์คอลัมน์ "แผนก"/"พนักงาน" เพิ่มในตาราง Overview หรือไม่
 var OFFICE_VIEW_CODES = ['0099999', '0099993'];
+// รายชื่อแผนกตายตัว 11 แผนก — ต้อง sync มือกับ OFFICE_DEPARTMENTS ใน office.html เสมอ (ดู CLAUDE.md
+// ข้อ 5.13) ถ้าจะเพิ่ม/ลบแผนกต้องแก้ทั้ง 2 ไฟล์ เพราะไฟล์นี้ไม่แชร์โค้ดกับ office.html
+var OFFICE_DEPARTMENTS = [
+  'E-Commerce', 'Finance', 'Human Resources', 'Internal Audit', 'IT',
+  'Management', 'Marketing', 'Merchandising', 'Procurement', 'Retail', 'Warehouse'
+];
+function officeDeptOptionsHTML(selected){
+  var sel = (selected || '').trim();
+  var hasExtra = sel && OFFICE_DEPARTMENTS.indexOf(sel) === -1;
+  var html = '<option value="">— ไม่มีแผนก —</option>';
+  if(hasExtra) html += '<option value="' + sel.replace(/"/g,'&quot;') + '" selected>' + sel + ' (ค่าเดิม)</option>';
+  html += OFFICE_DEPARTMENTS.map(function(d){
+    return '<option value="' + d + '"' + (d === sel ? ' selected' : '') + '>' + d + '</option>';
+  }).join('');
+  return html;
+}
 function seedAssets(store, storeIndex){
   var names = ["Printer","Laptop","Chair","Monitor","Desk","Air conditioner","Shelving unit","CCTV camera","POS terminal","Router","Whiteboard","Filing cabinet"];
   var locations = ["Office","Meeting room","Stockroom","Floor 1","Floor 2","Reception"];
@@ -1756,6 +1777,12 @@ function openAssetDrawer(idx){
   document.getElementById('fBarcode').value = a.barcode;
   document.getElementById('fCategory').value = a.category;
   document.getElementById('fLocation').value = a.location;
+  var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
+  document.getElementById('departmentGroup').style.display = isOfficeView ? 'block' : 'none';
+  if(isOfficeView){
+    document.getElementById('fDepartment').innerHTML = officeDeptOptionsHTML(a.department === '—' ? '' : a.department);
+    checkDrawerDeptMismatch();
+  }
   document.getElementById('fStatus').value = a.status === 'unmatched' ? 'duplicate' : a.status;
   document.getElementById('fWriteOffReason').value = '';
   toggleWriteOffReason();
@@ -1776,6 +1803,7 @@ function openAddDrawer(){
   document.getElementById('fBarcode').value = '';
   document.getElementById('fCategory').value = '';
   document.getElementById('fLocation').value = '';
+  document.getElementById('departmentGroup').style.display = 'none';
   document.getElementById('fStatus').value = 'pending';
   document.getElementById('fWriteOffReason').value = '';
   toggleWriteOffReason();
@@ -1783,6 +1811,22 @@ function openAddDrawer(){
   document.getElementById('photoBox').innerHTML = photoPlaceholder();
   document.getElementById('historyGroup').style.display = 'none';
   showDrawer();
+}
+
+// เตือนตอน HQ เปลี่ยนแผนกในหน้า Edit ให้ต่างจากแผนกเดิมใน master — เหมือน checkDeptChange
+// ใน office.html ให้เห็นทันทีก่อนกด Save ไม่ต้องรอ backend คำนวณ dept_mismatch ทีหลัง
+function checkDrawerDeptMismatch(){
+  var a = assetsByStore[currentStore][editingAssetIndex];
+  var warnEl = document.getElementById('fDepartmentWarn');
+  if(!a || !warnEl) return;
+  var master = (a.masterDept || '').trim();
+  var chosen = (document.getElementById('fDepartment').value || '').trim();
+  if(master && chosen && master !== chosen){
+    warnEl.style.display = 'block';
+    warnEl.textContent = '⚠ ต่างจากแผนกเดิมใน master (' + master + ') — จะบันทึกว่าย้ายแผนกแล้ว';
+  } else {
+    warnEl.style.display = 'none';
+  }
 }
 
 function photoPlaceholder(){
@@ -2220,10 +2264,19 @@ async function saveDrawer(){
     fullRemark = 'Write off — เหตุผล: ' + (reasonLabels[reasonVal] || reasonVal) + (remark ? (' — ' + remark) : '');
   }
 
+  var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
+  var patchBody = { condition: statusToCondition(status), remark: fullRemark };
+  if(isOfficeView){
+    var department = document.getElementById('fDepartment').value;
+    var masterDept = (a.masterDept || '').trim();
+    patchBody.scanned_department = department;
+    patchBody.dept_mismatch = !!(masterDept && department && masterDept !== department);
+  }
+
   try{
     await apiFetch('/hq/scans/' + a.scanId, {
       method: 'PATCH',
-      body: JSON.stringify({ condition: statusToCondition(status), remark: fullRemark })
+      body: JSON.stringify(patchBody)
     });
     // Trust the server, not our own optimism — reload real data so the drawer
     // and every list reflect what's actually saved.
