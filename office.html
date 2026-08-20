@@ -1282,7 +1282,7 @@ function rUnmatch(k){ return `
     <div class="fg"><div class="fl">แผนกที่พบของชิ้นนี้ (เลือกจากรายชื่อ)</div><select class="fi" id="dg-${k}" onchange="loadEmployeesForDept('${k}',this.value,'empg-${k}')">${deptOptionsHTML('')}</select></div>
     <div class="fg"><div class="fl">มอบหมายให้พนักงาน (เลือกแผนกก่อน)</div><select class="fi" id="empg-${k}" disabled><option value="">— เลือกแผนกก่อน —</option></select></div>
     <div class="fg">
-      <div class="ph-area"><input type="file" accept="image/*" capture="environment" onchange="prevPhoto(this,'${k}')"><img id="pv-${k}" class="ph-prev"><div id="pp-${k}"><div class="ph-ico">📷</div><div class="ph-txt">Tap to take photo</div></div></div>
+      <div class="ph-area"><input type="file" id="up-${k}" accept="image/*" capture="environment" onchange="prevPhoto(this,'${k}')"><img id="pv-${k}" class="ph-prev"><div id="pp-${k}"><div class="ph-ico">📷</div><div class="ph-txt">Tap to take photo</div></div></div>
     </div>
     <div class="fg"><div class="fl">Remark</div><input class="fi" id="ur-${k}" placeholder="Notes for HQ..."/></div>
     <div class="br">
@@ -1403,8 +1403,25 @@ async function doUnmatch(k) {
   const dept = document.getElementById('dg-'+k)?.value||'';
   const empId = document.getElementById('empg-'+k)?.value||'';
   const empName = (employeeCacheByCard[k] && employeeCacheByCard[k][empId]) || '';
-  commit(k,n,'unmatched',{serial_no:s,remark:r,scanned_department:dept,assigned_employee_id:empId,assigned_employee_name:empName});
-  await saveUnmatched(k,{serial_no:s,name:n,remark:r,department_guess:dept,assigned_employee_id:empId,assigned_employee_name:empName});
+  // FIX: เดิมช่องถ่ายรูปในการ์ดนี้ preview บนจอเฉยๆ ไม่เคยอัปโหลดขึ้น Cloudinary หรือส่ง photo_url
+  // ไปที่ backend เลย ต่างจากการ์ด matched/serial-check ที่อัปโหลดจริง — รูปที่ auditor ถ่ายไว้
+  // หายไปเงียบๆ ทุกครั้ง (เจอจริงจากรายงานผู้ใช้ 2026-08-20)
+  const fileInp = document.getElementById('up-'+k);
+  const file = fileInp?.files[0] || null;
+  let photoUrl = null;
+  if (file) {
+    showUploadOverlay(true);
+    speak(VOICE.uploading);   // 🔊 "กำลังอัปโหลดรูปภาพ กรุณารอสักครู่"
+    try {
+      photoUrl = await uploadToCloudinary(file, S.branch||'unknown');
+    } catch(e) {
+      toast('⚠ Upload รูปล้มเหลว — บันทึกโดยไม่มีรูป');
+    } finally {
+      showUploadOverlay(false);
+    }
+  }
+  commit(k,n,'unmatched',{serial_no:s,remark:r,photo_url:photoUrl,scanned_department:dept,assigned_employee_id:empId,assigned_employee_name:empName});
+  await saveUnmatched(k,{serial_no:s,name:n,remark:r,photo_url:photoUrl,department_guess:dept,assigned_employee_id:empId,assigned_employee_name:empName});
   speak(VOICE.notFound);    // 🔊 "ไม่พบข้อมูลในระบบ"
   toast('Sent to HQ for review');
   hideR();
@@ -1691,6 +1708,7 @@ async function saveUnmatched(qrKey, extra={}) {
   if (!S.sid||!S.token) { toast('⚠️ ยังไม่ได้เชื่อมต่อ session — รายการนี้จะไม่ถูกบันทึก'); return; }
   await reliableSend(API+'/unmatched', {session_id:S.sid, scanned_qr:qrKey,
     serial_no:extra.serial_no||null, name_guess:extra.name||null, remark:extra.remark||null,
+    photo_url:extra.photo_url||null,
     department_guess:extra.department_guess||null,
     assigned_employee_id:extra.assigned_employee_id||null,
     assigned_employee_name:extra.assigned_employee_name||null});

@@ -601,13 +601,17 @@ def get_scans(session_id: int, db=Depends(get_db), user=Depends(get_current_user
 @app.post("/unmatched")
 def create_unmatched(req: UnmatchedCreate, db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
+    # FIX: req.remark เดิมถูกรับเข้ามาใน UnmatchedCreate ถูกต้อง แต่ไม่เคยถูกใส่ลง INSERT จริง
+    # ทำให้ remark ที่ auditor พิมพ์ตอนสแกนไม่เจอ (บางคนใช้ช่องนี้จด Serial No.) หายไปเงียบๆ ทุกครั้ง
+    # ไม่ถึง HQ เลย — เจอจริงจากรายงานผู้ใช้ 2026-08-20 เพิ่มคอลัมน์ remark แยกจาก hq_note
+    # (hq_note ไว้ให้ HQ เขียนทีหลังตอน review เท่านั้น ตาม pattern เดียวกับ scan_logs.note/hq_note)
     cur.execute("""
         INSERT INTO unmatched_assets
-            (session_id, scanned_qr, serial_no, name_guess, photo_url, scanned_by, branch_id,
+            (session_id, scanned_qr, serial_no, name_guess, photo_url, remark, scanned_by, branch_id,
              department_guess, assigned_employee_id, assigned_employee_name)
-        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id
     """, (req.session_id, req.scanned_qr, req.serial_no, req.name_guess,
-          req.photo_url, user["user_id"], user["branch_id"], req.department_guess,
+          req.photo_url, req.remark, user["user_id"], user["branch_id"], req.department_guess,
           req.assigned_employee_id, req.assigned_employee_name))
     uid = cur.fetchone()["id"]
     db.commit()
@@ -982,7 +986,7 @@ def hq_get_unmatched(db=Depends(get_db), user=Depends(get_current_user)):
         raise HTTPException(status_code=403, detail="HQ admin only")
     cur = db.cursor()
     cur.execute("""
-        SELECT ua.id, ua.scanned_qr, ua.name_guess, ua.serial_no, ua.photo_url,
+        SELECT ua.id, ua.scanned_qr, ua.name_guess, ua.serial_no, ua.photo_url, ua.remark,
                ua.scanned_at, ua.status, ua.hq_note, ua.matched_asset_code, ua.department_guess,
                ua.assigned_employee_id, ua.assigned_employee_name,
                u.email AS auditor, b.id AS branch_id, b.name AS branch_name
