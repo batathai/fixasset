@@ -647,6 +647,10 @@
       <p class="field-label">Barcode</p>
       <input class="field-input" id="fBarcode" placeholder="e.g. SFU042026060012">
     </div>
+    <div class="field-group">
+      <p class="field-label">Serial No.</p>
+      <input class="field-input" id="fSerial" placeholder="e.g. SN#11J175301233">
+    </div>
     <div class="field-group" id="categoryGroup">
       <p class="field-label">Category</p>
       <input class="field-input" id="fCategory" placeholder="e.g. Equipment">
@@ -1272,6 +1276,8 @@ function buildStoresFromRealAssets(list, scansByQrKey){
     var scannedDept = matchingScan ? (matchingScan.scanned_department || '') : '';
     var department = scannedDept || masterDept || '—';
     var deptMismatch = !!(matchingScan && matchingScan.dept_mismatch);
+    // Serial: ใช้ค่าที่ auditor อ่านจากเครื่องจริงตอนสแกน (serial_found) ก่อนเสมอถ้ามี — เผื่อ master
+    // data ไม่มี serial หรือของถูกสลับเครื่อง ไม่งั้น fallback ไป serial ใน master ตาม pattern เดียวกับ department
     grouped[code].items.push({
       name: a.name || a.asset_name || ('Asset ' + baseCode),
       seq: seqNum ? ('SEQ' + seqNum) : (a.qr_key || '—'),
@@ -1286,7 +1292,7 @@ function buildStoresFromRealAssets(list, scansByQrKey){
       scanId: matchingScan ? scanIdOf(matchingScan) : null,
       qrKey: qrKey,
       qty: (a.qty != null ? a.qty : (a.quantity != null ? a.quantity : 1)),
-      serial: a.serial_no || a.serial || '',
+      serial: (matchingScan && matchingScan.serial_found) || a.serial_no || a.serial || '',
       department: department,
       masterDept: masterDept,
       deptMismatch: deptMismatch,
@@ -1775,6 +1781,7 @@ function openAssetDrawer(idx){
   document.getElementById('seqGroup').style.display = 'block';
   document.getElementById('fSeq').textContent = a.seq;
   document.getElementById('fBarcode').value = a.barcode;
+  document.getElementById('fSerial').value = a.serial || '';
   document.getElementById('fCategory').value = a.category;
   document.getElementById('fLocation').value = a.location;
   var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
@@ -1801,6 +1808,7 @@ function openAddDrawer(){
   document.getElementById('drawerTitle').textContent = 'Add asset';
   document.getElementById('seqGroup').style.display = 'none';
   document.getElementById('fBarcode').value = '';
+  document.getElementById('fSerial').value = '';
   document.getElementById('fCategory').value = '';
   document.getElementById('fLocation').value = '';
   document.getElementById('departmentGroup').style.display = 'none';
@@ -2212,6 +2220,7 @@ function statusToCondition(status){
 
 async function saveDrawer(){
   var barcode = document.getElementById('fBarcode').value.trim();
+  var serial = document.getElementById('fSerial').value.trim();
   var category = document.getElementById('fCategory').value.trim();
   var location = document.getElementById('fLocation').value.trim();
   var status = document.getElementById('fStatus').value;
@@ -2270,7 +2279,7 @@ async function saveDrawer(){
   }
 
   var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
-  var patchBody = { condition: statusToCondition(status), remark: fullRemark };
+  var patchBody = { condition: statusToCondition(status), remark: fullRemark, serial_found: serial };
   if(isOfficeView){
     var department = document.getElementById('fDepartment').value;
     var masterDept = (a.masterDept || '').trim();
