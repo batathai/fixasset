@@ -1713,14 +1713,18 @@ function cycleLabelFor(branchCode){
 
 /* ---------- Branch Status Grid ----------
    แบ่งสาขาเป็น 3 กลุ่มตาม status ของ session ล่าสุด:
-   on_process = กำลังทำอยู่, open (หรือยังไม่เคยเปิด session เลย) = ค้างงาน/ยังไม่เริ่ม, done = เสร็จแล้ว */
+   on_process = กำลังทำอยู่, open (หรือยังไม่เคยเปิด session เลย) = ค้างงาน/ยังไม่เริ่ม, done = เสร็จแล้ว
+   FIX: เดิมดูแค่ audit_sessions.status เพียงอย่างเดียว — ถ้าสาขาไหนมีของถูกสแกนจริงแล้ว (s.scanned > 0)
+   แต่ไม่มีใครกดเปิดรอบตรวจอย่างเป็นทางการที่สาขานั้น (เช่น ถูกสแกนข้ามสาขาผ่าน session ของสาขาอื่น —
+   เครื่องสแกนไม่ได้จำกัดว่าต้องสแกนของสาขาที่ login ไว้เท่านั้น) จะยังโชว์เป็น "ยังไม่เริ่ม" ทั้งที่จริง
+   มีความคืบหน้าแล้ว (เจอจริงกับสาขา Warehouse 2026-08-20) ตอนนี้นับ s.scanned > 0 เป็น "กำลังทำอยู่" ด้วย */
 function renderBranchGrid(){
   var buckets = { on_process: [], open: [], done: [] };
   stores.forEach(function(s){
     var rounds = sessionsByBranch[s.name] || [];
     var latest = rounds.length ? rounds[rounds.length - 1] : null;
-    var key = (latest && latest.status === 'on_process') ? 'on_process'
-            : (latest && latest.status === 'done') ? 'done'
+    var key = (latest && latest.status === 'done') ? 'done'
+            : ((latest && latest.status === 'on_process') || s.scanned > 0) ? 'on_process'
             : 'open';
     buckets[key].push(s);
   });
