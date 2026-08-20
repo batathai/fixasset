@@ -425,6 +425,10 @@
             <p class="summary-store" id="sumStoreName">Central Rama 2</p>
             <span class="summary-cycle" id="sumCycle">Audit cycle: Q3 2026</span>
           </div>
+          <div id="deptFilterWrap" style="display:none;margin-bottom:14px;">
+            <p style="font-size:11.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px;">ดูตามแผนก (Office)</p>
+            <div class="filter-chips" id="deptFilterChips"></div>
+          </div>
           <div class="summary-grid">
             <div class="stat-clickable" onclick="setAssetFilter('all')" title="ดูรายการทั้งหมด"><p class="summary-stat-label">Total assets</p><p class="summary-stat-value" id="sumTotal">1,245</p></div>
             <div class="stat-clickable" onclick="setAssetFilter('verified')" title="ดูรายการที่สแกนแล้ว"><p class="summary-stat-label">Scanned</p><p class="summary-stat-value" id="sumScanned">890</p></div>
@@ -1492,6 +1496,9 @@ function seedActivityLogFromAssets(){
 }
 var currentHQFilter = 'all';
 var currentAssetFilter = 'all';
+// 'all' = ทุกแผนกรวมกัน (เดิม/default), '__none__' = asset ที่ไม่มีข้อมูลแผนกใน master เลย,
+// ไม่งั้นเป็นชื่อแผนกจริงจาก OFFICE_DEPARTMENTS — ใช้ได้เฉพาะตอนดู Office/IT Hold เท่านั้น
+var currentDeptFilter = 'all';
 var editingAssetIndex = -1;
 var isAddMode = false;
 
@@ -1578,11 +1585,57 @@ function selectStore(name){
   currentStore = name;
   try{ localStorage.setItem('bataAuditStore', name); } catch(e){}
   currentAssetFilter = 'all';
+  currentDeptFilter = 'all';
   renderStoreChips();
+  renderDeptFilterChips();
   renderSummary();
   renderFilterChips();
   renderAssetList();
   document.getElementById('storeSwitchInput').value = '';
+}
+
+// ── OFFICE DEPARTMENT FILTER (Overview) ─────────────────────────────
+// แยกดู Total/Scanned/Remaining/Completion เป็นรายแผนกได้ แทนที่จะเห็นแต่ยอดรวมทั้ง Office
+// เดิมกด "Office" เข้ามาแล้วเห็นแค่ยอดรวม 1,126 ชิ้นปนกันหมด แยกไม่ออกว่าแผนกไหนตรวจไปเท่าไหร่แล้ว
+var OFFICE_DEPT_FILTER_OPTIONS = ['all'].concat(OFFICE_DEPARTMENTS).concat(['__none__']);
+function deptFilterLabel(d){
+  if(d === 'all') return 'ทุกแผนก';
+  if(d === '__none__') return 'ไม่มีแผนก';
+  return d;
+}
+function renderDeptFilterChips(){
+  var wrap = document.getElementById('deptFilterWrap');
+  var chips = document.getElementById('deptFilterChips');
+  var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
+  if(!isOfficeView){ wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  chips.innerHTML = OFFICE_DEPT_FILTER_OPTIONS.map(function(d){
+    return '<button class="f-chip ' + (d === currentDeptFilter ? 'active' : '') + '" onclick="setDeptFilter(\'' + d + '\')">' + deptFilterLabel(d) + '</button>';
+  }).join('');
+}
+function setDeptFilter(d){
+  currentDeptFilter = d;
+  renderDeptFilterChips();
+  renderSummary();
+  renderAssetList();
+  document.querySelector('.asset-table').scrollIntoView({behavior:'smooth', block:'start'});
+}
+function itemMatchesDeptFilter(a, dept){
+  if(dept === 'all') return true;
+  if(dept === '__none__') return !a.department || a.department === '—';
+  return a.department === dept;
+}
+// สรุปยอด Total/Scanned/Exceptions เฉพาะแผนกที่เลือก — คำนวณสดจาก assetsByStore[currentStore]
+// (ต่างจาก stores[].total/.scanned ที่เป็นยอดรวมทั้งสาขา คำนวณไว้ล่วงหน้าตอนโหลดข้อมูล)
+function officeDeptStats(dept){
+  var items = assetsByStore[currentStore] || [];
+  var filtered = items.filter(function(a){ return itemMatchesDeptFilter(a, dept); });
+  var exceptionStatuses = ['missing','damaged','unmatched'];
+  return {
+    total: filtered.length,
+    scanned: filtered.filter(function(a){ return a.status === 'verified'; }).length,
+    exceptions: filtered.filter(function(a){ return exceptionStatuses.indexOf(a.status) > -1; }).length
+  };
 }
 
 function populateStoreDatalist(){
@@ -1612,20 +1665,29 @@ function handleStoreSwitch(value){
 
 function renderSummary(){
   var s = stores.filter(function(x){ return x.name === currentStore; })[0];
-  var remaining = s.total - s.scanned;
-  var pct = s.total > 0 ? Math.round((s.scanned / s.total) * 100) : 0;
+  var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
+  // ตัวเลขปกติมาจาก stores[].total/.scanned/.exceptions (คำนวณไว้ล่วงหน้าตอนโหลดข้อมูล รวมทั้งสาขา)
+  // แต่ถ้าอยู่ในมุมมอง Office และเลือกแผนกไว้ ต้องคำนวณสดจาก assetsByStore เฉพาะแผนกนั้นแทน
+  var stats = (isOfficeView && currentDeptFilter !== 'all')
+    ? officeDeptStats(currentDeptFilter)
+    : { total: s.total, scanned: s.scanned, exceptions: s.exceptions };
+  var remaining = stats.total - stats.scanned;
+  var pct = stats.total > 0 ? Math.round((stats.scanned / stats.total) * 100) : 0;
   var display = s.displayName || s.name;
-  document.getElementById('sumStoreName').textContent = display + (display !== s.name ? ' (' + s.name + ')' : '');
-  document.getElementById('sumTotal').textContent = s.total.toLocaleString();
-  document.getElementById('sumScanned').textContent = s.scanned.toLocaleString();
+  document.getElementById('sumStoreName').textContent = display + (display !== s.name ? ' (' + s.name + ')' : '')
+    + (isOfficeView && currentDeptFilter !== 'all' ? ' — ' + deptFilterLabel(currentDeptFilter) : '');
+  document.getElementById('sumTotal').textContent = stats.total.toLocaleString();
+  document.getElementById('sumScanned').textContent = stats.scanned.toLocaleString();
   document.getElementById('sumRemaining').textContent = remaining.toLocaleString();
-  document.getElementById('sumExceptions').textContent = s.exceptions;
+  document.getElementById('sumExceptions').textContent = stats.exceptions;
   document.getElementById('sumPct').textContent = pct + '%';
   document.getElementById('sumBar').style.width = pct + '%';
-  document.getElementById('sumBar').style.background = statusMeta[s.status].bar;
+  var deptStatus = stats.scanned === 0 ? 'notstarted' : (stats.scanned === stats.total ? 'completed' : 'progress');
+  document.getElementById('sumBar').style.background = statusMeta[(isOfficeView && currentDeptFilter !== 'all') ? deptStatus : s.status].bar;
   document.getElementById('sumCaption').textContent = pct + '% complete';
   document.getElementById('sumRemainCaption').textContent = remaining.toLocaleString() + ' assets remaining';
   document.getElementById('sumCycle').textContent = cycleLabelFor(s.name);
+  renderDeptFilterChips();
 }
 
 function cycleLabelFor(branchCode){
@@ -1730,7 +1792,8 @@ function renderAssetList(){
       a.location.toLowerCase().indexOf(term) > -1 ||
       (isOfficeView && a.department.toLowerCase().indexOf(term) > -1) ||
       (isOfficeView && a.employeeName.toLowerCase().indexOf(term) > -1);
-    return matchesFilter && matchesSearch;
+    var matchesDept = !isOfficeView || itemMatchesDeptFilter(a, currentDeptFilter);
+    return matchesFilter && matchesSearch && matchesDept;
   });
   list = applyOverviewSort(list);
   lastOverviewExportList = list;
