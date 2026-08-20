@@ -2361,6 +2361,7 @@ async function saveDrawer(){
     closeDrawer();
     await loadRealData();
     if(stores.some(function(s){ return s.name === storeBeingEdited; })) selectStore(storeBeingEdited);
+    renderAssetSummary(); // เผื่อแก้ผ่านหน้า Asset Summary — ให้ตารางนั้นสดตามด้วย ไม่ใช่แค่ Overview
     showToast('บันทึกเข้า production จริงแล้ว');
   } catch(e){
     showToast('บันทึกไม่สำเร็จ: ' + e.message + ' — ลองเช็ค PATCH /hq/scans/{id} ใน /docs ว่า field ตรงกันไหม');
@@ -2434,11 +2435,27 @@ function allAssetsFlat(){
     assetsByStore[s.name].forEach(function(a){
       flat.push({
         code: a.barcode, seq: a.seq, name: a.name, branch: (s.displayName || s.name), serial: (a.serial && a.serial.length) ? a.serial : a.barcode.replace('SFU', 'SN'),
-        status: a.status, scanTime: a.lastScan, qty: a.qty != null ? a.qty : 1, scanId: a.scanId
+        status: a.status, scanTime: a.lastScan, qty: a.qty != null ? a.qty : 1, scanId: a.scanId,
+        storeCode: s.name, qrKey: a.qrKey
       });
     });
   });
   return flat;
+}
+
+// View/Edit/Photo บนหน้า Asset Summary เดิมเป็นแค่ showToast() ปุ่มหลอก ไม่เปิด drawer จริง
+// (ต่างจาก Overview ที่กดแล้วเปิด openAssetDrawer() ได้ปกติ) — ใช้ qrKey หา index ใน
+// assetsByStore[storeCode] ตัวจริง แล้วสลับ currentStore ไปสาขานั้นก่อนเปิด drawer เพราะ
+// openAssetDrawer()/saveDrawer() อ้างอิง assetsByStore[currentStore] เป็นหลักอยู่แล้ว
+function openAssetDrawerFromSummary(qrKey, storeCode){
+  var list = assetsByStore[storeCode] || [];
+  var idx = list.findIndex(function(x){ return x.qrKey === qrKey; });
+  if(idx === -1){ showToast('ไม่พบรายการนี้ — ลองกด Refresh'); return; }
+  if(currentStore !== storeCode){
+    currentStore = storeCode;
+    try{ localStorage.setItem('bataAuditStore', storeCode); } catch(e){}
+  }
+  openAssetDrawer(idx);
 }
 
 function populateBranchFilter(){
@@ -2556,6 +2573,9 @@ function renderAssetSummary(){
   tbody.innerHTML = filtered.slice(0, 25).map(function(a, i){
     var safeCode = a.code.replace(/'/g, "\\'");
     var safeName = a.name.replace(/'/g, "\\'");
+    var safeQrKey = (a.qrKey || '').replace(/'/g, "\\'");
+    var safeStoreCode = (a.storeCode || '').replace(/'/g, "\\'");
+    var openDrawerCall = "openAssetDrawerFromSummary('" + safeQrKey + "','" + safeStoreCode + "')";
     return '<tr>'
       + '<td>' + (i+1) + '</td>'
       + '<td>' + a.code + '</td>'
@@ -2567,9 +2587,9 @@ function renderAssetSummary(){
       + '<td>' + statusPillHtml(a.status) + '</td>'
       + '<td>' + formatDateShort(a.scanTime) + '</td>'
       + '<td><div class="as-row-actions">'
-        + '<button class="as-act-btn" title="View" onclick="showToast(\'View: ' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg></button>'
-        + '<button class="as-act-btn" title="Edit" onclick="showToast(\'Editing ' + safeCode + '…\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
-        + '<button class="as-act-btn" title="Photo" onclick="showToast(\'Opening photo: ' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></button>'
+        + '<button class="as-act-btn" title="View" onclick="' + openDrawerCall + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.7"/></svg></button>'
+        + '<button class="as-act-btn" title="Edit" onclick="' + openDrawerCall + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button>'
+        + '<button class="as-act-btn" title="Photo" onclick="' + openDrawerCall + '"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></button>'
         + '<button class="as-act-btn row-more-trigger" title="More" onclick="openRowMore(this,\'assetSummary\',\'' + safeName + '\',\'' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg></button>'
       + '</div></td>'
     + '</tr>';
