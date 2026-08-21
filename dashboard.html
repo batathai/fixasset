@@ -233,6 +233,10 @@
   .status-pill.damaged .sp-dot{background:var(--orange-fg);}
   .status-pill.unmatched{background:var(--purple-bg);color:var(--purple-fg);}
   .status-pill.unmatched .sp-dot{background:var(--purple-fg);}
+  .status-pill.matched{background:var(--green-bg);color:var(--green-fg);}
+  .status-pill.matched .sp-dot{background:var(--green-fg);}
+  .status-pill.rejected{background:var(--red-bg2);color:var(--red-fg);}
+  .status-pill.rejected .sp-dot{background:var(--red-fg);}
   .row-time{color:var(--ink-3);font-size:12px;}
   .row-action{background:none;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:6px 12px;font-size:12px;font-weight:600;color:var(--ink);}
   .row-action:hover{background:var(--surface-1);}
@@ -355,6 +359,11 @@
     <div class="nav-item" id="navAssetSummary" onclick="showPage('assetSummary')">
       <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
       Asset Summary
+    </div>
+    <div class="nav-item" id="navUnmatched" onclick="showPage('unmatched')">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 9.2a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="16.7" r="0.9" fill="currentColor"/></svg>
+      ไม่พบใน Master
+      <span class="nav-badge" id="navUnmatchedBadge" style="display:none;">0</span>
     </div>
     <div class="nav-item" id="navEmployees" onclick="showPage('employees')">
       <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 14.3c2.4.4 4 2.4 4 5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
@@ -551,6 +560,85 @@
         </div>
 
       </section>
+
+      <!-- ============ SCREEN: UNMATCHED (สแกนแล้วไม่พบใน Master) ============ -->
+      <section class="screen2" id="pageUnmatched">
+
+        <div class="as-kpi-grid" id="umKpiGrid">
+          <div class="as-kpi-card kpi-total kpi-active" data-um-filter="all" onclick="setUmKpiFilter('all')"><p class="as-kpi-label">Total</p><p class="as-kpi-value" id="umTotal">—</p><p class="as-kpi-sub">รายการทั้งหมด</p></div>
+          <div class="as-kpi-card kpi-pending" data-um-filter="pending" onclick="setUmKpiFilter('pending')"><p class="as-kpi-label">รอตรวจสอบ</p><p class="as-kpi-value" id="umPending" style="color:var(--amber-fg);">—</p><p class="as-kpi-sub">pending review</p></div>
+          <div class="as-kpi-card kpi-verified" data-um-filter="matched" onclick="setUmKpiFilter('matched')"><p class="as-kpi-label">จับคู่แล้ว</p><p class="as-kpi-value" id="umMatched" style="color:var(--green-fg);">—</p><p class="as-kpi-sub">matched</p></div>
+          <div class="as-kpi-card kpi-missing" data-um-filter="rejected" onclick="setUmKpiFilter('rejected')"><p class="as-kpi-label">ปฏิเสธแล้ว</p><p class="as-kpi-value" id="umRejected" style="color:var(--red-fg);">—</p><p class="as-kpi-sub">rejected</p></div>
+        </div>
+
+        <div class="as-toolbar">
+          <p class="as-toolbar-title">รายการที่สแกนแล้วไม่พบใน Master <span style="font-weight:400;color:var(--ink-3);">— คลิกแถวเพื่อตรวจสอบและจับคู่ หรือปฏิเสธ</span></p>
+          <div class="search-box" style="width:220px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <input type="text" id="umSearch" placeholder="ค้นหา QR / ชื่อ / serial" oninput="renderUnmatchedList()">
+          </div>
+          <select class="as-select" id="umBranchFilter" onchange="renderUnmatchedList()"><option value="all">ทุกสาขา</option></select>
+          <button class="as-refresh" onclick="refreshUnmatched()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Refresh
+          </button>
+          <div class="export-dropdown-wrap">
+            <button class="import-btn" onclick="toggleExportMenu('umExportMenu')">⬇ Export ▾</button>
+            <div class="export-menu" id="umExportMenu">
+              <button onclick="exportUnmatchedCSV()">Export CSV</button>
+            </div>
+          </div>
+        </div>
+        <p id="umResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
+        <div class="as-table-wrap">
+          <table class="as-table">
+            <thead><tr><th>#</th><th>Photo</th><th>Scanned QR</th><th>รายละเอียด</th><th>Serial</th><th>แผนก / พนักงาน</th><th>สาขา</th><th>Auditor</th><th>เวลาสแกน</th><th>สถานะ</th><th>Actions</th></tr></thead>
+            <tbody id="umRows"></tbody>
+          </table>
+        </div>
+
+      </section>
+
+      <!-- Unmatched review drawer -->
+      <div class="overlay" id="unmatchedOverlay" onclick="closeUnmatchedDrawer()"></div>
+      <div class="drawer" id="unmatchedDrawer">
+        <div class="drawer-head">
+          <p class="drawer-title" id="umDrawerTitle">Unmatched item</p>
+          <button class="drawer-close" onclick="closeUnmatchedDrawer()" aria-label="Close">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </div>
+        <div class="drawer-body">
+          <div class="photo-box" id="umPhotoBox"></div>
+          <div class="field-group"><p class="field-label">Scanned QR</p><p class="field-value" id="umScannedQr" style="font-family:monospace;">—</p></div>
+          <div class="field-group"><p class="field-label">รายละเอียดที่กรอกมา</p><p class="field-value" id="umNameGuess">—</p></div>
+          <div class="field-group"><p class="field-label">Serial (จากที่สแกน)</p><p class="field-value" id="umSerialGuess">—</p></div>
+          <div class="field-group"><p class="field-label">แผนก / พนักงาน</p><p class="field-value" id="umDeptEmp">—</p></div>
+          <div class="field-group"><p class="field-label">สาขา / Auditor / เวลา</p><p class="field-value" id="umMeta">—</p></div>
+          <div class="field-group"><p class="field-label">Remark จากคนสแกน</p><p class="field-value" id="umRemark">—</p></div>
+
+          <p id="umAlreadyReviewedNote" style="display:none;font-size:12.5px;color:var(--ink-2);background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:16px;"></p>
+
+          <div class="field-group">
+            <p class="field-label">จับคู่กับ Asset Code จริง (ถ้ารู้)</p>
+            <input class="field-input" id="umMatchedCode" placeholder="e.g. SFU042026060012">
+            <p style="font-size:11px;color:var(--ink-3);margin:6px 0 0;">ถ้าเว้นว่างแล้วกด Mark Matched จะปิดรายการนี้โดยไม่ผูกกับ asset จริงในระบบ</p>
+          </div>
+          <div class="field-group">
+            <p class="field-label">แก้ไข Serial (ถ้าต้องการ)</p>
+            <input class="field-input" id="umFixedSerial" placeholder="Serial No.">
+          </div>
+          <div class="field-group">
+            <p class="field-label">โน้ตจาก HQ</p>
+            <textarea class="field-textarea" id="umHqNote" placeholder="เหตุผล / หมายเหตุ..."></textarea>
+          </div>
+        </div>
+        <div class="drawer-footer">
+          <button class="btn-cancel" onclick="closeUnmatchedDrawer()">Cancel</button>
+          <button class="btn-outline-red" style="flex:1;" id="umRejectBtn" onclick="submitUnmatchedReview('rejected')">Reject</button>
+          <button class="btn-save" id="umMatchBtn" onclick="submitUnmatchedReview('matched')">Mark Matched</button>
+        </div>
+      </div>
 
       <!-- ============ SCREEN: EMPLOYEES (HR master list) ============ -->
       <section class="screen2" id="pageEmployees">
@@ -1259,11 +1347,17 @@ function buildStoresFromRealAssets(list, scansByQrKey){
   scansByQrKey = scansByQrKey || {};
   var grouped = {};
   list.forEach(function(a){
-    var code = a.location_code || a.branch_id || a.branch_code || 'UNKNOWN';
-    var displayName = STORE_NAMES[code] || a.location_name || a.branch_name || a.store_name || a.location_desc || a.location_description || a.branch_desc || code;
-    if(!grouped[code]){ grouped[code] = { name: code, displayName: displayName, items: [] }; }
     var qrKey = a.qr_key || a.asset_code;
     var matchingScan = qrKey ? scansByQrKey[qrKey] : null;
+    // FIX: เดิมจัดกลุ่ม asset ตาม location_code ใน master เพียวๆ — ถ้า asset ชิ้นนั้นมี location
+    // ผิดพลาด/ไม่ได้อัปเดตใน master (เช่น master บอกว่าอยู่ Warehouse แต่จริงๆ ถูกสแกนตอนอยู่ session
+    // ของ Office เพราะเครื่องสแกนไม่ได้จำกัดว่าต้องสแกนของสาขาตัวเองเท่านั้น) asset ชิ้นนั้นจะไปโผล่
+    // อยู่ใต้สาขาที่ผิดใน Overview ทำให้ทีมที่สแกนจริงมองไม่เห็นของที่ตัวเองเพิ่งสแกน (เจอจริง
+    // 2026-08-21 — สแกนที่ Office 9 ชิ้น แต่ Overview ของ Office โชว์แค่ 3) ถ้ามี scan จริงแล้ว
+    // ให้ใช้สาขาที่สแกนจริง (matchingScan.branch_id) เป็นหลักแทน location ใน master เสมอ
+    var code = (matchingScan && matchingScan.branch_id) || a.location_code || a.branch_id || a.branch_code || 'UNKNOWN';
+    var displayName = STORE_NAMES[code] || a.location_name || a.branch_name || a.store_name || a.location_desc || a.location_description || a.branch_desc || code;
+    if(!grouped[code]){ grouped[code] = { name: code, displayName: displayName, items: [] }; }
     var seqNum = seqDigitsOf(a.seq);
     var baseCode = a.asset_code || a.qr_key || String(a.id != null ? a.id : '');
     // Confirmed from a live /hq/assets record: is_scanned/scanned_at/scanned_by live
@@ -1447,6 +1541,10 @@ async function loadRealData(){
 
   document.getElementById('alBranchFilter').innerHTML = '<option value="all">ทุกสาขา</option>';
   renderActivityLog();
+
+  document.getElementById('umBranchFilter').innerHTML = '<option value="all">ทุกสาขา</option>';
+  await loadUnmatched();
+  if(document.getElementById('pageUnmatched').classList.contains('active')) renderUnmatchedList();
 
   var syncTimeEl = document.getElementById('overviewLastSyncTime');
   if(syncTimeEl) syncTimeEl.textContent = formatDateTime(new Date().toISOString());
@@ -2429,6 +2527,12 @@ function showPage(name){
       renderAssetSummary();
     }
     setTimeout(function(){ document.getElementById('asSearch').focus(); }, 0);
+  } else if(name === 'unmatched'){
+    document.getElementById('pageUnmatched').classList.add('active');
+    document.getElementById('navUnmatched').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'ไม่พบใน Master';
+    renderUnmatchedList();
+    setTimeout(function(){ document.getElementById('umSearch').focus(); }, 0);
   } else if(name === 'employees'){
     document.getElementById('pageEmployees').classList.add('active');
     document.getElementById('navEmployees').classList.add('active');
@@ -2553,6 +2657,183 @@ function asEmptyStateHtml(){
     + '<div class="as-empty-sub">Try another keyword, or check the branch/status filter</div>'
     + '<button class="add-btn" onclick="showToast(\'เปิดฟอร์มเพิ่ม Asset\')">+ Add Asset</button>'
     + '</div></td></tr>';
+}
+
+// ── UNMATCHED (สแกนแล้วไม่พบใน Master) ──────────────────────────────
+// เดิม Dashboard ไม่มีหน้าจอสำหรับ unmatched_assets เลยสักหน้า — ข้อมูลถึง backend ปกติ (มี
+// endpoint GET/PATCH /hq/unmatched อยู่แล้ว) แค่ไม่เคยมี UI ให้เปิดดู ทำให้ของที่สแกนไม่เจอ
+// (เช่น "No Fine Asset") หายไปจากสายตา HQ ทั้งที่จริงๆ อยู่ในฐานข้อมูล เจอจริงจากรายงานผู้ใช้
+// 2026-08-21 (สแกน 9 รายการ แต่เห็นใน Dashboard แค่ 3 — 4 รายการเป็น unmatched)
+var unmatchedItems = [];
+var lastUnmatchedExportList = [];
+var umKpiFilter = 'all';
+var umReviewingId = null;
+
+async function loadUnmatched(){
+  try{
+    var raw = await apiFetch('/hq/unmatched', { method: 'GET' });
+    unmatchedItems = Array.isArray(raw) ? raw : (raw.items || raw.data || []);
+  } catch(e){
+    unmatchedItems = [];
+  }
+  updateUnmatchedBadge();
+}
+
+function updateUnmatchedBadge(){
+  var badge = document.getElementById('navUnmatchedBadge');
+  if(!badge) return;
+  var pending = unmatchedItems.filter(function(i){ return i.status === 'pending'; }).length;
+  if(pending > 0){ badge.textContent = pending > 99 ? '99+' : pending; badge.style.display = 'inline-block'; }
+  else { badge.style.display = 'none'; }
+}
+
+function populateUnmatchedBranchFilter(){
+  var sel = document.getElementById('umBranchFilter');
+  if(!sel || sel.options.length > 1) return;
+  var seen = {};
+  unmatchedItems.forEach(function(i){
+    var name = i.branch_name || i.branch_id;
+    if(!name || seen[name]) return;
+    seen[name] = true;
+    var opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    sel.appendChild(opt);
+  });
+}
+
+function setUmKpiFilter(key){
+  umKpiFilter = key;
+  document.querySelectorAll('#umKpiGrid .as-kpi-card').forEach(function(c){ c.classList.remove('kpi-active'); });
+  document.querySelector('#umKpiGrid [data-um-filter="' + key + '"]').classList.add('kpi-active');
+  renderUnmatchedList();
+}
+
+async function refreshUnmatched(){
+  await loadUnmatched();
+  renderUnmatchedList();
+  showToast('Refreshed');
+}
+
+function renderUnmatchedList(){
+  populateUnmatchedBranchFilter();
+  document.getElementById('umTotal').textContent = unmatchedItems.length.toLocaleString();
+  document.getElementById('umPending').textContent = unmatchedItems.filter(function(i){ return i.status === 'pending'; }).length.toLocaleString();
+  document.getElementById('umMatched').textContent = unmatchedItems.filter(function(i){ return i.status === 'matched'; }).length.toLocaleString();
+  document.getElementById('umRejected').textContent = unmatchedItems.filter(function(i){ return i.status === 'rejected'; }).length.toLocaleString();
+
+  var term = (document.getElementById('umSearch').value || '').toLowerCase();
+  var branchF = document.getElementById('umBranchFilter').value;
+  var filtered = unmatchedItems.filter(function(i){
+    var mKpi = umKpiFilter === 'all' || i.status === umKpiFilter;
+    var mBranch = branchF === 'all' || (i.branch_name || i.branch_id) === branchF;
+    var mSearch = !term
+      || (i.scanned_qr || '').toLowerCase().indexOf(term) > -1
+      || (i.name_guess || '').toLowerCase().indexOf(term) > -1
+      || (i.serial_no || '').toLowerCase().indexOf(term) > -1
+      || (i.remark || '').toLowerCase().indexOf(term) > -1;
+    return mKpi && mBranch && mSearch;
+  }).sort(function(a, b){ return (b.scanned_at || '').localeCompare(a.scanned_at || ''); });
+
+  lastUnmatchedExportList = filtered;
+  document.getElementById('umResultCount').textContent = filtered.length ? ('พบ ' + filtered.length.toLocaleString() + ' รายการ') : '';
+
+  var tbody = document.getElementById('umRows');
+  if(!filtered.length){
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--ink-3);">ไม่มีรายการ</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.slice(0, 50).map(function(i, idx){
+    var deptEmp = [i.department_guess, i.assigned_employee_name].filter(Boolean).join(' · ') || '—';
+    return '<tr onclick="openUnmatchedDrawer(' + i.id + ')" style="cursor:pointer;">'
+      + '<td>' + (idx + 1) + '</td>'
+      + '<td>' + (i.photo_url ? ('<img class="asset-thumb" src="' + i.photo_url + '" alt="">') : '<div class="asset-thumb-placeholder">?</div>') + '</td>'
+      + '<td style="font-family:monospace;font-size:12px;color:var(--ink-2);">' + (i.scanned_qr || '—') + '</td>'
+      + '<td>' + (i.name_guess || '—') + '</td>'
+      + '<td>' + (i.serial_no || '—') + '</td>'
+      + '<td>' + deptEmp + '</td>'
+      + '<td>' + (i.branch_name || i.branch_id || '—') + '</td>'
+      + '<td>' + (i.auditor || '—') + '</td>'
+      + '<td>' + formatDateShort(i.scanned_at) + '</td>'
+      + '<td>' + statusPillHtml(i.status) + '</td>'
+      + '<td><button class="as-act-btn" title="Review" onclick="event.stopPropagation();openUnmatchedDrawer(' + i.id + ')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M12 20h9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4L16.5 3.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></button></td>'
+    + '</tr>';
+  }).join('');
+}
+
+function openUnmatchedDrawer(id){
+  var item = unmatchedItems.find(function(i){ return i.id === id; });
+  if(!item) return;
+  umReviewingId = id;
+  document.getElementById('umDrawerTitle').textContent = item.name_guess || 'Unmatched item';
+  document.getElementById('umPhotoBox').innerHTML = item.photo_url ? ('<img src="' + item.photo_url + '">') : photoPlaceholder();
+  document.getElementById('umScannedQr').textContent = item.scanned_qr || '—';
+  document.getElementById('umNameGuess').textContent = item.name_guess || '—';
+  document.getElementById('umSerialGuess').textContent = item.serial_no || '—';
+  document.getElementById('umDeptEmp').textContent = [item.department_guess, item.assigned_employee_name].filter(Boolean).join(' · ') || '—';
+  document.getElementById('umMeta').textContent = (item.branch_name || item.branch_id || '—') + ' · ' + (item.auditor || '—') + ' · ' + formatDateTime(item.scanned_at);
+  document.getElementById('umRemark').textContent = item.remark || '—';
+  document.getElementById('umMatchedCode').value = item.matched_asset_code || '';
+  document.getElementById('umFixedSerial').value = '';
+  document.getElementById('umHqNote').value = '';
+
+  var isReviewed = item.status !== 'pending';
+  document.getElementById('umMatchBtn').style.display = isReviewed ? 'none' : '';
+  document.getElementById('umRejectBtn').style.display = isReviewed ? 'none' : '';
+  var noteEl = document.getElementById('umAlreadyReviewedNote');
+  noteEl.style.display = isReviewed ? 'block' : 'none';
+  noteEl.textContent = isReviewed ? ('รีวิวแล้ว: ' + item.status + (item.hq_note ? (' — ' + item.hq_note) : '')) : '';
+
+  document.getElementById('unmatchedOverlay').classList.add('show');
+  document.getElementById('unmatchedDrawer').classList.add('show');
+}
+function closeUnmatchedDrawer(){
+  document.getElementById('unmatchedOverlay').classList.remove('show');
+  document.getElementById('unmatchedDrawer').classList.remove('show');
+  umReviewingId = null;
+}
+async function submitUnmatchedReview(status){
+  if(!umReviewingId) return;
+  var matchedCode = document.getElementById('umMatchedCode').value.trim();
+  var fixedSerial = document.getElementById('umFixedSerial').value.trim();
+  var hqNote = document.getElementById('umHqNote').value.trim();
+  var btn = document.getElementById(status === 'matched' ? 'umMatchBtn' : 'umRejectBtn');
+  btn.disabled = true;
+  try{
+    await apiFetch('/hq/unmatched/' + umReviewingId, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        status: status,
+        matched_asset_code: matchedCode || null,
+        serial_no: fixedSerial || null,
+        hq_note: hqNote || null
+      })
+    });
+    closeUnmatchedDrawer();
+    await loadUnmatched();
+    renderUnmatchedList();
+    if(status === 'matched' && matchedCode){
+      var storeBeingViewed = currentStore;
+      await loadRealData();
+      if(stores.some(function(s){ return s.name === storeBeingViewed; })) selectStore(storeBeingViewed);
+    }
+    showToast(status === 'matched' ? 'จับคู่แล้ว' : 'ปฏิเสธรายการแล้ว');
+  } catch(e){
+    showToast('บันทึกไม่สำเร็จ: ' + e.message);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+var UM_EXPORT_HEADERS = ['Scanned QR', 'รายละเอียด', 'Serial', 'แผนก', 'พนักงาน', 'สาขา', 'Auditor', 'เวลาสแกน', 'Remark', 'สถานะ'];
+function exportUnmatchedCSV(){
+  closeAllExportMenus();
+  var rows = lastUnmatchedExportList.map(function(i){
+    return [i.scanned_qr || '', i.name_guess || '', i.serial_no || '', i.department_guess || '', i.assigned_employee_name || '',
+      i.branch_name || i.branch_id || '', i.auditor || '', formatDateShort(i.scanned_at), i.remark || '', i.status];
+  });
+  var meta = buildMetaCSVBlock('Bata Fixed Asset Audit - Unmatched Report', 'ทุกสาขา', rows.length);
+  downloadFile('unmatched-' + todayStamp() + '.csv', meta + toCSV(UM_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
+  showToast('Export CSV สำเร็จ (' + rows.length + ' รายการ)');
 }
 
 function renderAssetSummary(){
