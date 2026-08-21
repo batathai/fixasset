@@ -922,6 +922,17 @@ function correctScanValue(raw) {
     const candidate = raw.slice(0, len);
     if (assetCache.has(candidate)) return candidate;
   }
+  // FIX: เครื่อง Urovo บางครั้งยิงโค้ดซ้ำติดกัน 2 อันไม่มีตัวคั่น เช่น
+  // "MAC012015060001SEQ007MAC012015060001SEQ008" กลายเป็น unmatched ทุกครั้งทั้งที่โค้ดแรกถูกต้อง
+  // จริง qr_key จริงทุกอันมี "SEQ" ตามด้วยเลข 3 หลักอยู่แค่ตำแหน่งเดียว ถ้า raw มี "SEQ"+เลข 3 หลัก
+  // โผล่มากกว่า 1 ครั้ง ให้ตัดเอาแค่ท่อนแรกถึงจุดจบของอันแรกมาลองก่อน (เดาผิดก็แค่ไปเป็น unmatched
+  // ตามปกติเหมือนเดิม ไม่เสียหายอะไรเพิ่ม)
+  const seqMatches = raw.match(/SEQ\d{3}/g);
+  if (seqMatches && seqMatches.length > 1) {
+    const firstSeqEnd = raw.indexOf(seqMatches[0]) + seqMatches[0].length;
+    const candidate = raw.slice(0, firstSeqEnd);
+    if (candidate !== raw) return candidate;
+  }
   return raw; // หาไม่เจอใน cache เลย ปล่อยให้ flow เดิมจัดการ (ไป unmatched ตามปกติ)
 }
 
