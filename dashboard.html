@@ -437,6 +437,7 @@
           <div id="deptFilterWrap" style="display:none;margin-bottom:14px;">
             <p style="font-size:11.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px;">ดูตามแผนก (Office)</p>
             <div class="filter-chips" id="deptFilterChips"></div>
+            <p id="deptUnmatchedLink" style="display:none;font-size:12px;margin:10px 0 0;"></p>
           </div>
           <div class="summary-grid">
             <div class="stat-clickable" onclick="setAssetFilter('all')" title="ดูรายการทั้งหมด"><p class="summary-stat-label">Total assets</p><p class="summary-stat-value" id="sumTotal">1,245</p></div>
@@ -578,6 +579,7 @@
             <input type="text" id="umSearch" placeholder="ค้นหา QR / ชื่อ / serial" oninput="renderUnmatchedList()">
           </div>
           <select class="as-select" id="umBranchFilter" onchange="renderUnmatchedList()"><option value="all">ทุกสาขา</option></select>
+          <select class="as-select" id="umDeptFilter" onchange="renderUnmatchedList()"><option value="all">ทุกแผนก</option></select>
           <button class="as-refresh" onclick="refreshUnmatched()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Refresh
@@ -1720,6 +1722,18 @@ function renderDeptFilterChips(){
   chips.innerHTML = OFFICE_DEPT_FILTER_OPTIONS.map(function(d){
     return '<button class="f-chip ' + (d === currentDeptFilter ? 'active' : '') + '" onclick="setDeptFilter(\'' + d + '\')">' + deptFilterLabel(d) + '</button>';
   }).join('');
+
+  // ลิงก์ไปหน้า "ไม่พบใน Master" กรองแผนกเดียวกันไว้ให้เลย — คนละอย่างกับ "สาขา" Warehouse
+  // (0068000) แต่ชื่อชนกันพอดี ทำให้สับสนได้ง่ายว่าทำไมของที่ "ใส่แผนกเป็น Warehouse" ไม่โผล่ตอน
+  // คลิกเข้าไปที่สาขา Warehouse — จริงๆ ต้องดูที่แผนก Warehouse ภายใน Office ต่างหาก
+  var linkEl = document.getElementById('deptUnmatchedLink');
+  if(currentDeptFilter === 'all' || currentDeptFilter === '__none__'){
+    linkEl.style.display = 'none';
+  } else {
+    var umCount = unmatchedItems.filter(function(i){ return i.department_guess === currentDeptFilter; }).length;
+    linkEl.style.display = 'block';
+    linkEl.innerHTML = '🔗 <a href="javascript:void(0)" onclick="goToUnmatchedForDept(\'' + currentDeptFilter + '\')" style="color:var(--red-500);font-weight:600;">ดูรายการที่ไม่พบใน Master ในแผนกนี้ (' + umCount + ' รายการ)</a>';
+  }
 }
 function setDeptFilter(d){
   currentDeptFilter = d;
@@ -2700,6 +2714,26 @@ function populateUnmatchedBranchFilter(){
     sel.appendChild(opt);
   });
 }
+// แผนกของ Office (department_guess) เป็นคนละอย่างกับ "สาขา" — Warehouse เองก็เป็นได้ทั้งชื่อสาขา
+// จริง (0068000) และชื่อแผนกหนึ่งใน 11 แผนกของ Office พร้อมกัน ทำให้สับสนได้ง่าย ช่องนี้กรองตาม
+// แผนกที่ auditor เลือกตอนสแกน (ไม่ใช่ตามสาขา) ใช้ list ตายตัวเดียวกับ OFFICE_DEPARTMENTS
+function populateUnmatchedDeptFilter(){
+  var sel = document.getElementById('umDeptFilter');
+  if(!sel || sel.options.length > 1) return;
+  OFFICE_DEPARTMENTS.forEach(function(d){
+    var opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    sel.appendChild(opt);
+  });
+}
+// เรียกจากการ์ด Summary ของ Overview (ปุ่ม "ดูรายการที่ไม่พบใน Master ในแผนกนี้") เพื่อกระโดดมาที่
+// หน้านี้พร้อม filter แผนกเดิมไว้ให้เลย ไม่ต้องมาเลือกใหม่เอง
+function goToUnmatchedForDept(dept){
+  showPage('unmatched');
+  populateUnmatchedDeptFilter();
+  document.getElementById('umDeptFilter').value = dept;
+  renderUnmatchedList();
+}
 
 function setUmKpiFilter(key){
   umKpiFilter = key;
@@ -2716,6 +2750,7 @@ async function refreshUnmatched(){
 
 function renderUnmatchedList(){
   populateUnmatchedBranchFilter();
+  populateUnmatchedDeptFilter();
   document.getElementById('umTotal').textContent = unmatchedItems.length.toLocaleString();
   document.getElementById('umPending').textContent = unmatchedItems.filter(function(i){ return i.status === 'pending'; }).length.toLocaleString();
   document.getElementById('umMatched').textContent = unmatchedItems.filter(function(i){ return i.status === 'matched'; }).length.toLocaleString();
@@ -2723,15 +2758,17 @@ function renderUnmatchedList(){
 
   var term = (document.getElementById('umSearch').value || '').toLowerCase();
   var branchF = document.getElementById('umBranchFilter').value;
+  var deptF = document.getElementById('umDeptFilter').value;
   var filtered = unmatchedItems.filter(function(i){
     var mKpi = umKpiFilter === 'all' || i.status === umKpiFilter;
     var mBranch = branchF === 'all' || (i.branch_name || i.branch_id) === branchF;
+    var mDept = deptF === 'all' || i.department_guess === deptF;
     var mSearch = !term
       || (i.scanned_qr || '').toLowerCase().indexOf(term) > -1
       || (i.name_guess || '').toLowerCase().indexOf(term) > -1
       || (i.serial_no || '').toLowerCase().indexOf(term) > -1
       || (i.remark || '').toLowerCase().indexOf(term) > -1;
-    return mKpi && mBranch && mSearch;
+    return mKpi && mBranch && mDept && mSearch;
   }).sort(function(a, b){ return (b.scanned_at || '').localeCompare(a.scanned_at || ''); });
 
   lastUnmatchedExportList = filtered;
