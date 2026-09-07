@@ -1097,24 +1097,33 @@ async function scan(raw) {
       headers:{'Authorization':'Bearer '+S.token}, signal:ctrl.signal
     });
     clearTimeout(tout);
+
+    // FIX (2026-09-07): เดิมพอ /assets/lookup ตอบ error (500 / เน็ตกระตุก / parse พัง) โค้ดไปเข้า
+    // catch แล้ว render การ์ด rUnmatch เหมือนกรณี "ไม่พบใน master จริง" ทุกประการ → auditor กด SEND
+    // TO HQ → asset ที่มีอยู่จริงกลายเป็น unmatched (เจอจริง FUR012013060005SEQ028 ที่ 20 นาที
+    // ต่อมาสแกนใหม่แล้ว verify ผ่าน แต่แถว unmatched ยังค้าง pending). แยกให้ชัด: rUnmatch เฉพาะเมื่อ
+    // backend ยืนยัน found=false เท่านั้น, error อื่นๆ ให้การ์ด "ลองใหม่" ไม่ auto ไป unmatched
+    if (!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
 
-    if (!data.found) {
+    if (data.found === false) {
       area.innerHTML = rUnmatch(key);
       speak(VOICE.notFound);
       toast('Not found in system');
-    } else {
+    } else if (data.found && data.asset) {
       assetCache.set(key, data.asset);
       showAssetResult(key, data.asset, area);
+    } else {
+      throw new Error('bad lookup response');
     }
   } catch(e) {
     if (e.name === 'AbortError') {
       toast('Slow connection — retrying...');
       setTimeout(() => scan(key), 1000); area.style.display='none';
     } else {
-      area.innerHTML = rUnmatch(key);
+      area.innerHTML = rLookupError(key);
       speak(VOICE.error);
-      toast('Error: '+e.message);
+      toast('เชื่อมต่อไม่ได้ — ยังไม่บันทึกเป็น Unmatched แตะ "ลองสแกนใหม่"');
     }
   }
   area.scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -1306,6 +1315,23 @@ function rUnmatch(k){ return `
   </div>
 </div>`; }
 
+// FIX (2026-09-07): การ์ดสำหรับกรณี /assets/lookup ล่ม/ตอบ error (ไม่ใช่ 404 จริง) — เดิมเคสนี้
+// เด้งไป rUnmatch ทันทีทำให้ asset ที่มีจริงถูก log เป็น unmatched ตอนเน็ตกระตุก ตอนนี้ให้ auditor
+// กด "ลองสแกนใหม่" ก่อน ถ้ายืนยันว่าของไม่มีจริงค่อยกด "ไม่พบจริง — แจ้ง HQ" เพื่อเปิดการ์ด unmatched
+function rLookupError(k){ return `
+<div class="rc mismatch">
+  <div class="rc-hdr"><div class="rc-ico">!</div><div><div class="rc-lbl">เชื่อมต่อระบบไม่สำเร็จ</div><div class="rc-txt">LOOKUP FAILED — NOT LOGGED</div></div></div>
+  <div class="rc-body">
+    <div class="ir"><span class="il">Scanned code</span><span class="iv ac">${k}</span></div>
+    <div class="dv"></div>
+    <div style="font-size:12px;color:var(--gray3);margin-bottom:10px;">ยังไม่ได้บันทึกรายการนี้ — เช็คสัญญาณเน็ตแล้วลองสแกนใหม่ ถ้าของไม่มีในระบบจริงค่อยแจ้ง HQ</div>
+    <div class="br">
+      <button class="btn-g" onclick="scan('${k}')">ลองสแกนใหม่</button>
+      <button class="btn-c" onclick="document.getElementById('ra').innerHTML=rUnmatch('${k}')">ไม่พบจริง — แจ้ง HQ</button>
+    </div>
+  </div>
+</div>`; }
+
 function rDup(k){ return `
 <div class="rc dup">
   <div class="rc-hdr"><div class="rc-ico">↺</div><div><div class="rc-lbl">Already scanned this session</div><div class="rc-txt">DUPLICATE</div></div></div>
@@ -1410,7 +1436,12 @@ async function doSerial(k,n,exp,match) {
   hideR();
 }
 
+const _recentUnmatch = {}; // FIX (2026-09-07): กันกดปุ่ม SEND TO HQ ซ้ำ / เครื่องยิงรัว ส่ง unmatched
+                           // key เดิมหลายรอบติดกัน (backend มี guard คู่กันด้วย ตรง POST /unmatched)
 async function doUnmatch(k) {
+  const now = Date.now();
+  if (_recentUnmatch[k] && now - _recentUnmatch[k] < 15000) { toast('ส่งรายการนี้ให้ HQ แล้ว'); hideR(); return; }
+  _recentUnmatch[k] = now;
   const n = document.getElementById('un-'+k)?.value||'Unknown device';
   const s = document.getElementById('us-'+k)?.value||'';
   const r = document.getElementById('ur-'+k)?.value||'';
@@ -1764,16 +1795,23 @@ function stopAutoRefresh() {
 }
 
 // ── CHECKLIST ────────────────────────────────────────────────
-async function loadChecklist(branchId) {
+async function loadChecklist(branchId, _attempt) {
+  _attempt = _attempt || 0;
   document.getElementById('cl-branch-label').textContent = branchId;
   document.getElementById('cl-remain').textContent = 'Loading...';
+  const retry = () => { if (_attempt < 3) setTimeout(() => loadChecklist(branchId, _attempt + 1), 10000); };
   try {
     const allLocationCodes = [branchId, ...OFFICE_EXTRA_LOCATION_CODES];
+    // FIX (2026-09-07): เดิม .catch(() => ({assets:[]})) กลืน error ของ location ที่โหลดพังแบบเงียบสนิท
+    // ถ้า location หลัก (branchId) โหลดไม่ได้ assetCache จะว่าง/ไม่ครบ ทำให้ทุกการสแกนหลุดไปยิง
+    // /assets/lookup ทีละชิ้น และถ้า lookup พลาดด้วยก็กลายเป็น unmatched หลอก — คราวนี้เก็บ flag
+    // ว่ามี location ไหนโหลดพังบ้าง แล้วเตือน + retry ไม่ปล่อยผ่านเงียบๆ
+    let anyLocFailed = false;
     const results = await Promise.all(
       allLocationCodes.map(code =>
         fetch(API+'/assets/branch/'+code, {headers:{'Authorization':'Bearer '+S.token}})
-          .then(res => res.json())
-          .catch(() => ({assets:[]})) // location เดียวโหลดพังไม่ควรทำให้ location อื่นพังตาม
+          .then(res => { if(!res.ok) throw new Error('HTTP '+res.status); return res.json(); })
+          .catch(() => { anyLocFailed = true; return {assets:[]}; }) // location เดียวโหลดพังไม่ควรทำให้ location อื่นพังตาม
       )
     );
     // รวม asset จากทุก location เข้าด้วยกัน กัน qr_key ซ้ำ (เผื่อ location ไหนคืนของซ้ำกันมาโดยบังเอิญ)
@@ -1784,7 +1822,19 @@ async function loadChecklist(branchId) {
     CHECKLIST = allAssets.map(a=>({qr_key:a.qr_key,name:a.name,serial:a.serial_no,status:'pending'}));
     S.total = CHECKLIST.length;
     buildCache(allAssets);
-  } catch(e) { CHECKLIST=[]; S.total=0; }
+    if (allAssets.length === 0 && _attempt < 3) {
+      // ไม่ได้อะไรมาเลย = อันตราย (assetCache ว่าง ทุกการสแกนจะหลุดไป lookup) — retry สูงสุด 3 ครั้ง
+      toast('⚠️ โหลดรายการ asset ไม่ได้ — จะลองใหม่ใน 10 วิ (ระหว่างนี้บางชิ้นอาจสแกนไม่เจอ)');
+      retry();
+    } else if (anyLocFailed) {
+      // ได้บางส่วน — เตือนเฉยๆ ไม่ retry วนซ้ำ (กัน loop ถ้า location เสริมพังถาวร)
+      toast('⚠️ บาง location โหลดไม่สำเร็จ — รายการอาจไม่ครบ');
+    }
+  } catch(e) {
+    CHECKLIST=[]; S.total=0;
+    toast('⚠️ โหลดรายการ asset ไม่สำเร็จ — จะลองใหม่ใน 10 วิ');
+    retry();
+  }
   updateChecklist();
 }
 function updateChecklist() {

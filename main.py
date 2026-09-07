@@ -601,6 +601,19 @@ def get_scans(session_id: int, db=Depends(get_db), user=Depends(get_current_user
 @app.post("/unmatched")
 def create_unmatched(req: UnmatchedCreate, db=Depends(get_db), user=Depends(get_current_user)):
     cur = db.cursor()
+    # FIX (2026-09-07): กัน unmatched แถวซ้ำ — ต่างจาก POST /scans ที่มี guard 409 already_scanned
+    # endpoint นี้ไม่เคยเช็คซ้ำเลย ทำให้เครื่อง Urovo ที่ยิงโค้ดรัวๆ / queue retry ของ frontend
+    # (reliableSend → flushPendingQueue) / การกดปุ่ม SEND TO HQ ซ้ำ สร้าง unmatched_assets ได้
+    # หลายแถวจากการสแกนจริงครั้งเดียว (เจอจริง session 98 — 3 แถว scanned_at ห่างกัน 0.6 วิ)
+    # ถ้ามีแถว pending ที่ scanned_qr + session_id เดียวกันอยู่แล้ว ให้คืนแถวเดิมแทนการ insert ใหม่
+    cur.execute("""
+        SELECT id FROM unmatched_assets
+        WHERE session_id = %s AND scanned_qr = %s AND status = 'pending'
+        LIMIT 1
+    """, (req.session_id, req.scanned_qr))
+    existing = cur.fetchone()
+    if existing:
+        return {"unmatched_id": existing["id"], "deduped": True}
     # FIX: req.remark เดิมถูกรับเข้ามาใน UnmatchedCreate ถูกต้อง แต่ไม่เคยถูกใส่ลง INSERT จริง
     # ทำให้ remark ที่ auditor พิมพ์ตอนสแกนไม่เจอ (บางคนใช้ช่องนี้จด Serial No.) หายไปเงียบๆ ทุกครั้ง
     # ไม่ถึง HQ เลย — เจอจริงจากรายงานผู้ใช้ 2026-08-20 เพิ่มคอลัมน์ remark แยกจาก hq_note
@@ -985,15 +998,26 @@ def hq_get_unmatched(db=Depends(get_db), user=Depends(get_current_user)):
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     cur = db.cursor()
+    # FIX (2026-09-07): ติดธง exists_in_master / already_verified ให้ HQ เห็นทันทีว่า unmatched
+    # แถวไหนจริงๆ มี qr_key ตรงกับ asset ใน master แล้ว (มักเกิดจากตอนสแกน /assets/lookup ล่ม
+    # ชั่วคราว frontend เลย fallback ไป "log เป็น unmatched" ทั้งที่ของมีอยู่จริง — เจอจริง
+    # FUR012013060005SEQ028 ที่ถูก verify สำเร็จอีก 20 นาทีต่อมาแต่แถว unmatched ยังค้าง pending)
+    # ให้ Dashboard ขึ้น badge + ให้ HQ กด reject ได้เร็ว ไม่ต้องไล่เช็คทีละแถวเอง
     cur.execute("""
         SELECT ua.id, ua.scanned_qr, ua.name_guess, ua.serial_no, ua.photo_url, ua.remark,
                ua.scanned_at, ua.status, ua.hq_note, ua.matched_asset_code, ua.department_guess,
                ua.assigned_employee_id, ua.assigned_employee_name,
-               u.email AS auditor, b.id AS branch_id, b.name AS branch_name
+               u.email AS auditor, b.id AS branch_id, b.name AS branch_name,
+               (am.id IS NOT NULL) AS exists_in_master,
+               am.name AS master_name,
+               (am.id IS NOT NULL AND EXISTS (
+                   SELECT 1 FROM scan_logs sl WHERE sl.asset_id = am.id
+               )) AS already_verified
         FROM unmatched_assets ua
         LEFT JOIN users u ON u.id = ua.scanned_by
         LEFT JOIN audit_sessions s ON s.id = ua.session_id
         LEFT JOIN branches b ON b.id = s.branch_id
+        LEFT JOIN assets am ON am.qr_key = ua.scanned_qr AND COALESCE(am.is_active, true) = true
         ORDER BY ua.scanned_at DESC
     """)
     return {"items": [dict(r) for r in cur.fetchall()]}

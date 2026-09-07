@@ -973,7 +973,9 @@ function todayStamp(){
 }
 function csvEscape(v){
   v = (v === undefined || v === null) ? '' : String(v);
-  if(/[",\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
+  // FIX (2026-09-07): เพิ่ม \r ในเงื่อนไข — เดิมถ้า field มี carriage return เดี่ยวๆ (เช่น asset code
+  // ที่มีอักขระแปลกปนจากเครื่องสแกน) จะไม่ถูกครอบ quote ทำให้แถวแตกเป็นหลายบรรทัดตอนเปิดใน Excel
+  if(/[",\r\n]/.test(v)) v = '"' + v.replace(/"/g, '""') + '"';
   return v;
 }
 function csvLine(arr){ return arr.map(csvEscape).join(','); }
@@ -1001,7 +1003,13 @@ function toCSV(headers, rows){
   return lines.join('\r\n');
 }
 function downloadFile(filename, content, mime){
-  var blob = new Blob([content], { type: mime });
+  // FIX: ไฟล์ CSV ที่ไม่มี UTF-8 BOM นำหน้า พอเปิดด้วย Excel บน Windows ภาษาไทย Excel จะเดา
+  // encoding เป็น TIS-620/Windows-874 ทำให้ภาษาไทยกลายเป็นตัวขยะอ่านไม่ออก (charset=utf-8 ใน
+  // MIME type ไม่ช่วย เพราะ Excel ไม่อ่าน) — เจอจริงกับ Unmatched Report ที่หัวตาราง/ข้อมูลเป็นไทย
+  // เติม BOM (U+FEFF) ให้ทุก export ที่เป็น CSV (Overview / Asset Summary / Unmatched)
+  var BOM = String.fromCharCode(0xFEFF);
+  var needBOM = /csv/i.test(mime || '') && content.charCodeAt(0) !== 0xFEFF;
+  var blob = new Blob(needBOM ? [BOM, content] : [content], { type: mime });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url; a.download = filename;
@@ -2781,10 +2789,18 @@ function renderUnmatchedList(){
   }
   tbody.innerHTML = filtered.slice(0, 50).map(function(i, idx){
     var deptEmp = [i.department_guess, i.assigned_employee_name].filter(Boolean).join(' · ') || '—';
+    // FIX (2026-09-07): badge เตือน HQ ว่า scanned_qr นี้จริงๆ มีใน master แล้ว (มักเกิดตอนสแกน
+    // /assets/lookup ล่มชั่วคราว frontend เลย fallback มา unmatched) — already_verified = มี scan_log
+    // อยู่แล้วด้วย = ปกติแล้วควรกด Reject รายการ unmatched นี้ทิ้ง
+    var masterBadge = i.already_verified
+      ? ' <span style="background:var(--green-bg,#e6f4ea);color:var(--green-fg,#137333);font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;">Verified แล้ว</span>'
+      : (i.exists_in_master
+          ? ' <span style="background:var(--amber-bg,#fef3e0);color:var(--amber-fg,#b85c00);font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;">อยู่ใน Master</span>'
+          : '');
     return '<tr onclick="openUnmatchedDrawer(' + i.id + ')" style="cursor:pointer;">'
       + '<td>' + (idx + 1) + '</td>'
       + '<td>' + (i.photo_url ? ('<img class="asset-thumb" src="' + i.photo_url + '" alt="">') : '<div class="asset-thumb-placeholder">?</div>') + '</td>'
-      + '<td style="font-family:monospace;font-size:12px;color:var(--ink-2);">' + (i.scanned_qr || '—') + '</td>'
+      + '<td style="font-family:monospace;font-size:12px;color:var(--ink-2);">' + (i.scanned_qr || '—') + masterBadge + '</td>'
       + '<td>' + (i.name_guess || '—') + '</td>'
       + '<td>' + (i.serial_no || '—') + '</td>'
       + '<td>' + deptEmp + '</td>'
@@ -2861,12 +2877,13 @@ async function submitUnmatchedReview(status){
   }
 }
 
-var UM_EXPORT_HEADERS = ['Scanned QR', 'รายละเอียด', 'Serial', 'แผนก', 'พนักงาน', 'สาขา', 'Auditor', 'เวลาสแกน', 'Remark', 'สถานะ'];
+var UM_EXPORT_HEADERS = ['Scanned QR', 'รายละเอียด', 'Serial', 'แผนก', 'พนักงาน', 'สาขา', 'Auditor', 'เวลาสแกน', 'Remark', 'สถานะ', 'อยู่ใน Master?'];
 function exportUnmatchedCSV(){
   closeAllExportMenus();
   var rows = lastUnmatchedExportList.map(function(i){
+    var masterNote = i.already_verified ? 'Verified แล้ว' : (i.exists_in_master ? 'อยู่ใน Master' : '');
     return [i.scanned_qr || '', i.name_guess || '', i.serial_no || '', i.department_guess || '', i.assigned_employee_name || '',
-      i.branch_name || i.branch_id || '', i.auditor || '', formatDateShort(i.scanned_at), i.remark || '', i.status];
+      i.branch_name || i.branch_id || '', i.auditor || '', formatDateShort(i.scanned_at), i.remark || '', i.status, masterNote];
   });
   var meta = buildMetaCSVBlock('Bata Fixed Asset Audit - Unmatched Report', 'ทุกสาขา', rows.length);
   downloadFile('unmatched-' + todayStamp() + '.csv', meta + toCSV(UM_EXPORT_HEADERS, rows), 'text/csv;charset=utf-8;');
