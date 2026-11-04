@@ -1496,3 +1496,6 @@ def health(db=Depends(get_db)):
     cur.execute("SELECT COUNT(*) as cnt FROM assets")
     cnt = cur.fetchone()["cnt"]
     return {"status": "ok", "assets_in_db": cnt}
+
+import wh_import
+wh_import.register(app, get_db, get_current_user)
