@@ -76,14 +76,23 @@ def _read_rows(content: bytes, filename: str):
 
 
 def _classify(cur, pairs, branch_id, session_date):
-    """แยกแถวเป็น matched / not_found / wrong_location / already_scanned"""
-    qr_keys = [c + s for c, s in pairs]
+    """แยกแถวเป็น matched / not_found / wrong_location / already_scanned
+
+    จับคู่ด้วย (asset_code, seq) ไม่ใช่ qr_key — เพราะ qr_key ใน DB มีหลายรูปแบบ
+    (ข้อมูลเก่าเป็น 'รหัส+SEQ+เลขลำดับ' เช่น MAC012015060006SEQ037 ส่วนที่ import ผ่าน Dashboard ใหม่เป็น 'รหัส+ลำดับ')
+    seq เทียบแบบ lpad 3 หลัก กันกรณีเก็บเป็นตัวเลข/ข้อความต่างกัน
+    """
+    codes = [c for c, _ in pairs]
+    seqs = [sq for _, sq in pairs]
     cur.execute(
-        """SELECT id, qr_key, location_code, name FROM assets
-           WHERE qr_key = ANY(%s) AND COALESCE(is_active, true) = true""",
-        (qr_keys,),
+        """SELECT a.id, a.asset_code, lpad(a.seq::text, 3, '0') AS seq3, a.location_code
+           FROM assets a
+           JOIN unnest(%s::text[], %s::text[]) AS t(code, seq) ON a.asset_code = t.code
+                AND lpad(a.seq::text, 3, '0') = lpad(t.seq, 3, '0')
+           WHERE COALESCE(a.is_active, true) = true""",
+        (codes, seqs),
     )
-    found = {r["qr_key"]: r for r in cur.fetchall()}
+    found = {(r["asset_code"], r["seq3"]): r for r in cur.fetchall()}
 
     asset_ids = [r["id"] for r in found.values()]
     scanned = set()
@@ -99,7 +108,7 @@ def _classify(cur, pairs, branch_id, session_date):
     res = {"matched": [], "not_found": [], "wrong_location": [], "already_scanned": []}
     for code, seq in pairs:
         k = code + seq
-        a = found.get(k)
+        a = found.get((code, seq.zfill(3)))
         if not a:
             res["not_found"].append(k)
         elif (a["location_code"] or "").strip() != branch_id:
