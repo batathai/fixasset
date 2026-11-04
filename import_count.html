@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Import ผลตรวจนับ (Excel)</title>
+<style>
+body{font-family:system-ui,'Noto Sans Thai',sans-serif;max-width:640px;margin:24px auto;padding:0 16px;color:#1a1a1a}
+h1{font-size:20px} .card{border:1px solid #ddd;border-radius:10px;padding:16px;margin:16px 0}
+input,button{font:inherit;padding:8px 10px;margin:4px 0;border-radius:6px;border:1px solid #bbb}
+button{background:#111;color:#fff;border:0;cursor:pointer} button:disabled{opacity:.4;cursor:default}
+button.sec{background:#fff;color:#111;border:1px solid #bbb} .err{color:#b00020} .ok{color:#0a7d33}
+table{border-collapse:collapse;width:100%} td{padding:4px 0;border-bottom:1px solid #eee} td:last-child{text-align:right;font-weight:600}
+.hide{display:none}
+</style></head><body>
+<h1>นำเข้าผลตรวจนับจาก Excel</h1>
+<p>แถวในไฟล์ = ตรวจนับพบแล้ว → สถานะจาก Pending เป็น Verified (ระบุที่มาว่า "นำเข้าจาก Excel") สำหรับ hq_admin เท่านั้น</p>
+
+<div class="card" id="loginBox">
+  <b>เข้าสู่ระบบ</b><br>
+  <input id="emp" placeholder="Employee ID"><br>
+  <input id="pw" type="password" placeholder="Password"><br>
+  <button onclick="login()">Login</button> <span id="loginMsg" class="err"></span>
+</div>
+
+<div class="card hide" id="mainBox">
+  <b>1) เลือกไฟล์</b><br>
+  รหัสที่ตั้ง (branch): <input id="branch" value="0068000" size="9"><br>
+  <input type="file" id="file" accept=".xlsx,.xls" onchange="preview()">
+  <div id="prev"></div>
+  <button id="confirmBtn" class="hide" onclick="confirmImport()">2) ยืนยันนำเข้า</button>
+  <div id="result"></div>
+</div>
+
+<div class="card hide" id="undoBox">
+  <b>ประวัติล่าสุด</b> <button class="sec" onclick="loadBatches()">รีเฟรช</button>
+  <div id="batches"></div>
+</div>
+
+<script>
+var API='https://bata-asset-api-production.up.railway.app', token=null;
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+async function api(path,opt){
+  opt=opt||{}; opt.headers=Object.assign({},opt.headers,{Authorization:'Bearer '+token});
+  var r=await fetch(API+path,opt), t=await r.text(), d; try{d=JSON.parse(t)}catch(e){d={detail:t}}
+  if(!r.ok) throw new Error(typeof d.detail==='string'?d.detail:JSON.stringify(d.detail));
+  return d;
+}
+async function login(){
+  try{
+    var r=await fetch(API+'/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({employee_id:emp.value.trim(),password:pw.value,branch_id:'HQ'})});
+    var d=await r.json(); if(!r.ok) throw new Error(d.detail||'login failed');
+    if(d.role!=='hq_admin') throw new Error('ต้องเป็น hq_admin');
+    token=d.token; loginBox.classList.add('hide'); mainBox.classList.remove('hide'); undoBox.classList.remove('hide'); loadBatches();
+  }catch(e){loginMsg.textContent=e.message}
+}
+function fd(){var f=new FormData(); f.append('file',file.files[0]); f.append('branch_id',branch.value.trim()); return f}
+async function preview(){
+  prev.innerHTML='กำลังตรวจไฟล์...'; confirmBtn.classList.add('hide'); result.textContent='';
+  try{
+    var d=await api('/hq/scans/import-count/preview',{method:'POST',body:fd()});
+    prev.innerHTML='<table>'
+     +'<tr><td>แถวในไฟล์</td><td>'+d.file_rows+'</td></tr>'
+     +'<tr><td>จะนำเข้า (Pending → Verified)</td><td class="ok">'+d.will_insert+'</td></tr>'
+     +'<tr><td>ซ้ำ — สแกน/นำเข้าแล้ววันนี้ (ข้าม)</td><td>'+d.already_scanned+'</td></tr>'
+     +'<tr><td>ไม่พบใน Master (ข้าม)</td><td>'+d.not_found+'</td></tr>'
+     +'<tr><td>ที่ตั้งไม่ตรง branch (ข้าม)</td><td>'+d.wrong_location+'</td></tr>'
+     +'<tr><td>Asset ทั้งหมดของ branch</td><td>'+d.branch_total_assets+'</td></tr></table>'
+     +(d.sample_not_found.length?'<p>ตัวอย่างที่ไม่พบ: '+esc(d.sample_not_found.join(', '))+'</p>':'');
+    if(d.will_insert>0) confirmBtn.classList.remove('hide');
+  }catch(e){prev.innerHTML='<p class="err">'+esc(e.message)+'</p>'}
+}
+async function confirmImport(){
+  if(!confirm('ยืนยันนำเข้า? (Undo ได้ภายหลัง)')) return;
+  confirmBtn.disabled=true;
+  try{
+    var d=await api('/hq/scans/import-count/confirm',{method:'POST',body:fd()});
+    result.innerHTML='<p class="ok">นำเข้า '+d.inserted+' รายการ (ข้าม '+d.skipped+') — batch #'+d.batch_id+'</p>';
+    confirmBtn.classList.add('hide'); loadBatches();
+  }catch(e){result.innerHTML='<p class="err">'+esc(e.message)+'</p>'}
+  confirmBtn.disabled=false;
+}
+async function loadBatches(){
+  try{
+    var d=await api('/hq/scans/import-count/batches');
+    batches.innerHTML='<table>'+d.batches.map(function(b){
+      return '<tr><td>#'+b.id+' '+esc(b.file_name||'')+' — '+b.inserted+' รายการ'+(b.is_undone?' (undo แล้ว)':'')+'</td><td>'
+       +(b.is_undone?'':'<button class="sec" onclick="undo('+b.id+')">Undo</button>')+'</td></tr>';
+    }).join('')+'</table>';
+  }catch(e){batches.innerHTML='<p class="err">'+esc(e.message)+'</p>'}
+}
+async function undo(id){
+  if(!confirm('Undo batch #'+id+' ? รายการจะกลับเป็น Pending')) return;
+  try{ var d=await api('/hq/scans/import-count/batches/'+id+'/undo',{method:'POST'}); alert('ลบแล้ว '+d.removed+' รายการ'); loadBatches(); }
+  catch(e){alert(e.message)}
+}
+</script></body></html>
