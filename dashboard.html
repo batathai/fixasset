@@ -18,9 +18,9 @@
     /* neutrals */
     --ink:#14161B; --ink-2:#4A505C; --ink-3:#7B8290; --ink-4:#B8BDC8;
     --line:#E4E7EC; --line-2:#D3D8E0;
-    --page:#EDEFF3;
+    --page:#F3F5F9;
     --surface:#FFFFFF; --surface-1:#F7F8FA; --surface-2:#EEF0F4;
-    --rail:#14161B; --rail-2:#1E2128; --rail-ink:#AEB4C0;
+    --rail:#0F1A2B; --rail-2:#1A2940; --rail-ink:#B4BECE;
     /* status (ใช้ทั้งใน CSS และ inline style ของ JS) */
     --green-bg:#E8F6EE; --green-fg:#17753A;
     --amber-bg:#FEF1DC; --amber-fg:#92600A;
@@ -29,8 +29,8 @@
     --orange-bg:#FDEDE0; --orange-fg:#B0560F;
     --blue-bg:#E8F1FD; --blue-fg:#1B5FC4;
     /* shape */
-    --r-sm:6px; --r-md:10px; --r-lg:14px;
-    --sh-xs:0 1px 0 rgba(20,22,27,.04);
+    --r-sm:8px; --r-md:12px; --r-lg:16px;
+    --sh-xs:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
     --sh-md:0 6px 20px rgba(20,22,27,.08);
     --sh-lg:0 18px 48px rgba(20,22,27,.22);
     --font:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -249,10 +249,6 @@
   .bg-col.done .bg-card{border-left-color:var(--green-fg);}
 
   /* ---------- needs-attention bar / load more ---------- */
-  .attention-bar{display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--purple-bg);color:var(--purple-fg);border:1px solid #DCD3F5;border-radius:var(--r-md);padding:11px 16px;font-size:14px;margin-bottom:16px;}
-  .attention-bar b{font-weight:600;}
-  .attention-bar button{background:var(--purple-fg);color:#fff;border:none;border-radius:var(--r-sm);padding:7px 14px;font-size:13px;font-weight:600;}
-  .attention-bar button:hover{background:#4F32A8;}
   .load-more-row{display:flex;justify-content:center;gap:10px;padding:16px;border-top:1px solid var(--line);background:var(--surface-1);}
   .load-more-left{color:var(--ink-3);}
   .asset-name > span{font-size:12.5px !important;}
@@ -341,8 +337,56 @@
   .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:var(--r-md);padding:11px 20px;font-size:13.5px;z-index:950;opacity:0;transition:all .2s;pointer-events:none;box-shadow:var(--sh-lg);}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+  /* ---------- Home dashboard (ภาพรวมทุกสาขา — ข้อมูลจริงเท่านั้น) ---------- */
+  #storeChips,#storeChipsToggle{display:none !important;}
+  .home-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(176px,1fr));gap:14px;margin-bottom:18px;}
+  .kpi-tile{display:flex;flex-direction:column;gap:4px;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid transparent;border-radius:var(--r-lg);padding:16px 18px 15px;box-shadow:var(--sh-xs);cursor:pointer;transition:box-shadow .12s ease,border-color .12s ease;}
+  .kpi-tile:hover{box-shadow:var(--sh-md);border-color:var(--line-2);}
+  .kpi-tile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .kpi-label{font-size:13.5px;font-weight:600;color:var(--ink-2);padding-top:2px;}
+  .kpi-icon,.attn-icon{display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;background:var(--c-bg);color:var(--c);}
+  .kpi-icon{width:40px;height:40px;}
+  .kpi-icon svg,.attn-icon svg{width:20px;height:20px;}
+  .kpi-num{font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-.02em;}
+  .kpi-note{font-size:12.5px;color:var(--ink-3);}
+  .c-blue{--c:var(--blue-fg);--c-bg:var(--blue-bg);} .c-green{--c:var(--green-fg);--c-bg:var(--green-bg);}
+  .c-amber{--c:var(--amber-fg);--c-bg:var(--amber-bg);} .c-red{--c:var(--red-fg);--c-bg:var(--red-bg2);}
+  .c-purple{--c:var(--purple-fg);--c-bg:var(--purple-bg);} .c-teal{--c:#0E7C86;--c-bg:#E2F5F6;}
+  .home-section{background:var(--surface);border-radius:var(--r-lg);padding:18px 20px 20px;box-shadow:var(--sh-xs);margin-bottom:18px;}
+  .home-section-title{font-size:16px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em;}
+  .home-section-sub{font-size:13px;color:var(--ink-3);font-weight:400;margin-left:6px;}
+  .attn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
+  .attn-card{display:flex;align-items:center;gap:14px;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-bottom:4px solid var(--c);border-radius:var(--r-md);padding:14px 16px;cursor:pointer;transition:box-shadow .12s ease;}
+  .attn-card:hover{box-shadow:var(--sh-md);}
+  .attn-icon{width:46px;height:46px;}
+  .attn-num{font-size:28px;line-height:1.1;font-weight:700;letter-spacing:-.02em;}
+  .attn-label{font-size:13.5px;font-weight:600;}
+  .attn-sub{font-size:12px;color:var(--ink-3);}
+  .home-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:18px;}
+  .stack-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--surface-2);margin-bottom:16px;}
+  .stack-bar span{display:block;height:100%;}
+  .stack-bar .sb-done{background:var(--green-fg);} .stack-bar .sb-progress{background:#E5A100;} .stack-bar .sb-none{background:var(--ink-4);}
+  .legend-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px;}
+  .legend-row:first-of-type{border-top:none;}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+  .legend-row b{margin-left:auto;font-size:16px;font-weight:700;}
+  .overall-pct{font-size:52px;line-height:1.05;font-weight:700;letter-spacing:-.03em;margin:0;}
+  .overall-sub{font-size:13px;color:var(--ink-3);margin:2px 0 18px;}
+  .legend-note{font-size:12.5px;color:var(--ink-3);margin-top:8px;}
+  .branch-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:none;border-top:1px solid var(--line);padding:10px 4px;cursor:pointer;border-radius:0;}
+  .branch-row:first-child{border-top:none;}
+  .branch-row:hover{background:var(--surface-1);}
+  .branch-row-name{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .branch-row-left{font-size:13px;color:var(--amber-fg);font-weight:600;}
+  .branch-row-bar{grid-column:1 / -1;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;}
+  .branch-row-bar i{display:block;height:100%;background:var(--green-fg);border-radius:3px;}
+  .home-empty{font-size:13.5px;color:var(--ink-3);padding:8px 0;}
+  .workspace-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:6px 0 12px;scroll-margin-top:80px;}
+  .workspace-head .home-section-title{margin:0;}
+
   /* ---------- responsive ---------- */
   @media (max-width:1100px){
+    .home-cols{grid-template-columns:1fr;}
     .as-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
     .summary-main{grid-template-columns:1fr;gap:18px;}
   }
@@ -376,7 +420,7 @@
 <style media="print">
   .sidebar, .content-header, .toolbar, .as-toolbar, .hq-strip, .store-switcher, .store-chips,
   .as-pagination, .login-overlay, .data-source-banner, .as-row-actions, .row-more-menu,
-  .as-modal-overlay, .export-menu, .attention-bar, .chips-toggle, .load-more-row { display: none !important; }
+  .as-modal-overlay, .export-menu, .chips-toggle, .load-more-row, .home-dash, .workspace-head { display: none !important; }
   .content-body { padding: 0; }
   .app { display: block; }
   body { background: #fff; }
@@ -450,7 +494,7 @@
     <div class="sb-nav">
       <div class="nav-item active" id="navOverview" onclick="showPage('overview')">
         <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
-        Overview
+        Dashboard
       </div>
       <div class="nav-item" id="navBranchGrid" onclick="showPage('branchGrid')">
         <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
@@ -485,7 +529,7 @@
 
   <div class="content">
     <div class="content-header">
-      <p class="content-title" id="pageTitle">Overview</p>
+      <p class="content-title" id="pageTitle">Dashboard</p>
     </div>
 
     <div class="content-body">
@@ -522,21 +566,95 @@
           </div>
         </div>
 
+        <div class="home-dash" id="homeDash">
+    <div class="home-kpis">
+      <button class="kpi-tile c-blue" onclick="goAssetSummary('all')">
+        <span class="kpi-tile-top"><span class="kpi-label">ทรัพย์สินรวม</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></span></span>
+        <span class="kpi-num" id="hmTotal">—</span>
+        <span class="kpi-note" id="hmTotalNote">รวมทุกสาขา</span>
+      </button>
+      <button class="kpi-tile c-green" onclick="goAssetSummary('verified')">
+        <span class="kpi-tile-top"><span class="kpi-label">สแกนแล้ว</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg></span></span>
+        <span class="kpi-num" id="hmVerified">—</span>
+        <span class="kpi-note" id="hmVerifiedNote"></span>
+      </button>
+      <button class="kpi-tile c-amber" onclick="goAssetSummary('pending')">
+        <span class="kpi-tile-top"><span class="kpi-label">ยังไม่ได้สแกน</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></span>
+        <span class="kpi-num" id="hmRemaining">—</span>
+        <span class="kpi-note" id="hmRemainingNote"></span>
+      </button>
+      <button class="kpi-tile c-red" onclick="goAssetSummary('all')">
+        <span class="kpi-tile-top"><span class="kpi-label">ผิดปกติ</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l9.5 16.5h-19L12 3.5z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.3" r=".7" fill="currentColor"/></svg></span></span>
+        <span class="kpi-num" id="hmExceptions">—</span>
+        <span class="kpi-note" id="hmExceptionsNote">ต้องตรวจสอบเพิ่ม</span>
+      </button>
+      <button class="kpi-tile c-teal" onclick="showPage('branchGrid')">
+        <span class="kpi-tile-top"><span class="kpi-label">สาขาตรวจครบ</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h12l-2 4 2 4H5"/></svg></span></span>
+        <span class="kpi-num" id="hmBranchesDone">—</span>
+        <span class="kpi-note" id="hmBranchesNote"></span>
+      </button>
+      <button class="kpi-tile c-purple" onclick="showPage('unmatched')">
+        <span class="kpi-tile-top"><span class="kpi-label">รอตรวจสอบ</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.5"/><circle cx="12" cy="16.7" r=".8" fill="currentColor"/></svg></span></span>
+        <span class="kpi-num" id="hmUnmatched">—</span>
+        <span class="kpi-note" id="hmUnmatchedNote">ไม่พบใน Master</span>
+      </button>
+    </div>
+
+    <section class="home-section">
+      <h2 class="home-section-title">สิ่งที่ต้องดูแล</h2>
+      <div class="attn-grid">
+        <button class="attn-card c-purple" onclick="showPage('unmatched')">
+          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.5"/><circle cx="12" cy="16.7" r=".8" fill="currentColor"/></svg></span>
+          <span><span class="attn-num" id="atUnmatched">—</span><br><span class="attn-label">ไม่พบใน Master</span><br><span class="attn-sub">รอ HQ ตรวจสอบและจับคู่</span></span>
+        </button>
+        <button class="attn-card c-red" onclick="goAssetSummary('missing')">
+          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg></span>
+          <span><span class="attn-num" id="atMissing">—</span><br><span class="attn-label">ไม่พบตัวทรัพย์สิน</span><br><span class="attn-sub">สถานะ Missing</span></span>
+        </button>
+        <button class="attn-card c-amber" onclick="goAssetSummary('damaged')">
+          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg></span>
+          <span><span class="attn-num" id="atDamaged">—</span><br><span class="attn-label">เสียหาย</span><br><span class="attn-sub">สถานะ Damaged</span></span>
+        </button>
+        <button class="attn-card c-blue" onclick="showPage('branchGrid')">
+          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg></span>
+          <span><span class="attn-num" id="atNotStarted">—</span><br><span class="attn-label">สาขาที่ยังไม่เริ่มตรวจ</span><br><span class="attn-sub">มี asset แต่ยังไม่สแกนเลย</span></span>
+        </button>
+      </div>
+    </section>
+
+    <div class="home-cols">
+      <section class="home-section">
+        <h2 class="home-section-title">ความคืบหน้ารายสาขา</h2>
+        <p class="overall-pct" id="hmOverallPct">—</p>
+        <p class="overall-sub">ของทรัพย์สินทั้งหมดสแกนแล้ว</p>
+        <div class="stack-bar" id="hmStackBar"><span class="sb-done" style="width:0"></span><span class="sb-progress" style="width:0"></span><span class="sb-none" style="width:0"></span></div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--green-fg)"></span>ตรวจครบแล้ว<b id="hmBrDone">—</b></div>
+        <div class="legend-row"><span class="legend-dot" style="background:#E5A100"></span>กำลังตรวจ<b id="hmBrProgress">—</b></div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--ink-4)"></span>ยังไม่เริ่ม<b id="hmBrNotStarted">—</b></div>
+        <p class="legend-note" id="hmBrEmptyNote"></p>
+      </section>
+      <section class="home-section">
+        <h2 class="home-section-title">สาขาที่ยังเหลือมากที่สุด<span class="home-section-sub">เฉพาะสาขาที่กำลังตรวจ — คลิกเพื่อดูรายละเอียด</span></h2>
+        <div id="hmTopBranches"></div>
+      </section>
+    </div>
+  </div>
+
+        <div class="workspace-head" id="branchWorkspace">
+          <h2 class="home-section-title">รายละเอียดรายสาขา</h2>
+          <span class="home-section-sub">พิมพ์ชื่อหรือรหัสสาขาเพื่อเลือกดู</span>
+        </div>
+
         <div class="store-switcher">
           <div class="store-search-box">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-            <input type="text" id="storeSwitchInput" list="storeDatalist" autocomplete="off" placeholder="พิมพ์ชื่อหรือรหัสสาขา (จาก 200 สาขา)" onchange="handleStoreSwitch(this.value)" onkeyup="if(event.key==='Enter') handleStoreSwitch(this.value)">
+            <input type="text" id="storeSwitchInput" list="storeDatalist" autocomplete="off" placeholder="พิมพ์ชื่อหรือรหัสสาขา (197 สาขา)" onchange="handleStoreSwitch(this.value)" onkeyup="if(event.key==='Enter') handleStoreSwitch(this.value)">
           </div>
           <datalist id="storeDatalist"></datalist>
         </div>
 
         <div class="store-chips" id="storeChips"></div>
         <button class="chips-toggle" id="storeChipsToggle" onclick="toggleStoreChips()">ดูสาขาทั้งหมด</button>
-
-        <div class="attention-bar" id="unmatchedAttention">
-          <span id="unmatchedAttentionText"></span>
-          <button onclick="showPage('unmatched')">ตรวจสอบรายการ</button>
-        </div>
 
         <div class="summary-card">
           <div class="summary-top">
@@ -1951,6 +2069,7 @@ function renderSummary(){
   document.getElementById('sumRemainCaption').textContent = remaining.toLocaleString() + ' assets remaining';
   document.getElementById('sumCycle').textContent = cycleLabelFor(s.name);
   renderDeptFilterChips();
+  renderHomeDashboard();
 }
 
 function cycleLabelFor(branchCode){
@@ -2115,6 +2234,92 @@ function renderAssetList(){
         + '<button class="btn-outline" onclick="showAllAssets()">แสดงทั้งหมด</button></div>')
     : '');
 }
+
+// ── HOME DASHBOARD (ภาพรวมทุกสาขา) ──────────────────────────────────
+// ตัวเลขทั้งหมดคำนวณจาก stores[] / assetsByStore / unmatchedItems ที่โหลดจาก API จริง — ไม่มีข้อมูลตัวอย่าง
+// นิยามเดียวกับการ์ดสรุปรายสาขา: Remaining = total - scanned, Exceptions = missing+damaged+unmatched
+function _hmEsc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function _hmSet(id, text){ var el = document.getElementById(id); if(el) el.textContent = text; }
+function goAssetSummary(key){
+  showPage('assetSummary');
+  var sel = document.getElementById('asStatusFilter');
+  if(key === 'damaged'){ if(sel) sel.value = 'damaged'; setAsKpiFilter('all'); }
+  else { if(sel) sel.value = 'all'; setAsKpiFilter(key); }
+}
+function renderHomeDashboard(){
+  if(!document.getElementById('homeDash')) return;
+  var total = 0, scanned = 0, exceptions = 0, missing = 0, damaged = 0;
+  var br = { done: 0, progress: 0, notstarted: 0, empty: 0 };
+  var open = [];
+  stores.forEach(function(s){
+    total += s.total; scanned += s.scanned; exceptions += s.exceptions;
+    if(s.total === 0) br.empty++;
+    else if(s.scanned === 0) br.notstarted++;
+    else if(s.scanned === s.total) br.done++;
+    else { br.progress++; open.push(s); }
+  });
+  Object.keys(assetsByStore).forEach(function(k){
+    assetsByStore[k].forEach(function(a){
+      if(a.status === 'missing') missing++;
+      else if(a.status === 'damaged') damaged++;
+    });
+  });
+  var withAssets = stores.length - br.empty;
+  var remaining = total - scanned;
+  var pct = total > 0 ? Math.round(scanned / total * 100) : 0;
+  var umPending = (typeof unmatchedItems !== 'undefined' && Array.isArray(unmatchedItems))
+    ? unmatchedItems.filter(function(i){ return i.status === 'pending'; }).length : 0;
+
+  _hmSet('hmTotal', total.toLocaleString());
+  _hmSet('hmTotalNote', 'ใน ' + withAssets.toLocaleString() + ' สาขา');
+  _hmSet('hmVerified', scanned.toLocaleString());
+  _hmSet('hmVerifiedNote', pct + '% ของทั้งหมด');
+  _hmSet('hmOverallPct', pct + '%');
+  _hmSet('hmRemaining', remaining.toLocaleString());
+  _hmSet('hmRemainingNote', 'เหลือตรวจอีก ' + (100 - pct) + '%');
+  _hmSet('hmExceptions', exceptions.toLocaleString());
+  _hmSet('hmBranchesDone', br.done.toLocaleString());
+  _hmSet('hmBranchesNote', 'จาก ' + withAssets.toLocaleString() + ' สาขา');
+  _hmSet('hmUnmatched', umPending.toLocaleString());
+  _hmSet('atUnmatched', umPending.toLocaleString());
+  _hmSet('atMissing', missing.toLocaleString());
+  _hmSet('atDamaged', damaged.toLocaleString());
+  _hmSet('atNotStarted', br.notstarted.toLocaleString());
+
+  _hmSet('hmBrDone', br.done.toLocaleString());
+  _hmSet('hmBrProgress', br.progress.toLocaleString());
+  _hmSet('hmBrNotStarted', br.notstarted.toLocaleString());
+  _hmSet('hmBrEmptyNote', br.empty > 0 ? ('ยังไม่มี asset ใน master อีก ' + br.empty.toLocaleString() + ' สาขา (ไม่นับในแถบด้านบน)') : '');
+  var bar = document.getElementById('hmStackBar');
+  if(bar && bar.children.length === 3){
+    var w = function(n){ return (withAssets > 0 ? (n / withAssets * 100) : 0) + '%'; };
+    bar.children[0].style.width = w(br.done);
+    bar.children[1].style.width = w(br.progress);
+    bar.children[2].style.width = w(br.notstarted);
+  }
+
+  open.sort(function(a, b){ return (b.total - b.scanned) - (a.total - a.scanned); });
+  var top = open.slice(0, 8);
+  var list = document.getElementById('hmTopBranches');
+  if(list){
+    list.innerHTML = top.length ? top.map(function(s){
+      var left = s.total - s.scanned;
+      var p = s.total > 0 ? Math.round(s.scanned / s.total * 100) : 0;
+      var label = (s.displayName || s.name);
+      return '<button class="branch-row" data-store="' + _hmEsc(s.name) + '" title="' + _hmEsc(label) + '">'
+        + '<span class="branch-row-name">' + _hmEsc(label) + '</span>'
+        + '<span class="branch-row-left">เหลือ ' + left.toLocaleString() + ' · ' + p + '%</span>'
+        + '<span class="branch-row-bar"><i style="width:' + p + '%"></i></span></button>';
+    }).join('') : '<p class="home-empty">ยังไม่มีสาขาที่กำลังตรวจอยู่</p>';
+  }
+}
+document.addEventListener('click', function(e){
+  var b = e.target.closest ? e.target.closest('.branch-row[data-store]') : null;
+  if(!b) return;
+  selectStore(b.getAttribute('data-store'));
+  var w = document.getElementById('branchWorkspace');
+  if(w) w.scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
 
 function showMoreAssets(){ overviewVisibleCount += OVERVIEW_PAGE_SIZE; renderAssetList(); }
 function showAllAssets(){ overviewVisibleCount = Infinity; renderAssetList(); }
@@ -2699,7 +2904,7 @@ function showPage(name){
   } else if(name === 'overview'){
     document.getElementById('pageOverview').classList.add('active');
     document.getElementById('navOverview').classList.add('active');
-    document.getElementById('pageTitle').textContent = 'Overview';
+    document.getElementById('pageTitle').textContent = 'Dashboard';
     setTimeout(function(){ document.getElementById('assetSearch').focus(); }, 0);
   } else if(name === 'assetSummary'){
     document.getElementById('pageAssetSummary').classList.add('active');
@@ -2871,11 +3076,7 @@ function updateUnmatchedBadge(){
   var pending = unmatchedItems.filter(function(i){ return i.status === 'pending'; }).length;
   if(pending > 0){ badge.textContent = pending > 99 ? '99+' : pending; badge.style.display = 'inline-block'; }
   else { badge.style.display = 'none'; }
-  var bar = document.getElementById('unmatchedAttention');
-  if(bar){
-    document.getElementById('unmatchedAttentionText').innerHTML = 'มี <b>' + pending.toLocaleString() + ' รายการ</b> ที่สแกนแล้วไม่พบใน Master รอตรวจสอบ';
-    bar.style.display = pending > 0 ? 'flex' : 'none';
-  }
+  renderHomeDashboard();
 }
 
 function populateUnmatchedBranchFilter(){
