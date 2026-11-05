@@ -113,6 +113,45 @@
   .conn-status[data-state="down"]{color:var(--red-fg);}
   .conn-status[data-state="checking"] .conn-dot{animation:connPulse 1s ease-in-out infinite;}
   @keyframes connPulse{50%{opacity:.35;}}
+
+  /* ===== Login hero: 3D asset box + barcode scan (decorative) ===== */
+  .fa-scene{position:relative;flex:1;min-height:230px;margin:6px 0 4px;perspective:900px;overflow:hidden;}
+  .fa-stage{position:absolute;left:50%;top:43%;width:0;height:0;transform-style:preserve-3d;transform:rotateX(-20deg);}
+  .fa-floor{position:absolute;left:-140px;top:-140px;width:280px;height:280px;border-radius:50%;transform:translateY(80px) rotateX(90deg);
+    background:radial-gradient(circle,rgba(0,0,0,.28) 0,rgba(0,0,0,.12) 34%,transparent 62%);border:1.5px solid rgba(255,255,255,.22);box-shadow:inset 0 0 0 26px rgba(255,255,255,.04);}
+  .fa-main{position:absolute;left:0;top:0;transform-style:preserve-3d;animation:faBob 4.4s ease-in-out infinite;}
+  .fa-orbit{position:absolute;left:0;top:0;transform-style:preserve-3d;transform:translateY(54px);animation:faOrbit var(--dur) linear infinite;animation-delay:var(--d);}
+  .fa-bob{position:absolute;left:0;top:0;transform-style:preserve-3d;transform:translateX(var(--r));animation:faBob 3.2s ease-in-out infinite;}
+  .fa-cube{position:absolute;transform-style:preserve-3d;animation:faSpin 14s linear infinite;}
+  .fa-orbit .fa-cube{animation-duration:7s;}
+  .fa-cube-main{animation-duration:16s;}
+  .fa-cube i{position:absolute;inset:0;display:block;border:1px solid rgba(20,22,27,.12);}
+  .fa-cube .f-front{background:#fff;}
+  .fa-cube .f-back{background:#EBC4CB;}
+  .fa-cube .f-right{background:#EFCDD3;}
+  .fa-cube .f-left{background:#F6DFE3;}
+  .fa-cube .f-top{background:#FFF4F6;}
+  .fa-cube .f-bottom{background:#B84A60;}
+  .fa-cube .f-top.tape,.fa-cube .f-front.tape{background-image:linear-gradient(90deg,transparent 38%,rgba(200,16,46,.9) 38% 62%,transparent 62%);}
+  .fa-cube .bc{position:absolute;left:14%;right:14%;top:30%;bottom:22%;background:#fff;border-radius:2px;
+    background-image:repeating-linear-gradient(90deg,#14161B 0 2px,transparent 2px 4px,#14161B 4px 5px,transparent 5px 8px,#14161B 8px 11px,transparent 11px 12px);}
+  .fa-cube .tag{position:absolute;left:14%;top:10%;font:700 9px/1 var(--mono);letter-spacing:.06em;color:var(--red-500);}
+  .fa-laser{position:absolute;left:50%;top:43%;width:210px;height:2px;margin-left:-105px;border-radius:2px;pointer-events:none;
+    background:linear-gradient(90deg,transparent,#fff 18%,#fff 82%,transparent);box-shadow:0 0 14px 3px rgba(255,255,255,.75),0 0 40px 10px rgba(255,255,255,.28);
+    animation:faScan 2.6s ease-in-out infinite alternate;}
+  .fa-chip{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);background:#fff;color:var(--red-600);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.22);white-space:nowrap;opacity:0;animation:faChip 5.2s ease-in-out infinite;}
+  .fa-chip b{color:var(--green-fg);margin-right:2px;}
+  @keyframes faSpin{to{transform:rotateY(360deg);}}
+  @keyframes faOrbit{to{transform:translateY(54px) rotateY(360deg);}}
+  @keyframes faBob{50%{translate:0 -8px;}}
+  @keyframes faScan{from{transform:translateY(-52px);}to{transform:translateY(52px);}}
+  @keyframes faChip{0%,52%{opacity:0;transform:translate(-50%,10px) scale(.9);}60%,88%{opacity:1;transform:translate(-50%,0) scale(1);}100%{opacity:0;transform:translate(-50%,-4px) scale(1);}}
+  @media (prefers-reduced-motion:reduce){
+    .fa-main,.fa-orbit,.fa-bob,.fa-cube,.fa-laser,.fa-chip{animation:none !important;}
+    .fa-chip{opacity:1;}
+    .fa-cube{transform:rotateY(-28deg);}
+    .fa-laser{display:none;}
+  }
   .login-sub code{font-family:var(--mono);background:var(--surface-2);padding:1px 5px;border-radius:4px;}
 
   /* ---------- banners ---------- */
@@ -502,6 +541,17 @@
   <div class="login-box">
     <div class="login-aside">
       <div class="login-wordmark"><b>BATA</b><span>THAILAND</span></div>
+      <div class="fa-scene" aria-hidden="true">
+        <div class="fa-stage">
+          <div class="fa-floor"></div>
+          <div class="fa-orbit" style="--dur:16s;--r:112px;--d:0s"><div class="fa-bob"><div class="fa-cube" data-s="30"></div></div></div>
+          <div class="fa-orbit" style="--dur:22s;--r:92px;--d:-9s"><div class="fa-bob"><div class="fa-cube" data-s="22"></div></div></div>
+          <div class="fa-orbit" style="--dur:19s;--r:128px;--d:-5s"><div class="fa-bob"><div class="fa-cube" data-s="26"></div></div></div>
+          <div class="fa-main"><div class="fa-cube fa-cube-main" data-s="108" data-bc="1"></div></div>
+        </div>
+        <div class="fa-laser"></div>
+        <div class="fa-chip"><b>✓</b> พบสินทรัพย์</div>
+      </div>
       <p class="login-tagline">ติดตามการตรวจนับสินทรัพย์ของทุกสาขาได้ในที่เดียว</p>
     </div>
     <div class="login-form">
@@ -1230,6 +1280,28 @@ function checkApiConnection(){
     .catch(function(){ box.dataset.state = 'down'; txt.textContent = 'เชื่อมต่อระบบไม่ได้'; })
     .then(function(){ clearTimeout(timer); });
 }
+
+// สร้างกล่อง 3D (6 หน้า) สำหรับฉากตกแต่งหน้า login
+(function(){
+  var cubes = document.querySelectorAll('.fa-cube[data-s]');
+  for(var n = 0; n < cubes.length; n++){
+    var c = cubes[n], sz = parseInt(c.getAttribute('data-s'), 10) || 40, h = sz / 2, bc = c.getAttribute('data-bc') === '1';
+    c.style.width = sz + 'px'; c.style.height = sz + 'px'; c.style.left = (-h) + 'px'; c.style.top = (-h) + 'px';
+    var faces = [['front','translateZ(' + h + 'px)'],['back','rotateY(180deg) translateZ(' + h + 'px)'],
+                 ['right','rotateY(90deg) translateZ(' + h + 'px)'],['left','rotateY(-90deg) translateZ(' + h + 'px)'],
+                 ['top','rotateX(90deg) translateZ(' + h + 'px)'],['bottom','rotateX(-90deg) translateZ(' + h + 'px)']];
+    for(var k = 0; k < faces.length; k++){
+      var f = document.createElement('i');
+      f.className = 'f-' + faces[k][0] + (!bc && (faces[k][0] === 'top') ? ' tape' : '') + (bc && faces[k][0] === 'top' ? ' tape' : '');
+      f.style.transform = faces[k][1];
+      if(bc && (faces[k][0] === 'front' || faces[k][0] === 'right' || faces[k][0] === 'left' || faces[k][0] === 'back')){
+        f.innerHTML = '<span class="tag">ASSET</span><span class="bc"></span>';
+      }
+      c.appendChild(f);
+    }
+  }
+})();
+
 checkApiConnection();
 setInterval(function(){
   var ov = document.getElementById('loginOverlay');
