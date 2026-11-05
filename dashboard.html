@@ -38,7 +38,7 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{font-family:var(--font);background:var(--page);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;}
+  body{font-family:var(--font);background:var(--page);color:var(--ink);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;}
   button{font-family:inherit;cursor:pointer;}
   textarea,select,input{font-family:inherit;}
   :focus-visible{outline:2px solid var(--red-500);outline-offset:2px;}
@@ -173,7 +173,7 @@
   .as-table-wrap{background:var(--surface);border:1px solid var(--line);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);overflow-x:auto;box-shadow:var(--sh-xs);}
   .as-table{width:100%;border-collapse:collapse;min-width:900px;}
   .as-table th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:10px 16px;background:var(--surface-1);border-top:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap;}
-  .as-table td{padding:11px 16px;border-bottom:1px solid var(--line);font-size:13.5px;white-space:nowrap;}
+  .as-table td{padding:12px 16px;border-bottom:1px solid var(--line);font-size:14.5px;white-space:nowrap;}
   .as-table tr:last-child td{border-bottom:none;}
   .as-table tbody tr:hover td{background:var(--surface-1);}
   .as-pagination{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line);}
@@ -201,10 +201,12 @@
   .store-search-box{flex:1;min-width:240px;max-width:380px;}
   .search-box{flex:1;min-width:200px;}
   .store-search-box input,.search-box input{border:none;background:none;outline:none;font-size:13.5px;width:100%;color:var(--ink);}
-  .store-chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:18px;padding-bottom:4px;}
+  .store-chips{display:flex;flex-wrap:wrap;gap:8px;max-height:73px;overflow:hidden;margin-bottom:8px;}
+  .store-chips.expanded{max-height:none;}
+  .chips-toggle{display:none;background:none;border:none;color:var(--red-600);font-size:13px;font-weight:600;padding:2px 0;margin-bottom:16px;text-decoration:underline;text-underline-offset:3px;}
   .store-chip{flex-shrink:0;font-size:13px;font-weight:500;padding:7px 14px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);white-space:nowrap;transition:border-color .12s ease;}
   .store-chip:hover{border-color:var(--ink-3);}
-  .store-chip.active{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600;}
+  .store-chip.active{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600;order:-1;}
   .filter-chips{display:flex;gap:6px;flex-wrap:wrap;}
   .f-chip{font-size:12.5px;font-weight:500;padding:6px 13px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);}
   .f-chip:hover{border-color:var(--ink-3);}
@@ -246,6 +248,15 @@
   .bg-col.open .bg-card{border-left-color:var(--red-fg);}
   .bg-col.done .bg-card{border-left-color:var(--green-fg);}
 
+  /* ---------- needs-attention bar / load more ---------- */
+  .attention-bar{display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--purple-bg);color:var(--purple-fg);border:1px solid #DCD3F5;border-radius:var(--r-md);padding:11px 16px;font-size:14px;margin-bottom:16px;}
+  .attention-bar b{font-weight:600;}
+  .attention-bar button{background:var(--purple-fg);color:#fff;border:none;border-radius:var(--r-sm);padding:7px 14px;font-size:13px;font-weight:600;}
+  .attention-bar button:hover{background:#4F32A8;}
+  .load-more-row{display:flex;justify-content:center;gap:10px;padding:16px;border-top:1px solid var(--line);background:var(--surface-1);}
+  .load-more-left{color:var(--ink-3);}
+  .asset-name > span{font-size:12.5px !important;}
+
   /* ---------- toolbar ---------- */
   .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
   .result-count{font-size:13px;color:var(--ink-2);margin:0 0 10px;}
@@ -263,8 +274,8 @@
 
   /* ---------- asset list (Overview) ---------- */
   .asset-table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);}
-  .asset-head{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;background:var(--surface-1);border-bottom:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--ink-2);}
-  .asset-row{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13.5px;cursor:pointer;}
+  .asset-head{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;background:var(--surface-1);border-bottom:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink-2);}
+  .asset-row{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:14.5px;cursor:pointer;}
   .asset-table.office-view .asset-head,
   .asset-table.office-view .asset-row{grid-template-columns:52px 1.1fr .8fr .7fr .8fr .9fr 50px .8fr 80px 120px;}
   .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 8px;margin-left:5px;white-space:nowrap;}
@@ -365,7 +376,7 @@
 <style media="print">
   .sidebar, .content-header, .toolbar, .as-toolbar, .hq-strip, .store-switcher, .store-chips,
   .as-pagination, .login-overlay, .data-source-banner, .as-row-actions, .row-more-menu,
-  .as-modal-overlay, .export-menu { display: none !important; }
+  .as-modal-overlay, .export-menu, .attention-bar, .chips-toggle, .load-more-row { display: none !important; }
   .content-body { padding: 0; }
   .app { display: block; }
   body { background: #fff; }
@@ -520,6 +531,12 @@
         </div>
 
         <div class="store-chips" id="storeChips"></div>
+        <button class="chips-toggle" id="storeChipsToggle" onclick="toggleStoreChips()">ดูสาขาทั้งหมด</button>
+
+        <div class="attention-bar" id="unmatchedAttention">
+          <span id="unmatchedAttentionText"></span>
+          <button onclick="showPage('unmatched')">ตรวจสอบรายการ</button>
+        </div>
 
         <div class="summary-card">
           <div class="summary-top">
@@ -1720,6 +1737,10 @@ var isAddMode = false;
 // ── OVERVIEW TABLE — CLICK-TO-SORT COLUMNS ──────────────────────────
 var overviewSortKey = null;   // null = default order (location_code, asset_code, seq จาก backend)
 var overviewSortDir = 'asc';
+// แบ่งหน้ารายการ asset ใน Overview (ดู renderAssetList) — ประกาศไว้ตรงนี้ก่อนฟังก์ชันที่ใช้เสมอ
+var OVERVIEW_PAGE_SIZE = 50;
+var overviewVisibleCount = OVERVIEW_PAGE_SIZE;
+var overviewListSig = '';
 var OVERVIEW_SORT_COLUMNS = [
   ['photo', 'Photo'], ['asset', 'Asset'], ['serial', 'Serial'], ['location', 'Location'],
   ['department', 'Department'], ['employee', 'Employee'],
@@ -1794,6 +1815,21 @@ function renderStoreChips(){
   if(list.length && !list.some(function(s){ return s.name === currentStore; })){
     selectStore(list[0].name);
   }
+  syncStoreChipsToggle();
+}
+
+// ปุ่มย่อ/ขยายรายการสาขา (มีหลายร้อยสาขา — ปกติแสดงแค่ ~2 แถว สาขาที่เลือกอยู่จะอยู่หน้าสุดเสมอ)
+function syncStoreChipsToggle(){
+  var wrap = document.getElementById('storeChips');
+  var btn = document.getElementById('storeChipsToggle');
+  if(!wrap || !btn) return;
+  var n = wrap.children.length;
+  btn.style.display = n > 6 ? 'inline-block' : 'none';
+  btn.textContent = wrap.classList.contains('expanded') ? 'ย่อรายการสาขา' : ('ดูสาขาทั้งหมด (' + n + ')');
+}
+function toggleStoreChips(){
+  document.getElementById('storeChips').classList.toggle('expanded');
+  syncStoreChipsToggle();
 }
 
 function selectStore(name){
@@ -2043,7 +2079,15 @@ function renderAssetList(){
     wrap.innerHTML = '<div style="padding:30px;text-align:center;color:var(--ink-3);">No assets match this filter.</div>';
     return;
   }
-  wrap.innerHTML = list.map(function(a){
+  // แบ่งหน้า (แสดงทีละ OVERVIEW_PAGE_SIZE แถว) — แสดงผลอย่างเดียว ไม่กระทบ list/export/ตัวเลขสรุป
+  // ถ้าสาขา/ตัวกรอง/คำค้น/การเรียงเปลี่ยน ให้เริ่มนับใหม่ที่หน้าแรก
+  var listSig = [currentStore, currentAssetFilter, currentDeptFilter, term, overviewSortKey, overviewSortDir].join('|');
+  if(listSig !== overviewListSig){ overviewListSig = listSig; overviewVisibleCount = OVERVIEW_PAGE_SIZE; }
+  var shownList = list.slice(0, overviewVisibleCount);
+  if(list.length > shownList.length){
+    countEl.textContent += ' (แสดง ' + shownList.length.toLocaleString() + ' รายการแรก)';
+  }
+  wrap.innerHTML = shownList.map(function(a){
     var idx = assetsByStore[currentStore].indexOf(a);
     var safeName = a.name.replace(/'/g, "\\'");
     var safeCode = a.barcode.replace(/'/g, "\\'");
@@ -2064,8 +2108,31 @@ function renderAssetList(){
         + '<button class="as-act-btn row-more-trigger" title="More" onclick="event.stopPropagation(); openRowMore(this,\'overview\',\'' + safeName + '\',\'' + safeCode + '\')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg></button>'
       + '</div>'
     + '</div>';
-  }).join('');
+  }).join('') + (list.length > shownList.length
+    ? ('<div class="load-more-row"><button class="btn-outline" onclick="showMoreAssets()">แสดงเพิ่มอีก '
+        + Math.min(OVERVIEW_PAGE_SIZE, list.length - shownList.length).toLocaleString()
+        + ' รายการ <span class="load-more-left">(เหลือ ' + (list.length - shownList.length).toLocaleString() + ')</span></button>'
+        + '<button class="btn-outline" onclick="showAllAssets()">แสดงทั้งหมด</button></div>')
+    : '');
 }
+
+function showMoreAssets(){ overviewVisibleCount += OVERVIEW_PAGE_SIZE; renderAssetList(); }
+function showAllAssets(){ overviewVisibleCount = Infinity; renderAssetList(); }
+
+// พิมพ์/Save as PDF ต้องได้ครบทุกแถวเหมือนเดิม — ขยายเป็นทั้งหมดชั่วคราวระหว่างพิมพ์ แล้วคืนค่าหลังพิมพ์เสร็จ
+var _overviewCountBeforePrint = null;
+function _overviewIsActive(){ var el = document.getElementById('pageOverview'); return !!(el && el.classList.contains('active')); }
+window.addEventListener('beforeprint', function(){
+  _overviewCountBeforePrint = overviewVisibleCount;
+  overviewVisibleCount = Infinity;
+  if(_overviewIsActive()) renderAssetList();
+});
+window.addEventListener('afterprint', function(){
+  if(_overviewCountBeforePrint === null) return;
+  overviewVisibleCount = _overviewCountBeforePrint;
+  _overviewCountBeforePrint = null;
+  if(_overviewIsActive()) renderAssetList();
+});
 
 function openAssetDrawer(idx){
   isAddMode = false;
@@ -2804,6 +2871,11 @@ function updateUnmatchedBadge(){
   var pending = unmatchedItems.filter(function(i){ return i.status === 'pending'; }).length;
   if(pending > 0){ badge.textContent = pending > 99 ? '99+' : pending; badge.style.display = 'inline-block'; }
   else { badge.style.display = 'none'; }
+  var bar = document.getElementById('unmatchedAttention');
+  if(bar){
+    document.getElementById('unmatchedAttentionText').innerHTML = 'มี <b>' + pending.toLocaleString() + ' รายการ</b> ที่สแกนแล้วไม่พบใน Master รอตรวจสอบ';
+    bar.style.display = pending > 0 ? 'flex' : 'none';
+  }
 }
 
 function populateUnmatchedBranchFilter(){
