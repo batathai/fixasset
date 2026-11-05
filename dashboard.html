@@ -105,6 +105,14 @@
   .login-input{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:10px 12px;font-size:14px;color:var(--ink);background:var(--surface);}
   .login-input:focus{outline:none;border-color:var(--red-500);box-shadow:0 0 0 3px rgba(200,16,46,.12);}
   .login-sub{font-size:11.5px;color:var(--ink-3);margin:16px 0 0;word-break:break-all;}
+  .conn-status{display:flex;align-items:center;gap:8px;margin:16px 0 0;font-size:12px;color:var(--ink-3);}
+  .conn-dot{width:9px;height:9px;border-radius:50%;background:var(--ink-4);flex-shrink:0;}
+  .conn-status[data-state="ok"] .conn-dot{background:#1FA550;box-shadow:0 0 0 3px rgba(31,165,80,.18);}
+  .conn-status[data-state="ok"]{color:var(--green-fg);}
+  .conn-status[data-state="down"] .conn-dot{background:#D92D20;box-shadow:0 0 0 3px rgba(217,45,32,.18);}
+  .conn-status[data-state="down"]{color:var(--red-fg);}
+  .conn-status[data-state="checking"] .conn-dot{animation:connPulse 1s ease-in-out infinite;}
+  @keyframes connPulse{50%{opacity:.35;}}
   .login-sub code{font-family:var(--mono);background:var(--surface-2);padding:1px 5px;border-radius:4px;}
 
   /* ---------- banners ---------- */
@@ -507,6 +515,7 @@
       <label class="login-label" for="loginBranchId">Branch ID <span style="color:var(--ink-3);font-weight:400;">(HQ เว้นว่างได้ถ้าไม่บังคับ)</span></label>
       <input class="login-input" id="loginBranchId" type="text" placeholder="เช่น HQ หรือรหัสสาขา" onkeydown="if(event.key==='Enter') doLogin()">
       <button class="add-btn" style="width:100%;margin-top:20px;padding:11px 16px;font-size:14px;" id="loginSubmitBtn" onclick="doLogin()">Sign in</button>
+      <p class="conn-status" id="connStatus" data-state="checking" role="status" aria-live="polite"><span class="conn-dot"></span><span id="connStatusText">กำลังตรวจสอบการเชื่อมต่อ…</span></p>
     </div>
   </div>
 </div>
@@ -1206,6 +1215,26 @@ stores.forEach(function(s, i){ assetsByStore[s.name] = seedAssets(s, i); });
    own background render; nobody sees it because the overlay covers it.
    ================================================================ */
 var API_BASE = 'https://bata-asset-api-production.up.railway.app';
+
+// สถานะการเชื่อมต่อ API บนหน้า login: จุดเขียว = ต่อได้, จุดแดง = ต่อไม่ได้
+function checkApiConnection(){
+  var box = document.getElementById('connStatus'), txt = document.getElementById('connStatusText');
+  if(!box || !txt) return;
+  var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timer = setTimeout(function(){ if(ctl) ctl.abort(); }, 8000);
+  fetch(API_BASE + '/health', ctl ? {signal: ctl.signal, cache: 'no-store'} : {cache: 'no-store'})
+    .then(function(r){
+      if(!r.ok) throw new Error('http ' + r.status);
+      box.dataset.state = 'ok'; txt.textContent = 'เชื่อมต่อระบบแล้ว';
+    })
+    .catch(function(){ box.dataset.state = 'down'; txt.textContent = 'เชื่อมต่อระบบไม่ได้'; })
+    .then(function(){ clearTimeout(timer); });
+}
+checkApiConnection();
+setInterval(function(){
+  var ov = document.getElementById('loginOverlay');
+  if(ov && ov.style.display !== 'none' && !document.hidden) checkApiConnection();
+}, 30000);
 
 var authToken = null;
 var authUser = null;
