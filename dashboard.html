@@ -114,43 +114,41 @@
   .conn-status[data-state="checking"] .conn-dot{animation:connPulse 1s ease-in-out infinite;}
   @keyframes connPulse{50%{opacity:.35;}}
 
-  /* ===== Login hero: 3D asset box + barcode scan (decorative) ===== */
-  .fa-scene{position:relative;flex:1;min-height:230px;margin:6px 0 4px;perspective:900px;overflow:hidden;}
-  .fa-stage{position:absolute;left:50%;top:43%;width:0;height:0;transform-style:preserve-3d;transform:rotateX(-20deg);}
-  .fa-floor{position:absolute;left:-140px;top:-140px;width:280px;height:280px;border-radius:50%;transform:translateY(80px) rotateX(90deg);
-    background:radial-gradient(circle,rgba(0,0,0,.28) 0,rgba(0,0,0,.12) 34%,transparent 62%);border:1.5px solid rgba(255,255,255,.22);box-shadow:inset 0 0 0 26px rgba(255,255,255,.04);}
-  .fa-main{position:absolute;left:0;top:0;transform-style:preserve-3d;animation:faBob 4.4s ease-in-out infinite;}
-  .fa-orbit{position:absolute;left:0;top:0;transform-style:preserve-3d;transform:translateY(54px);animation:faOrbit var(--dur) linear infinite;animation-delay:var(--d);}
-  .fa-bob{position:absolute;left:0;top:0;transform-style:preserve-3d;transform:translateX(var(--r));animation:faBob 3.2s ease-in-out infinite;}
-  .fa-cube{position:absolute;transform-style:preserve-3d;animation:faSpin 14s linear infinite;}
-  .fa-orbit .fa-cube{animation-duration:7s;}
-  .fa-cube-main{animation-duration:16s;}
-  .fa-cube i{position:absolute;inset:0;display:block;border:1px solid rgba(20,22,27,.12);}
-  .fa-cube .f-front{background:#fff;}
-  .fa-cube .f-back{background:#EBC4CB;}
-  .fa-cube .f-right{background:#EFCDD3;}
-  .fa-cube .f-left{background:#F6DFE3;}
-  .fa-cube .f-top{background:#FFF4F6;}
-  .fa-cube .f-bottom{background:#B84A60;}
-  .fa-cube .f-top.tape,.fa-cube .f-front.tape{background-image:linear-gradient(90deg,transparent 38%,rgba(200,16,46,.9) 38% 62%,transparent 62%);}
-  .fa-cube .bc{position:absolute;left:14%;right:14%;top:30%;bottom:22%;background:#fff;border-radius:2px;
+  /* ===== Login hero: Bata branch + computer + assets (3D, decorative) ===== */
+  .fa-scene{position:relative;flex:1;min-height:250px;margin:4px 0;perspective:1000px;overflow:hidden;}
+  .fa-stage{position:absolute;left:50%;top:46%;width:0;height:0;transform-style:preserve-3d;transform:rotateX(-24deg) rotateY(-24deg);animation:faSway 11s ease-in-out infinite alternate;}
+  .fa-floor{position:absolute;left:-168px;top:-118px;width:336px;height:236px;border-radius:18px;transform:translateY(50px) rotateX(90deg);
+    background:linear-gradient(rgba(255,255,255,.10) 1px,transparent 1px) 0 0/22px 22px,linear-gradient(90deg,rgba(255,255,255,.10) 1px,transparent 1px) 0 0/22px 22px,radial-gradient(circle at 50% 50%,#B20F2A,#8E0B20);
+    border:2px solid rgba(255,255,255,.35);box-shadow:0 0 0 6px rgba(0,0,0,.10);}
+  .fa-box{position:absolute;left:0;top:0;transform-style:preserve-3d;}
+  .fa-box i{position:absolute;left:50%;top:50%;display:block;overflow:hidden;border:1px solid rgba(20,22,27,.14);box-sizing:border-box;}
+  .fa-box .bc{position:absolute;left:12%;right:12%;top:30%;bottom:14%;background:#fff;border-radius:2px;
     background-image:repeating-linear-gradient(90deg,#14161B 0 2px,transparent 2px 4px,#14161B 4px 5px,transparent 5px 8px,#14161B 8px 11px,transparent 11px 12px);}
-  .fa-cube .tag{position:absolute;left:14%;top:10%;font:700 9px/1 var(--mono);letter-spacing:.06em;color:var(--red-500);}
-  .fa-laser{position:absolute;left:50%;top:43%;width:210px;height:2px;margin-left:-105px;border-radius:2px;pointer-events:none;
-    background:linear-gradient(90deg,transparent,#fff 18%,#fff 82%,transparent);box-shadow:0 0 14px 3px rgba(255,255,255,.75),0 0 40px 10px rgba(255,255,255,.28);
-    animation:faScan 2.6s ease-in-out infinite alternate;}
-  .fa-chip{position:absolute;left:50%;bottom:6px;transform:translateX(-50%);background:#fff;color:var(--red-600);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.22);white-space:nowrap;opacity:0;animation:faChip 5.2s ease-in-out infinite;}
+  .fa-box .tag{position:absolute;left:12%;top:8%;font:700 7px/1 var(--mono);letter-spacing:.06em;color:var(--red-500);}
+  .st-sign{position:absolute;left:0;right:0;top:0;height:26px;background:#C8102E;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;letter-spacing:3px;box-shadow:0 3px 0 rgba(0,0,0,.15);}
+  .st-win{position:absolute;left:10px;top:36px;width:70px;height:40px;border:2px solid #8E0B20;background:linear-gradient(135deg,#CFE6F5,#9CC3DD);}
+  .st-win::before{content:'';position:absolute;left:5px;right:5px;top:15px;height:3px;background:#8E0B20;box-shadow:0 14px 0 #8E0B20;}
+  .st-win::after{content:'';position:absolute;left:8px;top:6px;width:11px;height:9px;background:#C8102E;border-radius:2px 5px 2px 2px;box-shadow:16px 0 0 #fff,32px 0 0 #C8102E,0 14px 0 #fff,16px 14px 0 #C8102E,32px 14px 0 #fff;}
+  .st-door{position:absolute;right:14px;top:36px;width:34px;height:48px;background:#8E0B20;border-radius:2px 2px 0 0;}
+  .st-door::before{content:'';position:absolute;left:4px;top:4px;right:4px;bottom:0;background:linear-gradient(135deg,#CFE6F5,#9CC3DD);}
+  .st-door::after{content:'';position:absolute;right:2px;top:26px;width:3px;height:8px;background:#fff;border-radius:2px;}
+  .mon{position:absolute;inset:3px;background:#0F1A2B;border-radius:2px;padding:4px 5px;overflow:hidden;}
+  .mon b{display:block;font:700 6px/1 var(--mono);letter-spacing:.1em;color:#fff;margin-bottom:4px;}
+  .mon u{display:block;height:4px;border-radius:2px;background:rgba(255,255,255,.12);margin-bottom:3px;text-decoration:none;position:relative;}
+  .mon u::after{content:'';position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:#27C468;width:var(--w);animation:faBar 3.4s ease-in-out infinite alternate;}
+  .mon u.a::after{background:#F2B01E;} .mon u.c::after{background:#5B9BFF;}
+  .mon em{position:absolute;right:5px;bottom:4px;font-style:normal;font:700 13px/1 var(--font);color:#27C468;}
+  .mon s{position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,#fff,transparent);box-shadow:0 0 6px 1px rgba(255,255,255,.7);animation:faScreen 2.4s linear infinite;}
+  .fa-chip{position:absolute;left:50%;bottom:4px;transform:translateX(-50%);background:#fff;color:var(--red-600);font-size:12px;font-weight:700;padding:5px 12px;border-radius:999px;box-shadow:0 6px 16px rgba(0,0,0,.22);white-space:nowrap;opacity:0;animation:faChip 5.2s ease-in-out infinite;}
   .fa-chip b{color:var(--green-fg);margin-right:2px;}
-  @keyframes faSpin{to{transform:rotateY(360deg);}}
-  @keyframes faOrbit{to{transform:translateY(54px) rotateY(360deg);}}
-  @keyframes faBob{50%{translate:0 -8px;}}
-  @keyframes faScan{from{transform:translateY(-52px);}to{transform:translateY(52px);}}
+  @keyframes faSway{from{transform:rotateX(-24deg) rotateY(-34deg);}to{transform:rotateX(-24deg) rotateY(22deg);}}
+  @keyframes faBar{from{width:calc(var(--w) * .55);}to{width:var(--w);}}
+  @keyframes faScreen{from{transform:translateY(-4px);}to{transform:translateY(54px);}}
   @keyframes faChip{0%,52%{opacity:0;transform:translate(-50%,10px) scale(.9);}60%,88%{opacity:1;transform:translate(-50%,0) scale(1);}100%{opacity:0;transform:translate(-50%,-4px) scale(1);}}
   @media (prefers-reduced-motion:reduce){
-    .fa-main,.fa-orbit,.fa-bob,.fa-cube,.fa-laser,.fa-chip{animation:none !important;}
+    .fa-stage,.fa-chip,.mon u::after,.mon s{animation:none !important;}
     .fa-chip{opacity:1;}
-    .fa-cube{transform:rotateY(-28deg);}
-    .fa-laser{display:none;}
+    .mon s{display:none;}
   }
   .login-sub code{font-family:var(--mono);background:var(--surface-2);padding:1px 5px;border-radius:4px;}
 
@@ -544,12 +542,15 @@
       <div class="fa-scene" aria-hidden="true">
         <div class="fa-stage">
           <div class="fa-floor"></div>
-          <div class="fa-orbit" style="--dur:16s;--r:112px;--d:0s"><div class="fa-bob"><div class="fa-cube" data-s="30"></div></div></div>
-          <div class="fa-orbit" style="--dur:22s;--r:92px;--d:-9s"><div class="fa-bob"><div class="fa-cube" data-s="22"></div></div></div>
-          <div class="fa-orbit" style="--dur:19s;--r:128px;--d:-5s"><div class="fa-bob"><div class="fa-cube" data-s="26"></div></div></div>
-          <div class="fa-main"><div class="fa-cube fa-cube-main" data-s="108" data-bc="1"></div></div>
+          <div class="fa-box" data-theme="store" data-w="150" data-h="84" data-d="76" data-x="-34" data-y="8" data-z="-34" data-front="store"></div>
+          <div class="fa-box" data-theme="roof" data-w="162" data-h="9" data-d="88" data-x="-34" data-y="-38" data-z="-34"></div>
+          <div class="fa-box" data-theme="dark" data-w="8" data-h="14" data-d="8" data-x="84" data-y="43" data-z="30"></div>
+          <div class="fa-box" data-theme="dark" data-w="38" data-h="3" data-d="24" data-x="84" data-y="48" data-z="30"></div>
+          <div class="fa-box" data-theme="dark" data-w="78" data-h="52" data-d="6" data-x="84" data-y="10" data-z="30" data-front="monitor"></div>
+          <div class="fa-box" data-theme="red" data-w="50" data-h="22" data-d="30" data-x="-104" data-y="39" data-z="42" data-front="barcode"></div>
+          <div class="fa-box" data-theme="white" data-w="42" data-h="18" data-d="26" data-x="-104" data-y="19" data-z="42" data-front="barcode"></div>
+          <div class="fa-box" data-theme="white" data-w="30" data-h="16" data-d="22" data-x="-52" data-y="42" data-z="52" data-front="barcode"></div>
         </div>
-        <div class="fa-laser"></div>
         <div class="fa-chip"><b>✓</b> พบสินทรัพย์</div>
       </div>
       <p class="login-tagline">ติดตามการตรวจนับสินทรัพย์ของทุกสาขาได้ในที่เดียว</p>
@@ -1281,23 +1282,40 @@ function checkApiConnection(){
     .then(function(){ clearTimeout(timer); });
 }
 
-// สร้างกล่อง 3D (6 หน้า) สำหรับฉากตกแต่งหน้า login
+// สร้างฉาก 3D ตกแต่งหน้า login: สาขา Bata + คอมพิวเตอร์ + กล่อง asset
 (function(){
-  var cubes = document.querySelectorAll('.fa-cube[data-s]');
-  for(var n = 0; n < cubes.length; n++){
-    var c = cubes[n], sz = parseInt(c.getAttribute('data-s'), 10) || 40, h = sz / 2, bc = c.getAttribute('data-bc') === '1';
-    c.style.width = sz + 'px'; c.style.height = sz + 'px'; c.style.left = (-h) + 'px'; c.style.top = (-h) + 'px';
-    var faces = [['front','translateZ(' + h + 'px)'],['back','rotateY(180deg) translateZ(' + h + 'px)'],
-                 ['right','rotateY(90deg) translateZ(' + h + 'px)'],['left','rotateY(-90deg) translateZ(' + h + 'px)'],
-                 ['top','rotateX(90deg) translateZ(' + h + 'px)'],['bottom','rotateX(-90deg) translateZ(' + h + 'px)']];
+  var themes = {
+    store:{front:'#FFF8F4',back:'#EBD3D7',left:'#F3DDE0',right:'#E9C9CE',top:'#FFFFFF',bottom:'#B84A60'},
+    roof: {front:'#A50D26',back:'#7A0A1C',left:'#8E0B20',right:'#8E0B20',top:'#D8243F',bottom:'#6A0818'},
+    dark: {front:'#1B2433',back:'#121A27',left:'#202B3D',right:'#202B3D',top:'#2B3850',bottom:'#0C121C'},
+    red:  {front:'#D8243F',back:'#A50D26',left:'#B91230',right:'#B91230',top:'#E8566B',bottom:'#7A0A1C'},
+    white:{front:'#FFFFFF',back:'#EBC4CB',left:'#F6DFE3',right:'#EFCDD3',top:'#FFF4F6',bottom:'#B84A60'}
+  };
+  var fronts = {
+    store:'<span class="st-sign">BATA</span><span class="st-win"></span><span class="st-door"></span>',
+    monitor:'<div class="mon"><b>FIX ASSET</b><u style="--w:86%"></u><u class="a" style="--w:52%"></u><u class="c" style="--w:70%"></u><u style="--w:94%"></u><em>\u2713</em><s></s></div>',
+    barcode:'<span class="tag">ASSET</span><span class="bc"></span>'
+  };
+  var boxes = document.querySelectorAll('.fa-box[data-w]');
+  for(var n = 0; n < boxes.length; n++){
+    var el = boxes[n], w = +el.getAttribute('data-w'), h = +el.getAttribute('data-h'), d = +el.getAttribute('data-d');
+    var th = themes[el.getAttribute('data-theme')] || themes.white, fr = fronts[el.getAttribute('data-front')] || '';
+    el.style.transform = 'translate3d(' + el.getAttribute('data-x') + 'px,' + el.getAttribute('data-y') + 'px,' + el.getAttribute('data-z') + 'px)';
+    var faces = [
+      ['front', w, h, 'translateZ(' + d/2 + 'px)'],
+      ['back', w, h, 'rotateY(180deg) translateZ(' + d/2 + 'px)'],
+      ['right', d, h, 'rotateY(90deg) translateZ(' + w/2 + 'px)'],
+      ['left', d, h, 'rotateY(-90deg) translateZ(' + w/2 + 'px)'],
+      ['top', w, d, 'rotateX(90deg) translateZ(' + h/2 + 'px)'],
+      ['bottom', w, d, 'rotateX(-90deg) translateZ(' + h/2 + 'px)']
+    ];
     for(var k = 0; k < faces.length; k++){
-      var f = document.createElement('i');
-      f.className = 'f-' + faces[k][0] + (!bc && (faces[k][0] === 'top') ? ' tape' : '') + (bc && faces[k][0] === 'top' ? ' tape' : '');
-      f.style.transform = faces[k][1];
-      if(bc && (faces[k][0] === 'front' || faces[k][0] === 'right' || faces[k][0] === 'left' || faces[k][0] === 'back')){
-        f.innerHTML = '<span class="tag">ASSET</span><span class="bc"></span>';
-      }
-      c.appendChild(f);
+      var f = document.createElement('i'), fc = faces[k];
+      f.style.width = fc[1] + 'px'; f.style.height = fc[2] + 'px';
+      f.style.marginLeft = (-fc[1] / 2) + 'px'; f.style.marginTop = (-fc[2] / 2) + 'px';
+      f.style.background = th[fc[0]]; f.style.transform = fc[3];
+      if(fc[0] === 'front') f.innerHTML = fr;
+      el.appendChild(f);
     }
   }
 })();
