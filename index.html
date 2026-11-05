@@ -35,6 +35,17 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 .bata-name span{display:block;font-size:12px;font-weight:400;opacity:.75;letter-spacing:2px;margin-top:-2px;}
 .login-title{font-family:var(--cond);font-size:32px;font-weight:700;color:var(--white);line-height:1.1;position:relative;z-index:1;}
 .login-sub{color:rgba(255,255,255,.7);font-size:13px;margin-top:6px;position:relative;z-index:1;}
+.login-art{position:relative;z-index:1;width:min(74%,250px);margin:2px auto 14px;line-height:0;}
+.login-art img{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none;filter:drop-shadow(0 12px 10px rgba(70,0,12,.35));}
+@media (max-height:640px){.login-art{display:none;}}
+.conn-status{display:flex;align-items:center;gap:8px;margin:18px 0 0;font-size:12px;color:var(--gray3);}
+.conn-dot{width:9px;height:9px;border-radius:50%;background:var(--gray4);flex-shrink:0;}
+.conn-status[data-state="ok"]{color:#17753A;}
+.conn-status[data-state="ok"] .conn-dot{background:#1FA550;box-shadow:0 0 0 3px rgba(31,165,80,.18);}
+.conn-status[data-state="down"]{color:#BE2A20;}
+.conn-status[data-state="down"] .conn-dot{background:#D92D20;box-shadow:0 0 0 3px rgba(217,45,32,.18);}
+.conn-status[data-state="checking"] .conn-dot{animation:connPulse 1s ease-in-out infinite;}
+@keyframes connPulse{50%{opacity:.35;}}
 .login-form{padding:32px 28px;}
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
 .field label{font-size:11px;font-weight:600;color:var(--gray3);letter-spacing:.8px;text-transform:uppercase;}
@@ -238,6 +249,12 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
       <div class="bata-b">B</div>
       <div class="bata-name">BATA<span>THAILAND</span></div>
     </div>
+    <div class="login-art" aria-hidden="true">
+      <picture>
+        <source srcset="login_scan_still.png" media="(prefers-reduced-motion: reduce)">
+        <img src="login_scan.gif" alt="" width="443" height="394" draggable="false">
+      </picture>
+    </div>
     <div class="login-title">Fixed Asset<br>Audit System</div>
     <div class="login-sub">Scan & verify branch assets</div>
   </div>
@@ -270,6 +287,7 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
     </div>
     <button class="btn-login" id="login-btn" onclick="initVoice();doLogin()">SIGN IN</button>
     <div class="err" id="lerr">Please fill in all fields</div>
+    <p class="conn-status" id="connStatus" data-state="checking" role="status" aria-live="polite"><span class="conn-dot"></span><span id="connStatusText">กำลังตรวจสอบการเชื่อมต่อ…</span></p>
   </div>
 </div>
 
@@ -736,6 +754,26 @@ function hideBataLoading() {
     if (el) el.classList.remove('show');
   }
 }
+
+// สถานะการเชื่อมต่อ API บนหน้า login: จุดเขียว = ต่อได้, จุดแดง = ต่อไม่ได้
+function checkApiConnection(){
+  var box = document.getElementById('connStatus'), txt = document.getElementById('connStatusText');
+  if(!box || !txt) return;
+  var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var timer = setTimeout(function(){ if(ctl) ctl.abort(); }, 8000);
+  fetch(API + '/health', ctl ? {signal: ctl.signal, cache: 'no-store'} : {cache: 'no-store'})
+    .then(function(r){
+      if(!r.ok) throw new Error('http ' + r.status);
+      box.setAttribute('data-state', 'ok'); txt.textContent = 'เชื่อมต่อระบบแล้ว';
+    })
+    .catch(function(){ box.setAttribute('data-state', 'down'); txt.textContent = 'เชื่อมต่อระบบไม่ได้'; })
+    .then(function(){ clearTimeout(timer); });
+}
+checkApiConnection();
+setInterval(function(){
+  var sl = document.getElementById('sl');
+  if(sl && sl.classList.contains('active') && !document.hidden) checkApiConnection();
+}, 30000);
 
 async function doLogin() {
   const id = document.getElementById('li').value.trim();
