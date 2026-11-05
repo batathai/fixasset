@@ -54,7 +54,8 @@
 ├── migration_employees.sql           # Migration: ตาราง employees, employee_import_batches + คอลัมน์ assigned_employee_id/name ใน scan_logs — รันแล้ว
 ├── migration_unmatched_employee.sql  # Migration: คอลัมน์ assigned_employee_id/name ใน unmatched_assets — รันแล้ว
 ├── CNAME                              # Custom domain ของ GitHub Pages: fixasset.batathai.com
-├── login_scan.gif                     # ภาพเคลื่อนไหว (พื้นโปร่งใส) พนักงานสแกนสินทรัพย์ — ใช้ในหน้า Login ทั้ง 3 หน้า
+├── login_scan.webp                    # ภาพเคลื่อนไหวแบบนุ่ม (72 เฟรม ~37ms, พื้นโปร่งใส) พนักงานสแกนสินทรัพย์ — ใช้ในหน้า Login ทั้ง 3 หน้า
+├── login_scan.gif                     # ไฟล์ต้นฉบับ 9 เฟรม (กระตุก) — เก็บไว้เป็น fallback ของ <picture> สำหรับเบราว์เซอร์ที่ไม่รองรับ WebP
 ├── login_scan_still.png               # เฟรมนิ่งของ GIF — ใช้แทนเมื่อเครื่องตั้ง prefers-reduced-motion
 ├── bata_logo.png                      # โลโก้ที่ใช้ในหน้าเว็บ
 ├── CHANGES_README.md                  # สรุปแก้ไข "6 ข้อ" จากรอบก่อนหน้า (ยังไม่ถูกรวมเข้า docs/changelog.md อย่างเป็นทางการ)
@@ -133,7 +134,8 @@
 13. **หน้า Login ทั้ง 3 หน้า (`index.html`, `office.html`, `dashboard.html`) ไม่ได้แชร์โค้ดกัน** (ต่อยอดจากข้อ 8) — การแก้หน้าตา login หรือฟังก์ชัน `checkApiConnection()` ต้องไล่แก้ซ้ำทั้ง 3 ไฟล์เอง:
    - `checkApiConnection()` เรียก `GET {API}/health` ทุก 30 วินาทีตอนอยู่หน้า login; จุดแดงเป็นปกติเมื่อเปิดไฟล์ผ่าน `file://` (origin `null` โดน CORS)
    - แอพสแกน (`index.html`/`office.html`) ซ่อนภาพ GIF อัตโนมัติเมื่อจอเตี้ยกว่า 640px เพื่อให้ปุ่ม SIGN IN ยังอยู่บนจอเครื่อง Urovo โดยไม่ต้องเลื่อน
-   - ถ้าจะเปลี่ยนภาพ ให้ใช้ GIF พื้นโปร่งใส + แก้ไฟล์ `login_scan_still.png` ให้ตรงกันด้วย; อย่าใช้ภาพที่ตัดพื้นหลังอัตโนมัติ (เคยลองแล้ว ขอบไม่คม)
+   - ถ้าจะเปลี่ยนภาพ ให้ใช้ GIF พื้นโปร่งใส แล้วสร้าง `login_scan.webp` (เติมเฟรมคั่นกลางด้วย optical flow จนได้ ~27fps) + `login_scan_still.png` ให้ตรงกัน; อย่าใช้ภาพที่ตัดพื้นหลังอัตโนมัติ (เคยลองแล้ว ขอบไม่คม)
+   - GIF ต้นฉบับมีแค่ 9 เฟรม เฟรมละ 300ms ผู้ใช้ติว่า "กระตุก/เป็นสเต็บ" จึงสร้าง WebP แบบเติมเฟรมแทน (`<picture>` เลือก still → webp → gif ตามลำดับ)
 
 ---
 
@@ -197,9 +199,9 @@ Environment variables ที่ backend ต้องการ:
   - ลบ `seed_users.py`, `migration_scan_delete_log.sql`, `migration_office_department.sql` ออกจาก repo (รันเสร็จสิ้นแล้ว ไม่มีโค้ดอ้างอิงตอน runtime) — เนื้อหาเก็บสำรองไว้ที่ Section 9
 - **2026-11-05 — UI Redesign: Dashboard + หน้า Login (หน้าตาเท่านั้น):**
   - `dashboard.html` UI v3 (commit `7d5f401`) → รอบ 2: ชิปสาขาพับได้, แบ่งหน้ารายการ asset, `d9c5cf1` → รอบ 3: หน้า Dashboard แบบ KPI + attention center, `d9f95ad` → ปรับแบรนด์เป็น "Bata Fix Asset", `002f97d` → แอนิเมชันการ์ดตัวเลข/วงแหวนความคืบหน้า, `46d31b5` → เอาบรรทัด URL ของ API ออกจากหน้า login, เพิ่มจุดสถานะการเชื่อมต่อ (`344928d`)
-  - หน้า Login: ลองฉาก 3D CSS (กล่อง/สาขา Bata) แล้วผู้ใช้ไม่เอา เลยเอาออก (`9c1b864`) → ใช้ GIF ภาพพนักงานสแกนที่ผู้ใช้ทำมาเอง (`79e83c3`) → ใช้ GIF เดียวกันกับ `index.html`/`office.html` พร้อมจุดสถานะการเชื่อมต่อ (`faec384`)
+  - หน้า Login: ลองฉาก 3D CSS (กล่อง/สาขา Bata) แล้วผู้ใช้ไม่เอา เลยเอาออก (`9c1b864`) → ใช้ GIF ภาพพนักงานสแกนที่ผู้ใช้ทำมาเอง (`79e83c3`) → ใช้ GIF เดียวกันกับ `index.html`/`office.html` พร้อมจุดสถานะการเชื่อมต่อ (`faec384`) → เปลี่ยนเป็น `login_scan.webp` แบบเติมเฟรมให้เคลื่อนไหวนุ่มขึ้น (GIF เดิมกระตุก)
   - ข้อความฝั่งแดงหน้า login ของ Dashboard เปลี่ยนเป็น "ระบบตรวจนับสินทรัพย์ถาวร / Fixed Asset Audit · Bata Thailand" (ผู้ใช้ไม่ชอบสโลแกนแบบเดิม)
-  - เพิ่มไฟล์ `login_scan.gif`, `login_scan_still.png` — **ไม่มีการเปลี่ยน `main.py`, schema หรือฐานข้อมูล**
+  - เพิ่มไฟล์ `login_scan.gif`, `login_scan.webp`, `login_scan_still.png` — **ไม่มีการเปลี่ยน `main.py`, schema หรือฐานข้อมูล**
   - Commit ก่อนเริ่มรอบนี้ (ใช้ย้อนกลับได้): `db5ef4e`; ก่อนรอบแก้ login ของแอพสแกน: `79e83c3`
 
 ---
