@@ -1,283 +1,364 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bata Thailand — Audit Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+  /* ============================================================
+     Bata Audit — HQ Dashboard (UI v3)
+     โครงสร้าง id / onclick / class ที่ JS ใช้ ไม่มีการเปลี่ยนแปลง
+     ============================================================ */
   :root{
-    --red-500:#C8102E; --red-600:#AB0D27; --red-bg:#FDF2F3;
-    --ink:#111318; --ink-2:#5B5F6B; --ink-3:#9297A3; --ink-4:#C4C7CE;
-    --line:#EBECEF; --line-2:#E1E3E8;
-    --surface:#FFFFFF; --surface-1:#FAFAFB; --surface-2:#F3F4F6;
-    --green-bg:#EAF7EE; --green-fg:#1B7A3C;
-    --amber-bg:#FEF3E2; --amber-fg:#9A6400;
-    --red-fg:#C0281F; --red-bg2:#FCE9E9;
-    --purple-bg:#F1EDFB; --purple-fg:#6440C7;
-    --orange-bg:#FDEEE2; --orange-fg:#B5590F;
-    --blue-bg:#EAF2FE; --blue-fg:#1B5FC4;
-    --r-sm:8px; --r-md:12px; --r-lg:16px;
-    --sh-xs:0 1px 2px rgba(16,24,40,.05);
-    --sh-lg:0 12px 40px rgba(16,24,40,.16);
-    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    /* brand */
+    --red-500:#C8102E; --red-600:#A50D26; --red-bg:#FCEEF0;
+    /* neutrals */
+    --ink:#14161B; --ink-2:#4A505C; --ink-3:#7B8290; --ink-4:#B8BDC8;
+    --line:#E4E7EC; --line-2:#D3D8E0;
+    --page:#EDEFF3;
+    --surface:#FFFFFF; --surface-1:#F7F8FA; --surface-2:#EEF0F4;
+    --rail:#14161B; --rail-2:#1E2128; --rail-ink:#AEB4C0;
+    /* status (ใช้ทั้งใน CSS และ inline style ของ JS) */
+    --green-bg:#E8F6EE; --green-fg:#17753A;
+    --amber-bg:#FEF1DC; --amber-fg:#92600A;
+    --red-fg:#BE2A20; --red-bg2:#FCE8E6;
+    --purple-bg:#F0ECFB; --purple-fg:#6140C4;
+    --orange-bg:#FDEDE0; --orange-fg:#B0560F;
+    --blue-bg:#E8F1FD; --blue-fg:#1B5FC4;
+    /* shape */
+    --r-sm:6px; --r-md:10px; --r-lg:14px;
+    --sh-xs:0 1px 0 rgba(20,22,27,.04);
+    --sh-md:0 6px 20px rgba(20,22,27,.08);
+    --sh-lg:0 18px 48px rgba(20,22,27,.22);
+    --font:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{font-family:var(--font);background:var(--surface-1);color:var(--ink);font-size:14px;-webkit-font-smoothing:antialiased;}
+  body{font-family:var(--font);background:var(--page);color:var(--ink);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums;}
   button{font-family:inherit;cursor:pointer;}
   textarea,select,input{font-family:inherit;}
+  :focus-visible{outline:2px solid var(--red-500);outline-offset:2px;}
+  p{margin:0;}
 
+  /* ---------- shell ---------- */
   .app{display:flex;min-height:100vh;}
-  .sidebar{width:210px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--line);padding:16px 12px;}
-  .sb-brand{display:flex;align-items:center;gap:9px;padding:6px 8px 18px;}
-  .sb-brand-name{font-weight:700;font-size:13.5px;}
-  .sb-brand-sub{font-size:9.5px;color:var(--ink-3);display:block;margin-top:1px;}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:var(--r-sm);color:var(--ink-2);font-size:13px;font-weight:500;margin-bottom:2px;}
-  .nav-item:hover{background:var(--surface-1);color:var(--ink);}
-  .nav-item.active{background:var(--red-bg);color:var(--red-600);font-weight:600;}
-  .nav-item svg{flex-shrink:0;width:16px;height:16px;}
-  .nav-badge{margin-left:auto;background:var(--surface-2);color:var(--ink-2);font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;}
-  .nav-item.active .nav-badge{background:var(--red-500);color:#fff;}
+  .sidebar{width:236px;flex-shrink:0;background:var(--rail);color:var(--rail-ink);padding:20px 14px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;}
+  .sb-brand{display:flex;align-items:center;gap:11px;padding:2px 8px 22px;}
+  .sb-brand-name{display:block;font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;}
+  .sb-brand-sub{display:block;font-size:11.5px;color:var(--rail-ink);margin-top:1px;}
+  .sb-nav{flex:1;display:flex;flex-direction:column;gap:2px;}
+  .nav-item{position:relative;display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:var(--r-sm);color:var(--rail-ink);font-size:13.5px;font-weight:500;cursor:pointer;transition:background .12s ease,color .12s ease;}
+  .nav-item:hover{background:var(--rail-2);color:#fff;}
+  .nav-item.active{background:var(--rail-2);color:#fff;font-weight:600;}
+  .nav-item.active::before{content:'';position:absolute;left:-14px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--red-500);}
+  .nav-item svg{flex-shrink:0;width:17px;height:17px;}
+  .nav-badge{margin-left:auto;background:var(--red-500);color:#fff;font-size:11px;font-weight:600;padding:0 7px;line-height:18px;border-radius:20px;}
 
-  .avatar{width:26px;height:26px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:600;flex-shrink:0;}
-  .brand-mark{width:26px;height:26px;border-radius:6px;background:var(--red-500);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;}
+  .rail-user{display:flex;align-items:center;gap:10px;padding:12px 8px 0;border-top:1px solid var(--rail-2);margin-top:12px;}
+  .rail-user-meta{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px;}
+  #headerUserLabel{font-size:12px;color:#DADDE4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rail-signout{align-self:flex-start;background:none;border:none;padding:0;font-size:12px;color:var(--rail-ink);text-decoration:underline;text-underline-offset:3px;}
+  .rail-signout:hover{color:#fff;}
+
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--rail-2);border:1px solid #343944;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;flex-shrink:0;}
+  .brand-mark{width:32px;height:32px;border-radius:8px;background:var(--red-500);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;}
 
   .content{flex:1;min-width:0;}
-  .content-header{display:flex;align-items:center;justify-content:space-between;padding:16px 26px;border-bottom:1px solid var(--line);background:var(--surface);}
-  .content-title{font-size:17px;font-weight:700;margin:0;}
-  .content-body{padding:20px 26px 60px;max-width:1400px;}
+  .content-header{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:64px;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:40;}
+  .content-title{font-size:20px;font-weight:600;letter-spacing:-.01em;}
+  .content-body{padding:24px 32px 72px;max-width:1480px;}
   .screen2{display:none;}
   .screen2.active{display:block;}
 
-  .bata-loading-overlay{position:fixed;inset:0;background:rgba(17,19,24,.55);z-index:900;display:none;align-items:center;justify-content:center;}
+  /* ---------- loading ---------- */
+  .bata-loading-overlay{position:fixed;inset:0;background:rgba(20,22,27,.6);z-index:900;display:none;align-items:center;justify-content:center;}
   .bata-loading-overlay.show{display:flex;}
-  .bata-loading-box{background:#FFFFFF;border-radius:14px;border-top:5px solid #C8102E;padding:0 0 26px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:0 12px 40px rgba(0,0,0,.28);min-width:230px;overflow:hidden;}
-  .bata-loading-wordmark{display:flex;align-items:baseline;gap:7px;margin:22px 0 2px;}
-  .bata-loading-wordmark-bata{font-size:24px;font-weight:800;color:#AB0D27;font-family:Arial,sans-serif;letter-spacing:.5px;}
-  .bata-loading-wordmark-thailand{font-size:11px;font-weight:600;color:#8A8D93;font-family:Arial,sans-serif;letter-spacing:1.8px;}
+  .bata-loading-box{background:#fff;border-radius:var(--r-lg);border-top:4px solid var(--red-500);padding:0 0 26px;display:flex;flex-direction:column;align-items:center;gap:4px;box-shadow:var(--sh-lg);min-width:240px;overflow:hidden;}
+  .bata-loading-wordmark{display:flex;align-items:baseline;gap:7px;margin:24px 0 2px;}
+  .bata-loading-wordmark-bata{font-size:26px;font-weight:700;color:var(--red-600);letter-spacing:.5px;}
+  .bata-loading-wordmark-thailand{font-size:11px;font-weight:600;color:var(--ink-3);letter-spacing:1.8px;}
   .bata-loading-bar{width:120px;height:4px;background:#F3D4D9;border-radius:4px;overflow:hidden;margin-top:14px;}
-  .bata-loading-bar::after{content:'';display:block;width:40%;height:100%;background:#C8102E;border-radius:4px;animation:bataBarMove 1s ease-in-out infinite;}
+  .bata-loading-bar::after{content:'';display:block;width:40%;height:100%;background:var(--red-500);border-radius:4px;animation:bataBarMove 1s ease-in-out infinite;}
   @keyframes bataBarMove{0%{margin-left:-40%;}50%{margin-left:60%;}100%{margin-left:-40%;}}
-  .bata-loading-txt{font-size:13.5px;font-weight:700;color:#AB0D27;letter-spacing:.2px;margin-top:14px;}
-  .bata-loading-sub{font-size:11px;color:#9297A3;}
+  .bata-loading-txt{font-size:14px;font-weight:600;color:var(--red-600);margin-top:14px;}
+  .bata-loading-sub{font-size:12px;color:var(--ink-3);}
 
-  .login-overlay{position:fixed;inset:0;background:var(--surface-1);z-index:500;display:flex;align-items:center;justify-content:center;}
-  .login-box{width:360px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-lg);padding:26px 26px 20px;}
-  .login-brand{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
-  .login-brand-name{font-weight:700;font-size:14px;}
-  .login-brand-sub{font-size:10px;color:var(--ink-3);}
-  .login-title{font-size:15px;font-weight:700;margin:0 0 14px;}
-  .login-error{background:var(--red-bg2);color:var(--red-fg);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:9px 12px;font-size:12.5px;margin-bottom:12px;}
-  .login-label{display:block;font-size:11.5px;color:var(--ink-2);margin:12px 0 5px;font-weight:600;}
-  .login-input{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:9px 11px;font-size:13px;color:var(--ink);}
-  .login-input:focus{outline:none;border-color:var(--red-500);}
-  .login-sub{font-size:11px;color:var(--ink-3);margin:14px 0 0;text-align:center;}
-  .login-sub code{background:var(--surface-2);padding:1px 5px;border-radius:4px;}
-  .data-source-banner{display:none;align-items:center;gap:8px;background:var(--red-bg2);color:var(--red-fg);border:1px solid #F3C2BC;border-radius:var(--r-md);padding:10px 16px;font-size:12.5px;margin-bottom:14px;}
-  .as-error-banner{display:flex;align-items:center;gap:8px;background:#FEF3E2;color:#9A6400;border:1px solid #F5DDA8;border-radius:var(--r-md);padding:10px 16px;font-size:12.5px;margin-bottom:16px;}
-  .as-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px;}
-  .as-kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--sh-xs);position:relative;overflow:hidden;cursor:pointer;transition:box-shadow .15s ease,transform .15s ease;}
-  .as-kpi-card:hover{box-shadow:0 4px 16px rgba(16,24,40,.10);transform:translateY(-1px);}
-  .as-kpi-card.kpi-active{outline:2px solid var(--red-500);outline-offset:-1px;}
-  .as-kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;}
+  /* ---------- login ---------- */
+  .login-overlay{position:fixed;inset:0;background:var(--page);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .login-box{display:flex;width:860px;max-width:100%;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-lg);overflow:hidden;min-height:460px;}
+  .login-aside{flex:1;background:var(--red-500);color:#fff;padding:36px 34px;display:flex;flex-direction:column;justify-content:space-between;}
+  .login-wordmark{display:flex;align-items:baseline;gap:9px;}
+  .login-wordmark b{font-size:34px;font-weight:700;letter-spacing:.5px;}
+  .login-wordmark span{font-size:12.5px;font-weight:600;letter-spacing:2px;opacity:.85;}
+  .login-tagline{font-size:22px;line-height:1.35;font-weight:600;max-width:15em;letter-spacing:-.01em;}
+  .login-form{width:380px;flex-shrink:0;padding:36px 34px 28px;display:flex;flex-direction:column;justify-content:center;}
+  .login-brand{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
+  .login-brand-name{font-weight:600;font-size:15px;}
+  .login-brand-sub{font-size:12px;color:var(--ink-3);}
+  .login-title{font-size:18px;font-weight:600;margin:0 0 6px;}
+  .login-error{background:var(--red-bg2);color:var(--red-fg);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:9px 12px;font-size:13px;margin:8px 0 4px;}
+  .login-label{display:block;font-size:12.5px;color:var(--ink-2);margin:14px 0 5px;font-weight:500;}
+  .login-input{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:10px 12px;font-size:14px;color:var(--ink);background:var(--surface);}
+  .login-input:focus{outline:none;border-color:var(--red-500);box-shadow:0 0 0 3px rgba(200,16,46,.12);}
+  .login-sub{font-size:11.5px;color:var(--ink-3);margin:16px 0 0;word-break:break-all;}
+  .login-sub code{font-family:var(--mono);background:var(--surface-2);padding:1px 5px;border-radius:4px;}
+
+  /* ---------- banners ---------- */
+  .data-source-banner{display:none;align-items:center;gap:8px;background:var(--red-bg2);color:var(--red-fg);border:1px solid #F3C2BC;border-radius:var(--r-md);padding:11px 16px;font-size:13px;margin-bottom:16px;}
+  .as-error-banner{display:flex;align-items:center;gap:8px;background:var(--amber-bg);color:var(--amber-fg);border:1px solid #F5DDA8;border-radius:var(--r-md);padding:11px 16px;font-size:13px;margin-bottom:16px;}
+
+  /* ---------- KPI cards (Asset Summary / Unmatched) ---------- */
+  .as-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px;}
+  .as-kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 18px 15px 20px;box-shadow:var(--sh-xs);position:relative;overflow:hidden;cursor:pointer;transition:border-color .12s ease,box-shadow .12s ease;}
+  .as-kpi-card:hover{border-color:var(--line-2);box-shadow:var(--sh-md);}
+  .as-kpi-card.kpi-active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
+  .as-kpi-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;}
   .as-kpi-card.kpi-total::before{background:var(--ink-4);}
   .as-kpi-card.kpi-verified::before{background:var(--green-fg);}
   .as-kpi-card.kpi-pending::before{background:var(--amber-fg);}
   .as-kpi-card.kpi-missing::before{background:var(--red-fg);}
-  .as-kpi-label{font-size:12.5px;color:var(--ink-2);margin:0 0 8px;}
-  .as-kpi-value{font-size:24px;font-weight:700;margin:0;}
-  .as-kpi-sub{font-size:11.5px;color:var(--ink-3);margin-top:4px;}
-  .as-last-sync{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);background:var(--surface-1);border:1px solid var(--line);border-radius:999px;padding:6px 12px;white-space:nowrap;}
-  .as-last-sync b{color:var(--ink);font-weight:700;}
-  .as-last-sync .dot{width:6px;height:6px;border-radius:50%;background:var(--green-fg);flex-shrink:0;}
+  .as-kpi-label{font-size:13px;font-weight:500;color:var(--ink-2);margin:0 0 6px;}
+  .as-kpi-value{font-size:30px;line-height:1.1;font-weight:600;letter-spacing:-.02em;margin:0;}
+  .as-kpi-sub{font-size:12px;color:var(--ink-3);margin-top:5px;}
+  .as-last-sync{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 13px;white-space:nowrap;}
+  .as-last-sync b{color:var(--ink);font-weight:600;}
+  .as-last-sync .dot{width:7px;height:7px;border-radius:50%;background:var(--green-fg);flex-shrink:0;box-shadow:0 0 0 3px rgba(23,117,58,.15);}
+
+  /* ---------- row actions / menus ---------- */
   .as-row-actions{display:flex;align-items:center;gap:2px;}
-  .as-act-btn{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;border:none;background:transparent;cursor:pointer;color:var(--ink-3);}
+  .as-act-btn{display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:var(--r-sm);border:none;background:transparent;cursor:pointer;color:var(--ink-3);}
   .as-act-btn:hover{background:var(--surface-2);color:var(--ink);}
   .as-act-btn.as-danger:hover{background:var(--red-bg2);color:var(--red-fg);}
-  .row-more-menu{display:none;position:fixed;z-index:400;background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--sh-lg);min-width:150px;overflow:hidden;}
-  .row-more-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 14px;font-size:12.5px;border:none;background:none;color:var(--ink);}
+  .row-more-menu{display:none;position:fixed;z-index:400;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--sh-lg);min-width:160px;overflow:hidden;padding:4px;}
+  .row-more-item{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:9px 12px;font-size:13px;border:none;background:none;color:var(--ink);border-radius:var(--r-sm);}
   .row-more-item:hover{background:var(--surface-2);}
   .row-more-item.danger{color:var(--red-fg);}
   .row-more-item.danger:hover{background:var(--red-bg2);}
+
   .as-skel{background:linear-gradient(90deg,var(--surface-2) 25%,var(--line) 37%,var(--surface-2) 63%);background-size:400% 100%;animation:asShimmer 1.4s ease infinite;border-radius:4px;height:12px;display:inline-block;}
   @keyframes asShimmer{0%{background-position:100% 50%;}100%{background-position:0 50%;}}
-  .as-empty{padding:56px 20px;text-align:center;}
-  .as-empty .as-empty-icon{width:48px;height:48px;border-radius:50%;background:var(--surface-2);color:var(--ink-3);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
-  .as-empty-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;}
-  .as-empty-sub{font-size:12.5px;color:var(--ink-3);margin-bottom:16px;}
-  .as-modal-overlay{display:none;position:fixed;inset:0;background:rgba(17,19,24,.45);z-index:300;align-items:center;justify-content:center;}
+  .as-empty{padding:60px 20px;text-align:center;}
+  .as-empty .as-empty-icon{width:52px;height:52px;border-radius:50%;background:var(--surface-2);color:var(--ink-3);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;}
+  .as-empty-title{font-size:15px;font-weight:600;color:var(--ink);margin-bottom:4px;}
+  .as-empty-sub{font-size:13px;color:var(--ink-3);margin-bottom:16px;}
+
+  /* ---------- modal ---------- */
+  .as-modal-overlay{display:none;position:fixed;inset:0;background:rgba(20,22,27,.5);z-index:300;align-items:center;justify-content:center;}
   .as-modal-overlay.show{display:flex;}
-  .as-modal{background:#fff;border-radius:var(--r-lg);padding:22px;width:380px;max-width:calc(100vw - 32px);box-shadow:var(--sh-lg);}
-  .as-modal-title{font-size:14.5px;font-weight:700;margin:0 0 6px;}
-  .as-modal-body{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-bottom:6px;}
-  .as-modal-asset{display:flex;justify-content:space-between;background:var(--surface-2);border-radius:var(--r-sm);padding:10px 12px;margin:10px 0 16px;font-size:12.5px;}
-  .as-modal-asset b{font-weight:700;}
+  .as-modal{background:#fff;border-radius:var(--r-lg);padding:24px;width:400px;max-width:calc(100vw - 32px);box-shadow:var(--sh-lg);}
+  .as-modal-title{font-size:16px;font-weight:600;margin:0 0 6px;}
+  .as-modal-body{font-size:13px;color:var(--ink-2);line-height:1.65;margin-bottom:6px;}
+  .as-modal-asset{display:flex;justify-content:space-between;gap:12px;background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin:12px 0 18px;font-size:13px;}
+  .as-modal-asset b{font-weight:600;font-family:var(--mono);font-size:12.5px;}
   .as-modal-actions{display:flex;justify-content:flex-end;gap:8px;}
-  .btn-outline-red{background:transparent;border:1px solid var(--red-fg);color:var(--red-fg);border-radius:var(--r-sm);padding:8px 14px;font-size:12.5px;font-weight:600;}
+
+  /* ---------- buttons ---------- */
+  .add-btn{background:var(--red-500);color:#fff;border:1px solid var(--red-500);border-radius:var(--r-sm);padding:8px 16px;font-size:13px;font-weight:600;white-space:nowrap;transition:background .12s ease;}
+  .add-btn:hover{background:var(--red-600);border-color:var(--red-600);}
+  .import-btn,.btn-outline,.as-refresh{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 14px;font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap;transition:background .12s ease,border-color .12s ease;}
+  .import-btn:hover,.btn-outline:hover,.as-refresh:hover{background:var(--surface-1);border-color:var(--ink-4);}
+  .as-refresh{display:inline-flex;align-items:center;gap:6px;}
+  .btn-outline-red{background:transparent;border:1px solid var(--red-fg);color:var(--red-fg);border-radius:var(--r-sm);padding:8px 14px;font-size:13px;font-weight:600;}
   .btn-outline-red:hover{background:var(--red-bg2);}
+
+  /* ---------- table card toolbar ---------- */
   .as-toolbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:14px 18px;flex-wrap:wrap;}
-  .as-toolbar-title{font-size:14px;font-weight:700;margin:0;flex:1;min-width:140px;}
-  .as-select{border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 10px;font-size:12.5px;color:var(--ink-2);background:var(--surface);}
-  .as-refresh{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 13px;font-size:12.5px;font-weight:600;color:var(--ink);}
+  .as-toolbar-title{font-size:15px;font-weight:600;margin:0;flex:1;min-width:200px;}
+  .as-toolbar-title span{display:block;font-size:12.5px;line-height:1.4;margin-top:2px;}
+  .as-select{border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 10px;font-size:13px;color:var(--ink);background:var(--surface);}
   .as-table-wrap{background:var(--surface);border:1px solid var(--line);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);overflow-x:auto;box-shadow:var(--sh-xs);}
   .as-table{width:100%;border-collapse:collapse;min-width:900px;}
-  .as-table th{text-align:left;font-size:10.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;padding:11px 16px;border-bottom:1px solid var(--line);white-space:nowrap;}
-  .as-table td{padding:11px 16px;border-bottom:1px solid var(--line);font-size:13px;white-space:nowrap;}
+  .as-table th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:10px 16px;background:var(--surface-1);border-top:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap;}
+  .as-table td{padding:11px 16px;border-bottom:1px solid var(--line);font-size:13.5px;white-space:nowrap;}
   .as-table tr:last-child td{border-bottom:none;}
-  .as-table tr:hover td{background:var(--surface-1);}
-  .as-pagination{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;}
-  .btn-outline{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 14px;font-size:12.5px;font-weight:600;color:var(--ink);}
-  .btn-outline:hover{background:var(--surface-1);}
+  .as-table tbody tr:hover td{background:var(--surface-1);}
+  .as-pagination{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line);}
 
-  /* HQ STRIP */
-  .hq-strip{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--sh-xs);}
-  .hq-total{font-size:13px;font-weight:700;color:var(--ink);white-space:nowrap;}
+  /* ---------- export dropdown ---------- */
+  .export-dropdown-wrap{position:relative;display:inline-block;}
+  .export-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--line);border-radius:var(--r-md);box-shadow:var(--sh-lg);min-width:180px;z-index:250;overflow:hidden;padding:4px;}
+  .export-menu.show{display:block;}
+  .export-menu button{display:block;width:100%;text-align:left;padding:9px 12px;font-size:13px;border:none;background:none;color:var(--ink);cursor:pointer;border-radius:var(--r-sm);}
+  .export-menu button:hover{background:var(--surface-2);}
+
+  /* ---------- segmented / chips ---------- */
+  .hq-strip{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);}
+  .hq-total{font-size:13px;font-weight:600;white-space:nowrap;}
   .hq-segment{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:3px;gap:2px;}
-  .seg-btn{border:none;background:transparent;padding:7px 15px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--ink-2);display:flex;align-items:center;gap:7px;white-space:nowrap;transition:all .12s ease;}
-  .seg-btn:hover{color:var(--ink);}
+  .seg-btn{border:none;background:transparent;padding:7px 15px;border-radius:999px;font-size:13px;font-weight:500;color:var(--ink-2);display:flex;align-items:center;gap:7px;white-space:nowrap;}
   .seg-btn.active{background:var(--surface);color:var(--ink);box-shadow:var(--sh-xs);}
   .seg-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-  .seg-dot.green{background:var(--green-fg);}
-  .seg-dot.amber{background:var(--amber-fg);}
-  .seg-dot.gray{background:var(--ink-4);}
-  .seg-count{font-variant-numeric:tabular-nums;color:var(--ink-3);font-weight:600;}
-  .seg-btn.active .seg-count{color:var(--ink-2);}
+  .seg-dot.green{background:var(--green-fg);} .seg-dot.amber{background:var(--amber-fg);} .seg-dot.gray{background:var(--ink-4);}
+  .seg-count{color:var(--ink-3);font-weight:500;}
 
-  /* STORE SWITCHER */
-  .store-chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:18px;padding-bottom:2px;}
-  .store-chip{flex-shrink:0;font-size:12.5px;font-weight:600;padding:7px 14px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);white-space:nowrap;}
-  .store-chip.active{background:var(--red-500);border-color:var(--red-500);color:#fff;font-weight:700;}
-  .store-switcher{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
-  .store-search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 12px;flex:1;min-width:220px;max-width:340px;color:var(--ink-3);}
-  .store-search-box input{border:none;background:none;outline:none;font-size:13px;width:100%;color:var(--ink);}
-  .store-switcher-hint{font-size:12px;color:var(--ink-3);}
+  .store-switcher{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+  .store-search-box,.search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 12px;color:var(--ink-3);transition:border-color .12s ease,box-shadow .12s ease;}
+  .store-search-box:focus-within,.search-box:focus-within{border-color:var(--ink-2);box-shadow:0 0 0 3px rgba(20,22,27,.07);}
+  .store-search-box{flex:1;min-width:240px;max-width:380px;}
+  .search-box{flex:1;min-width:200px;}
+  .store-search-box input,.search-box input{border:none;background:none;outline:none;font-size:13.5px;width:100%;color:var(--ink);}
+  .store-chips{display:flex;gap:8px;overflow-x:auto;margin-bottom:18px;padding-bottom:4px;}
+  .store-chip{flex-shrink:0;font-size:13px;font-weight:500;padding:7px 14px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);white-space:nowrap;transition:border-color .12s ease;}
+  .store-chip:hover{border-color:var(--ink-3);}
+  .store-chip.active{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600;}
+  .filter-chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .f-chip{font-size:12.5px;font-weight:500;padding:6px 13px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);}
+  .f-chip:hover{border-color:var(--ink-3);}
+  .f-chip.active{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600;}
   .stat-clickable{cursor:pointer;}
-  .stat-clickable:hover .summary-stat-value{text-decoration:underline;text-decoration-color:var(--line-2);}
+  .stat-clickable:hover .summary-stat-value{text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:4px;}
 
-  /* SUMMARY */
-  .summary-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;margin-bottom:14px;box-shadow:var(--sh-xs);}
-  .summary-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:6px;}
-  .summary-store{font-size:17px;font-weight:700;margin:0;}
-  .summary-cycle{font-size:12.5px;color:var(--ink-3);}
-  .bg-col-title{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:700;margin-bottom:10px;}
-  .bg-col-count{background:var(--surface-2);color:var(--ink-2);font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px;}
-  .bg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
-  .bg-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ink-4);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;box-shadow:var(--sh-xs);transition:box-shadow .15s ease,transform .15s ease;}
-  .bg-card:hover{box-shadow:var(--sh-lg);transform:translateY(-1px);}
-  .bg-card-name{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:2px;}
-  .bg-card-code{font-size:11px;color:var(--ink-3);margin-bottom:8px;}
-  .bg-card-stat{font-size:11.5px;color:var(--ink-2);}
-  .bg-card-empty{font-size:12.5px;color:var(--ink-3);padding:10px 2px;}
+  /* ---------- Overview summary (จุดเด่นของหน้า: ความคืบหน้า) ---------- */
+  .summary-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 26px 20px;margin-bottom:18px;box-shadow:var(--sh-xs);}
+  .summary-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:6px;}
+  .summary-store{font-size:18px;font-weight:600;letter-spacing:-.01em;}
+  .summary-cycle{font-size:13px;color:var(--ink-3);}
+  .summary-main{display:grid;grid-template-columns:minmax(170px,230px) 1fr;gap:34px;align-items:end;margin-bottom:20px;}
+  .summary-hero-label{font-size:13px;font-weight:500;color:var(--ink-2);margin-bottom:2px;}
+  .summary-pct{font-size:64px;line-height:1;font-weight:600;letter-spacing:-.04em;}
+  .summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;}
+  .summary-grid > div{padding:2px 18px;border-left:1px solid var(--line);}
+  .summary-stat-label{font-size:13px;color:var(--ink-2);margin:0 0 3px;}
+  .summary-stat-value{font-size:26px;line-height:1.15;font-weight:600;margin:0;letter-spacing:-.02em;}
+  .summary-stat-value.warn{color:var(--amber-fg);}
+  .summary-stat-value.danger{color:var(--red-fg);}
+  .progress-track{height:14px;border-radius:7px;background:var(--surface-2);overflow:hidden;}
+  .progress-fill{height:100%;background:var(--green-fg);border-radius:7px;transition:width .4s ease;}
+  .progress-caption{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2);margin-top:8px;}
+  .dept-filter-title{font-size:13px;font-weight:600;color:var(--ink-2);margin:0 0 8px;}
+
+  /* ---------- branch grid ---------- */
+  .page-intro{font-size:13.5px;color:var(--ink-2);margin:0 0 18px;max-width:60em;}
+  .bg-col-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin-bottom:10px;}
+  .bg-col-count{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-size:12px;font-weight:600;padding:0 9px;line-height:20px;border-radius:20px;}
+  .bg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;}
+  .bg-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ink-4);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;box-shadow:var(--sh-xs);transition:box-shadow .12s ease,border-color .12s ease;}
+  .bg-card:hover{box-shadow:var(--sh-md);border-color:var(--line-2);border-left-color:inherit;}
+  .bg-card-name{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:1px;}
+  .bg-card-code{font-size:12px;font-family:var(--mono);color:var(--ink-3);margin-bottom:8px;}
+  .bg-card-stat{font-size:12.5px;color:var(--ink-2);}
+  .bg-card-empty{font-size:13px;color:var(--ink-3);padding:10px 2px;}
   .bg-col.on_process .bg-card{border-left-color:var(--amber-fg);}
   .bg-col.open .bg-card{border-left-color:var(--red-fg);}
   .bg-col.done .bg-card{border-left-color:var(--green-fg);}
-  .summary-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:14px;}
-  .summary-stat-label{font-size:11px;color:var(--ink-3);margin:0 0 4px;text-transform:uppercase;letter-spacing:.03em;}
-  .summary-stat-value{font-size:20px;font-weight:700;margin:0;letter-spacing:-.02em;}
-  .summary-stat-value.warn{color:var(--amber-fg);}
-  .summary-stat-value.danger{color:var(--red-fg);}
-  .progress-track{height:9px;border-radius:20px;background:var(--surface-2);overflow:hidden;}
-  .progress-fill{height:100%;background:var(--green-fg);transition:width .3s;}
-  .progress-caption{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-2);margin-top:6px;}
 
-  /* FILTER + SEARCH */
+  /* ---------- toolbar ---------- */
   .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
-  .search-box{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 12px;flex:1;min-width:200px;color:var(--ink-3);}
-  .search-box input{border:none;background:none;outline:none;font-size:13px;width:100%;color:var(--ink);}
-  .filter-chips{display:flex;gap:6px;flex-wrap:wrap;}
-  .f-chip{font-size:12px;font-weight:600;padding:7px 13px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);}
-  .f-chip.active{background:var(--ink);color:#fff;border-color:var(--ink);}
-  .add-btn{background:var(--red-500);color:#fff;border:none;border-radius:var(--r-sm);padding:8px 15px;font-size:12.5px;font-weight:600;white-space:nowrap;}
-  .add-btn:hover{background:var(--red-600);}
-  .import-btn{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 15px;font-size:12.5px;font-weight:600;color:var(--ink);white-space:nowrap;}
-  .import-btn:hover{background:var(--surface-1);}
-  .export-dropdown-wrap{position:relative;display:inline-block;}
-  .export-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;background:#fff;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--sh-lg);min-width:150px;z-index:250;overflow:hidden;}
-  .export-menu.show{display:block;}
-  .export-menu button{display:block;width:100%;text-align:left;padding:9px 14px;font-size:12.5px;border:none;background:none;color:var(--ink);cursor:pointer;}
-  .export-menu button:hover{background:var(--surface-2);}
+  .result-count{font-size:13px;color:var(--ink-2);margin:0 0 10px;}
 
-  .dropzone{border:1.5px dashed var(--line-2);border-radius:var(--r-md);padding:26px 16px;text-align:center;color:var(--ink-3);margin-bottom:16px;}
-  .dropzone-btn{background:var(--ink);color:#fff;border:none;border-radius:var(--r-sm);padding:9px 16px;font-size:12.5px;font-weight:600;margin-top:10px;}
-  .import-summary{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin-bottom:14px;font-size:12.5px;}
+  /* ---------- import ---------- */
+  .dropzone{border:1.5px dashed var(--line-2);border-radius:var(--r-md);padding:30px 16px;text-align:center;color:var(--ink-3);margin-bottom:16px;background:var(--surface-1);}
+  .dropzone-btn{background:var(--ink);color:#fff;border:none;border-radius:var(--r-sm);padding:9px 16px;font-size:13px;font-weight:600;margin-top:10px;}
+  .dropzone-btn:hover{background:#000;}
+  .import-summary{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin-bottom:14px;font-size:13px;}
   .import-summary b{color:var(--ink);}
-  .import-preview{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
-  .import-preview th{text-align:left;color:var(--ink-3);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line);}
-  .import-preview td{padding:6px 8px;border-bottom:1px solid var(--line);}
-  .writeoff-warn{background:var(--red-bg2);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:10px 12px;font-size:12px;color:var(--red-fg);margin-bottom:10px;}
+  .import-preview{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12.5px;}
+  .import-preview th{text-align:left;color:var(--ink-2);font-weight:600;padding:7px 8px;border-bottom:1px solid var(--line);}
+  .import-preview td{padding:7px 8px;border-bottom:1px solid var(--line);}
+  .writeoff-warn{background:var(--red-bg2);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:10px 12px;font-size:12.5px;color:var(--red-fg);margin-bottom:10px;}
 
-  /* ASSET LIST */
+  /* ---------- asset list (Overview) ---------- */
   .asset-table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);}
-  .asset-head{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;}
-  .asset-row{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13px;cursor:pointer;}
-  /* Office/IT Hold view — เพิ่มคอลัมน์ แผนก + พนักงาน หลัง Location */
+  .asset-head{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;background:var(--surface-1);border-bottom:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--ink-2);}
+  .asset-row{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:13.5px;cursor:pointer;}
   .asset-table.office-view .asset-head,
   .asset-table.office-view .asset-row{grid-template-columns:52px 1.1fr .8fr .7fr .8fr .9fr 50px .8fr 80px 120px;}
-  .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:10.5px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 7px;margin-left:5px;white-space:nowrap;}
+  .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 8px;margin-left:5px;white-space:nowrap;}
   .sortable-col{cursor:pointer;user-select:none;}
   .sortable-col:hover{color:var(--ink);}
-  .asset-thumb{width:40px;height:40px;border-radius:8px;object-fit:cover;display:block;background:var(--surface-2);}
-  .asset-thumb-placeholder{width:40px;height:40px;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-4);}
+  .asset-thumb{width:40px;height:40px;border-radius:var(--r-sm);object-fit:cover;display:block;background:var(--surface-2);}
+  .asset-thumb-placeholder{width:40px;height:40px;border-radius:var(--r-sm);background:var(--surface-2);display:flex;align-items:center;justify-content:center;color:var(--ink-4);}
   .asset-row:last-child{border-bottom:none;}
   .asset-row:hover{background:var(--surface-1);}
   .asset-name{font-weight:600;}
-  .status-pill{font-size:11px;font-weight:600;padding:3px 10px 3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+
+  .status-pill{font-size:12px;font-weight:600;padding:3px 10px 3px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;}
   .status-pill .sp-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-  .status-pill.verified{background:var(--green-bg);color:var(--green-fg);}
-  .status-pill.verified .sp-dot{background:var(--green-fg);}
+  .status-pill.verified,.status-pill.matched{background:var(--green-bg);color:var(--green-fg);}
+  .status-pill.verified .sp-dot,.status-pill.matched .sp-dot{background:var(--green-fg);}
   .status-pill.pending{background:var(--amber-bg);color:var(--amber-fg);}
   .status-pill.pending .sp-dot{background:var(--amber-fg);}
-  .status-pill.missing{background:var(--red-bg2);color:var(--red-fg);}
-  .status-pill.missing .sp-dot{background:var(--red-fg);}
+  .status-pill.missing,.status-pill.rejected{background:var(--red-bg2);color:var(--red-fg);}
+  .status-pill.missing .sp-dot,.status-pill.rejected .sp-dot{background:var(--red-fg);}
   .status-pill.damaged{background:var(--orange-bg);color:var(--orange-fg);}
   .status-pill.damaged .sp-dot{background:var(--orange-fg);}
   .status-pill.unmatched{background:var(--purple-bg);color:var(--purple-fg);}
   .status-pill.unmatched .sp-dot{background:var(--purple-fg);}
-  .status-pill.matched{background:var(--green-bg);color:var(--green-fg);}
-  .status-pill.matched .sp-dot{background:var(--green-fg);}
-  .status-pill.rejected{background:var(--red-bg2);color:var(--red-fg);}
-  .status-pill.rejected .sp-dot{background:var(--red-fg);}
-  .row-time{color:var(--ink-3);font-size:12px;}
-  .row-action{background:none;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:6px 12px;font-size:12px;font-weight:600;color:var(--ink);}
-  .row-action:hover{background:var(--surface-1);}
+  .row-time{color:var(--ink-3);font-size:12.5px;}
+  .row-action{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:6px 12px;font-size:12.5px;font-weight:500;color:var(--ink);}
+  .row-action:hover{background:var(--surface-1);border-color:var(--ink-4);}
 
-  /* DRAWER */
-  .overlay{position:fixed;inset:0;background:rgba(17,19,24,.4);z-index:90;display:none;}
+  /* ---------- drawer ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(20,22,27,.45);z-index:90;display:none;}
   .overlay.show{display:block;}
-  .drawer{position:fixed;top:0;right:0;bottom:0;width:400px;max-width:92vw;background:var(--surface);z-index:100;box-shadow:var(--sh-lg);transform:translateX(100%);transition:transform .22s ease;overflow-y:auto;}
-  .drawer.show{transform:translateX(0);}
-  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:5;}
-  .drawer-title{font-size:15px;font-weight:700;margin:0;}
-  .drawer-close{background:none;border:none;color:var(--ink-2);width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
-  .drawer-close:hover{background:var(--surface-1);}
-  .drawer-body{padding:18px 20px 26px;}
+  .drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:94vw;background:var(--surface);z-index:100;box-shadow:none;transform:translateX(100%);transition:transform .22s ease,box-shadow .22s ease,visibility 0s linear .22s;overflow-y:auto;visibility:hidden;}
+  .drawer.show{transform:translateX(0);box-shadow:var(--sh-lg);visibility:visible;transition:transform .22s ease,box-shadow .22s ease,visibility 0s;}
+  .drawer-head{display:flex;align-items:center;justify-content:space-between;padding:0 22px;height:64px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface);z-index:5;}
+  .drawer-title{font-size:16px;font-weight:600;}
+  .drawer-close{background:none;border:none;color:var(--ink-2);width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+  .drawer-close:hover{background:var(--surface-2);}
+  .drawer-body{padding:20px 22px 28px;}
   .photo-box{width:100%;aspect-ratio:4/3;background:var(--surface-2);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:var(--ink-4);margin-bottom:10px;overflow:hidden;}
   .photo-box img{width:100%;height:100%;object-fit:cover;}
-  .photo-actions{display:flex;gap:8px;margin-bottom:20px;}
-  .photo-actions button{flex:1;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px;font-size:12px;font-weight:600;color:var(--ink);}
-  .field-group{margin-bottom:16px;}
-  .field-label{font-size:11.5px;font-weight:700;color:var(--ink-2);text-transform:uppercase;letter-spacing:.03em;margin:0 0 6px;}
-  .field-value{font-size:13.5px;color:var(--ink);}
-  .field-input,.field-select,.field-textarea{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:9px 11px;font-size:13px;color:var(--ink);outline:none;}
-  .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--red-500);}
-  .field-textarea{min-height:64px;resize:vertical;}
-  .history-item{padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px;}
+  .photo-actions{display:flex;gap:8px;margin-bottom:22px;}
+  .photo-actions button{flex:1;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px;font-size:12.5px;font-weight:500;color:var(--ink);}
+  .photo-actions button:hover{background:var(--surface-1);}
+  .field-group{margin-bottom:18px;}
+  .field-label{font-size:13px;font-weight:600;color:var(--ink-2);margin:0 0 6px;}
+  .field-label span{font-weight:400;}
+  .field-value{font-size:14px;color:var(--ink);}
+  .field-input,.field-select,.field-textarea{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:9px 12px;font-size:14px;color:var(--ink);background:var(--surface);outline:none;}
+  .field-input:focus,.field-select:focus,.field-textarea:focus{border-color:var(--red-500);box-shadow:0 0 0 3px rgba(200,16,46,.12);}
+  .field-textarea{min-height:72px;resize:vertical;}
+  .history-item{padding:10px 0;border-bottom:1px solid var(--line);font-size:13px;}
   .history-item:last-child{border-bottom:none;}
   .history-event{font-weight:600;color:var(--ink);}
   .history-meta{color:var(--ink-3);margin-top:2px;}
-  .drawer-footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:14px 20px;display:flex;gap:10px;}
-  .btn-save{flex:1;background:var(--red-500);color:#fff;border:none;border-radius:var(--r-sm);padding:11px;font-size:13.5px;font-weight:600;}
+  .drawer-footer{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:14px 22px;display:flex;gap:10px;}
+  .btn-save{flex:1;background:var(--red-500);color:#fff;border:none;border-radius:var(--r-sm);padding:11px;font-size:14px;font-weight:600;}
   .btn-save:hover{background:var(--red-600);}
-  .btn-cancel{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:11px 16px;font-size:13.5px;font-weight:600;color:var(--ink);}
+  .btn-cancel{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:11px 18px;font-size:14px;font-weight:500;color:var(--ink);}
+  .btn-cancel:hover{background:var(--surface-1);}
+  .drawer-note{display:none;font-size:13px;color:var(--ink-2);background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:18px;}
+  .hint{font-size:12px;color:var(--ink-3);margin:6px 0 0;}
+  .mono{font-family:var(--mono);font-size:13px;}
 
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:20px;padding:10px 18px;font-size:13px;z-index:200;opacity:0;transition:all .2s;pointer-events:none;}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:var(--r-md);padding:11px 20px;font-size:13.5px;z-index:950;opacity:0;transition:all .2s;pointer-events:none;box-shadow:var(--sh-lg);}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+  /* ---------- responsive ---------- */
+  @media (max-width:1100px){
+    .as-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .summary-main{grid-template-columns:1fr;gap:18px;}
+  }
+  @media (max-width:900px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%;height:auto;position:static;flex-direction:row;align-items:center;padding:8px 10px;overflow-x:auto;gap:6px;}
+    .sb-brand{display:none;}
+    .sb-nav{flex-direction:row;flex:none;}
+    .nav-item{white-space:nowrap;padding:8px 12px;}
+    .nav-item.active::before{left:10px;right:10px;top:auto;bottom:0;width:auto;height:3px;border-radius:3px 3px 0 0;}
+    .rail-user{border-top:none;margin:0 0 0 auto;padding:0 4px;flex-shrink:0;}
+    .rail-user-meta{flex-direction:row;align-items:center;gap:10px;}
+    .content-header{padding:0 16px;height:56px;top:0;position:static;}
+    .content-body{padding:16px 16px 60px;}
+    .login-aside{display:none;}
+    .login-form{width:100%;}
+  }
   @media (max-width:700px){
-    .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+    .summary-grid{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:14px;}
+    .summary-grid > div:nth-child(odd){border-left:none;padding-left:2px;}
+    .summary-pct{font-size:52px;}
     .asset-head{display:none;}
-    .asset-row{grid-template-columns:1fr;row-gap:5px;}
+    .asset-row,.asset-table.office-view .asset-row{grid-template-columns:1fr;row-gap:5px;}
     .drawer{width:100%;max-width:100%;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important;animation-duration:.01ms !important;}
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -287,6 +368,7 @@
   .as-modal-overlay, .export-menu { display: none !important; }
   .content-body { padding: 0; }
   .app { display: block; }
+  body { background: #fff; }
   .print-report-header { display: block !important; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 2px solid #C8102E; }
   .print-report-footer { display: block !important; margin-top: 50px; page-break-inside: avoid; }
   .print-letterhead { display: block; }
@@ -325,17 +407,23 @@
 <!-- ============ LOGIN OVERLAY (real system — /auth/login) ============ -->
 <div class="login-overlay" id="loginOverlay">
   <div class="login-box">
-    <div class="login-brand"><div class="brand-mark">B</div><div><div class="login-brand-name">Bata Audit</div><div class="login-brand-sub">HQ Dashboard v2</div></div></div>
-    <p class="login-title">Sign in</p>
-    <div class="login-error" id="loginError" style="display:none;"></div>
-    <label class="login-label">Employee ID</label>
-    <input class="login-input" id="loginEmployeeId" type="text" placeholder="เช่น ADMIN01" onkeydown="if(event.key==='Enter') doLogin()">
-    <label class="login-label">Password</label>
-    <input class="login-input" id="loginPassword" type="password" onkeydown="if(event.key==='Enter') doLogin()">
-    <label class="login-label">Branch ID <span style="color:var(--ink-3);font-weight:400;">(HQ เว้นว่างได้ถ้าไม่บังคับ)</span></label>
-    <input class="login-input" id="loginBranchId" type="text" placeholder="เช่น HQ หรือรหัสสาขา" onkeydown="if(event.key==='Enter') doLogin()">
-    <button class="add-btn" style="width:100%;margin-top:6px;" id="loginSubmitBtn" onclick="doLogin()">Sign in</button>
-    <p class="login-sub">เชื่อมต่อ API: <code id="loginApiBase"></code></p>
+    <div class="login-aside">
+      <div class="login-wordmark"><b>BATA</b><span>THAILAND</span></div>
+      <p class="login-tagline">ติดตามการตรวจนับสินทรัพย์ของทุกสาขาได้ในที่เดียว</p>
+    </div>
+    <div class="login-form">
+      <div class="login-brand"><div class="brand-mark">B</div><div><div class="login-brand-name">Bata Audit</div><div class="login-brand-sub">HQ Dashboard</div></div></div>
+      <p class="login-title">Sign in</p>
+      <div class="login-error" id="loginError" style="display:none;"></div>
+      <label class="login-label" for="loginEmployeeId">Employee ID</label>
+      <input class="login-input" id="loginEmployeeId" type="text" placeholder="เช่น ADMIN01" onkeydown="if(event.key==='Enter') doLogin()">
+      <label class="login-label" for="loginPassword">Password</label>
+      <input class="login-input" id="loginPassword" type="password" onkeydown="if(event.key==='Enter') doLogin()">
+      <label class="login-label" for="loginBranchId">Branch ID <span style="color:var(--ink-3);font-weight:400;">(HQ เว้นว่างได้ถ้าไม่บังคับ)</span></label>
+      <input class="login-input" id="loginBranchId" type="text" placeholder="เช่น HQ หรือรหัสสาขา" onkeydown="if(event.key==='Enter') doLogin()">
+      <button class="add-btn" style="width:100%;margin-top:20px;padding:11px 16px;font-size:14px;" id="loginSubmitBtn" onclick="doLogin()">Sign in</button>
+      <p class="login-sub">เชื่อมต่อ API: <code id="loginApiBase"></code></p>
+    </div>
   </div>
 </div>
 
@@ -345,54 +433,58 @@
       <div class="brand-mark">B</div>
       <div>
         <span class="sb-brand-name">Bata Audit</span>
-        <span class="sb-brand-sub">HQ Dashboard v2</span>
+        <span class="sb-brand-sub">HQ Dashboard</span>
       </div>
     </div>
-    <div class="nav-item active" id="navOverview" onclick="showPage('overview')">
-      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
-      Overview
+    <div class="sb-nav">
+      <div class="nav-item active" id="navOverview" onclick="showPage('overview')">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
+        Overview
+      </div>
+      <div class="nav-item" id="navBranchGrid" onclick="showPage('branchGrid')">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
+        สถานะสาขา
+      </div>
+      <div class="nav-item" id="navAssetSummary" onclick="showPage('assetSummary')">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        Asset Summary
+      </div>
+      <div class="nav-item" id="navUnmatched" onclick="showPage('unmatched')">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 9.2a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="16.7" r="0.9" fill="currentColor"/></svg>
+        ไม่พบใน Master
+        <span class="nav-badge" id="navUnmatchedBadge" style="display:none;">0</span>
+      </div>
+      <div class="nav-item" id="navEmployees" onclick="showPage('employees')">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 14.3c2.4.4 4 2.4 4 5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        พนักงาน
+      </div>
+      <div class="nav-item" id="navActivityLog" onclick="showPage('activityLog')">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
+        Activity Log
+      </div>
     </div>
-    <div class="nav-item" id="navBranchGrid" onclick="showPage('branchGrid')">
-      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
-      สถานะสาขา
-    </div>
-    <div class="nav-item" id="navAssetSummary" onclick="showPage('assetSummary')">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-      Asset Summary
-    </div>
-    <div class="nav-item" id="navUnmatched" onclick="showPage('unmatched')">
-      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 9.2a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="16.7" r="0.9" fill="currentColor"/></svg>
-      ไม่พบใน Master
-      <span class="nav-badge" id="navUnmatchedBadge" style="display:none;">0</span>
-    </div>
-    <div class="nav-item" id="navEmployees" onclick="showPage('employees')">
-      <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 14.3c2.4.4 4 2.4 4 5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-      พนักงาน
-    </div>
-    <div class="nav-item" id="navActivityLog" onclick="showPage('activityLog')">
-      <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
-      Activity Log
+    <div class="rail-user">
+      <div class="avatar" id="headerAvatar">—</div>
+      <div class="rail-user-meta">
+        <span id="headerUserLabel"></span>
+        <button class="rail-signout" onclick="logout()">Sign out</button>
+      </div>
     </div>
   </nav>
 
   <div class="content">
     <div class="content-header">
       <p class="content-title" id="pageTitle">Overview</p>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span style="font-size:12px;color:var(--ink-2);" id="headerUserLabel"></span>
-        <button class="btn-outline" style="padding:6px 12px;font-size:11.5px;" onclick="logout()">Sign out</button>
-        <div class="avatar" id="headerAvatar">—</div>
-      </div>
     </div>
 
     <div class="content-body">
 
       <!-- ============ SCREEN: BRANCH STATUS GRID ============ -->
       <section class="screen2" id="pageBranchGrid">
-        <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 16px;">
+        <p class="page-intro">
           แบ่งตามสถานะ session ล่าสุดของแต่ละสาขา — คลิกที่การ์ดเพื่อดูรายละเอียด asset ของสาขานั้น
         </p>
-        <div id="branchGridWrap" style="display:flex;flex-direction:column;gap:22px;"></div>
+        <div id="branchGridWrap" style="display:flex;flex-direction:column;gap:26px;"></div>
       </section>
 
       <!-- ============ SCREEN: OVERVIEW (audit workspace) ============ -->
@@ -411,7 +503,7 @@
           <span id="overviewDataBannerText">โหลดข้อมูลจริงไม่สำเร็จ</span>
         </div>
 
-        <div class="data-source-banner" id="importUndoBanner" style="background:var(--surface-1);color:var(--ink);border-color:var(--line-2);justify-content:space-between;">
+        <div class="data-source-banner" id="importUndoBanner" style="background:var(--surface);color:var(--ink);border-color:var(--line-2);justify-content:space-between;">
           <span id="importUndoBannerText">Import สำเร็จ</span>
           <div style="display:flex;gap:8px;align-items:center;">
             <button class="btn-outline-red" onclick="undoLastImport()">Undo import นี้</button>
@@ -421,7 +513,7 @@
 
         <div class="store-switcher">
           <div class="store-search-box">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             <input type="text" id="storeSwitchInput" list="storeDatalist" autocomplete="off" placeholder="พิมพ์ชื่อหรือรหัสสาขา (จาก 200 สาขา)" onchange="handleStoreSwitch(this.value)" onkeyup="if(event.key==='Enter') handleStoreSwitch(this.value)">
           </div>
           <datalist id="storeDatalist"></datalist>
@@ -434,17 +526,22 @@
             <p class="summary-store" id="sumStoreName">Central Rama 2</p>
             <span class="summary-cycle" id="sumCycle">Audit cycle: Q3 2026</span>
           </div>
-          <div id="deptFilterWrap" style="display:none;margin-bottom:14px;">
-            <p style="font-size:11.5px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.03em;margin:0 0 8px;">ดูตามแผนก (Office)</p>
+          <div id="deptFilterWrap" style="display:none;margin-bottom:18px;">
+            <p class="dept-filter-title">ดูตามแผนก (Office)</p>
             <div class="filter-chips" id="deptFilterChips"></div>
-            <p id="deptUnmatchedLink" style="display:none;font-size:12px;margin:10px 0 0;"></p>
+            <p id="deptUnmatchedLink" style="display:none;font-size:12.5px;margin:10px 0 0;"></p>
           </div>
-          <div class="summary-grid">
-            <div class="stat-clickable" onclick="setAssetFilter('all')" title="ดูรายการทั้งหมด"><p class="summary-stat-label">Total assets</p><p class="summary-stat-value" id="sumTotal">1,245</p></div>
-            <div class="stat-clickable" onclick="setAssetFilter('verified')" title="ดูรายการที่สแกนแล้ว"><p class="summary-stat-label">Scanned</p><p class="summary-stat-value" id="sumScanned">890</p></div>
-            <div class="stat-clickable" onclick="setAssetFilter('pending')" title="ดูรายการที่ยังไม่สแกน"><p class="summary-stat-label">Remaining</p><p class="summary-stat-value warn" id="sumRemaining">355</p></div>
-            <div class="stat-clickable" onclick="setAssetFilter('exceptions')" title="ดู Missing / Damaged / Unmatched ทั้งหมด"><p class="summary-stat-label">Exceptions</p><p class="summary-stat-value danger" id="sumExceptions">18</p></div>
-            <div><p class="summary-stat-label">Completion</p><p class="summary-stat-value" id="sumPct">71%</p></div>
+          <div class="summary-main">
+            <div class="summary-hero">
+              <p class="summary-hero-label">ความคืบหน้าการตรวจนับ</p>
+              <p class="summary-pct" id="sumPct">71%</p>
+            </div>
+            <div class="summary-grid">
+              <div class="stat-clickable" onclick="setAssetFilter('all')" title="ดูรายการทั้งหมด"><p class="summary-stat-label">Total assets</p><p class="summary-stat-value" id="sumTotal">1,245</p></div>
+              <div class="stat-clickable" onclick="setAssetFilter('verified')" title="ดูรายการที่สแกนแล้ว"><p class="summary-stat-label">Scanned</p><p class="summary-stat-value" id="sumScanned">890</p></div>
+              <div class="stat-clickable" onclick="setAssetFilter('pending')" title="ดูรายการที่ยังไม่สแกน"><p class="summary-stat-label">Remaining</p><p class="summary-stat-value warn" id="sumRemaining">355</p></div>
+              <div class="stat-clickable" onclick="setAssetFilter('exceptions')" title="ดู Missing / Damaged / Unmatched ทั้งหมด"><p class="summary-stat-label">Exceptions</p><p class="summary-stat-value danger" id="sumExceptions">18</p></div>
+            </div>
           </div>
           <div class="progress-track"><div class="progress-fill" id="sumBar" style="width:71%;"></div></div>
           <div class="progress-caption"><span id="sumCaption">71% complete</span><span id="sumRemainCaption">355 assets remaining</span></div>
@@ -452,7 +549,7 @@
 
         <div class="toolbar">
           <div class="search-box">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             <input type="text" id="assetSearch" placeholder="Search asset, barcode, serial, location" oninput="renderAssetList()">
           </div>
           <div class="as-last-sync"><span class="dot"></span>Last Sync <b id="overviewLastSyncTime">—</b></div>
@@ -472,7 +569,7 @@
           <button class="add-btn" onclick="openAddDrawer()">+ Add Asset</button>
         </div>
 
-        <p id="assetResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
+        <p id="assetResultCount" class="result-count"></p>
 
         <div class="filter-chips" id="filterChips" style="margin-bottom:14px;"></div>
 
@@ -501,7 +598,7 @@
           <div style="font-size:12.5px;color:#333;margin-top:10px;" id="asPrintHeaderMeta"></div>
         </div>
 
-        <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px;">
           <div class="as-last-sync"><span class="dot"></span>Last Sync <b id="asLastSync">7 Jul 2026, 09:45</b></div>
         </div>
 
@@ -514,8 +611,8 @@
 
         <div class="as-toolbar">
           <p class="as-toolbar-title">รายการ Asset ทั้งหมด</p>
-          <div class="search-box" style="width:220px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <div class="search-box" style="width:240px;flex:none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             <input type="text" id="asSearch" placeholder="ค้นหา code / ชื่อ / serial" oninput="renderAssetSummary()">
           </div>
           <select class="as-select" id="asBranchFilter" onchange="renderAssetSummary()"><option value="all">ทุกสาขา</option></select>
@@ -541,7 +638,7 @@
           </div>
           <button class="add-btn" onclick="showToast('เปิดฟอร์มเพิ่ม Asset')">+ Add Asset</button>
         </div>
-        <p id="asResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
+        <p id="asResultCount" class="result-count" style="margin-top:10px;"></p>
         <div class="as-table-wrap">
           <table class="as-table">
             <thead><tr><th>#</th><th>Asset code</th><th>SEQ</th><th>ชื่อ Asset</th><th>สาขา</th><th>Serial no.</th><th>Qty</th><th>สถานะ</th><th>เวลาสแกน</th><th>Actions</th></tr></thead>
@@ -573,9 +670,9 @@
         </div>
 
         <div class="as-toolbar">
-          <p class="as-toolbar-title">รายการที่สแกนแล้วไม่พบใน Master <span style="font-weight:400;color:var(--ink-3);">— คลิกแถวเพื่อตรวจสอบและจับคู่ หรือปฏิเสธ</span></p>
-          <div class="search-box" style="width:220px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <p class="as-toolbar-title">รายการที่สแกนแล้วไม่พบใน Master <span style="font-weight:400;color:var(--ink-3);">คลิกแถวเพื่อตรวจสอบและจับคู่ หรือปฏิเสธ</span></p>
+          <div class="search-box" style="width:240px;flex:none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             <input type="text" id="umSearch" placeholder="ค้นหา QR / ชื่อ / serial" oninput="renderUnmatchedList()">
           </div>
           <select class="as-select" id="umBranchFilter" onchange="renderUnmatchedList()"><option value="all">ทุกสาขา</option></select>
@@ -591,7 +688,7 @@
             </div>
           </div>
         </div>
-        <p id="umResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
+        <p id="umResultCount" class="result-count" style="margin-top:10px;"></p>
         <div class="as-table-wrap">
           <table class="as-table">
             <thead><tr><th>#</th><th>Photo</th><th>Scanned QR</th><th>รายละเอียด</th><th>Serial</th><th>แผนก / พนักงาน</th><th>สาขา</th><th>Auditor</th><th>เวลาสแกน</th><th>สถานะ</th><th>Actions</th></tr></thead>
@@ -612,19 +709,19 @@
         </div>
         <div class="drawer-body">
           <div class="photo-box" id="umPhotoBox"></div>
-          <div class="field-group"><p class="field-label">Scanned QR</p><p class="field-value" id="umScannedQr" style="font-family:monospace;">—</p></div>
+          <div class="field-group"><p class="field-label">Scanned QR</p><p class="field-value mono" id="umScannedQr">—</p></div>
           <div class="field-group"><p class="field-label">รายละเอียดที่กรอกมา</p><p class="field-value" id="umNameGuess">—</p></div>
           <div class="field-group"><p class="field-label">Serial (จากที่สแกน)</p><p class="field-value" id="umSerialGuess">—</p></div>
           <div class="field-group"><p class="field-label">แผนก / พนักงาน</p><p class="field-value" id="umDeptEmp">—</p></div>
           <div class="field-group"><p class="field-label">สาขา / Auditor / เวลา</p><p class="field-value" id="umMeta">—</p></div>
           <div class="field-group"><p class="field-label">Remark จากคนสแกน</p><p class="field-value" id="umRemark">—</p></div>
 
-          <p id="umAlreadyReviewedNote" style="display:none;font-size:12.5px;color:var(--ink-2);background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:16px;"></p>
+          <p id="umAlreadyReviewedNote" class="drawer-note"></p>
 
           <div class="field-group">
             <p class="field-label">จับคู่กับ Asset Code จริง (ถ้ารู้)</p>
             <input class="field-input" id="umMatchedCode" placeholder="e.g. SFU042026060012">
-            <p style="font-size:11px;color:var(--ink-3);margin:6px 0 0;">ถ้าเว้นว่างแล้วกด Mark Matched จะปิดรายการนี้โดยไม่ผูกกับ asset จริงในระบบ</p>
+            <p class="hint">ถ้าเว้นว่างแล้วกด Mark Matched จะปิดรายการนี้โดยไม่ผูกกับ asset จริงในระบบ</p>
           </div>
           <div class="field-group">
             <p class="field-label">แก้ไข Serial (ถ้าต้องการ)</p>
@@ -646,9 +743,9 @@
       <section class="screen2" id="pageEmployees">
 
         <div class="as-toolbar">
-          <p class="as-toolbar-title">รายชื่อพนักงาน <span style="font-weight:400;color:var(--ink-3);">— ใช้เลือกตอน assign asset ในหน้า Office Scan</span></p>
-          <div class="search-box" style="width:220px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <p class="as-toolbar-title">รายชื่อพนักงาน <span style="font-weight:400;color:var(--ink-3);">ใช้เลือกตอน assign asset ในหน้า Office Scan</span></p>
+          <div class="search-box" style="width:240px;flex:none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             <input type="text" id="empSearch" placeholder="ค้นหา Employee ID / ชื่อ" oninput="renderEmployeeList()">
           </div>
           <select class="as-select" id="empDeptFilter" onchange="renderEmployeeList()"><option value="all">ทุกแผนก</option></select>
@@ -658,7 +755,7 @@
           </button>
           <button class="import-btn" onclick="openEmployeeImportDrawer()">⬆ Import พนักงาน</button>
         </div>
-        <p id="empResultCount" style="font-size:12.5px;color:var(--ink-2);margin:0 0 10px;"></p>
+        <p id="empResultCount" class="result-count" style="margin-top:10px;"></p>
         <div class="as-table-wrap">
           <table class="as-table">
             <thead><tr><th>#</th><th>Employee ID</th><th>ชื่อ</th><th>ตำแหน่ง</th><th>แผนก</th><th>สถานะ</th><th>Actions</th></tr></thead>
@@ -691,9 +788,9 @@
       <section class="screen2" id="pageActivityLog">
 
         <div class="as-toolbar">
-          <p class="as-toolbar-title">Activity Log <span style="font-weight:400;color:var(--ink-3);">— ทุก action ของทุกสาขา เรียงจากล่าสุด</span></p>
-          <div class="search-box" style="width:220px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <p class="as-toolbar-title">Activity Log <span style="font-weight:400;color:var(--ink-3);">ทุก action ของทุกสาขา เรียงจากล่าสุด</span></p>
+          <div class="search-box" style="width:240px;flex:none;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
             <input type="text" id="alSearch" placeholder="ค้นหา user / asset / สาขา" oninput="renderActivityLog()">
           </div>
           <select class="as-select" id="alBranchFilter" onchange="renderActivityLog()"><option value="all">ทุกสาขา</option></select>
@@ -739,8 +836,8 @@
     <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handlePhoto(this)">
 
     <div class="field-group" id="seqGroup">
-      <p class="field-label">SEQ <span style="text-transform:none;font-weight:400;color:var(--ink-3);">(จาก Master List — แก้ไขไม่ได้)</span></p>
-      <p class="field-value" id="fSeq" style="font-family:monospace;color:var(--ink-2);">—</p>
+      <p class="field-label">SEQ <span style="color:var(--ink-3);">(จาก Master List — แก้ไขไม่ได้)</span></p>
+      <p class="field-value mono" id="fSeq" style="color:var(--ink-2);">—</p>
     </div>
     <div class="field-group">
       <p class="field-label">Barcode</p>
@@ -761,7 +858,7 @@
     <div class="field-group" id="departmentGroup" style="display:none;">
       <p class="field-label">Department</p>
       <select class="field-select" id="fDepartment" onchange="checkDrawerDeptMismatch()"></select>
-      <p id="fDepartmentWarn" style="display:none;font-size:11.5px;color:var(--amber-fg);margin:6px 0 0;"></p>
+      <p id="fDepartmentWarn" style="display:none;font-size:12px;color:var(--amber-fg);margin:6px 0 0;"></p>
     </div>
     <div class="field-group">
       <p class="field-label">Status</p>
@@ -812,13 +909,13 @@
     </button>
   </div>
   <div class="drawer-body">
-    <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 14px;">อัปโหลดไฟล์ Master List (CSV/Excel — คอลัมน์เดียวกับที่ระบบเดิมใช้: รหัสสินทรัพย์, รหัสที่ตั้ง, ชื่อที่ตั้ง, รายละเอียดสินทรัพย์, เลขที่เครื่อง ฯลฯ) สำหรับสาขา <b id="importStoreName">Central Rama 2</b> ระบบจะตรวจสอบก่อนเขียนเข้าจริง</p>
+    <p style="font-size:13px;color:var(--ink-2);margin:0 0 14px;line-height:1.65;">อัปโหลดไฟล์ Master List (CSV/Excel — คอลัมน์เดียวกับที่ระบบเดิมใช้: รหัสสินทรัพย์, รหัสที่ตั้ง, ชื่อที่ตั้ง, รายละเอียดสินทรัพย์, เลขที่เครื่อง ฯลฯ) สำหรับสาขา <b id="importStoreName">Central Rama 2</b> ระบบจะตรวจสอบก่อนเขียนเข้าจริง</p>
     <button class="row-action" style="margin-bottom:14px;" onclick="showToast('ดาวน์โหลด template.csv')">⬇ ดาวน์โหลด Template</button>
 
     <div id="importStep1">
       <div class="dropzone">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <p style="font-size:12.5px;margin:8px 0 0;">ลากไฟล์มาวาง หรือ</p>
+        <p style="font-size:13px;margin:8px 0 0;">ลากไฟล์มาวาง หรือ</p>
         <button class="dropzone-btn" onclick="document.getElementById('importFileInput').click()">เลือกไฟล์ CSV / Excel</button>
         <input type="file" id="importFileInput" accept=".csv,.xls,.xlsx" style="display:none" onchange="handleImportFile(this)">
       </div>
@@ -847,12 +944,12 @@
     </button>
   </div>
   <div class="drawer-body">
-    <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 14px;">อัปโหลดไฟล์ Excel รายชื่อพนักงาน (คอลัมน์: Employee ID, Name, Position, Department, Department Code) — ระบบจะตรวจสอบซ้ำก่อนบันทึกจริง คนที่ Employee ID ซ้ำจะถูกอัปเดตข้อมูลทับของเดิม ไม่สร้างซ้ำ</p>
+    <p style="font-size:13px;color:var(--ink-2);margin:0 0 14px;line-height:1.65;">อัปโหลดไฟล์ Excel รายชื่อพนักงาน (คอลัมน์: Employee ID, Name, Position, Department, Department Code) — ระบบจะตรวจสอบซ้ำก่อนบันทึกจริง คนที่ Employee ID ซ้ำจะถูกอัปเดตข้อมูลทับของเดิม ไม่สร้างซ้ำ</p>
 
     <div id="empImportStep1">
       <div class="dropzone">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)"><path d="M12 3v12m0 0l-4-4m4 4l4-4" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <p style="font-size:12.5px;margin:8px 0 0;">ลากไฟล์มาวาง หรือ</p>
+        <p style="font-size:13px;margin:8px 0 0;">ลากไฟล์มาวาง หรือ</p>
         <button class="dropzone-btn" onclick="document.getElementById('empImportFileInput').click()">เลือกไฟล์ Excel</button>
         <input type="file" id="empImportFileInput" accept=".xls,.xlsx" style="display:none" onchange="handleEmployeeImportFile(this)">
       </div>
