@@ -114,6 +114,20 @@
   .conn-status[data-state="checking"] .conn-dot{animation:connPulse 1s ease-in-out infinite;}
   @keyframes connPulse{50%{opacity:.35;}}
 
+  /* ===== Login: พนักงานสแกนสินทรัพย์ (ภาพนิ่ง + เอฟเฟกต์สแกนเบาๆ ด้วย CSS) ===== */
+  .scan-art{position:relative;width:min(100%,292px);margin:18px auto;border-radius:20px;overflow:hidden;background:#FCFCFC;box-shadow:0 14px 30px rgba(0,0,0,.28);line-height:0;}
+  .scan-art img{display:block;width:100%;height:auto;user-select:none;}
+  .scan-art span{position:absolute;pointer-events:none;}
+  .sa-beam{left:48.8%;top:36.3%;width:6.8%;height:2px;border-radius:2px;transform-origin:0 50%;transform:rotate(55deg);
+    background:linear-gradient(90deg,rgba(255,40,40,.2),#FF2A2A 45%,#FF2A2A);box-shadow:0 0 6px 1px rgba(255,40,40,.85);animation:saFan .9s ease-in-out infinite alternate;}
+  .sa-tip{left:48.8%;top:36.3%;width:2.6%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);background:#FF2A2A;box-shadow:0 0 8px 2px rgba(255,40,40,.9);animation:saTip .9s ease-in-out infinite alternate;}
+  .sa-hit{left:52%;top:40.4%;width:5%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);background:rgba(255,40,40,.38);animation:saHit 1.8s ease-in-out infinite;}
+  .sa-ok{left:79.4%;top:22.7%;width:10.5%;aspect-ratio:1;border-radius:50%;transform:translate(-50%,-50%);border:2px solid #E5243F;opacity:0;animation:saOk 2.4s ease-out infinite;}
+  @keyframes saFan{from{transform:rotate(42deg);opacity:.8;}to{transform:rotate(68deg);opacity:1;}}
+  @keyframes saTip{from{opacity:.55;}to{opacity:1;}}
+  @keyframes saHit{0%,100%{opacity:.15;transform:translate(-50%,-50%) scale(.8);}50%{opacity:1;transform:translate(-50%,-50%) scale(1.25);}}
+  @keyframes saOk{0%,55%{opacity:0;transform:translate(-50%,-50%) scale(.85);}60%{opacity:.9;}100%{opacity:0;transform:translate(-50%,-50%) scale(1.7);}}
+  @media (prefers-reduced-motion:reduce){.sa-beam,.sa-tip,.sa-hit,.sa-ok{animation:none !important;} .sa-ok,.sa-hit{display:none;}}
   .login-sub code{font-family:var(--mono);background:var(--surface-2);padding:1px 5px;border-radius:4px;}
 
   /* ---------- banners ---------- */
@@ -503,6 +517,10 @@
   <div class="login-box">
     <div class="login-aside">
       <div class="login-wordmark"><b>BATA</b><span>THAILAND</span></div>
+      <div class="scan-art" aria-hidden="true">
+        <img src="login_scan.png" alt="" width="447" height="441" draggable="false">
+        <span class="sa-hit"></span><span class="sa-beam"></span><span class="sa-tip"></span><span class="sa-ok"></span>
+      </div>
       <p class="login-tagline">ระบบตรวจนับสินทรัพย์ถาวร<br><span style="font-size:15px;font-weight:500;opacity:.85;">Fixed Asset Audit · Bata Thailand</span></p>
     </div>
     <div class="login-form">
