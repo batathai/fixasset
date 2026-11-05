@@ -21,7 +21,7 @@
 
 - เวอร์ชัน backend ปัจจุบัน (ตาม `main.py`): **1.2.0**
 - ระบบใช้งานจริงอยู่แล้ว (production) มี login จริง มี asset master import จริง ไม่ใช่ prototype
-- คอมมิตล่าสุดใน repo นี้ (branch `main`): **2026-07-23**
+- คอมมิตล่าสุดใน repo นี้ (branch `main`): **2026-11-05**
 - **2026-07-21 — Office Asset Scan (เวอร์ชันแรก):** หน้าใหม่ `office.html` (clone จาก `index.html`) + คอลัมน์ `department` แบบ free text
 - **2026-07-22/23 — Office Asset Scan v2 + ระบบพนักงาน (เพิ่มเข้ามาวันนี้ — ดู section 8 รายละเอียดเต็ม):**
   - เปลี่ยนช่องแผนกใน `office.html` จาก free text → `<select>` แบบ fixed list 11 แผนก (กัน typo)
@@ -29,6 +29,11 @@
   - เพิ่ม dropdown ที่ 2 "มอบหมายให้พนักงาน" ใน `office.html` — เลือกแผนกก่อน ระบบดึงรายชื่อพนักงานเฉพาะแผนกนั้นมาให้เลือก ครอบคลุมทั้งการ์ด matched, serial-check, และ unmatched
   - **แก้บั๊กใหญ่ที่เจอระหว่างทาง:** `assets.department` (และคอลัมน์ที่เกี่ยวข้องใน `scan_logs`/`unmatched_assets`) ที่ระบุไว้ใน entry 2026-07-21 ว่าจะเพิ่ม **ไม่เคยถูกรันจริงในฐานข้อมูล Production** ทำให้ `/hq/assets` (และทุก endpoint ที่ query `a.department`) พัง 500 error มานานโดยไม่มีใครรู้ตัว — อาการที่เห็นคือ browser แจ้ง "CORS error" (เข้าใจผิดได้ง่ายมาก เพราะ FastAPI/Starlette ตอบ unhandled exception เป็น generic `text/plain "Internal Server Error"` ที่ไม่มี CORS header ติดมา) สาเหตุจริงคือ column ไม่มีอยู่ ไม่ใช่ CORS — แก้แล้วโดยรัน migration ที่ค้างไว้จริงๆ ใน Neon (ดู section 6 ข้อ 11 เรื่องวิธี debug อาการนี้)
   - เพิ่ม CORS origin สำหรับทดสอบผ่าน local server (`localhost:8000`, `:5500`, `:3000`)
+- **2026-11-05 — UI Redesign (เฉพาะหน้าตา ไม่แตะ logic/backend/DB) — ดู section 8 รายละเอียดเต็ม:**
+  - `dashboard.html` ออกแบบใหม่ทั้งหน้า (UI v3): sidebar สีกรมท่า, IBM Plex Sans Thai, หน้าแรกเปลี่ยนชื่อจาก "Overview" เป็น **"Dashboard"** ที่มี KPI 6 ใบ + "สิ่งที่ต้องดูแล" + วงแหวนความคืบหน้า + สาขาที่เหลือมากที่สุด (ตัวเลขทั้งหมดคำนวณจากข้อมูลจริง ไม่มีข้อมูลจำลอง)
+  - แบรนด์ในหน้าเว็บเปลี่ยนจาก "Bata Audit" เป็น **"Bata Fix Asset"**
+  - หน้า Login ของทั้ง 3 หน้า (`index.html`, `office.html`, `dashboard.html`) ใช้ภาพพนักงานสแกนสินทรัพย์ (`login_scan.gif`) + จุดสถานะการเชื่อมต่อ API เขียว/แดง
+  - Workflow ที่ใช้ตลอดรอบนี้: ทำบน branch `staging` ก่อน → ผู้ใช้สั่ง "merge เข้า main" → fast-forward `main` → fetch กลับมาเทียบ md5 ทุกครั้ง
 - **ยังไม่ได้แก้ (ทราบปัญหาแล้ว แต่ยังไม่ทำ):** auth session เก็บใน memory ของ backend (ดูหัวข้อ 6)
 
 > ⚠️ **สำคัญ:** `docs/` เหลือแค่ไฟล์ที่ตรงกับโค้ดจริง (`database.md`, `changelog.md`) — ถ้าไม่แน่ใจเรื่อง endpoint ให้ตรวจกับ `main.py` เสมอ
@@ -49,6 +54,8 @@
 ├── migration_employees.sql           # Migration: ตาราง employees, employee_import_batches + คอลัมน์ assigned_employee_id/name ใน scan_logs — รันแล้ว
 ├── migration_unmatched_employee.sql  # Migration: คอลัมน์ assigned_employee_id/name ใน unmatched_assets — รันแล้ว
 ├── CNAME                              # Custom domain ของ GitHub Pages: fixasset.batathai.com
+├── login_scan.gif                     # ภาพเคลื่อนไหว (พื้นโปร่งใส) พนักงานสแกนสินทรัพย์ — ใช้ในหน้า Login ทั้ง 3 หน้า
+├── login_scan_still.png               # เฟรมนิ่งของ GIF — ใช้แทนเมื่อเครื่องตั้ง prefers-reduced-motion
 ├── bata_logo.png                      # โลโก้ที่ใช้ในหน้าเว็บ
 ├── CHANGES_README.md                  # สรุปแก้ไข "6 ข้อ" จากรอบก่อนหน้า (ยังไม่ถูกรวมเข้า docs/changelog.md อย่างเป็นทางการ)
 └── docs/
@@ -117,6 +124,16 @@
 9. **ระบบ "User/เจ้าของ asset" ใน Office Scan ทำเสร็จแล้ว (2026-07-22/23)** — เป็น dropdown ที่ 2 ดึงจาก master list จริง (ตาราง `employees`) ตามที่เคยออกแบบคุยไว้ ไม่ใช่ free text แล้ว
 10. **เหตุการณ์ push ทับไฟล์ด้วย placeholder/เนื้อหาไม่ครบเคยเกิดซ้ำหลายรอบ (2026-07-21 และซ้ำอีกครั้งใน session 2026-07-22)** — ทั้งสองครั้งเป็นความผิดพลาดตอนเรียก tool push ผ่าน GitHub API (พิมพ์/วางเนื้อหาไม่ครบ หรือพลาดใส่ค่า placeholder แทนเนื้อหาจริง) **แนวทางป้องกัน: หลัง push ทุกครั้งที่แก้ไฟล์สำคัญ (`main.py`, `office.html`, `dashboard.html`) ให้ fetch กลับมาจาก GitHub ทันทีเพื่อ verify ว่าเนื้อหาตรงกับที่ตั้งใจ ก่อนจะถือว่างานเสร็จ** — ควรพิจารณา deploy ผ่าน branch แยก (เช่น `staging`) แล้วค่อย merge เข้า `main` หลังทดสอบแล้วว่าใช้งานได้จริง เพื่อลดความเสี่ยงนี้ในระยะยาว
 11. **วิธี debug เวลา browser ฟ้อง "CORS error" ทั้งที่ origin ถูกต้องแล้ว:** อย่าเชื่อข้อความ error ของ browser ทันที — เปิด DevTools → Network tab เช็ค status code จริงของ request ที่ fail ก่อนเสมอ ถ้าเป็น 500 (ไม่ใช่ request ที่ไม่ขึ้นเลย/blocked) แปลว่าเป็น backend exception จริง ไม่ใช่ CORS (Starlette/FastAPI ตอบ unhandled exception เป็น `text/plain "Internal Server Error"` แบบไม่มี CORS header ติดมา ทำให้ browser แจ้งเป็น "Failed to fetch" ที่ดูเหมือน CORS) ให้ไปดู Railway → Deploy Logs หา Python traceback ต่อ
+12. **หน้าตา UI ของ `dashboard.html` (v3) — ข้อควรรู้ก่อนแก้:**
+   - JS เดิมถูกคงไว้ แก้เพิ่มแบบเฉพาะจุด และ **ทุก element `id` / inline handler เดิมยังอยู่ครบ** (ตรวจด้วยการ diff id/handler ทุกรอบ) — ถ้าจะลบ/เปลี่ยนชื่อ id ต้องไล่ดูโค้ด JS ก่อนเสมอ
+   - ชิปสาขา (`#storeChips`, `#storeChipsToggle`) ถูกซ่อนด้วย CSS (`display:none !important`) แต่ยังมีใน DOM เพราะโค้ดเดิมยังเรียกใช้ — ใช้ "สาขาที่ยังเหลือมากที่สุด" หรือช่องค้นหาในส่วน "รายละเอียดรายสาขา" แทน
+   - รายการ asset ในหน้า Dashboard แบ่งหน้า (`OVERVIEW_PAGE_SIZE = 50` + ปุ่ม "แสดงเพิ่ม"); เวลาพิมพ์ (`beforeprint`) จะขยายเป็นทุกแถวอัตโนมัติ
+   - `renderHomeDashboard()` ถูกเรียกท้าย `renderSummary()` และ `updateUnmatchedBadge()` — คำนิยามตัวเลข: Remaining = total − scanned, Exceptions = missing + damaged + unmatched
+   - `_hmSet()` มีแอนิเมชันนับเลขขึ้น (เฉพาะจำนวนเต็ม) และการ์ดมี tilt ตามเมาส์ (เฉพาะอุปกรณ์ที่มี hover) ทั้งสองปิดเองเมื่อตั้ง `prefers-reduced-motion`
+13. **หน้า Login ทั้ง 3 หน้า (`index.html`, `office.html`, `dashboard.html`) ไม่ได้แชร์โค้ดกัน** (ต่อยอดจากข้อ 8) — การแก้หน้าตา login หรือฟังก์ชัน `checkApiConnection()` ต้องไล่แก้ซ้ำทั้ง 3 ไฟล์เอง:
+   - `checkApiConnection()` เรียก `GET {API}/health` ทุก 30 วินาทีตอนอยู่หน้า login; จุดแดงเป็นปกติเมื่อเปิดไฟล์ผ่าน `file://` (origin `null` โดน CORS)
+   - แอพสแกน (`index.html`/`office.html`) ซ่อนภาพ GIF อัตโนมัติเมื่อจอเตี้ยกว่า 640px เพื่อให้ปุ่ม SIGN IN ยังอยู่บนจอเครื่อง Urovo โดยไม่ต้องเลื่อน
+   - ถ้าจะเปลี่ยนภาพ ให้ใช้ GIF พื้นโปร่งใส + แก้ไฟล์ `login_scan_still.png` ให้ตรงกันด้วย; อย่าใช้ภาพที่ตัดพื้นหลังอัตโนมัติ (เคยลองแล้ว ขอบไม่คม)
 
 ---
 
@@ -178,6 +195,12 @@ Environment variables ที่ backend ต้องการ:
   - **บั๊กใหญ่ที่พบและแก้:** `assets.department` (จาก entry 2026-07-21) ไม่เคยถูกรันจริงใน Production DB มาก่อน ทำให้ `/hq/assets` พัง 500 error โดยแสดงผลเป็น "CORS error" ที่เข้าใจผิดง่าย (ดู section 6.11 วิธี debug) — แก้แล้วด้วย `migration_office_department.sql` (รันแล้ว, เนื้อหาเก็บใน Section 9)
   - เพิ่ม CORS origins สำหรับทดสอบผ่าน local server
   - ลบ `seed_users.py`, `migration_scan_delete_log.sql`, `migration_office_department.sql` ออกจาก repo (รันเสร็จสิ้นแล้ว ไม่มีโค้ดอ้างอิงตอน runtime) — เนื้อหาเก็บสำรองไว้ที่ Section 9
+- **2026-11-05 — UI Redesign: Dashboard + หน้า Login (หน้าตาเท่านั้น):**
+  - `dashboard.html` UI v3 (commit `7d5f401`) → รอบ 2: ชิปสาขาพับได้, แบ่งหน้ารายการ asset, `d9c5cf1` → รอบ 3: หน้า Dashboard แบบ KPI + attention center, `d9f95ad` → ปรับแบรนด์เป็น "Bata Fix Asset", `002f97d` → แอนิเมชันการ์ดตัวเลข/วงแหวนความคืบหน้า, `46d31b5` → เอาบรรทัด URL ของ API ออกจากหน้า login, เพิ่มจุดสถานะการเชื่อมต่อ (`344928d`)
+  - หน้า Login: ลองฉาก 3D CSS (กล่อง/สาขา Bata) แล้วผู้ใช้ไม่เอา เลยเอาออก (`9c1b864`) → ใช้ GIF ภาพพนักงานสแกนที่ผู้ใช้ทำมาเอง (`79e83c3`) → ใช้ GIF เดียวกันกับ `index.html`/`office.html` พร้อมจุดสถานะการเชื่อมต่อ (`faec384`)
+  - ข้อความฝั่งแดงหน้า login ของ Dashboard เปลี่ยนเป็น "ระบบตรวจนับสินทรัพย์ถาวร / Fixed Asset Audit · Bata Thailand" (ผู้ใช้ไม่ชอบสโลแกนแบบเดิม)
+  - เพิ่มไฟล์ `login_scan.gif`, `login_scan_still.png` — **ไม่มีการเปลี่ยน `main.py`, schema หรือฐานข้อมูล**
+  - Commit ก่อนเริ่มรอบนี้ (ใช้ย้อนกลับได้): `db5ef4e`; ก่อนรอบแก้ login ของแอพสแกน: `79e83c3`
 
 ---
 
