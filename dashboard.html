@@ -507,7 +507,6 @@
       <label class="login-label" for="loginBranchId">Branch ID <span style="color:var(--ink-3);font-weight:400;">(HQ เว้นว่างได้ถ้าไม่บังคับ)</span></label>
       <input class="login-input" id="loginBranchId" type="text" placeholder="เช่น HQ หรือรหัสสาขา" onkeydown="if(event.key==='Enter') doLogin()">
       <button class="add-btn" style="width:100%;margin-top:20px;padding:11px 16px;font-size:14px;" id="loginSubmitBtn" onclick="doLogin()">Sign in</button>
-      <p class="login-sub">เชื่อมต่อ API: <code id="loginApiBase"></code></p>
     </div>
   </div>
 </div>
@@ -1207,7 +1206,6 @@ stores.forEach(function(s, i){ assetsByStore[s.name] = seedAssets(s, i); });
    own background render; nobody sees it because the overlay covers it.
    ================================================================ */
 var API_BASE = 'https://bata-asset-api-production.up.railway.app';
-document.getElementById('loginApiBase').textContent = API_BASE;
 
 var authToken = null;
 var authUser = null;
