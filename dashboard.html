@@ -295,10 +295,12 @@
 
   /* ---------- asset list (Overview) ---------- */
   .asset-table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);}
-  .asset-head{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;padding:11px 18px;background:var(--surface-1);border-bottom:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink-2);}
-  .asset-row{display:grid;grid-template-columns:52px 1.2fr .9fr 1fr 60px 1fr 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:14.5px;cursor:pointer;}
+  .asset-head{display:grid;grid-template-columns:52px minmax(0,1.7fr) minmax(0,1.1fr) minmax(0,.8fr) 60px 120px 90px 132px;gap:10px;padding:11px 18px;background:var(--surface-1);border-bottom:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink-2);}
+  .asset-row{display:grid;grid-template-columns:52px minmax(0,1.7fr) minmax(0,1.1fr) minmax(0,.8fr) 60px 120px 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:14.5px;cursor:pointer;}
   .asset-table.office-view .asset-head,
-  .asset-table.office-view .asset-row{grid-template-columns:52px 1.1fr .8fr .7fr .8fr .9fr 50px .8fr 80px 120px;}
+  .asset-table.office-view .asset-row{grid-template-columns:52px minmax(0,1.6fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,.7fr) minmax(0,1fr) 60px 120px 90px 132px;}
+  .asset-row > div{min-width:0;}
+  .asset-cell-1l{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 8px;margin-left:5px;white-space:nowrap;}
   .sortable-col{cursor:pointer;user-select:none;}
   .sortable-col:hover{color:var(--ink);}
@@ -488,6 +490,7 @@
 
   /* ตารางเวลาพิมพ์ — ใส่เส้นขอบและสีหัวตารางให้ดูเป็นฟอร์มมาตรฐาน แทนเส้นบางๆ สีจางที่ใช้บนจอ */
   .asset-table, .as-table-wrap { border: 1px solid #C8102E !important; }
+  .asset-cell-1l { white-space: normal !important; overflow: visible !important; text-overflow: clip !important; }
   .asset-head, .as-table thead th { background: #FDF2F3 !important; color: #AB0D27 !important; border-bottom: 1.5px solid #C8102E !important; font-weight: 700 !important; }
   .asset-row, .as-table td { border-bottom: 1px solid #ddd !important; }
   .asset-row:nth-child(even), .as-table tbody tr:nth-child(even) td { background: #FAFAFA !important; }
@@ -1950,7 +1953,7 @@ var overviewVisibleCount = OVERVIEW_PAGE_SIZE;
 var overviewListSig = '';
 var OVERVIEW_SORT_COLUMNS = [
   ['photo', 'Photo'], ['asset', 'Asset'], ['serial', 'Serial'], ['location', 'Location'],
-  ['department', 'Department'], ['employee', 'Employee'],
+  ['department', 'Dept.'], ['employee', 'Employee'],
   ['qty', 'Qty'], ['status', 'Status'], ['lastscan', 'Last scan']
 ];
 function setOverviewSort(key){
@@ -2301,11 +2304,11 @@ function renderAssetList(){
     var safeCode = a.barcode.replace(/'/g, "\\'");
     return '<div class="asset-row" onclick="openAssetDrawer(' + idx + ')">'
       + '<div>' + (a.photo ? ('<img class="asset-thumb" src="' + a.photo + '" alt="">') : ('<div class="asset-thumb-placeholder"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 011 1v10a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="14" r="3.3" stroke="currentColor" stroke-width="1.6"/></svg></div>')) + '</div>'
-      + '<div class="asset-name">' + a.barcode + '<span style="display:block;font-size:11px;color:var(--ink-3);font-weight:400;">' + a.name + '</span></div>'
-      + '<div style="font-family:monospace;font-size:12px;color:var(--ink-2);">' + (a.serial || '—') + '</div>'
-      + '<div>' + a.location + '</div>'
+      + '<div class="asset-name"><span class="asset-cell-1l">' + a.barcode + '</span><span class="asset-cell-1l" title="' + _hmEsc(a.name) + '" style="font-size:11px;color:var(--ink-3);font-weight:400;">' + a.name + '</span></div>'
+      + '<div class="asset-cell-1l" title="' + _hmEsc(a.serial || '') + '" style="font-family:monospace;font-size:12px;color:var(--ink-2);">' + (a.serial || '—') + '</div>'
+      + '<div class="asset-cell-1l" title="' + _hmEsc(a.location) + '">' + a.location + '</div>'
       + (isOfficeView ? ('<div>' + a.department + (a.deptMismatch ? ('<span class="dept-warn-badge" title="แผนกที่สแกนต่างจาก master (' + a.masterDept + ')">⚠ ย้ายแผนก</span>') : '') + '</div>'
-        + '<div style="font-size:12.5px;color:var(--ink-2);">' + a.employeeName + '</div>') : '')
+        + '<div class="asset-cell-1l" title="' + _hmEsc(a.employeeName) + '" style="font-size:12.5px;color:var(--ink-2);">' + a.employeeName + '</div>') : '')
       + '<div style="text-align:center;">' + (a.qty != null ? a.qty : 1) + '</div>'
       + '<div>' + statusPillHtml(a.status) + '</div>'
       + '<div class="row-time">' + formatDateShort(a.lastScan) + '</div>'
