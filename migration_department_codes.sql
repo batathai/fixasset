@@ -24,11 +24,11 @@ INSERT INTO dept_code_map (old_name, new_code) VALUES
   ('E-Commerce',      '600ML'),
   ('Marketing',       '630'),
   ('Merchandising',   '640M'),
+  ('Country Manager', '999CM'),   -- ชื่อที่พบจริงในไฟล์ HR (3 คน)
   ('Management',      '999CM'),
   ('Procurement',     NULL);      -- แผนกถูกยกเลิก: ข้อมูลเดิมกลายเป็น "ไม่มีแผนก" (ไม่ลบ asset/พนักงาน)
 
-UPDATE assets a SET department = m.new_code
-  FROM dept_code_map m WHERE lower(trim(a.department)) = lower(m.old_name);
+-- (ไม่ต้องอัปเดต assets: ตรวจแล้วช่อง department ของ asset master ว่างทั้ง 39,746 แถว)
 
 UPDATE scan_logs s SET scanned_department = m.new_code
   FROM dept_code_map m WHERE lower(trim(s.scanned_department)) = lower(m.old_name);
@@ -41,6 +41,9 @@ UPDATE employees e SET department_code = m.new_code,
   FROM dept_code_map m WHERE lower(trim(e.department)) = lower(m.old_name);
 
 DROP TABLE dept_code_map;
+
+-- ผลที่คาดหวังของ employees หลังรัน (รวม 84): 500R=18, 600ML=4, 630=6, 640M=16, 680=1, 999CM=3, 999FI=17, 999HR=5, 999IA=7, 999IT=6, NULL=1
+-- SELECT department_code, COUNT(*) FROM employees GROUP BY 1 ORDER BY 1;
 
 -- ============ (3) ตรวจผล: ควรได้ 0 แถว (ถ้ามีแถว = ค่าที่ไม่อยู่ใน 12 รหัสใหม่) ============
 SELECT 'assets' AS src, department AS value, COUNT(*) FROM assets
