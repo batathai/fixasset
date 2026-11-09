@@ -322,9 +322,11 @@ def employees_by_department(department: str, db=Depends(get_db), user=Depends(ge
     cur = db.cursor()
     cur.execute("""
         SELECT employee_id, full_name, position FROM employees
-        WHERE department = %s AND COALESCE(is_active, true) = true
+        WHERE (UPPER(TRIM(COALESCE(department_code, ''))) = UPPER(TRIM(%s))
+               OR UPPER(TRIM(COALESCE(department, ''))) = UPPER(TRIM(%s)))
+          AND COALESCE(is_active, true) = true
         ORDER BY full_name
-    """, (department,))
+    """, (department, department))
     return {"employees": [dict(r) for r in cur.fetchall()]}
 
 
@@ -337,7 +339,7 @@ def hq_get_all_employees(db=Depends(get_db), user=Depends(get_current_user)):
         SELECT id, employee_id, full_name, position, department, department_code,
                is_active, imported_at
         FROM employees
-        ORDER BY department, full_name
+        ORDER BY COALESCE(department_code, department), full_name
     """)
     rows = [dict(r) for r in cur.fetchall()]
     return {"total": len(rows), "employees": rows}
@@ -393,7 +395,7 @@ async def hq_import_employees_preview(file: UploadFile = File(...), user=Depends
         existing = set()
 
     preview = [{**r, "duplicate": r["employee_id"] in existing} for r in rows]
-    depts = sorted({r["department"] for r in rows if r["department"]})
+    depts = sorted({(r["department_code"] or r["department"]) for r in rows if (r["department_code"] or r["department"])})
 
     return {"file_name": file.filename, "total_rows": len(rows),
             "duplicate_count": sum(1 for p in preview if p["duplicate"]),

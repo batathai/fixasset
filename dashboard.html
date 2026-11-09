@@ -1180,8 +1180,8 @@ var OFFICE_VIEW_CODES = ['0099999', '0099993'];
 // รายชื่อแผนกตายตัว 11 แผนก — ต้อง sync มือกับ OFFICE_DEPARTMENTS ใน office.html เสมอ (ดู CLAUDE.md
 // ข้อ 5.13) ถ้าจะเพิ่ม/ลบแผนกต้องแก้ทั้ง 2 ไฟล์ เพราะไฟล์นี้ไม่แชร์โค้ดกับ office.html
 var OFFICE_DEPARTMENTS = [
-  'E-Commerce', 'Finance', 'Human Resources', 'Internal Audit', 'IT',
-  'Management', 'Marketing', 'Merchandising', 'Procurement', 'Retail', 'Warehouse'
+  '500R', '600ML', '630', '640', '640M', '680',
+  '999', '999CM', '999FI', '999HR', '999IA', '999IT'
 ];
 function officeDeptOptionsHTML(selected){
   var sel = (selected || '').trim();
@@ -2783,7 +2783,7 @@ async function handleEmployeeImportFile(input){
       + (result.departments_found && result.departments_found.length ? (', แผนกที่พบในไฟล์: ' + result.departments_found.join(', ')) : '');
     document.getElementById('empImportPreviewRows').innerHTML = rows.slice(0, 200).map(function(r){
       var rowStyle = r.duplicate ? ' style="background:var(--amber-bg);"' : '';
-      return '<tr' + rowStyle + '><td>' + r.employee_id + '</td><td>' + r.full_name + '</td><td>' + (r.position || '—') + '</td><td>' + (r.department || '—') + '</td></tr>';
+      return '<tr' + rowStyle + '><td>' + r.employee_id + '</td><td>' + r.full_name + '</td><td>' + (r.position || '—') + '</td><td>' + (r.department_code || r.department || '—') + '</td></tr>';
     }).join('');
     document.getElementById('empImportConfirmBtn').disabled = false;
     document.getElementById('empImportConfirmBtn').style.opacity = '1';
@@ -2831,11 +2831,14 @@ async function loadEmployees(){
   }
 }
 
+// แสดงแผนกพนักงานเป็น "รหัส" อย่างเดียว (เช่น 999IT) — ถ้าแถวไหนไม่มีรหัสค่อย fallback เป็นชื่อเดิม
+function empDeptCode(e){ return ((e && (e.department_code || e.department)) || '').trim(); }
+
 function populateEmployeeDeptFilter(){
   var sel = document.getElementById('empDeptFilter');
   var currentVal = sel.value || 'all';
   var depts = [];
-  employees.forEach(function(e){ if(e.department && depts.indexOf(e.department) === -1) depts.push(e.department); });
+  employees.forEach(function(e){ var dc = empDeptCode(e); if(dc && depts.indexOf(dc) === -1) depts.push(dc); });
   depts.sort();
   sel.innerHTML = '<option value="all">ทุกแผนก</option>' + depts.map(function(d){ return '<option value="' + d + '">' + d + '</option>'; }).join('');
   if(depts.indexOf(currentVal) > -1) sel.value = currentVal;
@@ -2845,7 +2848,7 @@ function renderEmployeeList(){
   var term = (document.getElementById('empSearch').value || '').toLowerCase();
   var deptF = document.getElementById('empDeptFilter').value;
   var filtered = employees.filter(function(e){
-    var mDept = deptF === 'all' || e.department === deptF;
+    var mDept = deptF === 'all' || empDeptCode(e) === deptF;
     var mSearch = !term ||
       (e.employee_id || '').toLowerCase().indexOf(term) > -1 ||
       (e.full_name || '').toLowerCase().indexOf(term) > -1;
@@ -2866,7 +2869,7 @@ function renderEmployeeList(){
       + '<td>' + e.employee_id + '</td>'
       + '<td>' + e.full_name + '</td>'
       + '<td>' + (e.position || '—') + '</td>'
-      + '<td>' + (e.department || '—') + '</td>'
+      + '<td>' + (empDeptCode(e) || '—') + '</td>'
       + '<td>' + (isActive ? '<span class="status-pill verified"><span class="sp-dot"></span>Active</span>' : '<span class="status-pill missing"><span class="sp-dot"></span>ปิดใช้งาน</span>') + '</td>'
       + '<td><button class="row-action" onclick="toggleEmployeeActive(\'' + safeId + '\', ' + isActive + ')">' + (isActive ? 'ปิดใช้งาน' : 'เปิดใช้งาน') + '</button></td>'
     + '</tr>';
