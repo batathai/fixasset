@@ -139,6 +139,8 @@
    - GIF ต้นฉบับมีแค่ 9 เฟรม เฟรมละ 300ms ผู้ใช้ติว่า "กระตุก/เป็นสเต็บ" จึงสร้าง WebP แบบเติมเฟรมแทน (`<picture>` เลือก still → webp → gif ตามลำดับ)
 
 14. **รหัสแผนกกับไฟล์ HR / `employees`:** หน้าพนักงานใน Dashboard และ dropdown แผนกแสดง **รหัส (`department_code`) เป็นหลัก** ถ้าแถวไหนไม่มีรหัสค่อย fallback เป็นชื่อ (`department`); `GET /employees/department/{department}` จับคู่ได้ทั้งรหัสและชื่อ (ไม่สนตัวพิมพ์) — **ไฟล์ HR ที่ import ครั้งถัดไปต้องใช้รหัสใหม่ในช่อง Department Code** (เช่น `640M` ไม่ใช่ `640P`, `680` ไม่ใช่ `68001`, `999CM` แทน `999G`/`999MD`) ไม่งั้นรหัสเก่าจะกลับมา; `assets.department` ใน asset master ว่างทั้งหมด (39,746 แถว ณ 2026-11-09) ถ้า HQ จะ import แผนกของ asset ต้องใช้รหัสใหม่
+15. **Sidebar ของ `dashboard.html` ซ่อนอัตโนมัติ (2026-11-09):** บนจอ ≥901px ที่มีเมาส์ (`@media (min-width:901px) and (hover:hover)`) sidebar ถูกซ่อน (`translateX(-102%)`) แล้วเลื่อนเข้าเมื่อเมาส์ไปที่แถบ `.sb-edge` (กว้าง 14px ชิดขอบซ้าย) หรืออยู่บน sidebar เอง เป็น CSS ล้วน ไม่มี JS; จอแคบ/มือถือ/อุปกรณ์สัมผัสยังใช้ layout แถบบนแบบเดิม — ห้ามลบ `<div class="sb-edge">` ใน `#appRoot` (อยู่ก่อน `<nav class="sidebar">` เพราะใช้ sibling selector `~`)
+
 ---
 
 ## 7. วิธีรัน / Build / Deploy
@@ -210,6 +212,8 @@ Environment variables ที่ backend ต้องการ:
   - `main.py`: `employees_by_department` จับคู่ทั้ง `department_code` และ `department` (UPPER/TRIM), `departments_found` และการเรียง `/hq/employees` ใช้รหัสก่อน
   - ฐานข้อมูล: รัน `migration_department_codes.sql` แล้วใน Neon (ตรวจผลตรง: 500R=18, 600ML=4, 630=6, 640M=16, 680=1, 999CM=3, 999FI=17, 999HR=5, 999IA=7, 999IT=6, ว่าง=1) — แผนก Procurement ถูกยกเลิก (พนักงาน 1 คนเหลือเป็น "ไม่มีแผนก"), "Country Manager" → `999CM`
   - เพิ่มข้อ 6.14 เรื่องรหัสในไฟล์ HR; แก้ข้อ 5.13 เป็นรายการ 12 รหัส
+
+- **2026-11-09 (บ่าย)** — `dashboard.html`: sidebar ซ่อนอัตโนมัติ เลื่อนเข้า/ออกเมื่อเมาส์ไปขอบซ้ายสุด (ดูข้อ 6.15) — หน้าตาเท่านั้น ไม่แตะ backend/DB
 
 ---
 
