@@ -53,6 +53,7 @@
 ├── dashboard.html                    # Frontend: HQ Dashboard (static) — asset + พนักงาน host บน GitHub Pages
 ├── migration_employees.sql           # Migration: ตาราง employees, employee_import_batches + คอลัมน์ assigned_employee_id/name ใน scan_logs — รันแล้ว
 ├── migration_unmatched_employee.sql  # Migration: คอลัมน์ assigned_employee_id/name ใน unmatched_assets — รันแล้ว
+├── migration_department_codes.sql    # Migration: แปลงชื่อแผนกเดิม → รหัสแผนกใหม่ 12 ค่า (scan_logs, unmatched_assets, employees) — รันแล้ว 2026-11-09
 ├── CNAME                              # Custom domain ของ GitHub Pages: fixasset.batathai.com
 ├── login_scan.webp                    # ภาพเคลื่อนไหวแบบนุ่ม (72 เฟรม ~37ms, พื้นโปร่งใส) พนักงานสแกนสินทรัพย์ — ใช้ในหน้า Login ทั้ง 3 หน้า
 ├── login_scan.gif                     # ไฟล์ต้นฉบับ 9 เฟรม (กระตุก) — เก็บไว้เป็น fallback ของ <picture> สำหรับเบราว์เซอร์ที่ไม่รองรับ WebP
@@ -108,7 +109,7 @@
 10. **Schema change ทุกครั้งต้อง apply ผ่าน Neon SQL editor เอง** — ไม่มี auto-migration ตอน backend startup **และต้องยืนยันว่ารันสำเร็จจริงก่อนประกาศว่างานเสร็จ**
 11. **ทำไมไม่มี framework/build step ฝั่ง frontend** — เลือกความเรียบง่ายในการ deploy แลกกับไฟล์ .html ใหญ่มาก (100KB+) และแก้ยากขึ้นเรื่อยๆ
 12. **Employee assignment เก็บแบบ denormalized เหมือน department** — `scan_logs.assigned_employee_id`/`assigned_employee_name` และ `unmatched_assets.assigned_employee_id`/`assigned_employee_name` เก็บเป็น text ตรงๆ ไม่ผูก FK กับ `employees` เพื่อไม่ให้ scan record พังถ้าพนักงานถูกปิดใช้งาน/ลบทีหลัง
-13. **แผนกของ Office เป็น fixed list 11 ค่าตายตัวใน `office.html`** (`const OFFICE_DEPARTMENTS`) ไม่ได้ query จาก DB แบบ dynamic — ถ้าจะเพิ่ม/ลบแผนก ต้องแก้ array นี้ตรงๆ ใน `office.html`
+13. **แผนกของ Office เป็น fixed list 12 "รหัสแผนก" ตายตัว (แสดงและบันทึกเป็นรหัสล้วน ไม่มีชื่อเต็ม)** — `OFFICE_DEPARTMENTS` ใน `office.html` **และ `dashboard.html` (ต้อง sync มือทั้งสองไฟล์)** ไม่ได้ query จาก DB แบบ dynamic: `500R, 600ML, 630, 640, 640M, 680, 999, 999CM, 999FI, 999HR, 999IA, 999IT` (ชื่อเต็มของแต่ละรหัสไม่ได้เก็บในระบบ: 500R Retail Office, 600ML Multi-Channel, 630 Advertising, 640 Merchandising, 640M Merchandising Department, 680 Warehouse, 999 Administration, 999CM Country Manager Office, 999FI Finance Department (Account), 999HR Human Resources, 999IA Internal Audit, 999IT IT Department) — ถ้าจะเพิ่ม/ลบแผนก ต้องแก้ array นี้ทั้งสองไฟล์ และถ้ามีข้อมูลเดิมที่ใช้ค่าเก่าต้องเขียน migration แปลงค่าใน DB ด้วย
 
 ---
 
@@ -137,6 +138,7 @@
    - ถ้าจะเปลี่ยนภาพ ให้ใช้ GIF พื้นโปร่งใส แล้วสร้าง `login_scan.webp` (เติมเฟรมคั่นกลางด้วย optical flow จนได้ ~27fps) + `login_scan_still.png` ให้ตรงกัน; อย่าใช้ภาพที่ตัดพื้นหลังอัตโนมัติ (เคยลองแล้ว ขอบไม่คม)
    - GIF ต้นฉบับมีแค่ 9 เฟรม เฟรมละ 300ms ผู้ใช้ติว่า "กระตุก/เป็นสเต็บ" จึงสร้าง WebP แบบเติมเฟรมแทน (`<picture>` เลือก still → webp → gif ตามลำดับ)
 
+14. **รหัสแผนกกับไฟล์ HR / `employees`:** หน้าพนักงานใน Dashboard และ dropdown แผนกแสดง **รหัส (`department_code`) เป็นหลัก** ถ้าแถวไหนไม่มีรหัสค่อย fallback เป็นชื่อ (`department`); `GET /employees/department/{department}` จับคู่ได้ทั้งรหัสและชื่อ (ไม่สนตัวพิมพ์) — **ไฟล์ HR ที่ import ครั้งถัดไปต้องใช้รหัสใหม่ในช่อง Department Code** (เช่น `640M` ไม่ใช่ `640P`, `680` ไม่ใช่ `68001`, `999CM` แทน `999G`/`999MD`) ไม่งั้นรหัสเก่าจะกลับมา; `assets.department` ใน asset master ว่างทั้งหมด (39,746 แถว ณ 2026-11-09) ถ้า HQ จะ import แผนกของ asset ต้องใช้รหัสใหม่
 ---
 
 ## 7. วิธีรัน / Build / Deploy
@@ -203,6 +205,11 @@ Environment variables ที่ backend ต้องการ:
   - ข้อความฝั่งแดงหน้า login ของ Dashboard เปลี่ยนเป็น "ระบบตรวจนับสินทรัพย์ถาวร / Fixed Asset Audit · Bata Thailand" (ผู้ใช้ไม่ชอบสโลแกนแบบเดิม)
   - เพิ่มไฟล์ `login_scan.gif`, `login_scan.webp`, `login_scan_still.png` — **ไม่มีการเปลี่ยน `main.py`, schema หรือฐานข้อมูล**
   - Commit ก่อนเริ่มรอบนี้ (ใช้ย้อนกลับได้): `db5ef4e`; ก่อนรอบแก้ login ของแอพสแกน: `79e83c3`
+- **2026-11-09 — เปลี่ยนแผนกเป็นรหัสแผนก 12 ค่า (แสดงเฉพาะรหัส):**
+  - `office.html` + `dashboard.html`: `OFFICE_DEPARTMENTS` จาก 11 ชื่อ → 12 รหัส; หน้าพนักงานใน Dashboard แสดง/กรองด้วยรหัส
+  - `main.py`: `employees_by_department` จับคู่ทั้ง `department_code` และ `department` (UPPER/TRIM), `departments_found` และการเรียง `/hq/employees` ใช้รหัสก่อน
+  - ฐานข้อมูล: รัน `migration_department_codes.sql` แล้วใน Neon (ตรวจผลตรง: 500R=18, 600ML=4, 630=6, 640M=16, 680=1, 999CM=3, 999FI=17, 999HR=5, 999IA=7, 999IT=6, ว่าง=1) — แผนก Procurement ถูกยกเลิก (พนักงาน 1 คนเหลือเป็น "ไม่มีแผนก"), "Country Manager" → `999CM`
+  - เพิ่มข้อ 6.14 เรื่องรหัสในไฟล์ HR; แก้ข้อ 5.13 เป็นรายการ 12 รหัส
 
 ---
 
