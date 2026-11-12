@@ -63,7 +63,14 @@ CREATE TABLE assets (
   status            text DEFAULT 'active',   -- 'active' | 'disposed' | 'transferred' | 'missing'
   imported_at       timestamptz DEFAULT now(),
   import_batch_id   text,                    -- เพิ่มใน v0.8 — อ้างถึง import_batches.batch_id เพื่อทำ Undo เป็นชุด
-  is_active         boolean DEFAULT true     -- เพิ่มใน v0.8 — false = ถูก undo การ import ไปแล้ว (soft-delete)
+  is_active         boolean DEFAULT true,    -- เพิ่มใน v0.8 — false = ถูก undo การ import ไปแล้ว (soft-delete)
+  -- เพิ่ม 2026-11-12 (migration_asset_writeoff.sql): Write off โดย HQ — status เปลี่ยนเป็น 'disposed'
+  write_off_reason  text,                    -- sold | donated | damaged_beyond_repair | lost | other
+  write_off_remark  text,                    -- บังคับเมื่อ reason = other
+  written_off_by    text,                    -- employee_id ของ HQ ที่ตัด
+  written_off_at    timestamptz,
+  -- เพิ่ม 2026-11-12 (migration_asset_location_override.sql): HQ ย้าย location ด้วยมือ
+  location_override boolean DEFAULT false    -- true = Dashboard จัดกลุ่มตาม location_code แทนสาขาของ session ที่สแกน
 );
 
 CREATE INDEX idx_assets_asset_code   ON assets(asset_code);
@@ -185,6 +192,16 @@ CREATE TABLE IF NOT EXISTS import_batches (
   batch_id TEXT PRIMARY KEY, file_name TEXT, row_count INT,
   imported_by TEXT, imported_at TIMESTAMPTZ DEFAULT now(), status TEXT DEFAULT 'active'
 );
+
+-- 2026-11-12 — Write off asset ที่ยังไม่เคยสแกน (รันใน Neon แล้ว)
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS write_off_reason TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS write_off_remark TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS written_off_by TEXT;
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS written_off_at TIMESTAMPTZ;
+
+-- 2026-11-12 — HQ ย้าย location ของ asset (รันใน Neon แล้ว)
+ALTER TABLE assets ADD COLUMN IF NOT EXISTS location_override BOOLEAN DEFAULT false;
+UPDATE assets SET location_override = false WHERE location_override IS NULL;
 ```
 
 > **ข้อควรระวัง:** เคยเจอ error `column s.scheduled_date does not exist` เพราะ query ใน backend อ้างถึง column ที่ไม่เคยถูกสร้างจริงในฐานข้อมูล ก่อนแก้ query หรือเพิ่ม column ใหม่ ควรตรวจสอบ schema จริงในฐานข้อมูลก่อนเสมอ (ผ่าน Neon SQL editor หรือคำสั่ง `\d` ใน psql) เพื่อไม่ให้ code กับ database schema ไม่ตรงกัน

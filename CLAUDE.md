@@ -21,7 +21,7 @@
 
 - เวอร์ชัน backend ปัจจุบัน (ตาม `main.py`): **1.2.0**
 - ระบบใช้งานจริงอยู่แล้ว (production) มี login จริง มี asset master import จริง ไม่ใช่ prototype
-- คอมมิตล่าสุดใน repo นี้ (branch `main`): **2026-11-05**
+- คอมมิตล่าสุดใน repo นี้ (branch `main`): **2026-11-12** (`108d3e3`)
 - **2026-07-21 — Office Asset Scan (เวอร์ชันแรก):** หน้าใหม่ `office.html` (clone จาก `index.html`) + คอลัมน์ `department` แบบ free text
 - **2026-07-22/23 — Office Asset Scan v2 + ระบบพนักงาน (เพิ่มเข้ามาวันนี้ — ดู section 8 รายละเอียดเต็ม):**
   - เปลี่ยนช่องแผนกใน `office.html` จาก free text → `<select>` แบบ fixed list 11 แผนก (กัน typo)
@@ -34,6 +34,12 @@
   - แบรนด์ในหน้าเว็บเปลี่ยนจาก "Bata Audit" เป็น **"Bata Fix Asset"**
   - หน้า Login ของทั้ง 3 หน้า (`index.html`, `office.html`, `dashboard.html`) ใช้ภาพพนักงานสแกนสินทรัพย์ (`login_scan.gif`) + จุดสถานะการเชื่อมต่อ API เขียว/แดง
   - Workflow ที่ใช้ตลอดรอบนี้: ทำบน branch `staging` ก่อน → ผู้ใช้สั่ง "merge เข้า main" → fast-forward `main` → fetch กลับมาเทียบ md5 ทุกครั้ง
+- **2026-11-12 — Write off / ย้าย Location / Dashboard v4 (ผู้ใช้ทดสอบจริงแล้วใช้ได้) — ดูข้อ 6.16–6.18 และ section 8:**
+  - **Write off asset ที่ยังไม่เคยสแกน:** `POST /hq/assets/{id}/write-off` + คอลัมน์ `assets.write_off_*` (เดิมกด Save แล้วขึ้น toast "รอเชื่อม POST /scans")
+  - **ย้าย Location โดย HQ:** `PATCH /hq/assets/{id}/location` + `assets.location_override` — แก้บั๊กที่ช่อง Location ไม่เคยถูก save; กรณี master ถูกแล้วแต่สแกนที่สาขาอื่น (เช่น `MAC022014070001SEQ005`, `MAC022014110001SEQ002`) drawer เตือนแล้วกด Save เพื่อย้ายตาม master
+  - **Dashboard v4:** sidebar ไอคอนล้วน, แถบ % ใต้ KPI, การ์ดแผนกไม่ตรง, ภาพรวมสาขาและทีม, แนวโน้มสแกน 7 วัน
+  - Migration ที่รันใน Neon แล้ว: `migration_asset_writeoff.sql`, `migration_asset_location_override.sql`
+  - Workflow: staging → ผู้ใช้สั่ง "merge เข้า main" → fast-forward → เทียบ md5 (มี PR #1 "Staging" ที่ผู้ใช้เปิดไว้ถูกปิดเป็น merged)
 - **ยังไม่ได้แก้ (ทราบปัญหาแล้ว แต่ยังไม่ทำ):** auth session เก็บใน memory ของ backend (ดูหัวข้อ 6)
 
 > ⚠️ **สำคัญ:** `docs/` เหลือแค่ไฟล์ที่ตรงกับโค้ดจริง (`database.md`, `changelog.md`) — ถ้าไม่แน่ใจเรื่อง endpoint ให้ตรวจกับ `main.py` เสมอ
