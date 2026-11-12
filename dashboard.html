@@ -1124,6 +1124,7 @@
       <p class="field-label">Location</p>
       <input class="field-input" id="fLocation" list="storeCodeList" placeholder="พิมพ์รหัสหรือชื่อสาขา เช่น 0068000 Warehouse" autocomplete="off">
       <datalist id="storeCodeList"></datalist>
+      <p id="fLocationNote" style="display:none;font-size:12.5px;color:var(--amber-fg);margin:6px 0 0;"></p>
     </div>
     <div class="field-group" id="departmentGroup" style="display:none;">
       <p class="field-label">Department</p>
@@ -1795,6 +1796,7 @@ function buildStoresFromRealAssets(list, scansByQrKey){
       scanId: matchingScan ? scanIdOf(matchingScan) : null,
       assetId: a.id != null ? a.id : null,
       masterLocationCode: a.location_code || '',
+      locationOverride: a.location_override === true,
       qrKey: qrKey,
       qty: (a.qty != null ? a.qty : (a.quantity != null ? a.quantity : 1)),
       serial: (matchingScan && matchingScan.serial_found) || a.serial_no || a.serial || '',
@@ -2014,6 +2016,7 @@ var currentDeptFilter = 'all';
 var editingAssetIndex = -1;
 var isAddMode = false;
 var drawerInitialLocation = '';
+var drawerMovePending = false; // asset ถูกสแกนที่สาขาอื่น แต่ master ระบุ location อีกที่ — กด Save เพื่อให้ Dashboard ใช้ location ตาม master
 
 /* Location ของ asset = location_code ใน master — แสดงเป็น "รหัส — ชื่อ" เพื่อเลือกจาก datalist ได้ไม่พิมพ์ผิด */
 function locationLabel(code){
@@ -2646,6 +2649,14 @@ function openAssetDrawer(idx){
   fillStoreDatalist();
   drawerInitialLocation = a.masterLocationCode ? locationLabel(a.masterLocationCode) : (a.location || '');
   document.getElementById('fLocation').value = drawerInitialLocation;
+  drawerMovePending = !!(a.masterLocationCode && a.masterLocationCode !== currentStore && !a.locationOverride);
+  var locNote = document.getElementById('fLocationNote');
+  if(locNote){
+    locNote.style.display = drawerMovePending ? 'block' : 'none';
+    locNote.textContent = drawerMovePending
+      ? ('สแกนไว้ที่ ' + (STORE_NAMES[currentStore] || currentStore) + ' แต่ master ระบุ ' + (STORE_NAMES[a.masterLocationCode] || a.masterLocationCode) + ' — กด Save เพื่อย้ายไปอยู่ตาม master')
+      : '';
+  }
   var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
   document.getElementById('departmentGroup').style.display = isOfficeView ? 'block' : 'none';
   if(isOfficeView){
@@ -2673,6 +2684,8 @@ function openAddDrawer(){
   document.getElementById('fSerial').value = '';
   document.getElementById('fCategory').value = '';
   document.getElementById('fLocation').value = '';
+  drawerMovePending = false;
+  var locNoteAdd = document.getElementById('fLocationNote'); if(locNoteAdd) locNoteAdd.style.display = 'none';
   document.getElementById('departmentGroup').style.display = 'none';
   document.getElementById('fStatus').value = 'pending';
   document.getElementById('fWriteOffReason').value = '';
@@ -3132,7 +3145,7 @@ async function saveDrawer(){
   // ย้าย location จริง (assets.location_code) — ช่อง Location เดิมไม่เคยถูกส่งไป save เลย
   var locChanged = (location !== drawerInitialLocation);
   var newLocCode = null;
-  if(locChanged && status !== 'disposed'){
+  if((locChanged || drawerMovePending) && status !== 'disposed'){
     newLocCode = resolveLocationCode(location);
     if(!newLocCode){
       showToast('ไม่พบสาขานี้ — เลือกจากรายการ เช่น 0068000 — Warehouse');
