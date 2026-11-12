@@ -1727,6 +1727,7 @@ function buildStoresFromRealAssets(list, scansByQrKey){
       remark: a.remark || '',
       photo: matchingScan ? scanPhotoOf(matchingScan) : null,
       scanId: matchingScan ? scanIdOf(matchingScan) : null,
+      assetId: a.id != null ? a.id : null,
       qrKey: qrKey,
       qty: (a.qty != null ? a.qty : (a.quantity != null ? a.quantity : 1)),
       serial: (matchingScan && matchingScan.serial_found) || a.serial_no || a.serial || '',
@@ -2964,6 +2965,33 @@ async function saveDrawer(){
   }
 
   var a = assetsByStore[currentStore][editingAssetIndex];
+
+  if(!a.scanId && status === 'disposed'){
+    // Write off ของ asset ที่ยังไม่เคยสแกน — ทำที่ตัว asset master (POST /hq/assets/{id}/write-off)
+    // ไม่ต้องมี scan/session เพราะเป็นการตัดออกจากทะเบียน asset จะหลุดจากรายการ (status ไม่ใช่ active)
+    if(a.assetId == null){
+      showToast('ไม่พบ asset id — รีเฟรชหน้าแล้วลองใหม่');
+      saveBtn.disabled = false; saveBtn.textContent = 'Save';
+      return;
+    }
+    try{
+      await apiFetch('/hq/assets/' + a.assetId + '/write-off', {
+        method: 'POST',
+        body: JSON.stringify({ reason: reasonVal, remark: remark })
+      });
+      var storeWrittenOff = currentStore;
+      closeDrawer();
+      await loadRealData();
+      if(stores.some(function(s){ return s.name === storeWrittenOff; })) selectStore(storeWrittenOff);
+      renderAssetSummary();
+      showToast('Write off แล้ว — asset ถูกตัดออกจากทะเบียน');
+    } catch(e){
+      showToast('Write off ไม่สำเร็จ: ' + e.message);
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Save';
+    }
+    return;
+  }
 
   if(!a.scanId){
     // Never been scanned — updating status would mean creating a new scan

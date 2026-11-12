@@ -54,6 +54,7 @@
 ├── migration_employees.sql           # Migration: ตาราง employees, employee_import_batches + คอลัมน์ assigned_employee_id/name ใน scan_logs — รันแล้ว
 ├── migration_unmatched_employee.sql  # Migration: คอลัมน์ assigned_employee_id/name ใน unmatched_assets — รันแล้ว
 ├── migration_department_codes.sql    # Migration: แปลงชื่อแผนกเดิม → รหัสแผนกใหม่ 12 ค่า (scan_logs, unmatched_assets, employees) — รันแล้ว 2026-11-09
+├── migration_asset_writeoff.sql      # Migration: คอลัมน์ write_off_reason/write_off_remark/written_off_by/written_off_at ใน assets — รันแล้วใน Neon 2026-11-12 (ตรวจครบ 4 คอลัมน์)
 ├── CNAME                              # Custom domain ของ GitHub Pages: fixasset.batathai.com
 ├── login_scan.webp                    # ภาพเคลื่อนไหวแบบนุ่ม (72 เฟรม ~37ms, พื้นโปร่งใส) พนักงานสแกนสินทรัพย์ — ใช้ในหน้า Login ทั้ง 3 หน้า
 ├── login_scan.gif                     # ไฟล์ต้นฉบับ 9 เฟรม (กระตุก) — เก็บไว้เป็น fallback ของ <picture> สำหรับเบราว์เซอร์ที่ไม่รองรับ WebP
@@ -140,6 +141,7 @@
 
 14. **รหัสแผนกกับไฟล์ HR / `employees`:** หน้าพนักงานใน Dashboard และ dropdown แผนกแสดง **รหัส (`department_code`) เป็นหลัก** ถ้าแถวไหนไม่มีรหัสค่อย fallback เป็นชื่อ (`department`); `GET /employees/department/{department}` จับคู่ได้ทั้งรหัสและชื่อ (ไม่สนตัวพิมพ์) — **ไฟล์ HR ที่ import ครั้งถัดไปต้องใช้รหัสใหม่ในช่อง Department Code** (เช่น `640M` ไม่ใช่ `640P`, `680` ไม่ใช่ `68001`, `999CM` แทน `999G`/`999MD`) ไม่งั้นรหัสเก่าจะกลับมา; `assets.department` ใน asset master ว่างทั้งหมด (39,746 แถว ณ 2026-11-09) ถ้า HQ จะ import แผนกของ asset ต้องใช้รหัสใหม่
 15. **Sidebar ของ `dashboard.html` ซ่อนอัตโนมัติ (2026-11-09):** บนจอ ≥901px ที่มีเมาส์ (`@media (min-width:901px) and (hover:hover)`) sidebar ถูกซ่อน (`translateX(-102%)`) แล้วเลื่อนเข้าเมื่อเมาส์ไปที่แถบ `.sb-edge` (กว้าง 14px ชิดขอบซ้าย) หรืออยู่บน sidebar เอง เป็น CSS ล้วน ไม่มี JS; จอแคบ/มือถือ/อุปกรณ์สัมผัสยังใช้ layout แถบบนแบบเดิม — ห้ามลบ `<div class="sb-edge">` ใน `#appRoot` (อยู่ก่อน `<nav class="sidebar">` เพราะใช้ sibling selector `~`)
+16. **Write off ของ asset ที่ยังไม่เคยสแกน (2026-11-12):** ทำที่ตัว asset master ผ่าน `POST /hq/assets/{asset_id}/write-off` (เฉพาะ `hq_admin`) — ตั้ง `assets.status='disposed'` + เก็บเหตุผล/remark/ผู้ทำ/เวลาใน `write_off_*` แล้ว asset จะหลุดจาก `/hq/assets` (กรอง `status='active'`) จึงหายจาก Asset Summary และ Total ลด; `migration_asset_writeoff.sql` รันใน Neon แล้ว (2026-11-12) — ถ้าตั้ง DB ใหม่ต้องรันก่อน deploy `main.py` ไม่งั้น endpoint 500; `saveDrawer()` ใน `dashboard.html` ใช้เส้นทางนี้เฉพาะเมื่อ `!a.scanId && status==='disposed'` — asset ที่เคยสแกนแล้วยังใช้ `PATCH /hq/scans/{id}` (condition=`disposed`) เหมือนเดิม; สถานะอื่นของ asset ที่ยังไม่สแกนยังบันทึกไม่ได้ (ต้องรอ `POST /scans` + session); ยังไม่มีปุ่มยกเลิก write off/หน้ารายงาน (ย้อนกลับต้อง `UPDATE assets SET status='active' WHERE id=...` ใน Neon)
 
 ---
 
@@ -214,6 +216,7 @@ Environment variables ที่ backend ต้องการ:
   - เพิ่มข้อ 6.14 เรื่องรหัสในไฟล์ HR; แก้ข้อ 5.13 เป็นรายการ 12 รหัส
 
 - **2026-11-09 (บ่าย)** — `dashboard.html`: sidebar ซ่อนอัตโนมัติ เลื่อนเข้า/ออกเมื่อเมาส์ไปขอบซ้ายสุด (ดูข้อ 6.15) — หน้าตาเท่านั้น ไม่แตะ backend/DB
+- **2026-11-12** — Write off asset ที่ยังไม่เคยสแกน: เพิ่ม `POST /hq/assets/{asset_id}/write-off` (`main.py`), `migration_asset_writeoff.sql` (รันแล้ว), และแก้ `saveDrawer()` ใน `dashboard.html` (ดูข้อ 6.16) — เดิมกด Save แล้วขึ้น toast "Asset นี้ยังไม่เคยถูกสแกน…รอเชื่อม POST /scans"
 
 ---
 

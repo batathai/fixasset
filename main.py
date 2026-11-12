@@ -95,6 +95,12 @@ class ScanLogUpdate(BaseModel):
     assigned_employee_id: Optional[str] = None
     assigned_employee_name: Optional[str] = None
 
+WRITE_OFF_REASONS = {"sold", "donated", "damaged_beyond_repair", "lost", "other"}
+
+class AssetWriteOff(BaseModel):
+    reason: str
+    remark: Optional[str] = None
+
 class ScanLogPatchByQR(BaseModel):
     photo_url: Optional[str] = None
     remark: Optional[str] = None
@@ -1054,6 +1060,36 @@ def hq_get_all_assets(db=Depends(get_db), user=Depends(get_current_user)):
     total   = len(assets)
     scanned = sum(1 for a in assets if a["is_scanned"])
     return {"total": total, "scanned": scanned, "pending": total - scanned, "assets": assets}
+
+@app.post("/hq/assets/{asset_id}/write-off")
+def hq_write_off_asset(asset_id: int, req: AssetWriteOff, db=Depends(get_db), user=Depends(get_current_user)):
+    """Write off (ตัดออกจากทะเบียน) ที่ตัว asset master — ไม่ต้องมี scan/session
+    ตั้ง assets.status = 'disposed' ทำให้ asset หลุดจาก /hq/assets (กรอง status = 'active')
+    ข้อมูลเดิมไม่ถูกลบ เก็บเหตุผล/ผู้ทำ/เวลาไว้ในคอลัมน์ write_off_* (ดู migration_asset_writeoff.sql)"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    if req.reason not in WRITE_OFF_REASONS:
+        raise HTTPException(status_code=400, detail="Invalid write-off reason")
+    remark = (req.remark or "").strip()
+    if req.reason == "other" and not remark:
+        raise HTTPException(status_code=400, detail="Remark is required when reason is 'other'")
+    cur = db.cursor()
+    cur.execute("""
+        UPDATE assets
+           SET status = 'disposed',
+               write_off_reason = %s,
+               write_off_remark = %s,
+               written_off_by = %s,
+               written_off_at = NOW()
+         WHERE id = %s AND status = 'active' AND COALESCE(is_active, true) = true
+     RETURNING id, asset_code, seq
+    """, (req.reason, remark or None, user["employee_id"], asset_id))
+    row = cur.fetchone()
+    if not row:
+        db.rollback()
+        raise HTTPException(status_code=404, detail="Asset not found or already written off")
+    db.commit()
+    return {"ok": True, "asset_id": row["id"], "asset_code": row["asset_code"], "seq": row["seq"]}
 
 @app.delete("/hq/sessions/{session_id}")
 def hq_delete_session(session_id: int, db=Depends(get_db), user=Depends(get_current_user)):
