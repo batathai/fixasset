@@ -60,6 +60,26 @@
     .sb-edge:hover ~ .sidebar,.sidebar:hover,.sidebar:focus-within{transform:none;visibility:visible;box-shadow:10px 0 36px rgba(8,14,26,.38);
       transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,visibility 0s;}
   }
+  /* sidebar แบบไอคอนล้วน (2026-11-12) — เฉพาะจอกว้าง ≥901px; มือถือ/แท็บเล็ตแคบยังเป็นแถบเมนูด้านบนพร้อมข้อความตามเดิม
+     ชื่อเมนูอยู่ใน <span class="nav-text"> + title/aria-label ของ .nav-item (tooltip ตอนชี้เมาส์) */
+  @media (min-width:901px){
+    .sidebar{width:72px;padding:18px 14px 16px;align-items:center;}
+    .sb-brand{padding:2px 0 18px;justify-content:center;}
+    .sb-brand > div:last-child{display:none;}
+    .sb-nav{align-items:center;gap:6px;}
+    .nav-item{width:44px;height:44px;padding:0;justify-content:center;}
+    .nav-item .nav-text{display:none;}
+    .nav-item svg{width:22px;height:22px;}
+    .nav-badge{position:absolute;top:1px;right:-3px;margin:0;font-size:10.5px;line-height:16px;padding:0 5px;}
+    .rail-user{flex-direction:column;padding:12px 0 0;gap:8px;align-self:stretch;align-items:center;}
+    .rail-user-meta{flex:none;align-items:center;}
+    #headerUserLabel{display:none;}
+    .rail-signout{width:44px;height:44px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;text-decoration:none;align-self:center;}
+    .rail-signout:hover{background:var(--rail-2);}
+    .rail-signout .nav-text{display:none;}
+  }
+  .rail-signout svg{width:20px;height:20px;flex-shrink:0;}
+  @media (max-width:900px){ .rail-signout svg{display:none;} }
   .sb-brand{display:flex;align-items:center;gap:11px;padding:2px 8px 22px;}
   .sb-brand-name{display:block;font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;}
   .sb-brand-sub{display:block;font-size:11.5px;color:var(--rail-ink);margin-top:1px;}
@@ -376,11 +396,13 @@
   .kpi-icon,.attn-icon{display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;background:var(--c-bg);color:var(--c);}
   .kpi-icon{width:40px;height:40px;}
   .kpi-icon svg,.attn-icon svg{width:20px;height:20px;}
+  .kpi-bar{display:block;height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:8px;}
+  .kpi-bar i{display:block;height:100%;width:0;background:var(--c);border-radius:inherit;transition:width .6s ease;}
   .kpi-num{font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-.02em;}
   .kpi-note{font-size:12.5px;color:var(--ink-3);}
   .c-blue{--c:var(--blue-fg);--c-bg:var(--blue-bg);} .c-green{--c:var(--green-fg);--c-bg:var(--green-bg);}
   .c-amber{--c:var(--amber-fg);--c-bg:var(--amber-bg);} .c-red{--c:var(--red-fg);--c-bg:var(--red-bg2);}
-  .c-purple{--c:var(--purple-fg);--c-bg:var(--purple-bg);} .c-teal{--c:#0E7C86;--c-bg:#E2F5F6;}
+  .c-orange{--c:var(--orange-fg);--c-bg:var(--orange-bg);} .c-purple{--c:var(--purple-fg);--c-bg:var(--purple-bg);} .c-teal{--c:#0E7C86;--c-bg:#E2F5F6;}
   .home-section{background:var(--surface);border-radius:var(--r-lg);padding:18px 20px 20px;box-shadow:var(--sh-xs);margin-bottom:18px;}
   .home-section-title{font-size:16px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em;}
   .home-section-sub{font-size:13px;color:var(--ink-3);font-weight:400;margin-left:6px;}
@@ -391,6 +413,20 @@
   .attn-num{font-size:28px;line-height:1.1;font-weight:700;letter-spacing:-.02em;}
   .attn-label{font-size:13.5px;font-weight:600;}
   .attn-sub{font-size:12px;color:var(--ink-3);}
+  .snap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:4px 16px;}
+  .snap-tile{display:flex;align-items:center;gap:12px;padding:12px 2px;min-width:0;}
+  .snap-tile .kpi-icon{width:44px;height:44px;}
+  .snap-num{display:block;font-size:22px;line-height:1.15;font-weight:700;letter-spacing:-.01em;}
+  .snap-label{display:block;font-size:12.5px;color:var(--ink-3);}
+  .trend-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;}
+  .trend-item{min-width:0;}
+  .trend-label{font-size:13px;font-weight:600;color:var(--ink-2);}
+  .trend-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 6px;}
+  .trend-num{font-size:22px;font-weight:700;letter-spacing:-.01em;}
+  .trend-chip{font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px;background:var(--surface-2);color:var(--ink-2);}
+  .trend-chip.good{background:var(--green-bg);color:var(--green-fg);}
+  .trend-chip.bad{background:var(--red-bg2);color:var(--red-fg);}
+  .trend-svg{width:100%;height:96px;display:block;}
   .home-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:18px;}
   .stack-bar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--surface-2);margin-bottom:16px;}
   .stack-bar span{display:block;height:100%;}
@@ -558,37 +594,37 @@
       </div>
     </div>
     <div class="sb-nav">
-      <div class="nav-item active" id="navOverview" onclick="showPage('overview')">
+      <div class="nav-item active" id="navOverview" onclick="showPage('overview')" role="button" tabindex="0" title="Dashboard" aria-label="Dashboard">
         <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
-        Dashboard
+        <span class="nav-text">Dashboard</span>
       </div>
-      <div class="nav-item" id="navBranchGrid" onclick="showPage('branchGrid')">
-        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
-        สถานะสาขา
+      <div class="nav-item" id="navBranchGrid" onclick="showPage('branchGrid')" role="button" tabindex="0" title="สถานะสาขา" aria-label="สถานะสาขา">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Z"/><path d="M5 13v7h14v-7"/></svg>
+        <span class="nav-text">สถานะสาขา</span>
       </div>
-      <div class="nav-item" id="navAssetSummary" onclick="showPage('assetSummary')">
+      <div class="nav-item" id="navAssetSummary" onclick="showPage('assetSummary')" role="button" tabindex="0" title="Asset Summary" aria-label="Asset Summary">
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 4h16v16H4z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M8 9h8M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        Asset Summary
+        <span class="nav-text">Asset Summary</span>
       </div>
-      <div class="nav-item" id="navUnmatched" onclick="showPage('unmatched')">
+      <div class="nav-item" id="navUnmatched" onclick="showPage('unmatched')" role="button" tabindex="0" title="ไม่พบใน Master" aria-label="ไม่พบใน Master">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 9.2a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="16.7" r="0.9" fill="currentColor"/></svg>
-        ไม่พบใน Master
+        <span class="nav-text">ไม่พบใน Master</span>
         <span class="nav-badge" id="navUnmatchedBadge" style="display:none;">0</span>
       </div>
-      <div class="nav-item" id="navEmployees" onclick="showPage('employees')">
+      <div class="nav-item" id="navEmployees" onclick="showPage('employees')" role="button" tabindex="0" title="พนักงาน" aria-label="พนักงาน">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 14.3c2.4.4 4 2.4 4 5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-        พนักงาน
+        <span class="nav-text">พนักงาน</span>
       </div>
-      <div class="nav-item" id="navActivityLog" onclick="showPage('activityLog')">
+      <div class="nav-item" id="navActivityLog" onclick="showPage('activityLog')" role="button" tabindex="0" title="Activity Log" aria-label="Activity Log">
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
-        Activity Log
+        <span class="nav-text">Activity Log</span>
       </div>
     </div>
     <div class="rail-user">
-      <div class="avatar" id="headerAvatar">—</div>
+      <div class="avatar" id="headerAvatar" title="">—</div>
       <div class="rail-user-meta">
         <span id="headerUserLabel"></span>
-        <button class="rail-signout" onclick="logout()">Sign out</button>
+        <button class="rail-signout" onclick="logout()" title="Sign out" aria-label="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 4H5v16h5M15 8l4 4-4 4M19 12H9"/></svg><span class="nav-text">Sign out</span></button>
       </div>
     </div>
   </nav>
@@ -638,16 +674,19 @@
         <span class="kpi-tile-top"><span class="kpi-label">ทรัพย์สินรวม</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg></span></span>
         <span class="kpi-num" id="hmTotal">—</span>
         <span class="kpi-note" id="hmTotalNote">รวมทุกสาขา</span>
+        <span class="kpi-bar" aria-hidden="true"><i id="hmTotalBar"></i></span>
       </button>
       <button class="kpi-tile c-green" onclick="goAssetSummary('verified')">
         <span class="kpi-tile-top"><span class="kpi-label">สแกนแล้ว</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.7 2.7L16 9.5"/></svg></span></span>
         <span class="kpi-num" id="hmVerified">—</span>
         <span class="kpi-note" id="hmVerifiedNote"></span>
+        <span class="kpi-bar" aria-hidden="true"><i id="hmVerifiedBar"></i></span>
       </button>
       <button class="kpi-tile c-amber" onclick="goAssetSummary('pending')">
         <span class="kpi-tile-top"><span class="kpi-label">ยังไม่ได้สแกน</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></span>
         <span class="kpi-num" id="hmRemaining">—</span>
         <span class="kpi-note" id="hmRemainingNote"></span>
+        <span class="kpi-bar" aria-hidden="true"><i id="hmRemainingBar"></i></span>
       </button>
       <button class="kpi-tile c-red" onclick="goAssetSummary('all')">
         <span class="kpi-tile-top"><span class="kpi-label">ผิดปกติ</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l9.5 16.5h-19L12 3.5z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.3" r=".7" fill="currentColor"/></svg></span></span>
@@ -658,6 +697,7 @@
         <span class="kpi-tile-top"><span class="kpi-label">สาขาตรวจครบ</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h12l-2 4 2 4H5"/></svg></span></span>
         <span class="kpi-num" id="hmBranchesDone">—</span>
         <span class="kpi-note" id="hmBranchesNote"></span>
+        <span class="kpi-bar" aria-hidden="true"><i id="hmBranchesBar"></i></span>
       </button>
       <button class="kpi-tile c-purple" onclick="showPage('unmatched')">
         <span class="kpi-tile-top"><span class="kpi-label">รอตรวจสอบ</span><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.5"/><circle cx="12" cy="16.7" r=".8" fill="currentColor"/></svg></span></span>
@@ -685,6 +725,10 @@
           <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg></span>
           <span><span class="attn-num" id="atNotStarted">—</span><br><span class="attn-label">สาขาที่ยังไม่เริ่มตรวจ</span><br><span class="attn-sub">มี asset แต่ยังไม่สแกนเลย</span></span>
         </button>
+        <div class="attn-card c-orange" style="cursor:default;">
+          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span>
+          <span><span class="attn-num" id="atDeptMismatch">—</span><br><span class="attn-label">แผนกไม่ตรง</span><br><span class="attn-sub">สแกน ≠ แผนกใน master</span></span>
+        </div>
       </div>
     </section>
 
@@ -707,6 +751,25 @@
       <section class="home-section">
         <h2 class="home-section-title">สาขาที่ยังเหลือมากที่สุด<span class="home-section-sub">เฉพาะสาขาที่กำลังตรวจ — คลิกเพื่อดูรายละเอียด</span></h2>
         <div id="hmTopBranches"></div>
+      </section>
+    </div>
+
+    <div class="home-cols">
+      <section class="home-section">
+        <h2 class="home-section-title">ภาพรวมสาขาและทีม</h2>
+        <div class="snap-grid">
+          <div class="snap-tile c-blue"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Z"/><path d="M5 13v7h14v-7"/></svg></span><span><span class="snap-num" id="snBranches">—</span><span class="snap-label">สาขาทั้งหมดที่ต้องตรวจ</span></span></div>
+          <div class="snap-tile c-amber"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><span class="snap-num" id="snProgress">—</span><span class="snap-label">กำลังตรวจอยู่</span></span></div>
+          <div class="snap-tile c-teal"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h12l-2 4 2 4H5"/></svg></span><span><span class="snap-num" id="snNotStarted">—</span><span class="snap-label">ยังไม่เริ่มตรวจ</span></span></div>
+          <div class="snap-tile c-red"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 20h19L12 4Z"/><path d="M12 10v4M12 17.5v.01"/></svg></span><span><span class="snap-num" id="snEmpty">—</span><span class="snap-label">ยังไม่มี asset ใน master</span></span></div>
+          <div class="snap-tile c-purple"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span><span><span class="snap-num" id="snDepts">—</span><span class="snap-label">รหัสแผนกของ Office</span></span></div>
+          <div class="snap-tile c-green"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><span><span class="snap-num" id="snOffice">—</span><span class="snap-label" id="snOfficeNote">Office สแกนแล้ว</span></span></div>
+        </div>
+      </section>
+      <section class="home-section">
+        <h2 class="home-section-title">แนวโน้มการสแกน<span class="home-section-sub">7 วันล่าสุด เทียบ 7 วันก่อนหน้า</span></h2>
+        <div class="trend-grid" id="hmTrend"></div>
+        <p class="legend-note">นับจากเวลาสแกนจริงใน scan_logs / unmatched_assets</p>
       </section>
     </div>
   </div>
@@ -1059,7 +1122,8 @@
     </div>
     <div class="field-group">
       <p class="field-label">Location</p>
-      <input class="field-input" id="fLocation" placeholder="e.g. Office, Floor 1">
+      <input class="field-input" id="fLocation" list="storeCodeList" placeholder="พิมพ์รหัสหรือชื่อสาขา เช่น 0068000 Warehouse" autocomplete="off">
+      <datalist id="storeCodeList"></datalist>
     </div>
     <div class="field-group" id="departmentGroup" style="display:none;">
       <p class="field-label">Department</p>
@@ -1576,6 +1640,7 @@ async function doLogin(){
     } catch(e){ /* localStorage อาจถูกบล็อค (private mode ฯลฯ) — ไม่ fatal แค่จะไม่จำ login ข้าม refresh */ }
     document.getElementById('headerUserLabel').textContent = authUser.employee_id + (authUser.role ? ' · ' + authUser.role : '');
     document.getElementById('headerAvatar').textContent = initialsFrom(authUser.employee_id);
+    document.getElementById('headerAvatar').title = authUser.employee_id + (authUser.role ? ' · ' + authUser.role : '');
     hideLogin();
     await loadRealData();
     document.getElementById('assetSearch').focus();
@@ -1594,6 +1659,7 @@ function logout(){
   document.getElementById('loginPassword').value = '';
   document.getElementById('headerUserLabel').textContent = '';
   document.getElementById('headerAvatar').textContent = '—';
+  document.getElementById('headerAvatar').title = '';
   showLogin();
 }
 
@@ -1689,7 +1755,7 @@ function buildStoresFromRealAssets(list, scansByQrKey){
     // อยู่ใต้สาขาที่ผิดใน Overview ทำให้ทีมที่สแกนจริงมองไม่เห็นของที่ตัวเองเพิ่งสแกน (เจอจริง
     // 2026-08-21 — สแกนที่ Office 9 ชิ้น แต่ Overview ของ Office โชว์แค่ 3) ถ้ามี scan จริงแล้ว
     // ให้ใช้สาขาที่สแกนจริง (matchingScan.branch_id) เป็นหลักแทน location ใน master เสมอ
-    var code = (matchingScan && matchingScan.branch_id) || a.location_code || a.branch_id || a.branch_code || 'UNKNOWN';
+    var code = ((matchingScan && matchingScan.branch_id && !a.location_override) ? matchingScan.branch_id : null) || a.location_code || a.branch_id || a.branch_code || 'UNKNOWN';
     var displayName = STORE_NAMES[code] || a.location_name || a.branch_name || a.store_name || a.location_desc || a.location_description || a.branch_desc || code;
     if(!grouped[code]){ grouped[code] = { name: code, displayName: displayName, items: [] }; }
     var seqNum = seqDigitsOf(a.seq);
@@ -1728,6 +1794,7 @@ function buildStoresFromRealAssets(list, scansByQrKey){
       photo: matchingScan ? scanPhotoOf(matchingScan) : null,
       scanId: matchingScan ? scanIdOf(matchingScan) : null,
       assetId: a.id != null ? a.id : null,
+      masterLocationCode: a.location_code || '',
       qrKey: qrKey,
       qty: (a.qty != null ? a.qty : (a.quantity != null ? a.quantity : 1)),
       serial: (matchingScan && matchingScan.serial_found) || a.serial_no || a.serial || '',
@@ -1825,6 +1892,7 @@ async function loadRealData(){
   }
 
   buildStoresFromRealAssets(assetList, scansByQrKey);
+  homeScanList = scanList;
   activityLog = buildActivityLogFromScans(scanList, assetsByQrKey);
 
   // FIX: "Audit cycle: Q3 2026" เดิม hardcode ตายตัวในไฟล์ HTML ไม่เคยอัปเดตจริง
@@ -1903,6 +1971,7 @@ function tryRestoreSession(){
   authUser = savedUser;
   document.getElementById('headerUserLabel').textContent = authUser.employee_id + (authUser.role ? ' · ' + authUser.role : '');
   document.getElementById('headerAvatar').textContent = initialsFrom(authUser.employee_id);
+  document.getElementById('headerAvatar').title = authUser.employee_id + (authUser.role ? ' · ' + authUser.role : '');
   hideLogin();
   // ไม่เชื่อ token เดิมแบบ optimistic เฉยๆ — โหลดข้อมูลจริงทันที ถ้า token หมดอายุแล้ว
   // apiFetch จะเจอ 401 แล้วเด้งกลับไปหน้า Login เองอัตโนมัติ (ดู apiFetch ด้านบน)
@@ -1944,6 +2013,23 @@ var currentAssetFilter = 'all';
 var currentDeptFilter = 'all';
 var editingAssetIndex = -1;
 var isAddMode = false;
+var drawerInitialLocation = '';
+
+/* Location ของ asset = location_code ใน master — แสดงเป็น "รหัส — ชื่อ" เพื่อเลือกจาก datalist ได้ไม่พิมพ์ผิด */
+function locationLabel(code){
+  return STORE_NAMES[code] ? (code + ' — ' + STORE_NAMES[code]) : code;
+}
+function fillStoreDatalist(){
+  var dl = document.getElementById('storeCodeList');
+  if(!dl || dl.children.length) return;
+  dl.innerHTML = Object.keys(STORE_NAMES).sort().map(function(c){
+    return '<option value="' + locationLabel(c).replace(/"/g, '&quot;') + '"></option>';
+  }).join('');
+}
+function resolveLocationCode(text){
+  var m = /^\s*([0-9A-Za-z]{4,20})\s*(?:—|-|$)/.exec(text || '');
+  return (m && STORE_NAMES[m[1]]) ? m[1] : null;
+}
 
 // ── OVERVIEW TABLE — CLICK-TO-SORT COLUMNS ──────────────────────────
 var overviewSortKey = null;   // null = default order (location_code, asset_code, seq จาก backend)
@@ -2371,11 +2457,69 @@ function _hmSet(id, text){
   }, {passive:true});
   document.addEventListener('pointerleave', function(){ if(cur){ reset(cur); cur = null; } }, true);
 })();
+document.addEventListener('keydown', function(e){
+  if((e.key !== 'Enter' && e.key !== ' ') || !e.target || !e.target.classList || !e.target.classList.contains('nav-item')) return;
+  e.preventDefault();
+  e.target.click();
+});
 function goAssetSummary(key){
   showPage('assetSummary');
   var sel = document.getElementById('asStatusFilter');
   if(key === 'damaged'){ if(sel) sel.value = 'damaged'; setAsKpiFilter('all'); }
   else { if(sel) sel.value = 'all'; setAsKpiFilter(key); }
+}
+/* แนวโน้ม 7 วัน — นับจากเวลาสแกนจริง (scan_logs.scanned_at / unmatched_assets.scanned_at) แยกรายวันตามเวลาท้องถิ่นของเบราว์เซอร์
+   ค่าบนการ์ด = ผลรวม 7 วันล่าสุด, chip = เทียบ 7 วันก่อนหน้า (ไม่มีข้อมูลก่อนหน้า → "—") */
+var homeScanList = [];
+function renderHomeTrend(){
+  var wrap = document.getElementById('hmTrend');
+  if(!wrap) return;
+  var dayKey = function(d){ return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); };
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var idx = {}; // dayKey -> 0..13 (13 = วันนี้)
+  for(var i = 0; i < 14; i++){ var d = new Date(today); d.setDate(today.getDate() - (13 - i)); idx[dayKey(d)] = i; }
+  var mk = function(){ var a = []; for(var i = 0; i < 14; i++) a.push(0); return a; };
+  var series = [
+    { label: 'สแกนรวม', bad: false, color: '#1B5FC4', fill: '#E8F1FD', data: mk() },
+    { label: 'Verified', bad: false, color: '#17753A', fill: '#E8F6EE', data: mk() },
+    { label: 'ผิดปกติ', bad: true, color: '#BE2A20', fill: '#FCE8E6', data: mk() },
+    { label: 'ไม่พบใน Master', bad: true, color: '#6140C4', fill: '#F0ECFB', data: mk() }
+  ];
+  var slot = function(ts){
+    var d = new Date(ts);
+    if(isNaN(d.getTime())) return -1;
+    var k = dayKey(d);
+    return idx.hasOwnProperty(k) ? idx[k] : -1;
+  };
+  (homeScanList || []).forEach(function(sc){
+    var n = slot(scanTimeOf(sc)); if(n < 0) return;
+    series[0].data[n]++;
+    if(statusFromScan(sc) === 'verified') series[1].data[n]++; else series[2].data[n]++;
+  });
+  (Array.isArray(unmatchedItems) ? unmatchedItems : []).forEach(function(u){
+    var n = slot(u.scanned_at || u.created_at); if(n < 0) return;
+    series[3].data[n]++;
+  });
+  wrap.innerHTML = series.map(function(sr){
+    var prev = sr.data.slice(0, 7).reduce(function(a, b){ return a + b; }, 0);
+    var cur = sr.data.slice(7).reduce(function(a, b){ return a + b; }, 0);
+    var chip = '—', cls = '';
+    if(prev > 0){
+      var ch = Math.round((cur - prev) / prev * 100);
+      chip = (ch > 0 ? '▲ +' : (ch < 0 ? '▼ ' : '')) + ch + '%';
+      if(ch !== 0) cls = ((ch > 0) !== sr.bad) ? 'good' : 'bad';
+    }
+    var week = sr.data.slice(7);
+    var max = Math.max.apply(null, week.concat([1]));
+    var pts = week.map(function(v, i){ return (i * 200 / 6).toFixed(1) + ',' + (86 - (v / max) * 76).toFixed(1); }).join(' ');
+    return '<div class="trend-item">'
+      + '<div class="trend-label">' + sr.label + '</div>'
+      + '<div class="trend-top"><span class="trend-num">' + cur.toLocaleString() + '</span><span class="trend-chip ' + cls + '">' + chip + '</span></div>'
+      + '<svg class="trend-svg" viewBox="0 0 200 90" preserveAspectRatio="none" role="img" aria-label="กราฟ ' + sr.label + ' 7 วันล่าสุด">'
+      + '<polygon points="0,90 ' + pts + ' 200,90" fill="' + sr.fill + '"/>'
+      + '<polyline points="' + pts + '" fill="none" stroke="' + sr.color + '" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>'
+      + '</div>';
+  }).join('');
 }
 function renderHomeDashboard(){
   if(!document.getElementById('homeDash')) return;
@@ -2416,6 +2560,23 @@ function renderHomeDashboard(){
   _hmSet('atMissing', missing.toLocaleString());
   _hmSet('atDamaged', damaged.toLocaleString());
   _hmSet('atNotStarted', br.notstarted.toLocaleString());
+  var deptMismatch = 0;
+  Object.keys(assetsByStore).forEach(function(k){ assetsByStore[k].forEach(function(a){ if(a.deptMismatch) deptMismatch++; }); });
+  _hmSet('atDeptMismatch', deptMismatch.toLocaleString());
+  var _bar = function(id, v){ var el = document.getElementById(id); if(el) el.style.width = Math.max(0, Math.min(100, v)) + '%'; };
+  _bar('hmTotalBar', total > 0 ? 100 : 0);
+  _bar('hmVerifiedBar', pct);
+  _bar('hmRemainingBar', total > 0 ? 100 - pct : 0);
+  _bar('hmBranchesBar', withAssets > 0 ? br.done / withAssets * 100 : 0);
+  _hmSet('snBranches', stores.length.toLocaleString());
+  _hmSet('snProgress', br.progress.toLocaleString());
+  _hmSet('snNotStarted', br.notstarted.toLocaleString());
+  _hmSet('snEmpty', br.empty.toLocaleString());
+  _hmSet('snDepts', (typeof OFFICE_DEPARTMENTS !== 'undefined' ? OFFICE_DEPARTMENTS.length : 0).toLocaleString());
+  var officeStore = stores.filter(function(s){ return OFFICE_VIEW_CODES.indexOf(s.name) > -1; })[0];
+  _hmSet('snOffice', officeStore ? (officeStore.scanned.toLocaleString() + ' / ' + officeStore.total.toLocaleString()) : '—');
+  _hmSet('snOfficeNote', officeStore && officeStore.total > 0 ? ('Office สแกนแล้ว (' + Math.round(officeStore.scanned / officeStore.total * 100) + '%)') : 'Office สแกนแล้ว');
+  renderHomeTrend();
 
   _hmSet('hmBrDone', br.done.toLocaleString());
   _hmSet('hmBrProgress', br.progress.toLocaleString());
@@ -2482,7 +2643,9 @@ function openAssetDrawer(idx){
   document.getElementById('fBarcode').value = a.barcode;
   document.getElementById('fSerial').value = a.serial || '';
   document.getElementById('fCategory').value = a.category;
-  document.getElementById('fLocation').value = a.location;
+  fillStoreDatalist();
+  drawerInitialLocation = a.masterLocationCode ? locationLabel(a.masterLocationCode) : (a.location || '');
+  document.getElementById('fLocation').value = drawerInitialLocation;
   var isOfficeView = OFFICE_VIEW_CODES.indexOf(currentStore) > -1;
   document.getElementById('departmentGroup').style.display = isOfficeView ? 'block' : 'none';
   if(isOfficeView){
@@ -2966,6 +3129,23 @@ async function saveDrawer(){
 
   var a = assetsByStore[currentStore][editingAssetIndex];
 
+  // ย้าย location จริง (assets.location_code) — ช่อง Location เดิมไม่เคยถูกส่งไป save เลย
+  var locChanged = (location !== drawerInitialLocation);
+  var newLocCode = null;
+  if(locChanged && status !== 'disposed'){
+    newLocCode = resolveLocationCode(location);
+    if(!newLocCode){
+      showToast('ไม่พบสาขานี้ — เลือกจากรายการ เช่น 0068000 — Warehouse');
+      saveBtn.disabled = false; saveBtn.textContent = 'Save';
+      return;
+    }
+    if(a.assetId == null){
+      showToast('ไม่พบ asset id — รีเฟรชหน้าแล้วลองใหม่');
+      saveBtn.disabled = false; saveBtn.textContent = 'Save';
+      return;
+    }
+  }
+
   if(!a.scanId && status === 'disposed'){
     // Write off ของ asset ที่ยังไม่เคยสแกน — ทำที่ตัว asset master (POST /hq/assets/{id}/write-off)
     // ไม่ต้องมี scan/session เพราะเป็นการตัดออกจากทะเบียน asset จะหลุดจากรายการ (status ไม่ใช่ active)
@@ -2993,6 +3173,23 @@ async function saveDrawer(){
     return;
   }
 
+  if(!a.scanId && newLocCode && status === a.status){
+    // asset ที่ยังไม่เคยสแกน และแก้แค่ Location — ย้ายที่ master ได้เลย ไม่ต้องมี scan/session
+    try{
+      await apiFetch('/hq/assets/' + a.assetId + '/location', { method: 'PATCH', body: JSON.stringify({ location_code: newLocCode }) });
+      var storeMoved = currentStore;
+      closeDrawer();
+      await loadRealData();
+      if(stores.some(function(s){ return s.name === storeMoved; })) selectStore(storeMoved);
+      renderAssetSummary();
+      showToast('ย้ายไป ' + locationLabel(newLocCode) + ' แล้ว');
+    } catch(e){
+      showToast('ย้าย location ไม่สำเร็จ: ' + e.message);
+      saveBtn.disabled = false; saveBtn.textContent = 'Save';
+    }
+    return;
+  }
+
   if(!a.scanId){
     // Never been scanned — updating status would mean creating a new scan
     // (POST /scans), which needs an active audit session. Not wired yet.
@@ -3000,6 +3197,16 @@ async function saveDrawer(){
     saveBtn.disabled = false;
     saveBtn.textContent = 'Save';
     return;
+  }
+
+  if(newLocCode){
+    try{
+      await apiFetch('/hq/assets/' + a.assetId + '/location', { method: 'PATCH', body: JSON.stringify({ location_code: newLocCode }) });
+    } catch(e){
+      showToast('ย้าย location ไม่สำเร็จ: ' + e.message);
+      saveBtn.disabled = false; saveBtn.textContent = 'Save';
+      return;
+    }
   }
 
   var fullRemark = remark;

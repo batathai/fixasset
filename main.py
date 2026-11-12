@@ -95,6 +95,9 @@ class ScanLogUpdate(BaseModel):
     assigned_employee_id: Optional[str] = None
     assigned_employee_name: Optional[str] = None
 
+class AssetLocationUpdate(BaseModel):
+    location_code: str
+
 WRITE_OFF_REASONS = {"sold", "donated", "damaged_beyond_repair", "lost", "other"}
 
 class AssetWriteOff(BaseModel):
@@ -1044,7 +1047,7 @@ def hq_get_all_assets(db=Depends(get_db), user=Depends(get_current_user)):
         SELECT * FROM (
             SELECT DISTINCT ON (a.id)
                    a.id, a.qr_key, a.asset_code, a.seq, a.name, a.serial_no,
-                   a.location_code, a.department, a.purchase_date, a.status, a.qty,
+                   a.location_code, a.location_override, a.department, a.purchase_date, a.status, a.qty,
                    CASE WHEN sl.id IS NOT NULL THEN true ELSE false END AS is_scanned,
                    sl.scanned_at, u.email AS scanned_by, s.branch_id
             FROM assets a
@@ -1060,6 +1063,28 @@ def hq_get_all_assets(db=Depends(get_db), user=Depends(get_current_user)):
     total   = len(assets)
     scanned = sum(1 for a in assets if a["is_scanned"])
     return {"total": total, "scanned": scanned, "pending": total - scanned, "assets": assets}
+
+@app.patch("/hq/assets/{asset_id}/location")
+def hq_update_asset_location(asset_id: int, req: AssetLocationUpdate, db=Depends(get_db), user=Depends(get_current_user)):
+    """HQ ย้าย location ของ asset (assets.location_code) + ตั้ง location_override=true
+    ให้ Dashboard จัดกลุ่มตามค่านี้ แทนสาขาของ session ที่สแกน (ดู migration_asset_location_override.sql)"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    code = (req.location_code or "").strip()
+    if not code or len(code) > 20 or not code.isalnum():
+        raise HTTPException(status_code=400, detail="Invalid location_code")
+    cur = db.cursor()
+    cur.execute("""
+        UPDATE assets SET location_code = %s, location_override = true
+         WHERE id = %s AND COALESCE(is_active, true) = true
+     RETURNING id, asset_code, seq, location_code
+    """, (code, asset_id))
+    row = cur.fetchone()
+    if not row:
+        db.rollback()
+        raise HTTPException(status_code=404, detail="Asset not found")
+    db.commit()
+    return {"ok": True, "asset_id": row["id"], "location_code": row["location_code"]}
 
 @app.post("/hq/assets/{asset_id}/write-off")
 def hq_write_off_asset(asset_id: int, req: AssetWriteOff, db=Depends(get_db), user=Depends(get_current_user)):
