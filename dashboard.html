@@ -219,6 +219,8 @@
   .as-table{width:100%;border-collapse:collapse;min-width:900px;}
   .as-table th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:10px 16px;background:var(--surface-1);border-top:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap;}
   .as-table td{padding:12px 16px;border-bottom:1px solid var(--line);font-size:14.5px;white-space:nowrap;}
+  /* ชื่อ Asset ยาว → ตัดด้วย ... ท้ายข้อความ ให้ทุกแถวสูง/กว้างเท่ากัน เห็นคอลัมน์สถานะและ Actions ครบ (ชี้เมาส์ดูชื่อเต็มได้) */
+  .as-cell-name{max-width:clamp(160px,16vw,320px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .as-table tr:last-child td{border-bottom:none;}
   .as-table tbody tr:hover td{background:var(--surface-1);}
   .as-pagination{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line);}
@@ -3353,9 +3355,11 @@ function openAssetDrawerFromSummary(qrKey, storeCode){
 function populateBranchFilter(){
   var sel = document.getElementById('asBranchFilter');
   if(sel.options.length > 1) return;
-  stores.forEach(function(s){
+  // เรียง A–Z (ไม่ยุ่งกับลำดับของ stores เอง) — ไม่สนตัวพิมพ์เล็ก-ใหญ่, ตัวเลขเรียงตามค่า (Rama 4 ก่อน Rama 10), ชื่อไทยไปท้ายสุด
+  var labels = stores.map(function(s){ return s.displayName || s.name; });
+  labels.sort(function(a, b){ return a.localeCompare(b, 'en', { sensitivity: 'base', numeric: true }); });
+  labels.forEach(function(label){
     var opt = document.createElement('option');
-    var label = s.displayName || s.name;
     opt.value = label; opt.textContent = label;
     sel.appendChild(opt);
   });
@@ -3703,7 +3707,7 @@ function renderAssetSummary(){
       + '<td>' + (i+1) + '</td>'
       + '<td>' + a.code + '</td>'
       + '<td style="font-family:monospace;font-size:12px;color:var(--ink-2);">' + a.seq + '</td>'
-      + '<td>' + a.name + '</td>'
+      + '<td><div class="as-cell-name" title="' + String(a.name).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;') + '">' + a.name + '</div></td>'
       + '<td>' + a.branch + '</td>'
       + '<td>' + a.serial + '</td>'
       + '<td style="text-align:center;">' + (a.qty != null ? a.qty : 1) + '</td>'
