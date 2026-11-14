@@ -328,6 +328,16 @@
   .emp-chip{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;line-height:18px;padding:1px 10px 1px 8px;border-radius:20px;border:1px solid;white-space:nowrap;cursor:default;}
   .emp-chip::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
   .emp-chip.ok{color:var(--green-fg);background:var(--green-bg);border-color:rgba(23,117,58,.35);}
+  .emp-age{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:16px;padding:0 4px;margin-left:2px;border-radius:9px;font-size:10px;font-weight:700;color:#fff;line-height:1;}
+  .emp-age.over{background:#6D28D9;}
+  .emp-age.soon{background:#D97706;}
+  .emp-dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:6px 0 14px;}
+  .emp-dept-card{text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;cursor:pointer;}
+  .emp-dept-card:hover{border-color:var(--ink-4);}
+  .emp-dept-card.sel{border-color:var(--red-500);box-shadow:0 0 0 1px var(--red-500) inset;}
+  .emp-dept-card .dc-code{font-weight:700;font-size:15px;}
+  .emp-dept-card .dc-n{float:right;font-size:13px;color:var(--ink-2);}
+  .emp-dept-card .dc-row{margin-top:6px;font-size:12.5px;color:var(--ink-3);display:flex;gap:10px;flex-wrap:wrap;}
   .emp-chip-none{font-size:12px;color:var(--ink-4);}
   .emp-hold-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:var(--amber-bg);border:1px solid var(--line);border-radius:var(--r-md);font-size:13.5px;}
   .emp-hold-bar > span{flex:1 1 320px;}
@@ -1030,6 +1040,12 @@
             <input type="text" id="empSearch" placeholder="ค้นหา Employee ID / ชื่อ" oninput="renderEmployeeList()">
           </div>
           <select class="as-select" id="empDeptFilter" onchange="renderEmployeeList()"><option value="all">ทุกแผนก</option></select>
+          <select class="as-select" id="empAgeFilter" onchange="renderEmployeeList()" title="กรองตามอายุอุปกรณ์ที่ถือ (กฎ 5 ปี)">
+            <option value="all">อุปกรณ์ทุกอายุ</option>
+            <option value="over">เกิน 5 ปีแล้ว</option>
+            <option value="soon">ครบ 5 ปีในปีนี้</option>
+            <option value="flag">เกิน/ครบ 5 ปี (ทั้งสองแบบ)</option>
+          </select>
           <button class="as-refresh" onclick="loadEmployees()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Refresh
@@ -1039,6 +1055,7 @@
           <input type="file" id="empHoldFile" accept=".csv,.tsv,.txt" style="display:none;" onchange="onHoldingsFileChosen(this)">
         </div>
         <div id="empHoldImportBar" class="emp-hold-bar" style="display:none;"></div>
+        <div id="empDeptGrid" class="emp-dept-grid"></div>
         <p id="empResultCount" class="result-count" style="margin-top:10px;"></p>
         <p id="empHoldNote" class="result-count" style="margin:4px 0 10px;"></p>
         <div class="as-table-wrap">
@@ -1811,6 +1828,7 @@ function buildStoresFromRealAssets(list, scansByQrKey){
       photo: matchingScan ? scanPhotoOf(matchingScan) : null,
       scanId: matchingScan ? scanIdOf(matchingScan) : null,
       assetId: a.id != null ? a.id : null,
+      purchaseDate: a.purchase_date ? String(a.purchase_date).slice(0, 10) : '',
       masterLocationCode: a.location_code || '',
       locationOverride: a.location_override === true,
       qrKey: qrKey,
@@ -3078,20 +3096,47 @@ function buildAssetVerifyIndex(){
   var bySerial = {}, byCode = {};
   Object.keys(assetsByStore || {}).forEach(function(store){
     (assetsByStore[store] || []).forEach(function(a){
-      var hit = { barcode: a.barcode, store: store };
+      var hit = { barcode: a.barcode, store: store, purchaseDate: a.purchaseDate || '' };
       var sn = _hNorm(a.serial); if(sn && sn !== '—' && !bySerial[sn]) bySerial[sn] = hit;
       var cd = _hCode(a.rawAssetCode); if(cd && !byCode[cd]) byCode[cd] = hit;
     });
   });
   return { bySerial: bySerial, byCode: byCode };
 }
+// อายุอุปกรณ์ (กฎ 5 ปี): 'over' = ซื้อมาครบ 5 ปีแล้ว (เกินกำหนดเปลี่ยน), 'soon' = จะครบ 5 ปีภายในปีนี้ (วางแผนเปลี่ยน)
+// วันที่ซื้อใช้ assets.purchase_date ของ Asset ที่จับคู่เจอ; ถ้าไม่เจอ ใช้ปี-เดือนที่ฝังในเลข Asset (เช่น COM012022090002 = 2022-09)
+var EMP_AGE_YEARS = 5;
+function purchaseDateFromAssetCode(code){
+  var m = /^[A-Z]{3}\d{2}((?:19|20)\d{2})(0[1-9]|1[0-2])/.exec(_hCode(code));
+  return m ? (m[1] + '-' + m[2] + '-01') : '';
+}
+function deviceAgeInfo(dateStr){
+  if(!dateStr) return null;
+  var d = new Date(dateStr.length === 7 ? dateStr + '-01' : dateStr);
+  if(isNaN(d.getTime())) return null;
+  var now = new Date();
+  var fiveYearsAgo = new Date(now.getFullYear() - EMP_AGE_YEARS, now.getMonth(), now.getDate());
+  var months = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+  var label = Math.floor(months / 12) + ' ปี ' + (months % 12) + ' เดือน';
+  var flag = '';
+  if(d <= fiveYearsAgo) flag = 'over';
+  else if(d.getFullYear() + EMP_AGE_YEARS === now.getFullYear()) flag = 'soon';
+  return { flag: flag, label: label, ym: dateStr.slice(0, 7) };
+}
 function verifyHolding(h, idx){
   var sn = _hNorm(h.serial_no), cd = _hCode(h.asset_code);
-  if(sn && idx.bySerial[sn]) return { ok: true, why: 'พบใน Asset Summary: ' + idx.bySerial[sn].barcode + ' (' + idx.bySerial[sn].store + ') — จับคู่ด้วย Serial' };
-  if(!sn && cd && idx.byCode[cd]) return { ok: true, why: 'พบใน Asset Summary: ' + idx.byCode[cd].barcode + ' (' + idx.byCode[cd].store + ') — จับคู่ด้วยเลข Asset (ไฟล์ไม่มี Serial)' };
-  if(sn) return { ok: false, why: 'ไม่พบ Serial ' + h.serial_no + ' ใน Asset Summary' };
-  if(cd) return { ok: false, why: 'ไฟล์ไม่มี Serial และไม่พบเลข Asset ' + h.asset_code + ' ใน Asset Summary' };
-  return { ok: false, why: 'ไฟล์ไม่มีทั้งเลข Asset และ Serial' };
+  var hit = null, how = '';
+  if(sn && idx.bySerial[sn]){ hit = idx.bySerial[sn]; how = 'จับคู่ด้วย Serial'; }
+  else if(!sn && cd && idx.byCode[cd]){ hit = idx.byCode[cd]; how = 'จับคู่ด้วยเลข Asset (ไฟล์ไม่มี Serial)'; }
+  // วันที่ซื้อ: จาก Asset Summary ก่อน ไม่มีค่อยดึงจากเลข Asset ในไฟล์
+  var dateStr = (hit && hit.purchaseDate) || '', src = dateStr ? 'วันที่ซื้อจาก Asset Summary' : '';
+  if(!dateStr){ dateStr = purchaseDateFromAssetCode(h.asset_code); if(dateStr) src = 'ปี-เดือนที่ฝังในเลข Asset'; }
+  var age = deviceAgeInfo(dateStr);
+  var ageTxt = age ? (' · ซื้อ ' + age.ym + ' (อายุ ' + age.label + ', ' + src + ')' + (age.flag === 'over' ? ' ⚠ เกิน ' + EMP_AGE_YEARS + ' ปีแล้ว' : age.flag === 'soon' ? ' ⏳ ครบ ' + EMP_AGE_YEARS + ' ปีในปีนี้' : '')) : ' · ไม่ทราบอายุ';
+  if(hit) return { ok: true, age: age, why: 'พบใน Asset Summary: ' + hit.barcode + ' (' + hit.store + ') — ' + how + ageTxt };
+  if(sn) return { ok: false, age: age, why: 'ไม่พบ Serial ' + h.serial_no + ' ใน Asset Summary' + ageTxt };
+  if(cd) return { ok: false, age: age, why: 'ไฟล์ไม่มี Serial และไม่พบเลข Asset ' + h.asset_code + ' ใน Asset Summary' + ageTxt };
+  return { ok: false, age: null, why: 'ไฟล์ไม่มีทั้งเลข Asset และ Serial · ไม่ทราบอายุ' };
 }
 // สร้างข้อมูลชิปของพนักงานทุกคนในครั้งเดียว: employee_id → [{type, ok, tip}]
 function buildEmpChipData(){
@@ -3105,17 +3150,24 @@ function buildEmpChipData(){
     if(seen[dk]) return; seen[dk] = true;
     var v = verifyHolding(h, idx);
     (out[empId] = out[empId] || []).push({
-      type: h.device_type, ok: v.ok,
+      type: h.device_type, ok: v.ok, age: v.age ? v.age.flag : '',
       tip: h.device_type + (h.model ? ' · ' + h.model : '') + ' — ' + v.why
     });
   });
   return { chips: out, unmatched: m.unmatched };
 }
+// ธงของพนักงาน = ธงที่แย่สุดในบรรดาอุปกรณ์ที่ถือ (over > soon > ว่าง)
+function empAgeFlag(chipData, empId){
+  var list = chipData.chips[empId] || [], f = '';
+  list.forEach(function(c){ if(c.age === 'over') f = 'over'; else if(c.age === 'soon' && f !== 'over') f = 'soon'; });
+  return f;
+}
 function empChipsHtml(e, chipData){
   var list = chipData.chips[e.employee_id];
   if(!list || !list.length) return employeeHoldings.length ? '<span class="emp-chip-none">ไม่มีข้อมูลอุปกรณ์</span>' : '';
   return '<div class="emp-chips">' + list.map(function(c){
-    return '<span class="emp-chip ' + (c.ok ? 'ok' : 'no') + '" title="' + _hmEsc(c.tip) + '">' + c.type + '</span>';
+    var ageMark = c.age === 'over' ? '<b class="emp-age over">5+</b>' : c.age === 'soon' ? '<b class="emp-age soon">5</b>' : '';
+    return '<span class="emp-chip ' + (c.ok ? 'ok' : 'no') + '" title="' + _hmEsc(c.tip) + '">' + c.type + ageMark + '</span>';
   }).join('') + '</div>';
 }
 async function loadEmployeeHoldings(){
@@ -3221,24 +3273,60 @@ function populateEmployeeDeptFilter(){
   if(depts.indexOf(currentVal) > -1) sel.value = currentVal;
 }
 
+// การ์ดสรุปรายแผนก: จำนวนพนักงาน + กี่คนถืออุปกรณ์เกิน/ครบ 5 ปี (ชี้เมาส์ดูชื่อ, คลิกเพื่อกรองแผนกนั้น)
+function renderEmpDeptGrid(chipData, selectedDept){
+  var el = document.getElementById('empDeptGrid');
+  if(!el) return;
+  var depts = {};
+  employees.forEach(function(e){
+    if(e.is_active === false) return;
+    var d = empDeptCode(e) || 'ไม่มีแผนก';
+    var g = depts[d] || (depts[d] = { n: 0, over: [], soon: [] });
+    g.n++;
+    var f = empAgeFlag(chipData, e.employee_id);
+    if(f === 'over') g.over.push(e.full_name); else if(f === 'soon') g.soon.push(e.full_name);
+  });
+  var keys = Object.keys(depts).sort();
+  if(!keys.length){ el.innerHTML = ''; return; }
+  el.innerHTML = keys.map(function(d){
+    var g = depts[d], sel = selectedDept === d ? ' sel' : '';
+    var tip = 'พนักงาน ' + g.n + ' คน' + (g.over.length ? '\nเกิน 5 ปี: ' + g.over.join(', ') : '') + (g.soon.length ? '\nครบ 5 ปีในปีนี้: ' + g.soon.join(', ') : '');
+    var dv = String(d).replace(/'/g, "\\'");
+    return '<button class="emp-dept-card' + sel + '" title="' + _hmEsc(tip) + '" onclick="setEmpDeptFilter(\'' + dv + '\')">'
+      + '<span class="dc-code">' + _hmEsc(d) + '</span><span class="dc-n">' + g.n + ' คน</span>'
+      + '<div class="dc-row"><span><b class="emp-age over">5+</b> ' + g.over.length + ' คน</span><span><b class="emp-age soon">5</b> ' + g.soon.length + ' คน</span></div></button>';
+  }).join('');
+}
+function setEmpDeptFilter(d){
+  var sel = document.getElementById('empDeptFilter');
+  sel.value = (sel.value === d) ? 'all' : d;      // กดซ้ำเพื่อเอาตัวกรองออก
+  if(sel.value !== d && sel.value !== 'all') sel.value = 'all';
+  renderEmployeeList();
+}
 function renderHoldingsNote(chipData){
   var el = document.getElementById('empHoldNote');
   if(!el) return;
   if(!employeeHoldings.length){ el.innerHTML = 'ยังไม่มีข้อมูลอุปกรณ์ที่ถือครอง — กด "Import ถือครอง" แล้วเลือกไฟล์ User Asset List'; return; }
   var u = chipData.unmatched;
-  el.innerHTML = 'ชิป: <span class="emp-chip ok" style="display:inline-flex;">เขียว</span> หา Asset ใน Asset Summary เจอ · <span class="emp-chip no" style="display:inline-flex;">แดง</span> ตรวจสอบไม่ได้ (ชี้เมาส์ดูเหตุผล)'
+  el.innerHTML = 'ชิป: <span class="emp-chip ok" style="display:inline-flex;">เขียว</span> หา Asset ใน Asset Summary เจอ · <span class="emp-chip no" style="display:inline-flex;">แดง</span> ตรวจสอบไม่ได้ (ชี้เมาส์ดูเหตุผล) · <b class="emp-age over">5+</b> ถืออุปกรณ์เกิน 5 ปีแล้ว (ควรเปลี่ยน) · <b class="emp-age soon">5</b> จะครบ 5 ปีในปีนี้ (วางแผนเปลี่ยน)'
     + (u.length ? ' · <details style="display:inline;"><summary style="display:inline;cursor:pointer;color:var(--red-fg);">ชื่อในไฟล์ที่จับคู่พนักงานไม่ได้ ' + u.length + ' ชื่อ</summary><div style="margin-top:6px;">' + u.map(_hmEsc).join(', ') + '</div></details>' : '');
 }
 
 function renderEmployeeList(){
   var term = (document.getElementById('empSearch').value || '').toLowerCase();
   var deptF = document.getElementById('empDeptFilter').value;
+  var ageF = document.getElementById('empAgeFilter').value;
+  var chipData = buildEmpChipData();
+  renderHoldingsNote(chipData);
+  renderEmpDeptGrid(chipData, deptF);
   var filtered = employees.filter(function(e){
     var mDept = deptF === 'all' || empDeptCode(e) === deptF;
+    var fl = empAgeFlag(chipData, e.employee_id);
+    var mAge = ageF === 'all' || (ageF === 'flag' ? !!fl : fl === ageF);
     var mSearch = !term ||
       (e.employee_id || '').toLowerCase().indexOf(term) > -1 ||
       (e.full_name || '').toLowerCase().indexOf(term) > -1;
-    return mDept && mSearch;
+    return mDept && mSearch && mAge;
   });
   document.getElementById('empResultCount').textContent =
     'พบ ' + filtered.length.toLocaleString() + ' คน จากทั้งหมด ' + employees.length.toLocaleString() + ' คน';
@@ -3247,8 +3335,6 @@ function renderEmployeeList(){
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:30px;">ไม่พบพนักงานที่ตรงกับตัวกรอง (หรือยังไม่เคย import ไฟล์)</td></tr>';
     return;
   }
-  var chipData = buildEmpChipData();
-  renderHoldingsNote(chipData);
   tbody.innerHTML = filtered.map(function(e, i){
     var isActive = e.is_active !== false;
     var safeId = String(e.employee_id).replace(/'/g, "\\'");
