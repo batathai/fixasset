@@ -328,6 +328,9 @@
   .emp-chip{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;line-height:18px;padding:1px 10px 1px 8px;border-radius:20px;border:1px solid;white-space:nowrap;cursor:default;}
   .emp-chip::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
   .emp-chip.ok{color:var(--green-fg);background:var(--green-bg);border-color:rgba(23,117,58,.35);}
+  .emp-chip-none{font-size:12px;color:var(--ink-4);}
+  .emp-hold-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:var(--amber-bg);border:1px solid var(--line);border-radius:var(--r-md);font-size:13.5px;}
+  .emp-hold-bar > span{flex:1 1 320px;}
   .emp-chip.no{color:var(--red-fg);background:var(--red-bg2);border-color:rgba(190,42,32,.30);}
   .asset-cell-1l{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 8px;margin-left:5px;white-space:nowrap;}
@@ -1032,8 +1035,12 @@
             Refresh
           </button>
           <button class="import-btn" onclick="openEmployeeImportDrawer()">⬆ Import พนักงาน</button>
+          <button class="import-btn" onclick="openHoldingsFilePicker()" title="Import ไฟล์ User Asset List (Notebook / PC / Monitor ของแต่ละคน)">⬆ Import ถือครอง</button>
+          <input type="file" id="empHoldFile" accept=".csv,.tsv,.txt" style="display:none;" onchange="onHoldingsFileChosen(this)">
         </div>
+        <div id="empHoldImportBar" class="emp-hold-bar" style="display:none;"></div>
         <p id="empResultCount" class="result-count" style="margin-top:10px;"></p>
+        <p id="empHoldNote" class="result-count" style="margin:4px 0 10px;"></p>
         <div class="as-table-wrap">
           <table class="as-table">
             <thead><tr><th>#</th><th>Employee ID</th><th>ชื่อ</th><th>ตำแหน่ง</th><th>แผนก</th><th>สถานะ</th><th>Actions</th></tr></thead>
@@ -3023,6 +3030,7 @@ async function loadEmployees(){
   try{
     var result = await apiFetch('/hq/employees', { method: 'GET' });
     employees = result.employees || [];
+    await loadEmployeeHoldings();
     populateEmployeeDeptFilter();
     renderEmployeeList();
   } catch(e){
@@ -3037,47 +3045,170 @@ async function loadEmployees(){
 // แสดงแผนกพนักงานเป็น "รหัส" อย่างเดียว (เช่น 999IT) — ถ้าแถวไหนไม่มีรหัสค่อย fallback เป็นชื่อเดิม
 function empDeptCode(e){ return ((e && (e.department_code || e.department)) || '').trim(); }
 
-// ── อุปกรณ์ที่พนักงานถือครอง (ชิปเขียว/แดง ข้างชื่อในหน้า "พนักงาน") ─────────────────────
-// เขียว = มี asset ประเภทนั้นที่ถูกมอบหมายให้พนักงานคนนี้ตอนสแกน และตรวจพบตรง master แล้ว (status 'verified', มีเลข Asset)
-// แดง  = ยังตรวจสอบไม่ได้ว่าถือครองหรือไม่ (ยังไม่มี asset ประเภทนี้ที่สแกนยืนยันแล้ว)
-// ประเภทอุปกรณ์ไม่มีใน DB (assets.category ไม่มีจริง) จึงจำแนกจากคำในชื่อ asset — ชื่อที่ไม่มีคำเหล่านี้จะไม่ถูกนับ
-var EMP_DEVICE_TYPES = [
-  { key: 'Notebook', re: /note\s*book|laptop|แล็ปท็อป|โน้ตบุ๊ก|โน๊ตบุ๊ค/i },
-  { key: 'CPU',      re: /\bAIO\b|all[\s-]*in[\s-]*one|desktop|\bCPU\b|\bPC\b|คอมพิวเตอร์ตั้งโต๊ะ|เครื่องคอมพิวเตอร์/i },
-  { key: 'Monitor',  re: /monitor|\bLCD\b|\bLED\s*display|จอภาพ|จอมอนิเตอร์/i },
-  { key: 'Mobile',   re: /mobile|smart\s*phone|iphone|ipad|tablet|โทรศัพท์|มือถือ|แท็บเล็ต/i }
-];
-function empDeviceTypeOf(name){
-  var n = String(name || '');
-  if(EMP_DEVICE_TYPES[0].re.test(n)) return 'Notebook';   // เช็ค Notebook ก่อน เพราะบางชื่อมีคำว่า PC ด้วย
-  for(var i = 1; i < EMP_DEVICE_TYPES.length; i++){ if(EMP_DEVICE_TYPES[i].re.test(n)) return EMP_DEVICE_TYPES[i].key; }
-  return null;
+// ── อุปกรณ์ที่พนักงานถือครอง (ชิปเขียว/แดงข้างชื่อในหน้า "พนักงาน") ─────────────────────────
+// แหล่งข้อมูล: ตาราง employee_holdings (import จากไฟล์ User Asset List — migration_employee_holdings.sql)
+// ชิปโชว์เฉพาะอุปกรณ์ที่พนักงานคนนั้นถืออยู่ตามไฟล์ (Notebook / CPU / Monitor; กระเป๋าโน้ตบุ๊กไม่นับเพราะไม่มีเลข Asset)
+//   เขียว = หา Asset ใน Asset Summary เจอ (จับคู่ด้วย Serial ก่อน; ถ้าไฟล์ไม่มี Serial ค่อยลองเลข Asset)
+//   แดง  = ตรวจสอบไม่ได้ (ไฟล์ไม่มีเลข Asset/Serial หรือหาไม่เจอใน Asset Summary)
+var employeeHoldings = [];
+var pendingHoldingRows = null, pendingHoldingFileName = '';
+
+function _hNorm(t){ return String(t == null ? '' : t).replace(/\s+/g, '').toUpperCase(); }
+function _hCode(t){ return _hNorm(t).replace(/^COMO/, 'COM0'); }   // ในไฟล์มีที่พิมพ์ COM เป็นตัว O
+function _hNameTokens(t){
+  return String(t || '').toLowerCase().replace(/\(.*?\)/g, ' ').replace(/[^a-z0-9฀-๿]+/g, ' ').trim().split(' ').filter(Boolean);
 }
-// สร้างดัชนี ชื่อพนักงาน → { ประเภท: [เลข Asset ที่ยืนยันแล้ว] } จาก assetsByStore (ข้อมูลจริงที่โหลดไว้แล้ว)
-function buildEmpHoldingsIndex(){
-  var idx = {};
+// ชื่อในไฟล์ → พนักงานในระบบ: โทเคนทุกตัวของชื่อในไฟล์ต้องอยู่ในชื่อเต็มของพนักงาน และต้องเจอคนเดียวเท่านั้น (ถ้าซ้ำ/ไม่เจอ = ไม่จับคู่)
+function matchHoldingPersons(){
+  var empTok = employees.map(function(e){ return { e: e, t: _hNameTokens(e.full_name) }; });
+  var map = {}, unmatched = [];
+  employeeHoldings.forEach(function(h){
+    var key = h.person_name;
+    if(key in map) return;
+    var ht = _hNameTokens(key), found = [];
+    if(ht.length){
+      empTok.forEach(function(x){ if(ht.every(function(t){ return x.t.indexOf(t) > -1; })) found.push(x.e); });
+    }
+    map[key] = found.length === 1 ? found[0].employee_id : null;
+    if(found.length !== 1) unmatched.push(key + (found.length > 1 ? ' (ชื่อซ้ำ ' + found.length + ' คน)' : ''));
+  });
+  return { map: map, unmatched: unmatched };
+}
+function buildAssetVerifyIndex(){
+  var bySerial = {}, byCode = {};
   Object.keys(assetsByStore || {}).forEach(function(store){
     (assetsByStore[store] || []).forEach(function(a){
-      if(a.status !== 'verified' || !a.employeeName || a.employeeName === '—') return;
-      var t = empDeviceTypeOf(a.name);
-      if(!t) return;
-      var k = String(a.employeeName).trim().toLowerCase();
-      if(!idx[k]) idx[k] = {};
-      if(!idx[k][t]) idx[k][t] = [];
-      idx[k][t].push(a.barcode);
+      var hit = { barcode: a.barcode, store: store };
+      var sn = _hNorm(a.serial); if(sn && sn !== '—' && !bySerial[sn]) bySerial[sn] = hit;
+      var cd = _hCode(a.rawAssetCode); if(cd && !byCode[cd]) byCode[cd] = hit;
     });
   });
-  return idx;
+  return { bySerial: bySerial, byCode: byCode };
 }
-function empChipsHtml(e, idx){
-  var held = idx[String(e.full_name || '').trim().toLowerCase()] || {};
-  return '<div class="emp-chips">' + EMP_DEVICE_TYPES.map(function(t){
-    var codes = held[t.key] || [];
-    if(codes.length){
-      return '<span class="emp-chip ok" title="' + _hmEsc(t.key + ' · ถือครอง ' + codes.length + ' ชิ้น: ' + codes.join(', ')) + '">' + t.key + (codes.length > 1 ? ' ×' + codes.length : '') + '</span>';
-    }
-    return '<span class="emp-chip no" title="' + _hmEsc(t.key + ' · ยังตรวจสอบไม่ได้ว่าถือครองหรือไม่') + '">' + t.key + '</span>';
+function verifyHolding(h, idx){
+  var sn = _hNorm(h.serial_no), cd = _hCode(h.asset_code);
+  if(sn && idx.bySerial[sn]) return { ok: true, why: 'พบใน Asset Summary: ' + idx.bySerial[sn].barcode + ' (' + idx.bySerial[sn].store + ') — จับคู่ด้วย Serial' };
+  if(!sn && cd && idx.byCode[cd]) return { ok: true, why: 'พบใน Asset Summary: ' + idx.byCode[cd].barcode + ' (' + idx.byCode[cd].store + ') — จับคู่ด้วยเลข Asset (ไฟล์ไม่มี Serial)' };
+  if(sn) return { ok: false, why: 'ไม่พบ Serial ' + h.serial_no + ' ใน Asset Summary' };
+  if(cd) return { ok: false, why: 'ไฟล์ไม่มี Serial และไม่พบเลข Asset ' + h.asset_code + ' ใน Asset Summary' };
+  return { ok: false, why: 'ไฟล์ไม่มีทั้งเลข Asset และ Serial' };
+}
+// สร้างข้อมูลชิปของพนักงานทุกคนในครั้งเดียว: employee_id → [{type, ok, tip}]
+function buildEmpChipData(){
+  var out = {};
+  if(!employeeHoldings.length) return { chips: out, unmatched: [] };
+  var m = matchHoldingPersons(), idx = buildAssetVerifyIndex(), seen = {};
+  employeeHoldings.forEach(function(h){
+    var empId = m.map[h.person_name];
+    if(!empId) return;
+    var dk = empId + '|' + h.device_type + '|' + _hNorm(h.serial_no || h.model || h.asset_code);
+    if(seen[dk]) return; seen[dk] = true;
+    var v = verifyHolding(h, idx);
+    (out[empId] = out[empId] || []).push({
+      type: h.device_type, ok: v.ok,
+      tip: h.device_type + (h.model ? ' · ' + h.model : '') + ' — ' + v.why
+    });
+  });
+  return { chips: out, unmatched: m.unmatched };
+}
+function empChipsHtml(e, chipData){
+  var list = chipData.chips[e.employee_id];
+  if(!list || !list.length) return employeeHoldings.length ? '<span class="emp-chip-none">ไม่มีข้อมูลอุปกรณ์</span>' : '';
+  return '<div class="emp-chips">' + list.map(function(c){
+    return '<span class="emp-chip ' + (c.ok ? 'ok' : 'no') + '" title="' + _hmEsc(c.tip) + '">' + c.type + '</span>';
   }).join('') + '</div>';
+}
+async function loadEmployeeHoldings(){
+  try{
+    var r = await apiFetch('/hq/employee-holdings', { method: 'GET' });
+    employeeHoldings = r.holdings || [];
+  } catch(e){
+    employeeHoldings = [];
+    showToast('โหลดข้อมูลอุปกรณ์ที่ถือครองไม่สำเร็จ: ' + e.message + ' — เช็คว่ารัน migration_employee_holdings.sql แล้วหรือยัง');
+  }
+}
+
+// ── Import ไฟล์ User Asset List (CSV/TSV) ─────────────────────────────────────────────
+function parseDelimited(text, delim){
+  var rows = [], row = [], cur = '', q = false;
+  for(var i = 0; i < text.length; i++){
+    var c = text[i];
+    if(q){
+      if(c === '"'){ if(text[i + 1] === '"'){ cur += '"'; i++; } else { q = false; } }
+      else cur += c;
+    } else if(c === '"' && cur === ''){ q = true; }
+    else if(c === delim){ row.push(cur); cur = ''; }
+    else if(c === '\n' || c === '\r'){
+      if(c === '\r' && text[i + 1] === '\n') i++;
+      row.push(cur); cur = ''; rows.push(row); row = [];
+    } else cur += c;
+  }
+  if(cur !== '' || row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+function parseHoldingsFile(text){
+  text = text.replace(/^﻿/, '');
+  var firstLine = text.split(/\r?\n/)[0] || '';
+  var delim = firstLine.indexOf('\t') > -1 ? '\t' : ',';
+  var grid = parseDelimited(text, delim);
+  var dept = '', out = [], people = {}, skippedNoDevice = 0;
+  grid.forEach(function(r){
+    var c = r.map(function(x){ return (x || '').trim(); });
+    while(c.length < 9) c.push('');
+    if(/computer\s*name/i.test(c[2])){ dept = c[0]; return; }          // แถวหัวของแต่ละแผนก
+    var name = c[1].replace(/\(.*?\)/g, '').replace(/\s+/g, ' ').trim();
+    if(!name) return;
+    var added = 0;
+    if(c[2]){
+      var model = c[2].replace(/^\s*(pc|notebook|nootebook)\s*:\s*/i, '').trim();
+      var type = /^\s*(pc|desktop)\b/i.test(c[2]) ? 'CPU' : 'Notebook';
+      out.push({ person_name: name, dept_label: dept, device_type: type, model: model, asset_code: c[3], serial_no: c[4] }); added++;
+    }
+    if(c[5] || c[6] || c[7]){
+      var mModel = c[6], mSerial = c[7];
+      // บางแถว (เช่น Warehouse) ใส่แค่ Serial ลงช่อง Monitor — ถ้าดูเป็นรหัสล้วนและไม่มีช่อง S/No ให้ถือเป็น Serial
+      if(!mSerial && /^[A-Za-z0-9-]{8,}$/.test(mModel) && /\d/.test(mModel)){ mSerial = mModel; mModel = ''; }
+      out.push({ person_name: name, dept_label: dept, device_type: 'Monitor', model: mModel, asset_code: c[5], serial_no: mSerial }); added++;
+    }
+    if(added){ people[name] = true; } else { skippedNoDevice++; }
+  });
+  return { rows: out, peopleCount: Object.keys(people).length, noDevice: skippedNoDevice };
+}
+function openHoldingsFilePicker(){ var f = document.getElementById('empHoldFile'); f.value = ''; f.click(); }
+async function onHoldingsFileChosen(input){
+  var f = input.files && input.files[0];
+  if(!f) return;
+  try{
+    var parsed = parseHoldingsFile(await f.text());
+    if(!parsed.rows.length){ showToast('ไม่พบข้อมูลอุปกรณ์ในไฟล์นี้ — ต้องเป็นไฟล์ User Asset List (CSV/TSV ที่มีคอลัมน์ Computer Name)'); return; }
+    pendingHoldingRows = parsed.rows; pendingHoldingFileName = f.name;
+    var nb = parsed.rows.filter(function(r){ return r.device_type === 'Notebook'; }).length;
+    var cpu = parsed.rows.filter(function(r){ return r.device_type === 'CPU'; }).length;
+    var mon = parsed.rows.filter(function(r){ return r.device_type === 'Monitor'; }).length;
+    var bar = document.getElementById('empHoldImportBar');
+    bar.innerHTML = '<span>ไฟล์ <b>' + _hmEsc(f.name) + '</b>: พบ ' + parsed.peopleCount + ' คน — Notebook ' + nb + ' · CPU ' + cpu + ' · Monitor ' + mon
+      + ' (ข้าม ' + parsed.noDevice + ' คนที่ไม่มีอุปกรณ์) — <b>จะแทนที่ข้อมูลถือครองเดิมทั้งหมด</b></span>'
+      + '<button class="import-btn" onclick="confirmHoldingsImport()">ยืนยัน Import</button>'
+      + '<button class="as-refresh" onclick="cancelHoldingsImport()">ยกเลิก</button>';
+    bar.style.display = 'flex';
+  } catch(e){ showToast('อ่านไฟล์ไม่สำเร็จ: ' + e.message); }
+}
+function cancelHoldingsImport(){
+  pendingHoldingRows = null;
+  var bar = document.getElementById('empHoldImportBar'); bar.style.display = 'none'; bar.innerHTML = '';
+}
+async function confirmHoldingsImport(){
+  if(!pendingHoldingRows) return;
+  showBataLoading('กำลัง import ข้อมูลอุปกรณ์ที่ถือครอง...');
+  try{
+    var r = await apiFetch('/hq/employee-holdings/import', { method: 'POST', body: JSON.stringify({ file_name: pendingHoldingFileName, rows: pendingHoldingRows }) });
+    showToast('Import สำเร็จ ' + r.imported + ' รายการ' + (r.skipped ? ' (ข้าม ' + r.skipped + ')' : ''));
+    cancelHoldingsImport();
+    await loadEmployeeHoldings();
+    renderEmployeeList();
+  } catch(e){
+    showToast('Import ไม่สำเร็จ: ' + e.message + ' — เช็คว่ารัน migration_employee_holdings.sql แล้วหรือยัง');
+  } finally { hideBataLoading(); }
 }
 
 function populateEmployeeDeptFilter(){
@@ -3088,6 +3219,15 @@ function populateEmployeeDeptFilter(){
   depts.sort();
   sel.innerHTML = '<option value="all">ทุกแผนก</option>' + depts.map(function(d){ return '<option value="' + d + '">' + d + '</option>'; }).join('');
   if(depts.indexOf(currentVal) > -1) sel.value = currentVal;
+}
+
+function renderHoldingsNote(chipData){
+  var el = document.getElementById('empHoldNote');
+  if(!el) return;
+  if(!employeeHoldings.length){ el.innerHTML = 'ยังไม่มีข้อมูลอุปกรณ์ที่ถือครอง — กด "Import ถือครอง" แล้วเลือกไฟล์ User Asset List'; return; }
+  var u = chipData.unmatched;
+  el.innerHTML = 'ชิป: <span class="emp-chip ok" style="display:inline-flex;">เขียว</span> หา Asset ใน Asset Summary เจอ · <span class="emp-chip no" style="display:inline-flex;">แดง</span> ตรวจสอบไม่ได้ (ชี้เมาส์ดูเหตุผล)'
+    + (u.length ? ' · <details style="display:inline;"><summary style="display:inline;cursor:pointer;color:var(--red-fg);">ชื่อในไฟล์ที่จับคู่พนักงานไม่ได้ ' + u.length + ' ชื่อ</summary><div style="margin-top:6px;">' + u.map(_hmEsc).join(', ') + '</div></details>' : '');
 }
 
 function renderEmployeeList(){
@@ -3107,14 +3247,15 @@ function renderEmployeeList(){
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:30px;">ไม่พบพนักงานที่ตรงกับตัวกรอง (หรือยังไม่เคย import ไฟล์)</td></tr>';
     return;
   }
-  var holdIdx = buildEmpHoldingsIndex();
+  var chipData = buildEmpChipData();
+  renderHoldingsNote(chipData);
   tbody.innerHTML = filtered.map(function(e, i){
     var isActive = e.is_active !== false;
     var safeId = String(e.employee_id).replace(/'/g, "\\'");
     return '<tr>'
       + '<td>' + (i + 1) + '</td>'
       + '<td>' + e.employee_id + '</td>'
-      + '<td><div class="emp-name-cell"><span>' + e.full_name + '</span>' + empChipsHtml(e, holdIdx) + '</div></td>'
+      + '<td><div class="emp-name-cell"><span>' + e.full_name + '</span>' + empChipsHtml(e, chipData) + '</div></td>'
       + '<td>' + (e.position || '—') + '</td>'
       + '<td>' + (empDeptCode(e) || '—') + '</td>'
       + '<td>' + (isActive ? '<span class="status-pill verified"><span class="sp-dot"></span>Active</span>' : '<span class="status-pill missing"><span class="sp-dot"></span>ปิดใช้งาน</span>') + '</td>'

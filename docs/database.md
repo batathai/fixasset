@@ -170,6 +170,20 @@ CREATE TABLE serial_mismatches (
 );
 ```
 
+### employee_holdings (เพิ่ม 2026-11-14 — `migration_employee_holdings.sql`, ยังไม่ได้รันใน Neon)
+อุปกรณ์ที่พนักงานควรถือตามไฟล์ User Asset List — 1 แถว = อุปกรณ์ 1 ชิ้น; import ใหม่ = soft-delete ชุดเดิมทั้งหมด
+
+```sql
+CREATE TABLE employee_holdings (
+  id SERIAL PRIMARY KEY,
+  person_name TEXT NOT NULL,     -- ชื่อตามไฟล์ (จับคู่กับ employees.full_name ฝั่ง Dashboard)
+  dept_label TEXT,
+  device_type TEXT NOT NULL,     -- 'Notebook' | 'CPU' | 'Monitor'
+  model TEXT, asset_code TEXT, serial_no TEXT,
+  import_batch_id TEXT, is_active BOOLEAN DEFAULT true, imported_at TIMESTAMPTZ DEFAULT now()
+);
+```
+
 ## หมายเหตุการแก้ไข schema ที่เกิดขึ้นจริง
 
 ระหว่างใช้งานจริง มีการเพิ่ม column ผ่าน migration เพิ่มเติม (idempotent ด้วย `IF NOT EXISTS`):

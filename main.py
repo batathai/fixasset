@@ -104,6 +104,18 @@ class AssetWriteOff(BaseModel):
     reason: str
     remark: Optional[str] = None
 
+class HoldingRow(BaseModel):
+    person_name: str
+    dept_label: Optional[str] = None
+    device_type: str                 # Notebook | CPU | Monitor
+    model: Optional[str] = None
+    asset_code: Optional[str] = None
+    serial_no: Optional[str] = None
+
+class HoldingsImport(BaseModel):
+    file_name: Optional[str] = None
+    rows: List[HoldingRow]
+
 class ScanLogPatchByQR(BaseModel):
     photo_url: Optional[str] = None
     remark: Optional[str] = None
@@ -453,6 +465,60 @@ async def hq_import_employees_confirm(file: UploadFile = File(...), user=Depends
         raise HTTPException(status_code=500, detail=f"Import ล้มเหลว ไม่มีข้อมูลเข้าระบบ: {e}")
 
     return {"ok": True, "batch_id": batch_id, "processed": inserted}
+
+
+# ── อุปกรณ์ที่พนักงานควรถือ (import จากไฟล์ User Asset List) ─────────────────────────────
+# ตาราง employee_holdings (migration_employee_holdings.sql) — ฝั่ง Dashboard เอา serial/เลข Asset ไปเทียบกับ Asset Summary เอง
+HOLDING_DEVICE_TYPES = ("Notebook", "CPU", "Monitor")
+
+@app.get("/hq/employee-holdings")
+def hq_get_employee_holdings(db=Depends(get_db), user=Depends(get_current_user)):
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    cur = db.cursor()
+    cur.execute("""
+        SELECT person_name, dept_label, device_type, model, asset_code, serial_no
+        FROM employee_holdings
+        WHERE COALESCE(is_active, true) = true
+        ORDER BY dept_label, person_name, id
+    """)
+    rows = [dict(r) for r in cur.fetchall()]
+    return {"total": len(rows), "holdings": rows}
+
+@app.post("/hq/employee-holdings/import")
+def hq_import_employee_holdings(req: HoldingsImport, db=Depends(get_db), user=Depends(get_current_user)):
+    """แทนที่ข้อมูลถือครองทั้งชุด: ชุดเดิมถูก soft-delete (is_active=false) แล้วใส่ชุดใหม่ใน transaction เดียว"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    if not req.rows:
+        raise HTTPException(status_code=400, detail="ไม่มีข้อมูลให้ import")
+    if len(req.rows) > 5000:
+        raise HTTPException(status_code=400, detail="ข้อมูลเกิน 5,000 แถว")
+    clean = []
+    for r in req.rows:
+        name = (r.person_name or "").strip()
+        if not name or r.device_type not in HOLDING_DEVICE_TYPES:
+            continue
+        clean.append((name, (r.dept_label or "").strip() or None, r.device_type,
+                      (r.model or "").strip() or None, (r.asset_code or "").strip() or None,
+                      (r.serial_no or "").strip() or None))
+    if not clean:
+        raise HTTPException(status_code=400, detail="ไม่พบแถวที่ใช้ได้ (ต้องมีชื่อและประเภท Notebook/CPU/Monitor)")
+    batch_id = uuid.uuid4().hex
+    cur = db.cursor()
+    try:
+        cur.execute("UPDATE employee_holdings SET is_active = false WHERE COALESCE(is_active, true) = true")
+        for c in clean:
+            cur.execute("""
+                INSERT INTO employee_holdings
+                    (person_name, dept_label, device_type, model, asset_code, serial_no, import_batch_id, is_active, imported_at)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,true,NOW())
+            """, c + (batch_id,))
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Import ล้มเหลว ไม่มีข้อมูลเปลี่ยนแปลง: {e}")
+    return {"ok": True, "batch_id": batch_id, "imported": len(clean), "skipped": len(req.rows) - len(clean)}
 
 
 # ════════════════════════════════════════════════════════════════
