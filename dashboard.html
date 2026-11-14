@@ -322,6 +322,13 @@
   .asset-table.office-view .asset-head,
   .asset-table.office-view .asset-row{grid-template-columns:52px minmax(0,1.6fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,.7fr) minmax(0,1fr) 60px 120px 90px 132px;}
   .asset-row > div{min-width:0;}
+  .emp-name-cell{display:flex;align-items:center;gap:18px;}
+  .emp-name-cell > span{flex:0 1 190px;min-width:0;}
+  .emp-chips{display:grid;grid-template-columns:repeat(2,104px);gap:4px 6px;flex-shrink:0;}
+  .emp-chip{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;line-height:18px;padding:1px 10px 1px 8px;border-radius:20px;border:1px solid;white-space:nowrap;cursor:default;}
+  .emp-chip::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+  .emp-chip.ok{color:var(--green-fg);background:var(--green-bg);border-color:rgba(23,117,58,.35);}
+  .emp-chip.no{color:var(--red-fg);background:var(--red-bg2);border-color:rgba(190,42,32,.30);}
   .asset-cell-1l{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 8px;margin-left:5px;white-space:nowrap;}
   .sortable-col{cursor:pointer;user-select:none;}
@@ -3030,6 +3037,49 @@ async function loadEmployees(){
 // แสดงแผนกพนักงานเป็น "รหัส" อย่างเดียว (เช่น 999IT) — ถ้าแถวไหนไม่มีรหัสค่อย fallback เป็นชื่อเดิม
 function empDeptCode(e){ return ((e && (e.department_code || e.department)) || '').trim(); }
 
+// ── อุปกรณ์ที่พนักงานถือครอง (ชิปเขียว/แดง ข้างชื่อในหน้า "พนักงาน") ─────────────────────
+// เขียว = มี asset ประเภทนั้นที่ถูกมอบหมายให้พนักงานคนนี้ตอนสแกน และตรวจพบตรง master แล้ว (status 'verified', มีเลข Asset)
+// แดง  = ยังตรวจสอบไม่ได้ว่าถือครองหรือไม่ (ยังไม่มี asset ประเภทนี้ที่สแกนยืนยันแล้ว)
+// ประเภทอุปกรณ์ไม่มีใน DB (assets.category ไม่มีจริง) จึงจำแนกจากคำในชื่อ asset — ชื่อที่ไม่มีคำเหล่านี้จะไม่ถูกนับ
+var EMP_DEVICE_TYPES = [
+  { key: 'Notebook', re: /note\s*book|laptop|แล็ปท็อป|โน้ตบุ๊ก|โน๊ตบุ๊ค/i },
+  { key: 'CPU',      re: /\bAIO\b|all[\s-]*in[\s-]*one|desktop|\bCPU\b|\bPC\b|คอมพิวเตอร์ตั้งโต๊ะ|เครื่องคอมพิวเตอร์/i },
+  { key: 'Monitor',  re: /monitor|\bLCD\b|\bLED\s*display|จอภาพ|จอมอนิเตอร์/i },
+  { key: 'Mobile',   re: /mobile|smart\s*phone|iphone|ipad|tablet|โทรศัพท์|มือถือ|แท็บเล็ต/i }
+];
+function empDeviceTypeOf(name){
+  var n = String(name || '');
+  if(EMP_DEVICE_TYPES[0].re.test(n)) return 'Notebook';   // เช็ค Notebook ก่อน เพราะบางชื่อมีคำว่า PC ด้วย
+  for(var i = 1; i < EMP_DEVICE_TYPES.length; i++){ if(EMP_DEVICE_TYPES[i].re.test(n)) return EMP_DEVICE_TYPES[i].key; }
+  return null;
+}
+// สร้างดัชนี ชื่อพนักงาน → { ประเภท: [เลข Asset ที่ยืนยันแล้ว] } จาก assetsByStore (ข้อมูลจริงที่โหลดไว้แล้ว)
+function buildEmpHoldingsIndex(){
+  var idx = {};
+  Object.keys(assetsByStore || {}).forEach(function(store){
+    (assetsByStore[store] || []).forEach(function(a){
+      if(a.status !== 'verified' || !a.employeeName || a.employeeName === '—') return;
+      var t = empDeviceTypeOf(a.name);
+      if(!t) return;
+      var k = String(a.employeeName).trim().toLowerCase();
+      if(!idx[k]) idx[k] = {};
+      if(!idx[k][t]) idx[k][t] = [];
+      idx[k][t].push(a.barcode);
+    });
+  });
+  return idx;
+}
+function empChipsHtml(e, idx){
+  var held = idx[String(e.full_name || '').trim().toLowerCase()] || {};
+  return '<div class="emp-chips">' + EMP_DEVICE_TYPES.map(function(t){
+    var codes = held[t.key] || [];
+    if(codes.length){
+      return '<span class="emp-chip ok" title="' + _hmEsc(t.key + ' · ถือครอง ' + codes.length + ' ชิ้น: ' + codes.join(', ')) + '">' + t.key + (codes.length > 1 ? ' ×' + codes.length : '') + '</span>';
+    }
+    return '<span class="emp-chip no" title="' + _hmEsc(t.key + ' · ยังตรวจสอบไม่ได้ว่าถือครองหรือไม่') + '">' + t.key + '</span>';
+  }).join('') + '</div>';
+}
+
 function populateEmployeeDeptFilter(){
   var sel = document.getElementById('empDeptFilter');
   var currentVal = sel.value || 'all';
@@ -3057,13 +3107,14 @@ function renderEmployeeList(){
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--ink-3);padding:30px;">ไม่พบพนักงานที่ตรงกับตัวกรอง (หรือยังไม่เคย import ไฟล์)</td></tr>';
     return;
   }
+  var holdIdx = buildEmpHoldingsIndex();
   tbody.innerHTML = filtered.map(function(e, i){
     var isActive = e.is_active !== false;
     var safeId = String(e.employee_id).replace(/'/g, "\\'");
     return '<tr>'
       + '<td>' + (i + 1) + '</td>'
       + '<td>' + e.employee_id + '</td>'
-      + '<td>' + e.full_name + '</td>'
+      + '<td><div class="emp-name-cell"><span>' + e.full_name + '</span>' + empChipsHtml(e, holdIdx) + '</div></td>'
       + '<td>' + (e.position || '—') + '</td>'
       + '<td>' + (empDeptCode(e) || '—') + '</td>'
       + '<td>' + (isActive ? '<span class="status-pill verified"><span class="sp-dot"></span>Active</span>' : '<span class="status-pill missing"><span class="sp-dot"></span>ปิดใช้งาน</span>') + '</td>'
