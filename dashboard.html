@@ -1067,7 +1067,7 @@
             Refresh
           </button>
           <button class="import-btn" onclick="openImportChooser()">⬆ Import</button>
-          <input type="file" id="empHoldFile" accept=".csv,.tsv,.txt" style="display:none;" onchange="onHoldingsFileChosen(this)">
+          <input type="file" id="empHoldFile" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;" onchange="onHoldingsFileChosen(this)">
         </div>
         <div id="empHoldImportBar" class="emp-hold-bar" style="display:none;"></div>
         <div id="empDeptGrid" class="emp-dept-grid"></div>
@@ -1109,8 +1109,9 @@
             <b>รายชื่อพนักงาน (HR)</b><span>ไฟล์ Excel จาก HR — รหัสพนักงาน, ชื่อ, ตำแหน่ง, แผนก</span>
           </button>
           <button class="emp-choice" onclick="closeImportChooser();openHoldingsFilePicker()">
-            <b>อุปกรณ์ที่ถือครอง (User Asset List)</b><span>ไฟล์ CSV/TSV — Notebook / PC / Monitor ของแต่ละคน ระบบจะบันทึกประวัติผู้ถือให้อัตโนมัติ</span>
+            <b>อุปกรณ์ที่ถือครอง (Template)</b><span>ไฟล์ Excel/CSV ตาม Template — 1 แถว = อุปกรณ์ 1 ชิ้น (Notebook / CPU / Monitor) ระบบบันทึกประวัติการถือครองให้อัตโนมัติ · ไฟล์ User Asset List แบบเดิมยังใช้ได้</span>
           </button>
+          <a class="emp-choice" href="template_employee_holdings.xlsx" download style="text-decoration:none;"><b>⬇ ดาวน์โหลด Template (Excel)</b><span>มีรายการเลือก Device Type / รหัสแผนก และชีต "วิธีกรอก"</span></a>
           <div class="as-modal-actions"><button class="btn-outline" onclick="closeImportChooser()">ยกเลิก</button></div>
         </div>
       </div>
@@ -3287,11 +3288,50 @@ function parseDelimited(text, delim){
   if(cur !== '' || row.length){ row.push(cur); rows.push(row); }
   return rows;
 }
+// รูปแบบ Template (template_employee_holdings.xlsx): แถวหัวมี "Device Type" + ("Full Name" หรือ "Employee ID"), 1 แถว = อุปกรณ์ 1 ชิ้น
+function normStartDate(v){
+  v = String(v || '').trim(); if(!v) return '';
+  var m = v.match(/^(\d{4})[-\/](\d{1,2})(?:[-\/](\d{1,2}))?$/);
+  if(!m) return null;                                   // รูปแบบไม่รู้จัก
+  var y = +m[1], mo = +m[2]; if(mo < 1 || mo > 12) return null;
+  var out = y + '-' + (mo < 10 ? '0' : '') + mo;
+  if(m[3]){ var d = +m[3]; if(d < 1 || d > 31) return null; out += '-' + (d < 10 ? '0' : '') + d; }
+  return out;
+}
+function parseHoldingsTemplate(grid){
+  var hi = -1, col = {};
+  for(var i = 0; i < grid.length && hi < 0; i++){
+    var h = grid[i].map(function(x){ return String(x || '').trim().toLowerCase(); });
+    if(h.indexOf('device type') > -1 && (h.indexOf('full name') > -1 || h.indexOf('employee id') > -1)){
+      hi = i; h.forEach(function(n, k){ if(n) col[n] = k; });
+    }
+  }
+  if(hi < 0) return null;
+  function g(r, name){ var k = col[name]; return k === undefined ? '' : String(r[k] || '').trim(); }
+  var out = [], people = {}, errors = [];
+  for(var r = hi + 1; r < grid.length; r++){
+    var row = grid[r];
+    if(!row.some(function(x){ return String(x || '').trim(); })) continue;
+    var line = r + 1, empId = g(row, 'employee id'), name = g(row, 'full name').replace(/\s+/g, ' ');
+    var tRaw = g(row, 'device type').toLowerCase(), type = tRaw === 'notebook' ? 'Notebook' : tRaw === 'cpu' ? 'CPU' : tRaw === 'monitor' ? 'Monitor' : '';
+    var code = g(row, 'asset code'), serial = g(row, 'serial no'), sd = normStartDate(g(row, 'start date'));
+    if(!empId && !name){ errors.push('แถว ' + line + ': ไม่มี Employee ID และ Full Name'); continue; }
+    if(!type){ errors.push('แถว ' + line + ': Device Type ต้องเป็น Notebook / CPU / Monitor'); continue; }
+    if(!code && !serial){ errors.push('แถว ' + line + ': ต้องมี Serial No หรือ Asset Code'); continue; }
+    if(sd === null){ errors.push('แถว ' + line + ': Start Date ต้องเป็น YYYY-MM-DD หรือ YYYY-MM'); continue; }
+    out.push({ person_name: name || empId, employee_id: empId || null, dept_label: g(row, 'department code'), device_type: type,
+      model: g(row, 'model'), asset_code: code, serial_no: serial, started_at: sd, start_source: sd ? 'manual' : '', fromTemplate: true });
+    people[empId || name] = true;
+  }
+  return { rows: out, peopleCount: Object.keys(people).length, noDevice: 0, errors: errors, template: true };
+}
 function parseHoldingsFile(text){
   text = text.replace(/^﻿/, '');
   var firstLine = text.split(/\r?\n/)[0] || '';
   var delim = firstLine.indexOf('\t') > -1 ? '\t' : ',';
   var grid = parseDelimited(text, delim);
+  var tpl = parseHoldingsTemplate(grid);
+  if(tpl) return tpl;
   var dept = '', out = [], people = {}, skippedNoDevice = 0;
   grid.forEach(function(r){
     var c = r.map(function(x){ return (x || '').trim(); });
@@ -3320,12 +3360,24 @@ async function onHoldingsFileChosen(input){
   var f = input.files && input.files[0];
   if(!f) return;
   try{
-    var parsed = parseHoldingsFile(await f.text());
-    if(!parsed.rows.length){ showToast('ไม่พบข้อมูลอุปกรณ์ในไฟล์นี้ — ต้องเป็นไฟล์ User Asset List (CSV/TSV ที่มีคอลัมน์ Computer Name)'); return; }
+    var fileText;
+    if(/\.xlsx?$/i.test(f.name)){
+      var wb = XLSX.read(await f.arrayBuffer(), { type: 'array' });
+      var sn = wb.SheetNames.indexOf('Holdings') > -1 ? 'Holdings' : wb.SheetNames[0];
+      fileText = XLSX.utils.sheet_to_csv(wb.Sheets[sn]);
+    } else { fileText = await f.text(); }
+    var parsed = parseHoldingsFile(fileText);
+    if(!parsed.rows.length){ showToast(parsed.errors && parsed.errors.length ? parsed.errors.slice(0, 3).join(' · ') : 'ไม่พบข้อมูลอุปกรณ์ในไฟล์นี้ — ใช้ Template (ดาวน์โหลดได้จากหน้าต่าง Import) หรือไฟล์ User Asset List แบบเดิม'); return; }
     var vidx = buildAssetVerifyIndex(), personIds = {}, undated = 0;
     parsed.rows.forEach(function(r){
-      if(!(r.person_name in personIds)) personIds[r.person_name] = matchPersonToEmployee(r.person_name).id;
-      r.employee_id = personIds[r.person_name];
+      var byId = r.employee_id ? employees.filter(function(e){ return String(e.employee_id).toLowerCase() === String(r.employee_id).toLowerCase(); })[0] : null;
+      if(byId){ r.employee_id = byId.employee_id; r.person_name = byId.full_name; personIds[byId.full_name] = byId.employee_id; }
+      else {
+        r.employee_id = null;
+        if(!(r.person_name in personIds)) personIds[r.person_name] = matchPersonToEmployee(r.person_name).id;
+        r.employee_id = personIds[r.person_name];
+      }
+      if(r.started_at){ return; }                       // Template ระบุวันที่เองแล้ว
       var st = holdingStartInfo(r, vidx);
       r.started_at = st.d; r.start_source = st.src;
       if(!st.d) undated++;
@@ -3337,6 +3389,7 @@ async function onHoldingsFileChosen(input){
     var mon = parsed.rows.filter(function(r){ return r.device_type === 'Monitor'; }).length;
     var bar = document.getElementById('empHoldImportBar');
     bar.innerHTML = '<span>ไฟล์ <b>' + _hmEsc(f.name) + '</b>: พบ ' + parsed.peopleCount + ' คน — Notebook ' + nb + ' · CPU ' + cpu + ' · Monitor ' + mon
+      + (parsed.errors && parsed.errors.length ? '<br><b style="color:var(--red-600,#c8102e)">ข้าม ' + parsed.errors.length + ' แถวที่ไม่ครบ:</b> ' + _hmEsc(parsed.errors.slice(0, 4).join(' · ') + (parsed.errors.length > 4 ? ' …' : '')) : '')
       + '<br>จับคู่พนักงานในระบบได้ ' + matched + ' จาก ' + names.length + ' คน · ไม่มีวันที่ในรหัส Asset ' + undated + ' ชิ้น (จะเป็น "ไม่ทราบวันเริ่มถือ")'
       + '<br>ระบบ<b>ไม่ลบ</b>ข้อมูลเดิม: คนเดิมถืออยู่แล้วไม่เปลี่ยน · อุปกรณ์เดิมที่ไฟล์ระบุคนใหม่ = บันทึกเป็นการโอนอัตโนมัติ</span>'
       + '<button class="import-btn" onclick="confirmHoldingsImport()">ยืนยัน Import</button>'
