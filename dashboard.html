@@ -3368,7 +3368,7 @@ async function onHoldingsFileChosen(input){
     } else { fileText = await f.text(); }
     var parsed = parseHoldingsFile(fileText);
     if(!parsed.rows.length){ showToast(parsed.errors && parsed.errors.length ? parsed.errors.slice(0, 3).join(' · ') : 'ไม่พบข้อมูลอุปกรณ์ในไฟล์นี้ — ใช้ Template (ดาวน์โหลดได้จากหน้าต่าง Import) หรือไฟล์ User Asset List แบบเดิม'); return; }
-    var vidx = buildAssetVerifyIndex(), personIds = {}, undated = 0;
+    var vidx = buildAssetVerifyIndex(), personIds = {}, undated = 0, autoCode = 0, serialNotFound = 0;
     parsed.rows.forEach(function(r){
       var byId = r.employee_id ? employees.filter(function(e){ return String(e.employee_id).toLowerCase() === String(r.employee_id).toLowerCase(); })[0] : null;
       if(byId){ r.employee_id = byId.employee_id; r.person_name = byId.full_name; personIds[byId.full_name] = byId.employee_id; }
@@ -3376,6 +3376,12 @@ async function onHoldingsFileChosen(input){
         r.employee_id = null;
         if(!(r.person_name in personIds)) personIds[r.person_name] = matchPersonToEmployee(r.person_name).id;
         r.employee_id = personIds[r.person_name];
+      }
+      // มี Serial แต่ไม่มีเลข Asset (หรือเลขไม่มี SEQ) → ดึงเลข Asset เต็มจาก Asset Summary ด้วย Serial
+      var sk = _hNorm(r.serial_no);
+      if(sk && !/SEQ/i.test(r.asset_code || '')){
+        var sh = vidx.bySerial[sk];
+        if(sh && sh.barcode){ r.asset_code = sh.barcode; autoCode++; } else { serialNotFound++; }
       }
       if(r.started_at){ return; }                       // Template ระบุวันที่เองแล้ว
       var st = holdingStartInfo(r, vidx);
@@ -3390,6 +3396,7 @@ async function onHoldingsFileChosen(input){
     var bar = document.getElementById('empHoldImportBar');
     bar.innerHTML = '<span>ไฟล์ <b>' + _hmEsc(f.name) + '</b>: พบ ' + parsed.peopleCount + ' คน — Notebook ' + nb + ' · CPU ' + cpu + ' · Monitor ' + mon
       + (parsed.errors && parsed.errors.length ? '<br><b style="color:var(--red-600,#c8102e)">ข้าม ' + parsed.errors.length + ' แถวที่ไม่ครบ:</b> ' + _hmEsc(parsed.errors.slice(0, 4).join(' · ') + (parsed.errors.length > 4 ? ' …' : '')) : '')
+      + (autoCode || serialNotFound ? '<br>ดึงเลข Asset จาก Asset Summary ด้วย Serial อัตโนมัติ <b>' + autoCode + '</b> ชิ้น' + (serialNotFound ? ' · ยังหา Serial ไม่เจอใน Asset Summary ' + serialNotFound + ' ชิ้น (ยังไม่มีเลข Asset)' : '') : '')
       + '<br>จับคู่พนักงานในระบบได้ ' + matched + ' จาก ' + names.length + ' คน · ไม่มีวันที่ในรหัส Asset ' + undated + ' ชิ้น (จะเป็น "ไม่ทราบวันเริ่มถือ")'
       + '<br>ระบบ<b>ไม่ลบ</b>ข้อมูลเดิม: คนเดิมถืออยู่แล้วไม่เปลี่ยน · อุปกรณ์เดิมที่ไฟล์ระบุคนใหม่ = บันทึกเป็นการโอนอัตโนมัติ</span>'
       + '<button class="import-btn" onclick="confirmHoldingsImport()">ยืนยัน Import</button>'
@@ -3454,7 +3461,7 @@ function renderEmpDrawer(){
     var v = verifyHolding(h, idx), pv = holdingPrev(h);
     var mark = v.age && v.age.flag === 'over' ? '<b class="emp-age over">5+</b>' : v.age && v.age.flag === 'soon' ? '<b class="emp-age soon">5</b>' : '';
     return '<div class="hold-item"><div class="hold-top"><span class="emp-chip ' + (v.ok ? 'ok' : 'no') + '">' + h.device_type + mark + '</span>' + _hmEsc(h.model || '') + '</div>'
-      + '<div class="hold-meta">' + _hmEsc([h.serial_no && ('Serial ' + h.serial_no), h.asset_code].filter(Boolean).join(' · ') || 'ไม่มี Serial/เลข Asset') + '</div>'
+      + '<div class="hold-meta">' + _hmEsc([h.serial_no && ('Serial ' + h.serial_no), h.asset_code || ((idx.bySerial[_hNorm(h.serial_no)] || {}).barcode ? (idx.bySerial[_hNorm(h.serial_no)].barcode + ' (จาก Asset Summary)') : '')].filter(Boolean).join(' · ') || 'ไม่มี Serial/เลข Asset') + '</div>'
       + '<div class="hold-meta">' + _hmEsc(startNote(h)) + '</div>'
       + (pv ? '<div class="hold-meta hold-flow">รับต่อจาก <b>' + _hmEsc(pv.person_name) + '</b></div>' : '')
       + '<div class="hold-meta">' + _hmEsc(v.why) + '</div>'
@@ -3523,7 +3530,7 @@ async function submitEmpAssign(){
   if(!e || !a) return;
   var body = { employee_id: e.employee_id, person_name: e.full_name, dept_label: empDeptCode(e) || null,
     device_type: document.getElementById('empAssignType').value, model: a.name,
-    asset_code: a.serial ? (a.rawAssetCode || '') : a.barcode, serial_no: a.serial || '',
+    asset_code: a.barcode, serial_no: a.serial || '',
     started_at: document.getElementById('empAssignDate').value };
   showBataLoading('กำลังบันทึก...');
   try{
