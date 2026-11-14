@@ -338,6 +338,13 @@
   .emp-dept-card .dc-code{font-weight:700;font-size:15px;}
   .emp-dept-card .dc-n{float:right;font-size:13px;color:var(--ink-2);}
   .emp-dept-card .dc-row{margin-top:6px;font-size:12.5px;color:var(--ink-3);display:flex;gap:10px;flex-wrap:wrap;}
+  .hold-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .hold-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
+  .hold-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--ink-3);}
+  .hold-form input,.hold-form select{width:100%;box-sizing:border-box;}
+  .hold-item.editing{border-color:var(--red-500);}
+  .hold-item.replacing{border-color:var(--red-500);background:var(--surface-2,var(--surface));}
+  .hold-banner{font-size:12.5px;line-height:1.6;background:var(--surface-2,#f6f6f6);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin:6px 0;}
   .emp-choice{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin:0 0 10px;cursor:pointer;}
   .emp-choice:hover{border-color:var(--red-500);}
   .emp-choice b{display:block;font-size:14.5px;}
@@ -3426,7 +3433,7 @@ function openImportChooser(){ document.getElementById('empImportChooser').classL
 function closeImportChooser(){ document.getElementById('empImportChooser').classList.remove('show'); }
 
 // ── หน้าต่างพนักงาน: อุปกรณ์ที่ถือ + ประวัติ + มอบ Asset ─────────────────────────────────
-var empDrawerId = null, empAssignPick = null;
+var empDrawerId = null, empAssignPick = null, empEditId = null, empReplaceId = null;
 function holdingNext(h){      // ผู้ถือคนถัดไปของอุปกรณ์ชิ้นเดียวกัน (ถ้ามี)
   if(!h.asset_key) return null;
   return employeeHoldings.filter(function(x){ return x.asset_key === h.asset_key && x.id > h.id; })[0] || null;
@@ -3437,7 +3444,7 @@ function holdingPrev(h){      // ผู้ถือคนก่อนหน้�
   return p.length ? p[p.length - 1] : null;
 }
 function openEmpDrawer(empId){
-  empDrawerId = empId; empAssignPick = null;
+  empDrawerId = empId; empAssignPick = null; empEditId = null; empReplaceId = null;
   renderEmpDrawer();
   document.getElementById('empDrawerOverlay').classList.add('show');
   document.getElementById('empDrawer').classList.add('show');
@@ -3460,29 +3467,38 @@ function renderEmpDrawer(){
   html += cur.length ? cur.map(function(h){
     var v = verifyHolding(h, idx), pv = holdingPrev(h);
     var mark = v.age && v.age.flag === 'over' ? '<b class="emp-age over">5+</b>' : v.age && v.age.flag === 'soon' ? '<b class="emp-age soon">5</b>' : '';
-    return '<div class="hold-item"><div class="hold-top"><span class="emp-chip ' + (v.ok ? 'ok' : 'no') + '">' + h.device_type + mark + '</span>' + _hmEsc(h.model || '') + '</div>'
+    if(empEditId === h.id) return holdEditForm(h, idx);
+    return '<div class="hold-item' + (empReplaceId === h.id ? ' replacing' : '') + '"><div class="hold-top"><span class="emp-chip ' + (v.ok ? 'ok' : 'no') + '">' + h.device_type + mark + '</span>' + _hmEsc(h.model || '') + '</div>'
       + '<div class="hold-meta">' + _hmEsc([h.serial_no && ('Serial ' + h.serial_no), h.asset_code || ((idx.bySerial[_hNorm(h.serial_no)] || {}).barcode ? (idx.bySerial[_hNorm(h.serial_no)].barcode + ' (จาก Asset Summary)') : '')].filter(Boolean).join(' · ') || 'ไม่มี Serial/เลข Asset') + '</div>'
       + '<div class="hold-meta">' + _hmEsc(startNote(h)) + '</div>'
       + (pv ? '<div class="hold-meta hold-flow">รับต่อจาก <b>' + _hmEsc(pv.person_name) + '</b></div>' : '')
       + '<div class="hold-meta">' + _hmEsc(v.why) + '</div>'
-      + '<button class="row-action hold-act" onclick="returnHolding(' + h.id + ')">รับคืน</button></div>';
+      + '<div class="hold-btns"><button class="row-action" onclick="startEditHolding(' + h.id + ')">แก้ไข</button>'
+      + '<button class="row-action" onclick="startReplaceHolding(' + h.id + ')">เปลี่ยนเครื่อง</button>'
+      + '<button class="row-action" onclick="returnHolding(' + h.id + ')">รับคืน</button></div></div>';
   }).join('') : '<p style="font-size:13px;color:var(--ink-3);">ยังไม่มีอุปกรณ์ที่ถือครอง</p>';
   html += '<p class="hold-sec">ประวัติที่เคยถือ (' + past.length + ')</p>';
   html += past.length ? past.map(function(h){
     var nx = holdingNext(h);
     var flow = h.ended_reason === 'return' ? 'รับคืนแล้ว' : (nx ? 'ส่งต่อให้ <b>' + _hmEsc(nx.person_name) + '</b>' + (nx.ended_at ? '' : ' (ถืออยู่ปัจจุบัน)') : 'โอนให้คนอื่น');
+    if(empEditId === h.id) return holdEditForm(h, idx);
     return '<div class="hold-item past"><div class="hold-top"><span class="emp-chip no" style="background:var(--surface);color:var(--ink-2);border-color:var(--line);">' + h.device_type + '</span>' + _hmEsc(h.model || '') + '</div>'
       + '<div class="hold-meta">' + _hmEsc(h.started_at ? String(h.started_at).slice(0, 10) : 'ไม่ทราบ') + ' → ' + _hmEsc(String(h.ended_at).slice(0, 10)) + (h.started_at ? ' · นาน ' + _hmEsc(durationLabel(h.started_at, h.ended_at)) : '') + '</div>'
-      + '<div class="hold-meta hold-flow">' + flow + '</div></div>';
+      + '<div class="hold-meta">' + _hmEsc([h.serial_no && ('Serial ' + h.serial_no), h.asset_code].filter(Boolean).join(' · ')) + '</div>'
+      + '<div class="hold-meta hold-flow">' + flow + '</div>'
+      + '<div class="hold-btns"><button class="row-action" onclick="startEditHolding(' + h.id + ')">แก้ไข</button></div></div>';
   }).join('') : '<p style="font-size:13px;color:var(--ink-3);">ยังไม่มีประวัติ</p>';
-  html += '<p class="hold-sec">มอบ Asset ให้คนนี้</p>'
+  var rep0 = empReplaceId ? employeeHoldings.filter(function(x){ return x.id === empReplaceId; })[0] : null;
+  html += '<p class="hold-sec">' + (rep0 ? 'เปลี่ยนเครื่อง' : 'มอบ Asset ให้คนนี้') + '</p>'
+    + (rep0 ? '<div class="hold-banner">เปลี่ยนแทน <b>' + _hmEsc(rep0.device_type + ' ' + (rep0.model || '') + (rep0.serial_no ? ' · ' + rep0.serial_no : '')) + '</b> — เครื่องเดิมจะถูกบันทึกเป็น "รับคืน" ในวันที่เลือก แล้วเริ่มถือเครื่องใหม่ <button class="row-action" onclick="cancelReplaceHolding()">ยกเลิก</button></div>' : '')
     + '<div class="search-box" style="width:100%;"><input type="text" id="empAssignSearch" placeholder="ค้นหาเลข Asset / Serial / ชื่ออุปกรณ์ (อย่างน้อย 2 ตัวอักษร)" oninput="renderEmpAssignResults()"></div>'
-    + '<div id="empAssignResults"></div><div id="empAssignForm"></div>';
+    + '<div id="empAssignResults"></div><div id="empAssignForm"></div>'
+    + '<button class="row-action" style="margin-top:8px;" onclick="openManualAdd()">ไม่พบใน Asset Summary? เพิ่มด้วย Serial เอง</button><div id="empManualForm"></div>';
   document.getElementById('empDrawerBody').innerHTML = html;
 }
 function guessDeviceType(name){
   var n = String(name || '');
-  if(/monitor|\bLCD\b|\bLED\b|จอ/i.test(n)) return 'Monitor';
+  if(/monitor|\bLCD\b|\bLED\b|จอ|\b(philips|samsung|benq|aoc|viewsonic|lg)\b|\b\d{2}[a-z]{1,3}\d{2,3}[a-z]?\b|\bE\d{4}[a-z]{0,3}\b/i.test(n) && !/note\s*book|laptop|latitude|probook/i.test(n)) return 'Monitor';
   if(/note\s*book|laptop|latitude|probook|thinkbook|inspiron|ideapad|pro\s*14/i.test(n)) return 'Notebook';
   if(/\bAIO\b|desktop|\bCPU\b|\bPC\b|optiplex|thinkcentre/i.test(n)) return 'CPU';
   return 'Notebook';
@@ -3510,7 +3526,7 @@ function renderEmpAssignResults(){
     var hd = holderOfAsset(x.a);
     return '<button class="hold-pick" onclick="pickAssignAsset(' + i + ')">' + _hmEsc(x.a.barcode) + ' · ' + _hmEsc(x.a.name)
       + '<small>' + _hmEsc(x.a.serial ? 'Serial ' + x.a.serial : 'ไม่มี Serial') + (hd ? ' · ปัจจุบันถือโดย ' + _hmEsc(hd.person_name) + ' (จะบันทึกเป็นการโอน)' : '') + '</small></button>';
-  }).join('') : '<p style="font-size:13px;color:var(--ink-3);margin-top:6px;">ไม่พบ Asset ที่ตรงกับคำค้น</p>';
+  }).join('') : '<p style="font-size:13px;color:var(--ink-3);margin-top:6px;">ไม่พบ Asset ที่ตรงกับคำค้น — ยังไม่มีใน Asset Summary? <a href="#" onclick="openManualAdd();return false;">เพิ่มด้วย Serial เอง</a></p>';
 }
 function pickAssignAsset(i){
   var x = _empAssignHits[i]; if(!x) return;
@@ -3534,11 +3550,76 @@ async function submitEmpAssign(){
     started_at: document.getElementById('empAssignDate').value };
   showBataLoading('กำลังบันทึก...');
   try{
+    if(empReplaceId){ await apiFetch('/hq/employee-holdings/' + empReplaceId + '/return', { method: 'POST', body: JSON.stringify({ ended_at: body.started_at }) }); empReplaceId = null; }
     var r = await apiFetch('/hq/employee-holdings/assign', { method: 'POST', body: JSON.stringify(body) });
     showToast('มอบ ' + a.barcode + ' ให้ ' + e.full_name + ' แล้ว' + (r.previous_holder ? ' (โอนจาก ' + r.previous_holder + ')' : ''));
     empAssignPick = null;
     await loadEmployeeHoldings(); renderEmpDrawer(); renderEmployeeList();
   } catch(err){ showToast('มอบ Asset ไม่สำเร็จ: ' + err.message); }
+  finally { hideBataLoading(); }
+}
+function holdRow(id){ return employeeHoldings.filter(function(x){ return x.id === id; })[0]; }
+function startEditHolding(id){ empEditId = id; renderEmpDrawer(); }
+function cancelEditHolding(){ empEditId = null; renderEmpDrawer(); }
+function startReplaceHolding(id){
+  empReplaceId = id; empEditId = null; renderEmpDrawer();
+  var el = document.getElementById('empAssignSearch'); if(el){ el.scrollIntoView({ block: 'center' }); el.focus(); }
+}
+function cancelReplaceHolding(){ empReplaceId = null; renderEmpDrawer(); }
+function _typeSelect(id, cur){ return '<select class="as-select" id="' + id + '">' + ['Notebook', 'CPU', 'Monitor'].map(function(t){ return '<option' + (t === cur ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>'; }
+function holdEditForm(h, idx){
+  var hit = idx.bySerial[_hNorm(h.serial_no)];
+  return '<div class="hold-item editing"><div class="hold-top">แก้ไขรายการ</div>'
+    + '<div class="hold-form">'
+    + '<label>ชนิด' + _typeSelect('heType', h.device_type) + '</label>'
+    + '<label>รุ่น<input class="as-select" id="heModel" value="' + _hmEsc(h.model || '') + '"></label>'
+    + '<label>Serial No<input class="as-select" id="heSerial" value="' + _hmEsc(h.serial_no || '') + '"></label>'
+    + '<label>เลข Asset (มี SEQ)<input class="as-select" id="heCode" value="' + _hmEsc(h.asset_code || (hit ? hit.barcode : '')) + '" placeholder="ว่าง = ดึงจาก Asset Summary"></label>'
+    + '<label>วันเริ่มถือ<input type="date" class="as-select" id="heStart" value="' + _hmEsc(h.started_at ? String(h.started_at).slice(0, 10) : '') + '"></label>'
+    + '</div><div class="hold-meta">' + (hit ? 'พบ Serial นี้ใน Asset Summary: ' + _hmEsc(hit.barcode) : 'ยังไม่พบ Serial นี้ใน Asset Summary — เมื่อนำข้อมูล Asset เข้าระบบแล้ว Asset Tag จะขึ้นให้เอง') + '</div>'
+    + '<div class="hold-btns"><button class="import-btn" onclick="saveHoldingEdit(' + h.id + ')">บันทึก</button><button class="as-refresh" onclick="cancelEditHolding()">ยกเลิก</button></div></div>';
+}
+async function saveHoldingEdit(id){
+  var h = holdRow(id); if(!h) return;
+  var serial = document.getElementById('heSerial').value.trim(), code = document.getElementById('heCode').value.trim();
+  if(serial && !code){ var hit = buildAssetVerifyIndex().bySerial[_hNorm(serial)]; if(hit && hit.barcode) code = hit.barcode; }
+  var body = { device_type: document.getElementById('heType').value, model: document.getElementById('heModel').value.trim(), serial_no: serial, asset_code: code };
+  var sd = document.getElementById('heStart').value;
+  if(sd && sd !== (h.started_at ? String(h.started_at).slice(0, 10) : '')) body.started_at = sd;
+  showBataLoading('กำลังบันทึก...');
+  try{
+    await apiFetch('/hq/employee-holdings/' + id, { method: 'PATCH', body: JSON.stringify(body) });
+    showToast('บันทึกการแก้ไขแล้ว'); empEditId = null;
+    await loadEmployeeHoldings(); renderEmpDrawer(); renderEmployeeList();
+  } catch(err){ showToast('แก้ไขไม่สำเร็จ: ' + err.message); }
+  finally { hideBataLoading(); }
+}
+function openManualAdd(){
+  var q = (document.getElementById('empAssignSearch') || {}).value || '';
+  document.getElementById('empAssignResults').innerHTML = '';
+  document.getElementById('empManualForm').innerHTML = '<div class="hold-item" style="margin-top:8px;"><div class="hold-top">เพิ่มด้วย Serial เอง</div>'
+    + '<div class="hold-form"><label>ชนิด' + _typeSelect('hmType', 'Monitor') + '</label>'
+    + '<label>รุ่น<input class="as-select" id="hmModel" placeholder="เช่น PHILIPS 241V8"></label>'
+    + '<label>Serial No<input class="as-select" id="hmSerial" value="' + _hmEsc(q.trim()) + '"></label>'
+    + '<label>วันเริ่มถือ<input type="date" class="as-select" id="hmStart" value="' + new Date().toISOString().slice(0, 10) + '"></label></div>'
+    + '<div class="hold-meta">ถ้า Serial นี้อยู่ใน Asset Summary ระบบจะเติมเลข Asset ให้เอง ถ้ายังไม่มี จะบันทึกไว้ก่อนและขึ้น Asset Tag ให้เมื่อนำข้อมูลเข้า</div>'
+    + '<div class="hold-btns"><button class="import-btn" onclick="submitManualAdd()">ยืนยันเพิ่ม</button></div></div>';
+}
+async function submitManualAdd(){
+  var e = employees.filter(function(x){ return x.employee_id === empDrawerId; })[0]; if(!e) return;
+  var serial = document.getElementById('hmSerial').value.trim();
+  if(!serial){ showToast('กรุณากรอก Serial No'); return; }
+  var hit = buildAssetVerifyIndex().bySerial[_hNorm(serial)];
+  var body = { employee_id: e.employee_id, person_name: e.full_name, dept_label: empDeptCode(e) || null,
+    device_type: document.getElementById('hmType').value, model: document.getElementById('hmModel').value.trim(),
+    asset_code: hit && hit.barcode ? hit.barcode : '', serial_no: serial, started_at: document.getElementById('hmStart').value };
+  showBataLoading('กำลังบันทึก...');
+  try{
+    if(empReplaceId){ await apiFetch('/hq/employee-holdings/' + empReplaceId + '/return', { method: 'POST', body: JSON.stringify({ ended_at: body.started_at }) }); empReplaceId = null; }
+    var r = await apiFetch('/hq/employee-holdings/assign', { method: 'POST', body: JSON.stringify(body) });
+    showToast('เพิ่ม ' + serial + ' ให้ ' + e.full_name + ' แล้ว' + (r.previous_holder ? ' (โอนจาก ' + r.previous_holder + ')' : '') + (hit ? '' : ' — ยังไม่พบใน Asset Summary'));
+    await loadEmployeeHoldings(); renderEmpDrawer(); renderEmployeeList();
+  } catch(err){ showToast('เพิ่มไม่สำเร็จ: ' + err.message); }
   finally { hideBataLoading(); }
 }
 async function returnHolding(id){

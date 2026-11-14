@@ -128,6 +128,14 @@ class HoldingAssign(BaseModel):
 class HoldingReturn(BaseModel):
     ended_at: Optional[str] = None
 
+class HoldingEdit(BaseModel):
+    # None = ไม่แก้, "" = ล้างค่า (ใช้กับ model / asset_code)
+    device_type: Optional[str] = None
+    model: Optional[str] = None
+    serial_no: Optional[str] = None
+    asset_code: Optional[str] = None
+    started_at: Optional[str] = None
+
 class HoldingsImport(BaseModel):
     file_name: Optional[str] = None
     rows: List[HoldingRow]
@@ -643,6 +651,49 @@ def hq_return_employee_holding(holding_id: int, req: HoldingReturn, db=Depends(g
         raise HTTPException(status_code=404, detail="ไม่พบรายการที่ถืออยู่ (อาจถูกรับคืนไปแล้ว)")
     db.commit()
     return {"ok": True, "id": holding_id}
+
+@app.patch("/hq/employee-holdings/{holding_id}")
+def hq_edit_employee_holding(holding_id: int, req: HoldingEdit, db=Depends(get_db), user=Depends(get_current_user)):
+    """แก้ไขรายละเอียดรายการถือครอง (แก้ที่คีย์ผิด/เพิ่ม Serial-เลข Asset ที่เพิ่งหาเจอ/ปรับวันเริ่มถือ)
+    ถ้าจะ 'เปลี่ยนเครื่อง' ให้ใช้ return + assign เพื่อให้เก็บเป็นประวัติ ไม่ใช่แก้ทับ"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    if req.device_type is not None and req.device_type not in HOLDING_DEVICE_TYPES:
+        raise HTTPException(status_code=400, detail="device_type ต้องเป็น Notebook / CPU / Monitor")
+    cur = db.cursor()
+    cur.execute("""SELECT id, device_type, model, serial_no, asset_code, asset_key, started_at, ended_at
+                   FROM employee_holdings WHERE id = %s AND COALESCE(is_active, true) = true""", (holding_id,))
+    row = cur.fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="ไม่พบรายการถือครอง")
+    pick = lambda new, old: old if new is None else ((new.strip() or None))
+    serial = pick(req.serial_no, row["serial_no"])
+    code = pick(req.asset_code, row["asset_code"])
+    model = pick(req.model, row["model"])
+    dtype = req.device_type or row["device_type"]
+    key = _holding_key(serial, code)
+    if not key:
+        raise HTTPException(status_code=400, detail="ต้องมี Serial หรือเลข Asset ที่มีส่วน SEQ อย่างน้อยหนึ่งอย่าง")
+    started = row["started_at"]
+    source_sql = ""
+    if req.started_at is not None:
+        started = _parse_hold_date(req.started_at)
+        if not started:
+            raise HTTPException(status_code=400, detail="วันที่ต้องเป็น YYYY-MM-DD หรือ YYYY-MM")
+        source_sql = ", start_source = 'manual'"
+    if row["ended_at"] is None and key != row["asset_key"]:
+        cur.execute("""SELECT person_name FROM employee_holdings
+                       WHERE asset_key = %s AND ended_at IS NULL AND id <> %s AND COALESCE(is_active, true) = true""", (key, holding_id))
+        other = cur.fetchone()
+        if other:
+            raise HTTPException(status_code=409, detail=f"อุปกรณ์ชิ้นนี้ ({key}) ถืออยู่กับ {other['person_name']} — ใช้ \"มอบ Asset\" เพื่อโอนแทนการแก้ทับ")
+    if started and row["ended_at"] and started > row["ended_at"]:
+        raise HTTPException(status_code=400, detail="วันเริ่มถือต้องไม่หลังวันสิ้นสุด")
+    cur.execute(f"""UPDATE employee_holdings SET device_type = %s, model = %s, serial_no = %s, asset_code = %s,
+                    asset_key = %s, started_at = %s{source_sql} WHERE id = %s""",
+                (dtype, model, serial, code, key, started, holding_id))
+    db.commit()
+    return {"ok": True, "id": holding_id, "asset_key": key}
 
 
 # ════════════════════════════════════════════════════════════════
