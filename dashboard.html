@@ -338,6 +338,22 @@
   .emp-dept-card .dc-code{font-weight:700;font-size:15px;}
   .emp-dept-card .dc-n{float:right;font-size:13px;color:var(--ink-2);}
   .emp-dept-card .dc-row{margin-top:6px;font-size:12.5px;color:var(--ink-3);display:flex;gap:10px;flex-wrap:wrap;}
+  .emp-choice{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin:0 0 10px;cursor:pointer;}
+  .emp-choice:hover{border-color:var(--red-500);}
+  .emp-choice b{display:block;font-size:14.5px;}
+  .emp-choice span{display:block;margin-top:3px;font-size:12.5px;color:var(--ink-3);line-height:1.5;}
+  .emp-name-link{background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left;border-bottom:1px dotted var(--ink-3);}
+  .emp-name-link:hover{color:var(--red-600);border-bottom-color:var(--red-600);}
+  .hold-sec{font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;margin:18px 0 8px;}
+  .hold-item{border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px;position:relative;}
+  .hold-item .hold-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;font-size:13.5px;}
+  .hold-item .hold-meta{margin-top:4px;font-size:12.5px;color:var(--ink-3);line-height:1.5;}
+  .hold-item .hold-act{position:absolute;top:8px;right:8px;}
+  .hold-item.past{background:var(--surface-1);}
+  .hold-flow{color:var(--ink-2);}
+  .hold-pick{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin-top:6px;cursor:pointer;font-size:13px;}
+  .hold-pick:hover{border-color:var(--red-500);}
+  .hold-pick small{display:block;color:var(--ink-3);font-size:12px;margin-top:2px;}
   .emp-chip-none{font-size:12px;color:var(--ink-4);}
   .emp-hold-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:var(--amber-bg);border:1px solid var(--line);border-radius:var(--r-md);font-size:13.5px;}
   .emp-hold-bar > span{flex:1 1 320px;}
@@ -1050,8 +1066,7 @@
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M3 12a9 9 0 0115.3-6.4M21 12a9 9 0 01-15.3 6.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M18 3v5h-5M6 21v-5h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
             Refresh
           </button>
-          <button class="import-btn" onclick="openEmployeeImportDrawer()">⬆ Import พนักงาน</button>
-          <button class="import-btn" onclick="openHoldingsFilePicker()" title="Import ไฟล์ User Asset List (Notebook / PC / Monitor ของแต่ละคน)">⬆ Import ถือครอง</button>
+          <button class="import-btn" onclick="openImportChooser()">⬆ Import</button>
           <input type="file" id="empHoldFile" accept=".csv,.tsv,.txt" style="display:none;" onchange="onHoldingsFileChosen(this)">
         </div>
         <div id="empHoldImportBar" class="emp-hold-bar" style="display:none;"></div>
@@ -1083,6 +1098,20 @@
             <button class="btn-outline" onclick="closeAsModal()">Cancel</button>
             <button class="btn-outline-red" onclick="confirmAsDelete()">Delete</button>
           </div>
+        </div>
+      </div>
+
+      <div class="as-modal-overlay" id="empImportChooser" onclick="if(event.target===this)closeImportChooser()">
+        <div class="as-modal" style="width:440px;">
+          <p class="as-modal-title">Import ข้อมูลพนักงาน</p>
+          <p class="as-modal-body">เลือกชนิดไฟล์ที่จะนำเข้า</p>
+          <button class="emp-choice" onclick="closeImportChooser();openEmployeeImportDrawer()">
+            <b>รายชื่อพนักงาน (HR)</b><span>ไฟล์ Excel จาก HR — รหัสพนักงาน, ชื่อ, ตำแหน่ง, แผนก</span>
+          </button>
+          <button class="emp-choice" onclick="closeImportChooser();openHoldingsFilePicker()">
+            <b>อุปกรณ์ที่ถือครอง (User Asset List)</b><span>ไฟล์ CSV/TSV — Notebook / PC / Monitor ของแต่ละคน ระบบจะบันทึกประวัติผู้ถือให้อัตโนมัติ</span>
+          </button>
+          <div class="as-modal-actions"><button class="btn-outline" onclick="closeImportChooser()">ยกเลิก</button></div>
         </div>
       </div>
 
@@ -1193,6 +1222,11 @@
       <textarea class="field-textarea" id="fRemark" placeholder="Add a note about this asset…"></textarea>
     </div>
 
+    <div class="field-group" id="holderGroup" style="display:none;">
+      <p class="field-label">ผู้ถือครอง (ใครถือมาก่อน / ส่งต่อไปที่ใคร)</p>
+      <div id="holderList"></div>
+    </div>
+
     <div class="field-group" id="historyGroup">
       <p class="field-label">History</p>
       <div id="historyList"></div>
@@ -1205,6 +1239,17 @@
 </div>
 
 <div class="overlay" id="importOverlay" onclick="closeImportDrawer()"></div>
+<div class="overlay" id="empDrawerOverlay" onclick="closeEmpDrawer()"></div>
+<div class="drawer" id="empDrawer">
+  <div class="drawer-head">
+    <p class="drawer-title" id="empDrawerTitle">พนักงาน</p>
+    <button class="drawer-close" onclick="closeEmpDrawer()" aria-label="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+  <div class="drawer-body" id="empDrawerBody"></div>
+</div>
+
 <div class="drawer" id="importDrawer">
   <div class="drawer-head">
     <p class="drawer-title">Import assets</p>
@@ -2703,6 +2748,7 @@ function openAssetDrawer(idx){
   document.getElementById('fRemark').value = a.remark || '';
   document.getElementById('photoBox').innerHTML = a.photo ? '<img src="' + a.photo + '">' : photoPlaceholder();
   document.getElementById('historyGroup').style.display = 'block';
+  renderAssetHolders(a);
   document.getElementById('historyList').innerHTML = a.history.length ? a.history.map(function(h){
     return '<div class="history-item"><div class="history-event">' + h.event + (h.detail ? ' <span style="font-weight:400;color:var(--ink-3);">— ' + h.detail + '</span>' : '') + '</div><div class="history-meta">' + h.by + ' · ' + h.time + '</div></div>';
   }).join('') : '<p style="font-size:12.5px;color:var(--ink-3);">No history yet.</p>';
@@ -2727,6 +2773,7 @@ function openAddDrawer(){
   document.getElementById('fRemark').value = '';
   document.getElementById('photoBox').innerHTML = photoPlaceholder();
   document.getElementById('historyGroup').style.display = 'none';
+  document.getElementById('holderGroup').style.display = 'none';
   showDrawer();
 }
 
@@ -3077,21 +3124,59 @@ function _hNameTokens(t){
   return String(t || '').toLowerCase().replace(/\(.*?\)/g, ' ').replace(/[^a-z0-9฀-๿]+/g, ' ').trim().split(' ').filter(Boolean);
 }
 // ชื่อในไฟล์ → พนักงานในระบบ: โทเคนทุกตัวของชื่อในไฟล์ต้องอยู่ในชื่อเต็มของพนักงาน และต้องเจอคนเดียวเท่านั้น (ถ้าซ้ำ/ไม่เจอ = ไม่จับคู่)
-function matchHoldingPersons(){
-  var empTok = employees.map(function(e){ return { e: e, t: _hNameTokens(e.full_name) }; });
-  var map = {}, unmatched = [];
-  employeeHoldings.forEach(function(h){
-    var key = h.person_name;
-    if(key in map) return;
-    var ht = _hNameTokens(key), found = [];
-    if(ht.length){
-      empTok.forEach(function(x){ if(ht.every(function(t){ return x.t.indexOf(t) > -1; })) found.push(x.e); });
-    }
-    map[key] = found.length === 1 ? found[0].employee_id : null;
-    if(found.length !== 1) unmatched.push(key + (found.length > 1 ? ' (ชื่อซ้ำ ' + found.length + ' คน)' : ''));
+// จับคู่ชื่อในไฟล์ → พนักงานในระบบ: โทเคนทุกตัวของชื่อต้องอยู่ในชื่อเต็ม และต้องเจอคนเดียวเท่านั้น (ซ้ำ/ไม่เจอ = null)
+function matchPersonToEmployee(name){
+  var ht = _hNameTokens(name);
+  if(!ht.length) return { id: null, n: 0 };
+  var found = employees.filter(function(e){
+    var t = _hNameTokens(e.full_name);
+    return ht.every(function(x){ return t.indexOf(x) > -1; });
   });
-  return { map: map, unmatched: unmatched };
+  return { id: found.length === 1 ? found[0].employee_id : null, n: found.length };
 }
+var _holdNameCache = {};
+// แถวถือครองนี้เป็นของพนักงานคนไหน: ใช้ employee_id ที่บันทึกไว้ ถ้าไม่มีค่อยจับคู่จากชื่อ
+function empIdOfHolding(h){
+  if(h.employee_id) return h.employee_id;
+  if(!(h.person_name in _holdNameCache)) _holdNameCache[h.person_name] = matchPersonToEmployee(h.person_name).id;
+  return _holdNameCache[h.person_name];
+}
+function openHoldings(){ return employeeHoldings.filter(function(h){ return !h.ended_at; }); }
+function matchHoldingPersons(){
+  var unmatched = [], seen = {};
+  openHoldings().forEach(function(h){
+    if(empIdOfHolding(h) || seen[h.person_name]) return;
+    seen[h.person_name] = true;
+    var n = matchPersonToEmployee(h.person_name).n;
+    unmatched.push(h.person_name + (n > 1 ? ' (ชื่อซ้ำ ' + n + ' คน)' : ''));
+  });
+  return { unmatched: unmatched };
+}
+// ระยะเวลาที่ถือ นับจากวันเริ่มถึงวันนี้ (หรือถึงวันสิ้นสุด)
+function durationLabel(fromStr, toStr){
+  if(!fromStr) return '';
+  var a = new Date(String(fromStr).slice(0, 10)), b = toStr ? new Date(String(toStr).slice(0, 10)) : new Date();
+  if(isNaN(a.getTime()) || isNaN(b.getTime())) return '';
+  var m = (b.getFullYear() - a.getFullYear()) * 12 + (b.getMonth() - a.getMonth());
+  if(m < 1) return 'ไม่ถึง 1 เดือน';
+  return (m >= 12 ? Math.floor(m / 12) + ' ปี ' : '') + (m % 12 ? (m % 12) + ' เดือน' : '').trim();
+}
+function startNote(h){
+  if(!h.started_at) return 'ไม่ทราบวันเริ่มถือ';
+  var src = h.start_source === 'transfer' ? 'วันที่โอนจริง' : h.start_source === 'manual' ? 'วันที่ HQ บันทึก'
+          : h.start_source === 'asset_summary' ? 'ประมาณจากวันที่ซื้อใน Asset Summary' : 'ประมาณจากปี-เดือนในรหัส Asset';
+  return 'ตั้งแต่ ' + String(h.started_at).slice(0, 7) + ' · นาน ' + durationLabel(h.started_at) + ' (' + src + ')';
+}
+// วันเริ่มถือของแถวจากไฟล์ (ไม่มีวันที่ในไฟล์): ปี-เดือนในรหัส Asset ก่อน ไม่มีค่อยใช้วันที่ซื้อของ Asset ที่จับคู่เจอ
+function holdingStartInfo(row, idx){
+  var c = purchaseDateFromAssetCode(row.asset_code);
+  if(c) return { d: c, src: 'asset_code' };
+  var sn = _hNorm(row.serial_no), cd = _hCode(row.asset_code);
+  var hit = (sn && idx.bySerial[sn]) || (!sn && cd && idx.byCode[cd]) || null;
+  if(hit && hit.purchaseDate) return { d: String(hit.purchaseDate).slice(0, 10), src: 'asset_summary' };
+  return { d: '', src: '' };
+}
+
 function buildAssetVerifyIndex(){
   var bySerial = {}, byCode = {};
   Object.keys(assetsByStore || {}).forEach(function(store){
@@ -3141,17 +3226,18 @@ function verifyHolding(h, idx){
 // สร้างข้อมูลชิปของพนักงานทุกคนในครั้งเดียว: employee_id → [{type, ok, tip}]
 function buildEmpChipData(){
   var out = {};
-  if(!employeeHoldings.length) return { chips: out, unmatched: [] };
+  var open = openHoldings();
+  if(!open.length) return { chips: out, unmatched: [] };
   var m = matchHoldingPersons(), idx = buildAssetVerifyIndex(), seen = {};
-  employeeHoldings.forEach(function(h){
-    var empId = m.map[h.person_name];
+  open.forEach(function(h){
+    var empId = empIdOfHolding(h);
     if(!empId) return;
     var dk = empId + '|' + h.device_type + '|' + _hNorm(h.serial_no || h.model || h.asset_code);
     if(seen[dk]) return; seen[dk] = true;
     var v = verifyHolding(h, idx);
     (out[empId] = out[empId] || []).push({
       type: h.device_type, ok: v.ok, age: v.age ? v.age.flag : '',
-      tip: h.device_type + (h.model ? ' · ' + h.model : '') + ' — ' + v.why
+      tip: h.device_type + (h.model ? ' · ' + h.model : '') + ' — ' + v.why + '\nการถือครอง: ' + startNote(h)
     });
   });
   return { chips: out, unmatched: m.unmatched };
@@ -3170,14 +3256,17 @@ function empChipsHtml(e, chipData){
     return '<span class="emp-chip ' + (c.ok ? 'ok' : 'no') + '" title="' + _hmEsc(c.tip) + '">' + c.type + ageMark + '</span>';
   }).join('') + '</div>';
 }
-async function loadEmployeeHoldings(){
+var holdingsLoaded = false;
+async function loadEmployeeHoldings(quiet){
   try{
     var r = await apiFetch('/hq/employee-holdings', { method: 'GET' });
     employeeHoldings = r.holdings || [];
+    holdingsLoaded = true;
   } catch(e){
     employeeHoldings = [];
-    showToast('โหลดข้อมูลอุปกรณ์ที่ถือครองไม่สำเร็จ: ' + e.message + ' — เช็คว่ารัน migration_employee_holdings.sql แล้วหรือยัง');
+    if(!quiet) showToast('โหลดข้อมูลอุปกรณ์ที่ถือครองไม่สำเร็จ: ' + e.message + ' — เช็คว่ารัน migration_employee_holdings.sql และ migration_holdings_ledger.sql แล้วหรือยัง');
   }
+  _holdNameCache = {};
 }
 
 // ── Import ไฟล์ User Asset List (CSV/TSV) ─────────────────────────────────────────────
@@ -3233,13 +3322,23 @@ async function onHoldingsFileChosen(input){
   try{
     var parsed = parseHoldingsFile(await f.text());
     if(!parsed.rows.length){ showToast('ไม่พบข้อมูลอุปกรณ์ในไฟล์นี้ — ต้องเป็นไฟล์ User Asset List (CSV/TSV ที่มีคอลัมน์ Computer Name)'); return; }
+    var vidx = buildAssetVerifyIndex(), personIds = {}, undated = 0;
+    parsed.rows.forEach(function(r){
+      if(!(r.person_name in personIds)) personIds[r.person_name] = matchPersonToEmployee(r.person_name).id;
+      r.employee_id = personIds[r.person_name];
+      var st = holdingStartInfo(r, vidx);
+      r.started_at = st.d; r.start_source = st.src;
+      if(!st.d) undated++;
+    });
+    var names = Object.keys(personIds), matched = names.filter(function(n){ return personIds[n]; }).length;
     pendingHoldingRows = parsed.rows; pendingHoldingFileName = f.name;
     var nb = parsed.rows.filter(function(r){ return r.device_type === 'Notebook'; }).length;
     var cpu = parsed.rows.filter(function(r){ return r.device_type === 'CPU'; }).length;
     var mon = parsed.rows.filter(function(r){ return r.device_type === 'Monitor'; }).length;
     var bar = document.getElementById('empHoldImportBar');
     bar.innerHTML = '<span>ไฟล์ <b>' + _hmEsc(f.name) + '</b>: พบ ' + parsed.peopleCount + ' คน — Notebook ' + nb + ' · CPU ' + cpu + ' · Monitor ' + mon
-      + ' (ข้าม ' + parsed.noDevice + ' คนที่ไม่มีอุปกรณ์) — <b>จะแทนที่ข้อมูลถือครองเดิมทั้งหมด</b></span>'
+      + '<br>จับคู่พนักงานในระบบได้ ' + matched + ' จาก ' + names.length + ' คน · ไม่มีวันที่ในรหัส Asset ' + undated + ' ชิ้น (จะเป็น "ไม่ทราบวันเริ่มถือ")'
+      + '<br>ระบบ<b>ไม่ลบ</b>ข้อมูลเดิม: คนเดิมถืออยู่แล้วไม่เปลี่ยน · อุปกรณ์เดิมที่ไฟล์ระบุคนใหม่ = บันทึกเป็นการโอนอัตโนมัติ</span>'
       + '<button class="import-btn" onclick="confirmHoldingsImport()">ยืนยัน Import</button>'
       + '<button class="as-refresh" onclick="cancelHoldingsImport()">ยกเลิก</button>';
     bar.style.display = 'flex';
@@ -3254,13 +3353,165 @@ async function confirmHoldingsImport(){
   showBataLoading('กำลัง import ข้อมูลอุปกรณ์ที่ถือครอง...');
   try{
     var r = await apiFetch('/hq/employee-holdings/import', { method: 'POST', body: JSON.stringify({ file_name: pendingHoldingFileName, rows: pendingHoldingRows }) });
-    showToast('Import สำเร็จ ' + r.imported + ' รายการ' + (r.skipped ? ' (ข้าม ' + r.skipped + ')' : ''));
+    showToast('Import สำเร็จ: เพิ่มใหม่ ' + r.new + ' · ไม่เปลี่ยน ' + r.unchanged + ' · โอนผู้ถือ ' + r.transferred + (r.skipped ? ' · ข้าม ' + r.skipped : ''));
     cancelHoldingsImport();
     await loadEmployeeHoldings();
     renderEmployeeList();
   } catch(e){
     showToast('Import ไม่สำเร็จ: ' + e.message + ' — เช็คว่ารัน migration_employee_holdings.sql แล้วหรือยัง');
   } finally { hideBataLoading(); }
+}
+
+function openImportChooser(){ document.getElementById('empImportChooser').classList.add('show'); }
+function closeImportChooser(){ document.getElementById('empImportChooser').classList.remove('show'); }
+
+// ── หน้าต่างพนักงาน: อุปกรณ์ที่ถือ + ประวัติ + มอบ Asset ─────────────────────────────────
+var empDrawerId = null, empAssignPick = null;
+function holdingNext(h){      // ผู้ถือคนถัดไปของอุปกรณ์ชิ้นเดียวกัน (ถ้ามี)
+  if(!h.asset_key) return null;
+  return employeeHoldings.filter(function(x){ return x.asset_key === h.asset_key && x.id > h.id; })[0] || null;
+}
+function holdingPrev(h){      // ผู้ถือคนก่อนหน้า
+  if(!h.asset_key) return null;
+  var p = employeeHoldings.filter(function(x){ return x.asset_key === h.asset_key && x.id < h.id; });
+  return p.length ? p[p.length - 1] : null;
+}
+function openEmpDrawer(empId){
+  empDrawerId = empId; empAssignPick = null;
+  renderEmpDrawer();
+  document.getElementById('empDrawerOverlay').classList.add('show');
+  document.getElementById('empDrawer').classList.add('show');
+}
+function closeEmpDrawer(){
+  document.getElementById('empDrawerOverlay').classList.remove('show');
+  document.getElementById('empDrawer').classList.remove('show');
+  empDrawerId = null;
+}
+function renderEmpDrawer(){
+  var e = employees.filter(function(x){ return x.employee_id === empDrawerId; })[0];
+  if(!e) return;
+  document.getElementById('empDrawerTitle').textContent = e.full_name;
+  var rows = employeeHoldings.filter(function(h){ return empIdOfHolding(h) === e.employee_id; });
+  var cur = rows.filter(function(h){ return !h.ended_at; });
+  var past = rows.filter(function(h){ return h.ended_at; }).sort(function(a, b){ return String(b.ended_at).localeCompare(String(a.ended_at)); });
+  var idx = buildAssetVerifyIndex();
+  var html = '<p style="font-size:13px;color:var(--ink-2);margin:0;">' + _hmEsc(e.employee_id) + ' · ' + _hmEsc(empDeptCode(e) || '—') + ' · ' + _hmEsc(e.position || '—') + '</p>';
+  html += '<p class="hold-sec">กำลังถือครอง (' + cur.length + ')</p>';
+  html += cur.length ? cur.map(function(h){
+    var v = verifyHolding(h, idx), pv = holdingPrev(h);
+    var mark = v.age && v.age.flag === 'over' ? '<b class="emp-age over">5+</b>' : v.age && v.age.flag === 'soon' ? '<b class="emp-age soon">5</b>' : '';
+    return '<div class="hold-item"><div class="hold-top"><span class="emp-chip ' + (v.ok ? 'ok' : 'no') + '">' + h.device_type + mark + '</span>' + _hmEsc(h.model || '') + '</div>'
+      + '<div class="hold-meta">' + _hmEsc([h.serial_no && ('Serial ' + h.serial_no), h.asset_code].filter(Boolean).join(' · ') || 'ไม่มี Serial/เลข Asset') + '</div>'
+      + '<div class="hold-meta">' + _hmEsc(startNote(h)) + '</div>'
+      + (pv ? '<div class="hold-meta hold-flow">รับต่อจาก <b>' + _hmEsc(pv.person_name) + '</b></div>' : '')
+      + '<div class="hold-meta">' + _hmEsc(v.why) + '</div>'
+      + '<button class="row-action hold-act" onclick="returnHolding(' + h.id + ')">รับคืน</button></div>';
+  }).join('') : '<p style="font-size:13px;color:var(--ink-3);">ยังไม่มีอุปกรณ์ที่ถือครอง</p>';
+  html += '<p class="hold-sec">ประวัติที่เคยถือ (' + past.length + ')</p>';
+  html += past.length ? past.map(function(h){
+    var nx = holdingNext(h);
+    var flow = h.ended_reason === 'return' ? 'รับคืนแล้ว' : (nx ? 'ส่งต่อให้ <b>' + _hmEsc(nx.person_name) + '</b>' + (nx.ended_at ? '' : ' (ถืออยู่ปัจจุบัน)') : 'โอนให้คนอื่น');
+    return '<div class="hold-item past"><div class="hold-top"><span class="emp-chip no" style="background:var(--surface);color:var(--ink-2);border-color:var(--line);">' + h.device_type + '</span>' + _hmEsc(h.model || '') + '</div>'
+      + '<div class="hold-meta">' + _hmEsc(h.started_at ? String(h.started_at).slice(0, 10) : 'ไม่ทราบ') + ' → ' + _hmEsc(String(h.ended_at).slice(0, 10)) + (h.started_at ? ' · นาน ' + _hmEsc(durationLabel(h.started_at, h.ended_at)) : '') + '</div>'
+      + '<div class="hold-meta hold-flow">' + flow + '</div></div>';
+  }).join('') : '<p style="font-size:13px;color:var(--ink-3);">ยังไม่มีประวัติ</p>';
+  html += '<p class="hold-sec">มอบ Asset ให้คนนี้</p>'
+    + '<div class="search-box" style="width:100%;"><input type="text" id="empAssignSearch" placeholder="ค้นหาเลข Asset / Serial / ชื่ออุปกรณ์ (อย่างน้อย 2 ตัวอักษร)" oninput="renderEmpAssignResults()"></div>'
+    + '<div id="empAssignResults"></div><div id="empAssignForm"></div>';
+  document.getElementById('empDrawerBody').innerHTML = html;
+}
+function guessDeviceType(name){
+  var n = String(name || '');
+  if(/monitor|\bLCD\b|\bLED\b|จอ/i.test(n)) return 'Monitor';
+  if(/note\s*book|laptop|latitude|probook|thinkbook|inspiron|ideapad|pro\s*14/i.test(n)) return 'Notebook';
+  if(/\bAIO\b|desktop|\bCPU\b|\bPC\b|optiplex|thinkcentre/i.test(n)) return 'CPU';
+  return 'Notebook';
+}
+function holderOfAsset(a){        // ผู้ถือปัจจุบันของ Asset ชิ้นนี้ (ถ้ามี)
+  var keys = [_hNorm(a.serial), _hCode(a.barcode)].filter(Boolean);
+  return openHoldings().filter(function(h){ return keys.indexOf(h.asset_key) > -1; })[0] || null;
+}
+var _empAssignHits = [];
+function renderEmpAssignResults(){
+  var el = document.getElementById('empAssignResults');
+  var term = (document.getElementById('empAssignSearch').value || '').trim().toLowerCase();
+  if(term.length < 2){ el.innerHTML = ''; _empAssignHits = []; return; }
+  _empAssignHits = [];
+  Object.keys(assetsByStore || {}).some(function(store){
+    (assetsByStore[store] || []).some(function(a){
+      if((a.barcode || '').toLowerCase().indexOf(term) > -1 || (a.serial || '').toLowerCase().indexOf(term) > -1 || (a.name || '').toLowerCase().indexOf(term) > -1){
+        _empAssignHits.push({ a: a, store: store });
+      }
+      return _empAssignHits.length >= 8;
+    });
+    return _empAssignHits.length >= 8;
+  });
+  el.innerHTML = _empAssignHits.length ? _empAssignHits.map(function(x, i){
+    var hd = holderOfAsset(x.a);
+    return '<button class="hold-pick" onclick="pickAssignAsset(' + i + ')">' + _hmEsc(x.a.barcode) + ' · ' + _hmEsc(x.a.name)
+      + '<small>' + _hmEsc(x.a.serial ? 'Serial ' + x.a.serial : 'ไม่มี Serial') + (hd ? ' · ปัจจุบันถือโดย ' + _hmEsc(hd.person_name) + ' (จะบันทึกเป็นการโอน)' : '') + '</small></button>';
+  }).join('') : '<p style="font-size:13px;color:var(--ink-3);margin-top:6px;">ไม่พบ Asset ที่ตรงกับคำค้น</p>';
+}
+function pickAssignAsset(i){
+  var x = _empAssignHits[i]; if(!x) return;
+  empAssignPick = x.a;
+  var hd = holderOfAsset(x.a), today = new Date().toISOString().slice(0, 10), gt = guessDeviceType(x.a.name);
+  document.getElementById('empAssignResults').innerHTML = '';
+  document.getElementById('empAssignForm').innerHTML = '<div class="hold-item" style="margin-top:8px;"><div class="hold-top">' + _hmEsc(x.a.barcode) + '</div>'
+    + '<div class="hold-meta">' + _hmEsc(x.a.name) + '</div>'
+    + (hd ? '<div class="hold-meta hold-flow">ปัจจุบันถือโดย <b>' + _hmEsc(hd.person_name) + '</b> — เมื่อยืนยัน ระบบปิดรายการของเขาและเก็บเป็นประวัติ</div>' : '')
+    + '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">'
+    + '<select class="as-select" id="empAssignType">' + ['Notebook', 'CPU', 'Monitor'].map(function(t){ return '<option' + (t === gt ? ' selected' : '') + '>' + t + '</option>'; }).join('') + '</select>'
+    + '<input type="date" class="as-select" id="empAssignDate" value="' + today + '">'
+    + '<button class="import-btn" onclick="submitEmpAssign()">ยืนยันมอบ</button></div></div>';
+}
+async function submitEmpAssign(){
+  var e = employees.filter(function(x){ return x.employee_id === empDrawerId; })[0], a = empAssignPick;
+  if(!e || !a) return;
+  var body = { employee_id: e.employee_id, person_name: e.full_name, dept_label: empDeptCode(e) || null,
+    device_type: document.getElementById('empAssignType').value, model: a.name,
+    asset_code: a.serial ? (a.rawAssetCode || '') : a.barcode, serial_no: a.serial || '',
+    started_at: document.getElementById('empAssignDate').value };
+  showBataLoading('กำลังบันทึก...');
+  try{
+    var r = await apiFetch('/hq/employee-holdings/assign', { method: 'POST', body: JSON.stringify(body) });
+    showToast('มอบ ' + a.barcode + ' ให้ ' + e.full_name + ' แล้ว' + (r.previous_holder ? ' (โอนจาก ' + r.previous_holder + ')' : ''));
+    empAssignPick = null;
+    await loadEmployeeHoldings(); renderEmpDrawer(); renderEmployeeList();
+  } catch(err){ showToast('มอบ Asset ไม่สำเร็จ: ' + err.message); }
+  finally { hideBataLoading(); }
+}
+async function returnHolding(id){
+  showBataLoading('กำลังบันทึกการรับคืน...');
+  try{
+    await apiFetch('/hq/employee-holdings/' + id + '/return', { method: 'POST', body: JSON.stringify({}) });
+    showToast('บันทึกการรับคืนแล้ว');
+    await loadEmployeeHoldings(); renderEmpDrawer(); renderEmployeeList();
+  } catch(err){ showToast('รับคืนไม่สำเร็จ: ' + err.message); }
+  finally { hideBataLoading(); }
+}
+
+// ── ผู้ถือครองของ Asset (ใน drawer ของ Asset): ใครถือมาก่อน / ส่งต่อไปที่ใคร ──────────────────
+function renderAssetHolders(a){
+  var grp = document.getElementById('holderGroup'), el = document.getElementById('holderList');
+  grp.style.display = 'block';
+  var keys = [_hNorm(a.serial), _hCode(a.barcode)].filter(Boolean);
+  function draw(){
+    var rows = employeeHoldings.filter(function(h){ return keys.indexOf(h.asset_key) > -1; });
+    if(!rows.length){
+      el.innerHTML = '<p style="font-size:12.5px;color:var(--ink-3);">' + (holdingsLoaded ? 'ยังไม่มีข้อมูลผู้ถือครอง (ไม่อยู่ในไฟล์ User Asset List และยังไม่เคยมอบผ่านหน้า "พนักงาน")' : 'กำลังโหลด...') + '</p>';
+      return;
+    }
+    el.innerHTML = rows.map(function(h, i){
+      var open = !h.ended_at;
+      var flow = open ? 'ถืออยู่ปัจจุบัน' : (h.ended_reason === 'return' ? 'รับคืนแล้ว' : 'ส่งต่อให้ ' + ((holdingNext(h) || {}).person_name || 'คนอื่น'));
+      return '<div class="history-item"><div class="history-event">' + (i + 1) + '. ' + _hmEsc(h.person_name) + (open ? ' <span class="status-pill verified" style="margin-left:6px;"><span class="sp-dot"></span>ปัจจุบัน</span>' : '') + '</div>'
+        + '<div class="history-meta">' + _hmEsc(h.started_at ? String(h.started_at).slice(0, 10) : 'ไม่ทราบ') + ' → ' + (open ? 'ปัจจุบัน' : _hmEsc(String(h.ended_at).slice(0, 10)))
+        + (h.started_at ? ' · นาน ' + _hmEsc(durationLabel(h.started_at, h.ended_at)) : '') + ' · ' + _hmEsc(flow) + '</div></div>';
+    }).join('');
+  }
+  draw();
+  if(!holdingsLoaded){ loadEmployeeHoldings(true).then(draw); }
 }
 
 function populateEmployeeDeptFilter(){
@@ -3341,7 +3592,7 @@ function renderEmployeeList(){
     return '<tr>'
       + '<td>' + (i + 1) + '</td>'
       + '<td>' + e.employee_id + '</td>'
-      + '<td><div class="emp-name-cell"><span>' + e.full_name + '</span>' + empChipsHtml(e, chipData) + '</div></td>'
+      + '<td><div class="emp-name-cell"><span><button class="emp-name-link" onclick="openEmpDrawer(\'' + safeId + '\')" title="ดูอุปกรณ์ที่ถือและประวัติ">' + _hmEsc(e.full_name) + '</button></span>' + empChipsHtml(e, chipData) + '</div></td>'
       + '<td>' + (e.position || '—') + '</td>'
       + '<td>' + (empDeptCode(e) || '—') + '</td>'
       + '<td>' + (isActive ? '<span class="status-pill verified"><span class="sp-dot"></span>Active</span>' : '<span class="status-pill missing"><span class="sp-dot"></span>ปิดใช้งาน</span>') + '</td>'

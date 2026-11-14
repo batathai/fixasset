@@ -170,8 +170,8 @@ CREATE TABLE serial_mismatches (
 );
 ```
 
-### employee_holdings (เพิ่ม 2026-11-14 — `migration_employee_holdings.sql`, ยังไม่ได้รันใน Neon)
-อุปกรณ์ที่พนักงานควรถือตามไฟล์ User Asset List — 1 แถว = อุปกรณ์ 1 ชิ้น; import ใหม่ = soft-delete ชุดเดิมทั้งหมด
+### employee_holdings (เพิ่ม 2026-11-14 — `migration_employee_holdings.sql` รันแล้ว; ledger: `migration_holdings_ledger.sql` ยังไม่ได้รัน)
+สมุดบันทึกการถือครอง — 1 แถว = 1 ช่วงเวลาที่พนักงานคนหนึ่งถืออุปกรณ์ 1 ชิ้น (`ended_at` NULL = ถืออยู่ปัจจุบัน); เปลี่ยนผู้ถือ = ปิดแถวเก่า (`ended_reason='transfer'`) แล้วเปิดแถวใหม่ (`start_source='transfer'`); Import ไม่ลบข้อมูลเดิมแล้ว (merge)
 
 ```sql
 CREATE TABLE employee_holdings (
@@ -180,7 +180,13 @@ CREATE TABLE employee_holdings (
   dept_label TEXT,
   device_type TEXT NOT NULL,     -- 'Notebook' | 'CPU' | 'Monitor'
   model TEXT, asset_code TEXT, serial_no TEXT,
-  import_batch_id TEXT, is_active BOOLEAN DEFAULT true, imported_at TIMESTAMPTZ DEFAULT now()
+  import_batch_id TEXT, is_active BOOLEAN DEFAULT true, imported_at TIMESTAMPTZ DEFAULT now(),
+  -- เพิ่มโดย migration_holdings_ledger.sql
+  employee_id TEXT,              -- ผูกกับ employees.employee_id (text ไม่ใช่ FK)
+  asset_key TEXT,                -- Serial (ตัวพิมพ์ใหญ่ ไม่มีช่องว่าง) หรือเลข Asset ที่มี SEQ; ใช้เชื่อมประวัติของอุปกรณ์ชิ้นเดียวกัน
+  started_at DATE, start_source TEXT,  -- 'asset_code' | 'asset_summary' | 'manual' | 'transfer'
+  ended_at DATE, ended_reason TEXT,    -- 'transfer' | 'return'
+  recorded_by TEXT
 );
 ```
 

@@ -4,7 +4,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from typing import Optional, List, Any
 import psycopg2, psycopg2.extras, os, hashlib, secrets, time, uuid, io
-from datetime import datetime
+from datetime import datetime, date
 from dotenv import load_dotenv
 import httpx
 import xlrd, openpyxl
@@ -106,11 +106,27 @@ class AssetWriteOff(BaseModel):
 
 class HoldingRow(BaseModel):
     person_name: str
+    employee_id: Optional[str] = None   # จับคู่พนักงานได้ → ส่งมาด้วย (ฝั่ง Dashboard จับคู่ชื่อให้)
+    started_at: Optional[str] = None    # 'YYYY-MM-DD' หรือ 'YYYY-MM' (จากรหัส Asset / วันที่ซื้อ)
+    start_source: Optional[str] = None  # 'asset_summary' | 'asset_code'
     dept_label: Optional[str] = None
     device_type: str                 # Notebook | CPU | Monitor
     model: Optional[str] = None
     asset_code: Optional[str] = None
     serial_no: Optional[str] = None
+
+class HoldingAssign(BaseModel):
+    employee_id: str
+    person_name: str
+    dept_label: Optional[str] = None
+    device_type: str
+    model: Optional[str] = None
+    asset_code: Optional[str] = None
+    serial_no: Optional[str] = None
+    started_at: Optional[str] = None
+
+class HoldingReturn(BaseModel):
+    ended_at: Optional[str] = None
 
 class HoldingsImport(BaseModel):
     file_name: Optional[str] = None
@@ -470,55 +486,163 @@ async def hq_import_employees_confirm(file: UploadFile = File(...), user=Depends
 # ── อุปกรณ์ที่พนักงานควรถือ (import จากไฟล์ User Asset List) ─────────────────────────────
 # ตาราง employee_holdings (migration_employee_holdings.sql) — ฝั่ง Dashboard เอา serial/เลข Asset ไปเทียบกับ Asset Summary เอง
 HOLDING_DEVICE_TYPES = ("Notebook", "CPU", "Monitor")
+_HOLD_COLS = "id, person_name, employee_id, dept_label, device_type, model, asset_code, serial_no, asset_key, started_at, start_source, ended_at, ended_reason"
+
+def _holding_key(serial, code):
+    """กุญแจตามรอยอุปกรณ์ข้ามผู้ถือ: Serial (พิมพ์ใหญ่ ไม่มีช่องว่าง) ก่อน ไม่มีค่อยใช้เลข Asset (แก้ COMO→COM0)
+    เลข Asset ที่ไม่มีส่วน SEQ ใช้ร่วมกันได้หลายเครื่อง (เช่น COM012025120001) จึงไม่ใช้เป็นกุญแจ — คืน None"""
+    sn = "".join((serial or "").split()).upper()
+    if sn:
+        return sn
+    cd = "".join((code or "").split()).upper()
+    if cd.startswith("COMO"):
+        cd = "COM0" + cd[4:]
+    return cd if "SEQ" in cd else None
+
+def _parse_hold_date(v):
+    if not v:
+        return None
+    v = v.strip()
+    try:
+        if len(v) == 7:
+            return datetime.strptime(v + "-01", "%Y-%m-%d").date()
+        return datetime.strptime(v[:10], "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+def _open_holdings_for(cur, key, person_name, device_type, model):
+    """แถวที่ 'ถืออยู่' ของอุปกรณ์ชิ้นนี้ (ไม่รู้กุญแจ = เทียบด้วยชื่อคน+ประเภท+รุ่น)"""
+    if key:
+        cur.execute("""SELECT id, person_name, employee_id FROM employee_holdings
+                       WHERE asset_key = %s AND ended_at IS NULL AND COALESCE(is_active, true) = true""", (key,))
+    else:
+        cur.execute("""SELECT id, person_name, employee_id FROM employee_holdings
+                       WHERE asset_key IS NULL AND lower(person_name) = lower(%s) AND device_type = %s
+                         AND COALESCE(model, '') = %s AND ended_at IS NULL AND COALESCE(is_active, true) = true""",
+                    (person_name, device_type, model or ""))
+    return cur.fetchall()
+
+def _same_holder(row, employee_id, person_name):
+    if employee_id and row["employee_id"]:
+        return row["employee_id"] == employee_id
+    return (row["person_name"] or "").strip().lower() == (person_name or "").strip().lower()
+
+def _put_holding(cur, user, r, source_when_new):
+    """บันทึกการถือครอง 1 ชิ้น: ถ้าคนเดิมถืออยู่แล้ว → แค่อัปเดตรายละเอียด; ถ้าถืออยู่กับคนอื่น → ปิดรายการเก่า (transfer) แล้วเปิดใหม่
+    คืน (ผลลัพธ์, ชื่อผู้ถือเดิมถ้าโอน)"""
+    name, emp_id, dtype = r["person_name"], r.get("employee_id"), r["device_type"]
+    key = _holding_key(r.get("serial_no"), r.get("asset_code"))
+    existing = _open_holdings_for(cur, key, name, dtype, r.get("model"))
+    same = [e for e in existing if _same_holder(e, emp_id, name)]
+    if same:
+        cur.execute("""UPDATE employee_holdings SET model = COALESCE(%s, model), asset_code = COALESCE(%s, asset_code),
+                       serial_no = COALESCE(%s, serial_no), employee_id = COALESCE(%s, employee_id),
+                       dept_label = COALESCE(%s, dept_label), asset_key = COALESCE(asset_key, %s) WHERE id = %s""",
+                    (r.get("model"), r.get("asset_code"), r.get("serial_no"), emp_id, r.get("dept_label"), key, same[0]["id"]))
+        return "unchanged", None
+    prev = None
+    for e in existing:
+        cur.execute("UPDATE employee_holdings SET ended_at = %s, ended_reason = 'transfer' WHERE id = %s", (date.today(), e["id"]))
+        prev = e["person_name"]
+    started = date.today() if existing else r.get("started_at")
+    source = "transfer" if existing else source_when_new
+    cur.execute("""INSERT INTO employee_holdings
+            (person_name, employee_id, dept_label, device_type, model, asset_code, serial_no, asset_key,
+             started_at, start_source, recorded_by, import_batch_id, is_active, imported_at)
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,true,NOW())""",
+        (name, emp_id, r.get("dept_label"), dtype, r.get("model"), r.get("asset_code"), r.get("serial_no"), key,
+         started, source, user["employee_id"], r.get("batch_id")))
+    return ("transferred" if existing else "new"), prev
 
 @app.get("/hq/employee-holdings")
 def hq_get_employee_holdings(db=Depends(get_db), user=Depends(get_current_user)):
+    """คืนทั้ง 'ถืออยู่' (ended_at = null) และประวัติที่เลิกถือแล้ว — ฝั่ง Dashboard แยกเอง"""
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     cur = db.cursor()
-    cur.execute("""
-        SELECT person_name, dept_label, device_type, model, asset_code, serial_no
-        FROM employee_holdings
-        WHERE COALESCE(is_active, true) = true
-        ORDER BY dept_label, person_name, id
-    """)
+    cur.execute(f"SELECT {_HOLD_COLS} FROM employee_holdings WHERE COALESCE(is_active, true) = true ORDER BY id")
     rows = [dict(r) for r in cur.fetchall()]
     return {"total": len(rows), "holdings": rows}
 
 @app.post("/hq/employee-holdings/import")
 def hq_import_employee_holdings(req: HoldingsImport, db=Depends(get_db), user=Depends(get_current_user)):
-    """แทนที่ข้อมูลถือครองทั้งชุด: ชุดเดิมถูก soft-delete (is_active=false) แล้วใส่ชุดใหม่ใน transaction เดียว"""
+    """รวมข้อมูลจากไฟล์ User Asset List เข้าสมุดประวัติ (ไม่ลบของเดิม):
+    คนเดิมถืออยู่แล้ว = ไม่เปลี่ยน · อุปกรณ์เดิมแต่ไฟล์ระบุคนใหม่ = ปิดรายการเก่า (ended_at = วันนี้) แล้วเปิดใหม่ · ชิ้นใหม่ = เปิดรายการ"""
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     if not req.rows:
         raise HTTPException(status_code=400, detail="ไม่มีข้อมูลให้ import")
     if len(req.rows) > 5000:
         raise HTTPException(status_code=400, detail="ข้อมูลเกิน 5,000 แถว")
-    clean = []
-    for r in req.rows:
-        name = (r.person_name or "").strip()
-        if not name or r.device_type not in HOLDING_DEVICE_TYPES:
-            continue
-        clean.append((name, (r.dept_label or "").strip() or None, r.device_type,
-                      (r.model or "").strip() or None, (r.asset_code or "").strip() or None,
-                      (r.serial_no or "").strip() or None))
-    if not clean:
-        raise HTTPException(status_code=400, detail="ไม่พบแถวที่ใช้ได้ (ต้องมีชื่อและประเภท Notebook/CPU/Monitor)")
     batch_id = uuid.uuid4().hex
+    counts = {"new": 0, "unchanged": 0, "transferred": 0, "skipped": 0}
+    seen = set()
     cur = db.cursor()
     try:
-        cur.execute("UPDATE employee_holdings SET is_active = false WHERE COALESCE(is_active, true) = true")
-        for c in clean:
-            cur.execute("""
-                INSERT INTO employee_holdings
-                    (person_name, dept_label, device_type, model, asset_code, serial_no, import_batch_id, is_active, imported_at)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,true,NOW())
-            """, c + (batch_id,))
+        for r in req.rows:
+            name = (r.person_name or "").strip()
+            if not name or r.device_type not in HOLDING_DEVICE_TYPES:
+                counts["skipped"] += 1
+                continue
+            d = {"person_name": name, "employee_id": (r.employee_id or "").strip() or None,
+                 "dept_label": (r.dept_label or "").strip() or None, "device_type": r.device_type,
+                 "model": (r.model or "").strip() or None, "asset_code": (r.asset_code or "").strip() or None,
+                 "serial_no": (r.serial_no or "").strip() or None, "started_at": _parse_hold_date(r.started_at),
+                 "batch_id": batch_id}
+            dk = (_holding_key(d["serial_no"], d["asset_code"]) or f"{name}|{d['device_type']}|{d['model']}", d["employee_id"] or name.lower())
+            if dk in seen:
+                counts["skipped"] += 1
+                continue
+            seen.add(dk)
+            result, _prev = _put_holding(cur, user, d, r.start_source if r.start_source in ("asset_summary", "asset_code") else "asset_code")
+            counts[result] += 1
         db.commit()
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Import ล้มเหลว ไม่มีข้อมูลเปลี่ยนแปลง: {e}")
-    return {"ok": True, "batch_id": batch_id, "imported": len(clean), "skipped": len(req.rows) - len(clean)}
+    return {"ok": True, "batch_id": batch_id, **counts}
+
+@app.post("/hq/employee-holdings/assign")
+def hq_assign_employee_holding(req: HoldingAssign, db=Depends(get_db), user=Depends(get_current_user)):
+    """HQ เลือก Asset ให้ผู้ถือครอง — ถ้าอุปกรณ์ชิ้นนี้ถืออยู่กับคนอื่น ระบบปิดรายการเก่าให้อัตโนมัติ (เก็บเป็นประวัติ)"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    if req.device_type not in HOLDING_DEVICE_TYPES:
+        raise HTTPException(status_code=400, detail="device_type ต้องเป็น Notebook / CPU / Monitor")
+    if not _holding_key(req.serial_no, req.asset_code):
+        raise HTTPException(status_code=400, detail="ต้องมี Serial หรือเลข Asset ที่มีส่วน SEQ (เช่น COM012022090002SEQ002) เพื่อใช้ตามรอยอุปกรณ์")
+    d = {"person_name": req.person_name.strip(), "employee_id": req.employee_id.strip(),
+         "dept_label": (req.dept_label or "").strip() or None, "device_type": req.device_type,
+         "model": (req.model or "").strip() or None, "asset_code": (req.asset_code or "").strip() or None,
+         "serial_no": (req.serial_no or "").strip() or None, "started_at": _parse_hold_date(req.started_at) or date.today()}
+    cur = db.cursor()
+    try:
+        result, prev = _put_holding(cur, user, d, "manual")
+        if result == "unchanged":
+            db.rollback()
+            raise HTTPException(status_code=409, detail="พนักงานคนนี้ถืออุปกรณ์ชิ้นนี้อยู่แล้ว")
+        db.commit()
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"บันทึกไม่สำเร็จ: {e}")
+    return {"ok": True, "result": result, "previous_holder": prev}
+
+@app.post("/hq/employee-holdings/{holding_id}/return")
+def hq_return_employee_holding(holding_id: int, req: HoldingReturn, db=Depends(get_db), user=Depends(get_current_user)):
+    """รับคืนอุปกรณ์ (ปิดรายการที่ถืออยู่ — ไม่ลบ เก็บเป็นประวัติ)"""
+    if user["role"] != "hq_admin":
+        raise HTTPException(status_code=403, detail="HQ admin only")
+    cur = db.cursor()
+    cur.execute("""UPDATE employee_holdings SET ended_at = %s, ended_reason = 'return'
+                   WHERE id = %s AND ended_at IS NULL AND COALESCE(is_active, true) = true RETURNING id""",
+                (_parse_hold_date(req.ended_at) or date.today(), holding_id))
+    if not cur.fetchone():
+        db.rollback()
+        raise HTTPException(status_code=404, detail="ไม่พบรายการที่ถืออยู่ (อาจถูกรับคืนไปแล้ว)")
+    db.commit()
+    return {"ok": True, "id": holding_id}
 
 
 # ════════════════════════════════════════════════════════════════
