@@ -48,18 +48,7 @@
   .app{display:flex;min-height:100vh;}
   .sidebar{width:236px;flex-shrink:0;background:var(--rail);color:var(--rail-ink);padding:20px 14px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;}
 
-  /* ---------- sidebar แบบซ่อนอัตโนมัติ: เลื่อนเข้าเมื่อเอาเมาส์ชิดขอบซ้ายจอ เลื่อนออกเมื่อเมาส์ออก ----------
-     ใช้เฉพาะจอกว้าง + มีเมาส์ (hover) — มือถือ/แท็บเล็ตยังเป็นแถบเมนูด้านบนตามเดิม */
-  .sb-edge{display:none;}
-  @media (min-width:901px) and (hover:hover){
-    .sb-edge{display:block;position:fixed;left:0;top:0;bottom:0;width:14px;z-index:59;}
-    .sb-edge::after{content:'';position:absolute;left:0;top:50%;width:5px;height:72px;margin-top:-36px;border-radius:0 6px 6px 0;background:var(--rail);opacity:.5;transition:opacity .2s,width .2s;}
-    .sb-edge:hover::after{opacity:1;width:8px;}
-    .sidebar{position:fixed;left:0;top:0;z-index:60;transform:translateX(-102%);visibility:hidden;box-shadow:none;
-      transition:transform .3s cubic-bezier(.2,.8,.2,1) .18s,box-shadow .3s ease .18s,visibility 0s linear .48s;}
-    .sb-edge:hover ~ .sidebar,.sidebar:hover,.sidebar:focus-within{transform:none;visibility:visible;box-shadow:10px 0 36px rgba(8,14,26,.38);
-      transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,visibility 0s;}
-  }
+  .sb-edge{display:none !important;} /* เลิกใช้ (เดิมเป็นแถบขอบซ้ายสำหรับ sidebar ซ่อนอัตโนมัติ) — คง element ไว้ไม่ลบ */
   /* sidebar แบบไอคอนล้วน (2026-11-12) — เฉพาะจอกว้าง ≥901px; มือถือ/แท็บเล็ตแคบยังเป็นแถบเมนูด้านบนพร้อมข้อความตามเดิม
      ชื่อเมนูอยู่ใน <span class="nav-text"> + title/aria-label ของ .nav-item (tooltip ตอนชี้เมาส์) */
   @media (min-width:901px){
@@ -77,6 +66,31 @@
     .rail-signout{width:44px;height:44px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;text-decoration:none;align-self:center;}
     .rail-signout:hover{background:var(--rail-2);}
     .rail-signout .nav-text{display:none;}
+  }
+  /* sidebar แบบ Supabase (2026-11-20) — จอกว้าง + มีเมาส์: แถบไอคอน 72px แสดงตลอด
+     ชี้เมาส์/โฟกัสที่แถบ → สไลด์กว้างออกเป็น 236px ทับเนื้อหา (ไม่ดันเนื้อหา) เห็นชื่อเมนู; เมาส์ออก → หดกลับ
+     มือถือ/แท็บเล็ตสัมผัสยังใช้แถบไอคอน 72px (ไม่ขยาย) / จอแคบเป็นแถบบนตามเดิม */
+  @media (min-width:901px) and (hover:hover){
+    .app{padding-left:72px;}
+    .sidebar{position:fixed;left:0;top:0;z-index:60;overflow:hidden;align-items:stretch;
+      transition:width .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease;}
+    .sidebar:hover,.sidebar:focus-within{width:236px;box-shadow:10px 0 36px rgba(8,14,26,.38);}
+    .sidebar .sb-brand{justify-content:flex-start;padding:2px 6px 18px;white-space:nowrap;}
+    .sidebar .sb-brand > div:last-child{display:block;opacity:0;transition:opacity .15s ease;}
+    .sidebar .sb-nav{align-items:stretch;}
+    .sidebar .nav-item{width:auto;padding:0 11px;justify-content:flex-start;white-space:nowrap;}
+    .sidebar .nav-item .nav-text{display:block;opacity:0;transition:opacity .15s ease;}
+    .sidebar:hover .nav-badge,.sidebar:focus-within .nav-badge{position:static;margin-left:auto;font-size:11px;line-height:18px;padding:0 7px;}
+    .sidebar .rail-user{align-items:stretch;}
+    .sidebar .avatar{margin-left:6px;align-self:flex-start;}
+    .sidebar .rail-user-meta{align-items:stretch;}
+    .sidebar #headerUserLabel{display:block;opacity:0;padding-left:6px;transition:opacity .15s ease;}
+    .sidebar .rail-signout{text-decoration:none;color:var(--rail-ink);width:auto;height:44px;border-radius:var(--r-sm);display:flex;align-items:center;padding:0 11px;justify-content:flex-start;gap:11px;align-self:stretch;white-space:nowrap;font-size:13.5px;}
+    .sidebar .rail-signout:hover{background:var(--rail-2);color:#fff;}
+    .sidebar .rail-signout .nav-text{display:block;opacity:0;transition:opacity .15s ease;}
+    .sidebar:hover .sb-brand > div:last-child,.sidebar:focus-within .sb-brand > div:last-child,
+    .sidebar:hover .nav-text,.sidebar:focus-within .nav-text,
+    .sidebar:hover #headerUserLabel,.sidebar:focus-within #headerUserLabel{opacity:1;transition-delay:.08s;}
   }
   .rail-signout svg{width:20px;height:20px;flex-shrink:0;}
   @media (max-width:900px){ .rail-signout svg{display:none;} }
@@ -123,7 +137,7 @@
   /* ---------- login ---------- */
   .login-overlay{position:fixed;inset:0;background:var(--page);z-index:500;display:flex;align-items:center;justify-content:center;padding:16px;}
   .login-box{display:flex;width:860px;max-width:100%;background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--sh-lg);overflow:hidden;min-height:460px;}
-  .login-aside{flex:1;background:var(--red-500);color:#fff;padding:36px 34px;display:flex;flex-direction:column;justify-content:space-between;}
+  .login-aside{flex:1;background:linear-gradient(160deg,#D5122F 0%,#A50D26 100%);color:#fff;padding:36px 34px;display:flex;flex-direction:column;justify-content:space-between;}
   .login-wordmark{display:flex;align-items:baseline;gap:9px;}
   .login-wordmark b{font-size:34px;font-weight:700;letter-spacing:.5px;}
   .login-wordmark span{font-size:12.5px;font-weight:600;letter-spacing:2px;opacity:.85;}
@@ -552,6 +566,39 @@
     .ring3d .ring-fg{transition:none;}
     .bata-coin i,.login-brand .brand-mark{animation:none;}
   }
+
+  /* ============================================================
+     ธีมแดง (2026-11-20) — sidebar แดง, แบนเนอร์หน้า Dashboard, KPI แบบกราเดียนต์
+     เปลี่ยนเฉพาะสี/หน้าตา ไม่แตะ id / handler / JS
+     ============================================================ */
+  :root{ --page:#F6F3F4; --rail:#B80F2B; --rail-2:rgba(255,255,255,.16); --rail-ink:#FFE4E8; }
+  .sidebar{background:linear-gradient(180deg,#D5122F 0%,#B80F2B 55%,#8F0B20 100%);}
+  .sb-brand-name{color:#fff;} .sb-brand-sub{color:#FFD3DA;}
+  .sidebar .brand-mark{background:#fff;color:var(--red-500);box-shadow:0 2px 8px rgba(80,0,12,.25);}
+  .nav-item:hover{background:rgba(255,255,255,.14);color:#fff;}
+  .nav-item.active{background:#fff;color:var(--red-500);font-weight:600;box-shadow:0 2px 10px rgba(80,0,12,.22);}
+  .nav-item.active::before{display:none;}
+  .nav-badge{background:#fff;color:var(--red-500);}
+  .rail-user{border-top-color:rgba(255,255,255,.22);}
+  .avatar{border-color:rgba(255,255,255,.45);}
+  #headerUserLabel{color:#fff;}
+  .content-header{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);}
+  .content-title{color:var(--ink);}
+  .import-btn{background:var(--red-500);border-color:var(--red-500);color:#fff;font-weight:600;}
+  .import-btn:hover{background:var(--red-600);border-color:var(--red-600);}
+  .home-section{border:1px solid #EFE7E9;}
+
+  /* แบนเนอร์หน้า Dashboard — ภาพ banner_fixasset.webp (ข้อความอยู่ในภาพ) */
+  .hero-banner{margin-bottom:18px;border-radius:var(--r-lg);overflow:hidden;border:1px solid #EFE7E9;box-shadow:var(--sh-xs);background:#fff;line-height:0;}
+  .hero-banner img{display:block;width:100%;height:auto;aspect-ratio:3.4/1;object-fit:cover;object-position:center top;}
+  /* KPI: ใบแรกแดงทึบ ใบอื่นไล่สีอ่อนตามสีของมัน */
+  .kpi-tile{background:linear-gradient(135deg,#fff 45%,var(--c-bg) 140%);border-color:#EFE7E9;}
+  .home-kpis .kpi-tile:first-child{background:linear-gradient(135deg,#E0173A 0%,#A50D26 100%);border-color:transparent;color:#fff;box-shadow:0 10px 24px rgba(200,16,46,.28);}
+  .home-kpis .kpi-tile:first-child .kpi-label,.home-kpis .kpi-tile:first-child .kpi-note{color:rgba(255,255,255,.88);}
+  .home-kpis .kpi-tile:first-child .kpi-icon{background:rgba(255,255,255,.2);color:#fff;}
+  .home-kpis .kpi-tile:first-child .kpi-bar{background:rgba(255,255,255,.25);}
+  .home-kpis .kpi-tile:first-child .kpi-bar i{background:#fff;}
+  @media print{.hero-banner{display:none !important;}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style media="print">
@@ -711,6 +758,10 @@
             <button class="btn-outline-red" onclick="undoLastImport()">Undo import นี้</button>
             <button class="btn-outline" onclick="document.getElementById('importUndoBanner').style.display='none'">ปิด</button>
           </div>
+        </div>
+
+        <div class="hero-banner" id="heroBanner">
+          <img src="banner_fixasset.webp" alt="Bata Fix Asset — Asset Audit System: ตรวจนับทรัพย์สิน ติดตามสถานะ สรุปรายงาน" width="1600" height="533" decoding="async">
         </div>
 
         <div class="home-dash" id="homeDash">
