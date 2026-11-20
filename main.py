@@ -110,7 +110,7 @@ class HoldingRow(BaseModel):
     started_at: Optional[str] = None    # 'YYYY-MM-DD' หรือ 'YYYY-MM' (จากรหัส Asset / วันที่ซื้อ)
     start_source: Optional[str] = None  # 'asset_summary' | 'asset_code'
     dept_label: Optional[str] = None
-    device_type: str                 # Notebook | CPU | Monitor
+    device_type: str                 # Notebook | CPU | Monitor | UPS
     model: Optional[str] = None
     asset_code: Optional[str] = None
     serial_no: Optional[str] = None
@@ -493,7 +493,7 @@ async def hq_import_employees_confirm(file: UploadFile = File(...), user=Depends
 
 # ── อุปกรณ์ที่พนักงานควรถือ (import จากไฟล์ User Asset List) ─────────────────────────────
 # ตาราง employee_holdings (migration_employee_holdings.sql) — ฝั่ง Dashboard เอา serial/เลข Asset ไปเทียบกับ Asset Summary เอง
-HOLDING_DEVICE_TYPES = ("Notebook", "CPU", "Monitor")
+HOLDING_DEVICE_TYPES = ("Notebook", "CPU", "Monitor", "UPS")
 _HOLD_COLS = "id, person_name, employee_id, dept_label, device_type, model, asset_code, serial_no, asset_key, started_at, start_source, ended_at, ended_reason"
 
 def _holding_key(serial, code):
@@ -616,7 +616,7 @@ def hq_assign_employee_holding(req: HoldingAssign, db=Depends(get_db), user=Depe
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     if req.device_type not in HOLDING_DEVICE_TYPES:
-        raise HTTPException(status_code=400, detail="device_type ต้องเป็น Notebook / CPU / Monitor")
+        raise HTTPException(status_code=400, detail="device_type ต้องเป็น Notebook / CPU / Monitor / UPS")
     if not _holding_key(req.serial_no, req.asset_code):
         raise HTTPException(status_code=400, detail="ต้องมี Serial หรือเลข Asset ที่มีส่วน SEQ (เช่น COM012022090002SEQ002) เพื่อใช้ตามรอยอุปกรณ์")
     d = {"person_name": req.person_name.strip(), "employee_id": req.employee_id.strip(),
@@ -659,7 +659,7 @@ def hq_edit_employee_holding(holding_id: int, req: HoldingEdit, db=Depends(get_d
     if user["role"] != "hq_admin":
         raise HTTPException(status_code=403, detail="HQ admin only")
     if req.device_type is not None and req.device_type not in HOLDING_DEVICE_TYPES:
-        raise HTTPException(status_code=400, detail="device_type ต้องเป็น Notebook / CPU / Monitor")
+        raise HTTPException(status_code=400, detail="device_type ต้องเป็น Notebook / CPU / Monitor / UPS")
     cur = db.cursor()
     cur.execute("""SELECT id, device_type, model, serial_no, asset_code, asset_key, started_at, ended_at
                    FROM employee_holdings WHERE id = %s AND COALESCE(is_active, true) = true""", (holding_id,))
