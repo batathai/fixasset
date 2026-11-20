@@ -322,6 +322,32 @@
   .emp-dept-card .dc-code{font-weight:700;font-size:15px;}
   .emp-dept-card .dc-n{float:right;font-size:13px;color:var(--ink-2);}
   .emp-dept-card .dc-row{margin-top:6px;font-size:13px;color:var(--ink-3);display:flex;gap:10px;flex-wrap:wrap;}
+  /* การ์ดแผนก = ไอคอน + รหัส + จำนวนคนเท่านั้น */
+  .emp-dept-card{display:flex;align-items:center;gap:10px;}
+  .emp-dept-card .dc-ico{flex:none;width:28px;height:28px;border-radius:8px;background:var(--red-bg,#FDECEF);color:var(--red-500);display:inline-flex;align-items:center;justify-content:center;}
+  .emp-dept-card .dc-ico svg{width:16px;height:16px;}
+  .emp-dept-card .dc-code{flex:1;min-width:0;}
+  .emp-dept-card .dc-n{float:none;white-space:nowrap;}
+  /* การ์ดอายุอุปกรณ์: ใครอยู่กลุ่มไหน */
+  .emp-age-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:6px 0 14px;}
+  .emp-age-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:12px 14px;border-top:3px solid #6D28D9;}
+  .emp-age-card.soon{border-top-color:#D97706;}
+  .emp-age-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .emp-age-head .eh-title{font-weight:700;font-size:14px;}
+  .emp-age-head .eh-sub{font-size:12px;color:var(--ink-3);}
+  .emp-age-head .eh-n{margin-left:auto;font-weight:700;font-size:20px;}
+  .emp-age-list{display:flex;flex-wrap:wrap;gap:6px;max-height:96px;overflow:auto;}
+  .emp-age-person{font:inherit;font-size:12.5px;background:var(--page);border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer;color:var(--ink);}
+  .emp-age-person:hover{border-color:var(--ink-4);}
+  .emp-age-person small{color:var(--ink-3);margin-left:4px;}
+  .emp-age-empty{font-size:12.5px;color:var(--ink-3);}
+  .emp-age-card.sel{box-shadow:0 0 0 1px currentColor inset;background:var(--page);}
+  .emp-age-card.over.sel{color:#6D28D9;} .emp-age-card.soon.sel{color:#D97706;}
+  .emp-age-card .emp-age-head{cursor:pointer;}
+  .emp-age-card .eh-n{color:var(--ink);}
+  .eh-sort{font:inherit;font-size:11.5px;color:var(--ink-2);background:#fff;border:1px solid var(--line);border-radius:999px;padding:2px 9px;cursor:pointer;margin-left:6px;}
+  .eh-sort:hover{border-color:var(--ink-4);}
+  @media (max-width:767px){.emp-age-cards{grid-template-columns:1fr;}}
   .hold-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
   .hold-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
   .hold-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--ink-3);}
@@ -1121,16 +1147,7 @@
           <input type="file" id="empHoldFile" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;" onchange="onHoldingsFileChosen(this)">
         </div>
         <div id="empHoldImportBar" class="emp-hold-bar" style="display:none;"></div>
-        <div class="attn-grid" id="empTopCards" style="margin:16px 0;grid-template-columns:repeat(auto-fit,minmax(220px,320px));">
-        <div class="attn-card c-orange" style="cursor:default;">
-          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span>
-          <span><span class="attn-num" id="atDeptMismatch">—</span><br><span class="attn-label">แผนกไม่ตรง</span><br><span class="attn-sub">สแกน ≠ แผนกใน master</span></span>
-        </div>
-        <div class="attn-card c-purple" style="cursor:default;">
-          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span>
-          <span><span class="attn-num" id="snDepts">—</span><br><span class="attn-label">รหัสแผนกของ Office</span><br><span class="attn-sub">แผนกที่เลือกได้ตอนสแกน</span></span>
-        </div>
-        </div>
+        <div id="empAgeCards" class="emp-age-cards"></div>
         <div id="empDeptGrid" class="emp-dept-grid"></div>
         <p id="empResultCount" class="result-count" style="margin-top:10px;"></p>
         <p id="empHoldNote" class="result-count" style="margin:4px 0 10px;"></p>
@@ -3745,7 +3762,27 @@ function populateEmployeeDeptFilter(){
   if(depts.indexOf(currentVal) > -1) sel.value = currentVal;
 }
 
-// การ์ดสรุปรายแผนก: จำนวนพนักงาน + กี่คนถืออุปกรณ์เกิน/ครบ 5 ปี (ชี้เมาส์ดูชื่อ, คลิกเพื่อกรองแผนกนั้น)
+// ไอคอนเล็กประจำแผนก (SVG เส้น 24x24) — ใช้บอกชนิดแผนกคร่าวๆ; ไม่รู้จักรหัส = วงกลมประ
+var DEPT_ICONS = {
+  '500R':  '<path d="M3 9l1.5-5h15L21 9v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Z"/><path d="M5 13v7h14v-7"/>',
+  '600ML': '<path d="M12 3l9 5-9 5-9-5 9-5Z"/><path d="M3 13l9 5 9-5"/>',
+  '630':   '<path d="M4 10v4h3l7 4V6L7 10H4Z"/><path d="M17.5 9a4 4 0 0 1 0 6"/>',
+  '640':   '<path d="M20 12l-8 8-9-9V4h7l10 8Z"/><circle cx="7.5" cy="8.5" r="1"/>',
+  '640M':  '<path d="M20 12l-8 8-9-9V4h7l10 8Z"/><circle cx="7.5" cy="8.5" r="1"/>',
+  '680':   '<path d="M3 10l9-6 9 6v10H3V10Z"/><path d="M8 20v-6h8v6"/>',
+  '999':   '<rect x="6" y="4" width="12" height="17" rx="1.5"/><path d="M9 4h6v3H9zM9 11h6M9 15h6"/>',
+  '999CM': '<path d="M4 18l2-10 4 4 2-6 2 6 4-4 2 10H4Z"/>',
+  '999FI': '<circle cx="12" cy="12" r="8.5"/><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2c-1 0-2-.5-2.5-1.5M12 6.5V8m0 8v1.5"/>',
+  '999HR': '<circle cx="9" cy="8" r="3"/><path d="M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5"/><circle cx="17" cy="8.5" r="2.3"/><path d="M16 14.7c2.9-.2 4.9 1.8 4.9 4.8"/>',
+  '999IA': '<path d="M12 3l8 3v6c0 4.5-3.4 7.7-8 9-4.6-1.3-8-4.5-8-9V6l8-3Z"/><path d="M8.5 12l2.5 2.5 4.5-5"/>',
+  '999IT': '<rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/>'
+};
+function deptIconSvg(code){
+  var d = DEPT_ICONS[String(code || '').toUpperCase()] || '<circle cx="12" cy="12" r="8.5" stroke-dasharray="3 3"/>';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+}
+
+// การ์ดสรุปรายแผนก: ไอคอน + รหัสแผนก + จำนวนพนักงาน (active) เท่านั้น, คลิกเพื่อกรองแผนก
 function renderEmpDeptGrid(chipData, selectedDept){
   var el = document.getElementById('empDeptGrid');
   if(!el) return;
@@ -3753,21 +3790,61 @@ function renderEmpDeptGrid(chipData, selectedDept){
   employees.forEach(function(e){
     if(e.is_active === false) return;
     var d = empDeptCode(e) || 'ไม่มีแผนก';
-    var g = depts[d] || (depts[d] = { n: 0, over: [], soon: [] });
-    g.n++;
-    var f = empAgeFlag(chipData, e.employee_id);
-    if(f === 'over') g.over.push(e.full_name); else if(f === 'soon') g.soon.push(e.full_name);
+    depts[d] = (depts[d] || 0) + 1;
   });
   var keys = Object.keys(depts).sort();
   if(!keys.length){ el.innerHTML = ''; return; }
   el.innerHTML = keys.map(function(d){
-    var g = depts[d], sel = selectedDept === d ? ' sel' : '';
-    var tip = 'พนักงาน ' + g.n + ' คน' + (g.over.length ? '\nเกิน 5 ปี: ' + g.over.join(', ') : '') + (g.soon.length ? '\nครบ 5 ปีในปีนี้: ' + g.soon.join(', ') : '');
+    var sel = selectedDept === d ? ' sel' : '';
     var dv = String(d).replace(/'/g, "\\'");
-    return '<button class="emp-dept-card' + sel + '" title="' + _hmEsc(tip) + '" onclick="setEmpDeptFilter(\'' + dv + '\')">'
-      + '<span class="dc-code">' + _hmEsc(d) + '</span><span class="dc-n">' + g.n + ' คน</span>'
-      + '<div class="dc-row"><span><b class="emp-age over">5+</b> ' + g.over.length + ' คน</span><span><b class="emp-age soon">5</b> ' + g.soon.length + ' คน</span></div></button>';
+    return '<button class="emp-dept-card' + sel + '" title="พนักงาน ' + depts[d] + ' คน" onclick="setEmpDeptFilter(\'' + dv + '\')">'
+      + '<span class="dc-ico">' + deptIconSvg(d === 'ไม่มีแผนก' ? '' : d) + '</span>'
+      + '<span class="dc-code">' + _hmEsc(d) + '</span><span class="dc-n">' + depts[d] + ' คน</span></button>';
   }).join('');
+}
+
+// การ์ดอายุอุปกรณ์: 5+ (ครบ 5 ปีแล้ว) และ 5 (จะครบในปีนี้) — แสดงชื่อพนักงานที่อยู่ในแต่ละกลุ่ม คลิกชื่อเพื่อเปิดรายละเอียด
+var empAgeSort = { over: 'name', soon: 'name' };
+var EMP_SORT_LABEL = { name: 'ชื่อ A–Z', dept: 'แผนก' };
+function toggleEmpAgeSort(kind, ev){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  empAgeSort[kind] = empAgeSort[kind] === 'name' ? 'dept' : 'name';
+  renderEmployeeList();
+}
+// คลิกการ์ด = กรองตารางเป็นกลุ่มนั้น (คลิกซ้ำเพื่อยกเลิก)
+function setEmpAgeCard(kind){
+  var sel = document.getElementById('empAgeFilter');
+  sel.value = (sel.value === kind) ? 'all' : kind;
+  renderEmployeeList();
+}
+function renderEmpAgeCards(chipData){
+  var el = document.getElementById('empAgeCards');
+  if(!el) return;
+  var groups = { over: [], soon: [] };
+  employees.forEach(function(e){
+    if(e.is_active === false) return;
+    var f = empAgeFlag(chipData, e.employee_id);
+    if(f) groups[f].push(e);
+  });
+  var curF = document.getElementById('empAgeFilter').value;
+  function card(kind, badge, title, sub){
+    var list = groups[kind].slice().sort(function(x, y){
+      if(empAgeSort[kind] === 'dept'){
+        var dx = empDeptCode(x) || '~', dy = empDeptCode(y) || '~';
+        if(dx !== dy) return dx.localeCompare(dy, 'en', { numeric: true });
+      }
+      return String(x.full_name || '').localeCompare(String(y.full_name || ''), 'en');
+    });
+    var body = list.length ? list.map(function(e){
+      var id = String(e.employee_id).replace(/'/g, "\\'");
+      return '<button class="emp-age-person" onclick="openEmpDrawer(\'' + id + '\')" title="ดูอุปกรณ์ที่ถือและประวัติ">' + _hmEsc(e.full_name) + (empDeptCode(e) ? '<small>' + _hmEsc(empDeptCode(e)) + '</small>' : '') + '</button>';
+    }).join('') : '<span class="emp-age-empty">' + (employeeHoldings.length ? 'ไม่มีพนักงานในกลุ่มนี้' : 'ยังไม่มีข้อมูลอุปกรณ์ที่ถือครอง') + '</span>';
+    return '<div class="emp-age-card ' + kind + (curF === kind ? ' sel' : '') + '"><div class="emp-age-head" onclick="setEmpAgeCard(\'' + kind + '\')" title="คลิกเพื่อกรองตารางเป็นกลุ่มนี้ (คลิกซ้ำเพื่อยกเลิก)"><b class="emp-age ' + kind + '">' + badge + '</b>'
+      + '<span><span class="eh-title">' + title + '</span><br><span class="eh-sub">' + sub + '</span></span>'
+      + '<span class="eh-n">' + list.length + ' คน</span>'
+      + '<button class="eh-sort" onclick="toggleEmpAgeSort(\'' + kind + '\', event)" title="สลับการเรียงรายชื่อ">เรียง: ' + EMP_SORT_LABEL[empAgeSort[kind]] + ' ⇅</button></div><div class="emp-age-list">' + body + '</div></div>';
+  }
+  el.innerHTML = card('over', '5+', 'ถืออุปกรณ์เกิน 5 ปีแล้ว', 'ควรเปลี่ยน') + card('soon', '5', 'จะครบ 5 ปีในปีนี้', 'วางแผนเปลี่ยน');
 }
 function setEmpDeptFilter(d){
   var sel = document.getElementById('empDeptFilter');
@@ -3791,6 +3868,7 @@ function renderEmployeeList(){
   var chipData = buildEmpChipData();
   renderHoldingsNote(chipData);
   renderEmpDeptGrid(chipData, deptF);
+  renderEmpAgeCards(chipData);
   var filtered = employees.filter(function(e){
     var mDept = deptF === 'all' || empDeptCode(e) === deptF;
     var fl = empAgeFlag(chipData, e.employee_id);
