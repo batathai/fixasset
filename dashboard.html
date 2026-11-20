@@ -6,7 +6,7 @@
 <title>Bata Thailand — Fix Asset Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
      Bata Fix Asset — HQ Dashboard (UI v3)
@@ -14,13 +14,15 @@
      ============================================================ */
   :root{
     /* brand */
-    --red-500:#C8102E; --red-600:#A50D26; --red-bg:#FCEEF0;
+    --red-500:#D5001C; --red-600:#B00017; --red-bg:#FDECEE;
     /* neutrals */
-    --ink:#14161B; --ink-2:#4A505C; --ink-3:#7B8290; --ink-4:#B8BDC8;
-    --line:#E4E7EC; --line-2:#D3D8E0;
-    --page:#F3F5F9;
+    --ink:#111827; --ink-2:#4B5563; --ink-3:#6B7280; --ink-4:#B8BDC8;
+    --line:#E5E7EB; --line-2:#D1D5DB;
+    --page:#F8F9FC;
     --surface:#FFFFFF; --surface-1:#F7F8FA; --surface-2:#EEF0F4;
-    --rail:#0F1A2B; --rail-2:#1A2940; --rail-ink:#B4BECE;
+    --rail:#D5001C; --rail-2:rgba(255,255,255,.16); --rail-ink:#FFE9EC;
+    --rail-bg:linear-gradient(180deg,#E3001F 0%,#D5001C 45%,#A80015 100%);
+    --sb-w:232px; --sb-w-rail:72px; /* sidebar: แถบไอคอน 72px จองที่ไว้ → ขยาย 240px ทับเนื้อหาเมื่อชี้เมาส์ */
     /* status (ใช้ทั้งใน CSS และ inline style ของ JS) */
     --green-bg:#E8F6EE; --green-fg:#17753A;
     --amber-bg:#FEF1DC; --amber-fg:#92600A;
@@ -29,11 +31,11 @@
     --orange-bg:#FDEDE0; --orange-fg:#B0560F;
     --blue-bg:#E8F1FD; --blue-fg:#1B5FC4;
     /* shape */
-    --r-sm:8px; --r-md:12px; --r-lg:16px;
+    --r-sm:8px; --r-md:10px; --r-lg:14px;
     --sh-xs:0 1px 3px rgba(16,24,40,.06),0 1px 2px rgba(16,24,40,.04);
     --sh-md:0 6px 20px rgba(20,22,27,.08);
     --sh-lg:0 18px 48px rgba(20,22,27,.22);
-    --font:'IBM Plex Sans Thai',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font:'Inter','Sarabun',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   }
   *{box-sizing:border-box;}
@@ -46,73 +48,37 @@
 
   /* ---------- shell ---------- */
   .app{display:flex;min-height:100vh;}
-  .sidebar{width:236px;flex-shrink:0;background:var(--rail);color:var(--rail-ink);padding:20px 14px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;}
-
-  .sb-edge{display:none !important;} /* เลิกใช้ (เดิมเป็นแถบขอบซ้ายสำหรับ sidebar ซ่อนอัตโนมัติ) — คง element ไว้ไม่ลบ */
-  /* sidebar แบบไอคอนล้วน (2026-11-12) — เฉพาะจอกว้าง ≥901px; มือถือ/แท็บเล็ตแคบยังเป็นแถบเมนูด้านบนพร้อมข้อความตามเดิม
-     ชื่อเมนูอยู่ใน <span class="nav-text"> + title/aria-label ของ .nav-item (tooltip ตอนชี้เมาส์) */
-  @media (min-width:901px){
-    .sidebar{width:72px;padding:18px 14px 16px;align-items:center;}
-    .sb-brand{padding:2px 0 18px;justify-content:center;}
-    .sb-brand > div:last-child{display:none;}
-    .sb-nav{align-items:center;gap:6px;}
-    .nav-item{width:44px;height:44px;padding:0;justify-content:center;}
-    .nav-item .nav-text{display:none;}
-    .nav-item svg{width:22px;height:22px;}
-    .nav-badge{position:absolute;top:1px;right:-3px;margin:0;font-size:10.5px;line-height:16px;padding:0 5px;}
-    .rail-user{flex-direction:column;padding:12px 0 0;gap:8px;align-self:stretch;align-items:center;}
-    .rail-user-meta{flex:none;align-items:center;}
-    #headerUserLabel{display:none;}
-    .rail-signout{width:44px;height:44px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;text-decoration:none;align-self:center;}
-    .rail-signout:hover{background:var(--rail-2);}
-    .rail-signout .nav-text{display:none;}
+  .sb-edge{display:none !important;} /* เลิกใช้ — คง element ไว้เพราะโค้ดเดิมอ้างถึง */
+  /* Sidebar: ≥1280px ขยายเต็ม 240px ตรึงซ้าย (ไม่ทับเนื้อหา) / <1280px เป็น drawer เปิดด้วยปุ่มเมนู */
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:60;width:var(--sb-w);background:var(--rail-bg);color:var(--rail-ink);padding:16px 12px;display:flex;flex-direction:column;transform:translateX(-100%);transition:transform .2s ease,box-shadow .2s ease;}
+  .app.sb-open .sidebar{transform:none;box-shadow:8px 0 32px rgba(8,14,26,.3);}
+  .sb-backdrop{display:none;position:fixed;inset:0;z-index:55;background:rgba(17,24,39,.45);}
+  .app.sb-open .sb-backdrop{display:block;}
+  @media (min-width:1280px){
+    .app{padding-left:var(--sb-w);}
+    .sidebar{transform:none;box-shadow:none;}
+    .sb-backdrop,.app.sb-open .sb-backdrop{display:none;}
   }
-  /* sidebar แบบ Supabase (2026-11-20) — จอกว้าง + มีเมาส์: แถบไอคอน 72px แสดงตลอด
-     ชี้เมาส์/โฟกัสที่แถบ → สไลด์กว้างออกเป็น 236px ทับเนื้อหา (ไม่ดันเนื้อหา) เห็นชื่อเมนู; เมาส์ออก → หดกลับ
-     มือถือ/แท็บเล็ตสัมผัสยังใช้แถบไอคอน 72px (ไม่ขยาย) / จอแคบเป็นแถบบนตามเดิม */
-  @media (min-width:901px) and (hover:hover){
-    .app{padding-left:72px;}
-    .sidebar{position:fixed;left:0;top:0;z-index:60;overflow:hidden;align-items:stretch;
-      transition:width .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s ease;}
-    .sidebar:hover,.sidebar:focus-within{width:236px;box-shadow:10px 0 36px rgba(8,14,26,.38);}
-    .sidebar .sb-brand{justify-content:flex-start;padding:2px 6px 18px;white-space:nowrap;}
-    .sidebar .sb-brand > div:last-child{display:block;opacity:0;transition:opacity .15s ease;}
-    .sidebar .sb-nav{align-items:stretch;}
-    .sidebar .nav-item{width:auto;padding:0 11px;justify-content:flex-start;white-space:nowrap;}
-    .sidebar .nav-item .nav-text{display:block;opacity:0;transition:opacity .15s ease;}
-    .sidebar:hover .nav-badge,.sidebar:focus-within .nav-badge{position:static;margin-left:auto;font-size:11px;line-height:18px;padding:0 7px;}
-    .sidebar .rail-user{align-items:stretch;}
-    .sidebar .avatar{margin-left:6px;align-self:flex-start;}
-    .sidebar .rail-user-meta{align-items:stretch;}
-    .sidebar #headerUserLabel{display:block;opacity:0;padding-left:6px;transition:opacity .15s ease;}
-    .sidebar .rail-signout{text-decoration:none;color:var(--rail-ink);width:auto;height:44px;border-radius:var(--r-sm);display:flex;align-items:center;padding:0 11px;justify-content:flex-start;gap:11px;align-self:stretch;white-space:nowrap;font-size:13.5px;}
-    .sidebar .rail-signout:hover{background:var(--rail-2);color:#fff;}
-    .sidebar .rail-signout .nav-text{display:block;opacity:0;transition:opacity .15s ease;}
-    .sidebar:hover .sb-brand > div:last-child,.sidebar:focus-within .sb-brand > div:last-child,
-    .sidebar:hover .nav-text,.sidebar:focus-within .nav-text,
-    .sidebar:hover #headerUserLabel,.sidebar:focus-within #headerUserLabel{opacity:1;transition-delay:.08s;}
-  }
-  .rail-signout svg{width:20px;height:20px;flex-shrink:0;}
-  @media (max-width:900px){ .rail-signout svg{display:none;} }
-  .sb-brand{display:flex;align-items:center;gap:11px;padding:2px 8px 22px;}
-  .sb-brand-name{display:block;font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;}
-  .sb-brand-sub{display:block;font-size:11.5px;color:var(--rail-ink);margin-top:1px;}
-  .sb-nav{flex:1;display:flex;flex-direction:column;gap:2px;}
-  .nav-item{position:relative;display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:var(--r-sm);color:var(--rail-ink);font-size:13.5px;font-weight:500;cursor:pointer;transition:background .12s ease,color .12s ease;}
+  .sb-brand{display:flex;align-items:center;gap:10px;padding:2px 8px 12px;}
+  .sb-brand-name{display:block;font-weight:700;font-size:14px;color:#fff;letter-spacing:.01em;line-height:1.2;}
+  .sb-brand-sub{display:block;font-size:11px;color:#FFD3DA;margin-top:2px;}
+  .sb-nav{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:2px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.3) transparent;}
+  .nav-group{margin:12px 12px 2px;padding-top:10px;border-top:1px solid rgba(255,255,255,.22);font-size:11px;font-weight:600;color:#FFD3DA;letter-spacing:.02em;}
+  .nav-item{position:relative;display:flex;align-items:center;gap:10px;min-height:34px;padding:0 12px;border-radius:var(--r-sm);color:var(--rail-ink);font-size:13px;font-weight:500;cursor:pointer;transition:background .12s ease,color .12s ease;}
   .nav-item:hover{background:var(--rail-2);color:#fff;}
-  .nav-item.active{background:var(--rail-2);color:#fff;font-weight:600;}
-  .nav-item.active::before{content:'';position:absolute;left:-14px;top:9px;bottom:9px;width:3px;border-radius:0 3px 3px 0;background:var(--red-500);}
-  .nav-item svg{flex-shrink:0;width:17px;height:17px;}
-  .nav-badge{margin-left:auto;background:var(--red-500);color:#fff;font-size:11px;font-weight:600;padding:0 7px;line-height:18px;border-radius:20px;}
-
-  .rail-user{display:flex;align-items:center;gap:10px;padding:12px 8px 0;border-top:1px solid var(--rail-2);margin-top:12px;}
-  .rail-user-meta{min-width:0;flex:1;display:flex;flex-direction:column;gap:2px;}
-  #headerUserLabel{font-size:12px;color:#DADDE4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .rail-signout{align-self:flex-start;background:none;border:none;padding:0;font-size:12px;color:var(--rail-ink);text-decoration:underline;text-underline-offset:3px;}
+  .nav-item.active{background:#fff;color:var(--red-500);font-weight:600;box-shadow:0 2px 8px rgba(80,0,12,.2);}
+  .nav-item svg{flex-shrink:0;width:18px;height:18px;}
+  .nav-badge{margin-left:auto;background:#fff;color:var(--red-500);font-size:11px;font-weight:600;padding:0 6px;line-height:16px;border-radius:20px;}
+  .nav-item.active .nav-badge{background:var(--red-500);color:#fff;}
+  .rail-user{display:flex;align-items:center;gap:12px;padding:12px 8px 0;border-top:1px solid rgba(255,255,255,.22);margin-top:12px;}
+  .rail-user-meta{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px;}
+  #headerUserLabel{font-size:12px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rail-signout{align-self:flex-start;display:flex;align-items:center;gap:8px;background:none;border:none;padding:0;font-size:12px;color:var(--rail-ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap;}
   .rail-signout:hover{color:#fff;}
-
-  .avatar{width:32px;height:32px;border-radius:50%;background:var(--rail-2);border:1px solid #343944;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:600;flex-shrink:0;}
-  .brand-mark{width:32px;height:32px;border-radius:8px;background:var(--red-500);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;}
+  .rail-signout svg{display:none;}
+  .avatar{width:32px;height:32px;border-radius:50%;background:var(--rail-2);border:1px solid rgba(255,255,255,.45);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;}
+  .brand-mark{width:34px;height:34px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;}
+  .brand-mark img{display:block;width:100%;height:100%;object-fit:contain;}
 
   .content{flex:1;min-width:0;}
   .content-header{display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:64px;border-bottom:1px solid var(--line);background:var(--surface);position:sticky;top:0;z-index:40;}
@@ -140,7 +106,7 @@
   .login-aside{flex:1;background:linear-gradient(160deg,#D5122F 0%,#A50D26 100%);color:#fff;padding:36px 34px;display:flex;flex-direction:column;justify-content:space-between;}
   .login-wordmark{display:flex;align-items:baseline;gap:9px;}
   .login-wordmark b{font-size:34px;font-weight:700;letter-spacing:.5px;}
-  .login-wordmark span{font-size:12.5px;font-weight:600;letter-spacing:2px;opacity:.85;}
+  .login-wordmark span{font-size:13px;font-weight:600;letter-spacing:2px;opacity:.85;}
   .login-tagline{font-size:22px;line-height:1.35;font-weight:600;max-width:15em;letter-spacing:-.01em;}
   .login-form{width:380px;flex-shrink:0;padding:36px 34px 28px;display:flex;flex-direction:column;justify-content:center;}
   .login-brand{display:flex;align-items:center;gap:10px;margin-bottom:22px;}
@@ -148,10 +114,10 @@
   .login-brand-sub{font-size:12px;color:var(--ink-3);}
   .login-title{font-size:18px;font-weight:600;margin:0 0 6px;}
   .login-error{background:var(--red-bg2);color:var(--red-fg);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:9px 12px;font-size:13px;margin:8px 0 4px;}
-  .login-label{display:block;font-size:12.5px;color:var(--ink-2);margin:14px 0 5px;font-weight:500;}
+  .login-label{display:block;font-size:13px;color:var(--ink-2);margin:14px 0 5px;font-weight:500;}
   .login-input{width:100%;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:10px 12px;font-size:14px;color:var(--ink);background:var(--surface);}
   .login-input:focus{outline:none;border-color:var(--red-500);box-shadow:0 0 0 3px rgba(200,16,46,.12);}
-  .login-sub{font-size:11.5px;color:var(--ink-3);margin:16px 0 0;word-break:break-all;}
+  .login-sub{font-size:12px;color:var(--ink-3);margin:16px 0 0;word-break:break-all;}
   .conn-status{display:flex;align-items:center;gap:8px;margin:16px 0 0;font-size:12px;color:var(--ink-3);}
   .conn-dot{width:9px;height:9px;border-radius:50%;background:var(--ink-4);flex-shrink:0;}
   .conn-status[data-state="ok"] .conn-dot{background:#1FA550;box-shadow:0 0 0 3px rgba(31,165,80,.18);}
@@ -171,7 +137,7 @@
   .as-error-banner{display:flex;align-items:center;gap:8px;background:var(--amber-bg);color:var(--amber-fg);border:1px solid #F5DDA8;border-radius:var(--r-md);padding:11px 16px;font-size:13px;margin-bottom:16px;}
 
   /* ---------- KPI cards (Asset Summary / Unmatched) ---------- */
-  .as-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:18px;}
+  .as-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:16px;}
   .as-kpi-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:16px 18px 15px 20px;box-shadow:var(--sh-xs);position:relative;overflow:hidden;cursor:pointer;transition:border-color .12s ease,box-shadow .12s ease;}
   .as-kpi-card:hover{border-color:var(--line-2);box-shadow:var(--sh-md);}
   .as-kpi-card.kpi-active{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);}
@@ -183,7 +149,7 @@
   .as-kpi-label{font-size:13px;font-weight:500;color:var(--ink-2);margin:0 0 6px;}
   .as-kpi-value{font-size:30px;line-height:1.1;font-weight:600;letter-spacing:-.02em;margin:0;}
   .as-kpi-sub{font-size:12px;color:var(--ink-3);margin-top:5px;}
-  .as-last-sync{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 13px;white-space:nowrap;}
+  .as-last-sync{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 13px;white-space:nowrap;}
   .as-last-sync b{color:var(--ink);font-weight:600;}
   .as-last-sync .dot{width:7px;height:7px;border-radius:50%;background:var(--green-fg);flex-shrink:0;box-shadow:0 0 0 3px rgba(23,117,58,.15);}
 
@@ -212,7 +178,7 @@
   .as-modal-title{font-size:16px;font-weight:600;margin:0 0 6px;}
   .as-modal-body{font-size:13px;color:var(--ink-2);line-height:1.65;margin-bottom:6px;}
   .as-modal-asset{display:flex;justify-content:space-between;gap:12px;background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;margin:12px 0 18px;font-size:13px;}
-  .as-modal-asset b{font-weight:600;font-family:var(--mono);font-size:12.5px;}
+  .as-modal-asset b{font-weight:600;font-family:var(--mono);font-size:13px;}
   .as-modal-actions{display:flex;justify-content:flex-end;gap:8px;}
 
   /* ---------- buttons ---------- */
@@ -227,12 +193,12 @@
   /* ---------- table card toolbar ---------- */
   .as-toolbar{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg) var(--r-lg) 0 0;padding:14px 18px;flex-wrap:wrap;}
   .as-toolbar-title{font-size:15px;font-weight:600;margin:0;flex:1;min-width:200px;}
-  .as-toolbar-title span{display:block;font-size:12.5px;line-height:1.4;margin-top:2px;}
+  .as-toolbar-title span{display:block;font-size:13px;line-height:1.4;margin-top:2px;}
   .as-select{border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px 10px;font-size:13px;color:var(--ink);background:var(--surface);}
   .as-table-wrap{background:var(--surface);border:1px solid var(--line);border-top:none;border-radius:0 0 var(--r-lg) var(--r-lg);overflow-x:auto;box-shadow:var(--sh-xs);}
   .as-table{width:100%;border-collapse:collapse;min-width:900px;}
-  .as-table th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:10px 16px;background:var(--surface-1);border-top:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap;}
-  .as-table td{padding:12px 16px;border-bottom:1px solid var(--line);font-size:14.5px;white-space:nowrap;}
+  .as-table th{text-align:left;font-size:13px;font-weight:600;color:var(--ink-2);padding:10px 16px;background:var(--surface-1);border-top:1px solid var(--line);border-bottom:1px solid var(--line);white-space:nowrap;}
+  .as-table td{padding:12px 16px;border-bottom:1px solid var(--line);font-size:15px;white-space:nowrap;}
   /* ชื่อ Asset ยาว → ตัดด้วย ... ท้ายข้อความ ให้ทุกแถวสูง/กว้างเท่ากัน เห็นคอลัมน์สถานะและ Actions ครบ (ชี้เมาส์ดูชื่อเต็มได้) */
   .as-cell-name{max-width:clamp(160px,16vw,320px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .as-table tr:last-child td{border-bottom:none;}
@@ -261,7 +227,7 @@
   .store-search-box:focus-within,.search-box:focus-within{border-color:var(--ink-2);box-shadow:0 0 0 3px rgba(20,22,27,.07);}
   .store-search-box{flex:1;min-width:240px;max-width:380px;}
   .search-box{flex:1;min-width:200px;}
-  .store-search-box input,.search-box input{border:none;background:none;outline:none;font-size:13.5px;width:100%;color:var(--ink);}
+  .store-search-box input,.search-box input{border:none;background:none;outline:none;font-size:14px;width:100%;color:var(--ink);}
   .store-chips{display:flex;flex-wrap:wrap;gap:8px;max-height:73px;overflow:hidden;margin-bottom:8px;}
   .store-chips.expanded{max-height:none;}
   .chips-toggle{display:none;background:none;border:none;color:var(--red-600);font-size:13px;font-weight:600;padding:2px 0;margin-bottom:16px;text-decoration:underline;text-underline-offset:3px;}
@@ -269,7 +235,7 @@
   .store-chip:hover{border-color:var(--ink-3);}
   .store-chip.active{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600;order:-1;}
   .filter-chips{display:flex;gap:6px;flex-wrap:wrap;}
-  .f-chip{font-size:12.5px;font-weight:500;padding:6px 13px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);}
+  .f-chip{font-size:13px;font-weight:500;padding:6px 13px;border-radius:20px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);}
   .f-chip:hover{border-color:var(--ink-3);}
   .f-chip.active{background:var(--ink);color:#fff;border-color:var(--ink);font-weight:600;}
   .stat-clickable{cursor:pointer;}
@@ -291,19 +257,19 @@
   .summary-stat-value.danger{color:var(--red-fg);}
   .progress-track{height:14px;border-radius:7px;background:var(--surface-2);overflow:hidden;}
   .progress-fill{height:100%;background:var(--green-fg);border-radius:7px;transition:width .4s ease;}
-  .progress-caption{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2);margin-top:8px;}
+  .progress-caption{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2);margin-top:8px;}
   .dept-filter-title{font-size:13px;font-weight:600;color:var(--ink-2);margin:0 0 8px;}
 
   /* ---------- branch grid ---------- */
-  .page-intro{font-size:13.5px;color:var(--ink-2);margin:0 0 18px;max-width:60em;}
+  .page-intro{font-size:14px;color:var(--ink-2);margin:0 0 18px;max-width:60em;}
   .bg-col-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;margin-bottom:10px;}
   .bg-col-count{background:var(--surface);border:1px solid var(--line);color:var(--ink-2);font-size:12px;font-weight:600;padding:0 9px;line-height:20px;border-radius:20px;}
   .bg-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;}
   .bg-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--ink-4);border-radius:var(--r-md);padding:12px 14px;cursor:pointer;box-shadow:var(--sh-xs);transition:box-shadow .12s ease,border-color .12s ease;}
   .bg-card:hover{box-shadow:var(--sh-md);border-color:var(--line-2);border-left-color:inherit;}
-  .bg-card-name{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:1px;}
+  .bg-card-name{font-size:14px;font-weight:600;color:var(--ink);margin-bottom:1px;}
   .bg-card-code{font-size:12px;font-family:var(--mono);color:var(--ink-3);margin-bottom:8px;}
-  .bg-card-stat{font-size:12.5px;color:var(--ink-2);}
+  .bg-card-stat{font-size:13px;color:var(--ink-2);}
   .bg-card-empty{font-size:13px;color:var(--ink-3);padding:10px 2px;}
   .bg-col.on_process .bg-card{border-left-color:var(--amber-fg);}
   .bg-col.open .bg-card{border-left-color:var(--red-fg);}
@@ -312,7 +278,7 @@
   /* ---------- needs-attention bar / load more ---------- */
   .load-more-row{display:flex;justify-content:center;gap:10px;padding:16px;border-top:1px solid var(--line);background:var(--surface-1);}
   .load-more-left{color:var(--ink-3);}
-  .asset-name > span{font-size:12.5px !important;}
+  .asset-name > span{font-size:13px !important;}
 
   /* ---------- toolbar ---------- */
   .toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
@@ -324,25 +290,25 @@
   .dropzone-btn:hover{background:#000;}
   .import-summary{background:var(--surface-1);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin-bottom:14px;font-size:13px;}
   .import-summary b{color:var(--ink);}
-  .import-preview{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12.5px;}
+  .import-preview{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;}
   .import-preview th{text-align:left;color:var(--ink-2);font-weight:600;padding:7px 8px;border-bottom:1px solid var(--line);}
   .import-preview td{padding:7px 8px;border-bottom:1px solid var(--line);}
-  .writeoff-warn{background:var(--red-bg2);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:10px 12px;font-size:12.5px;color:var(--red-fg);margin-bottom:10px;}
+  .writeoff-warn{background:var(--red-bg2);border:1px solid #F3C2BC;border-radius:var(--r-sm);padding:10px 12px;font-size:13px;color:var(--red-fg);margin-bottom:10px;}
 
   /* ---------- asset list (Overview) ---------- */
   .asset-table{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);}
   .asset-head{display:grid;grid-template-columns:52px minmax(0,1.7fr) minmax(0,1.1fr) minmax(0,.8fr) 60px 120px 90px 132px;gap:10px;padding:11px 18px;background:var(--surface-1);border-bottom:1px solid var(--line);font-size:13px;font-weight:600;color:var(--ink-2);}
-  .asset-row{display:grid;grid-template-columns:52px minmax(0,1.7fr) minmax(0,1.1fr) minmax(0,.8fr) 60px 120px 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:14.5px;cursor:pointer;}
+  .asset-row{display:grid;grid-template-columns:52px minmax(0,1.7fr) minmax(0,1.1fr) minmax(0,.8fr) 60px 120px 90px 132px;gap:10px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);font-size:15px;cursor:pointer;}
   .asset-table.office-view .asset-head,
   .asset-table.office-view .asset-row{grid-template-columns:52px minmax(0,1.6fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,.7fr) minmax(0,1fr) 60px 120px 90px 132px;}
   .asset-row > div{min-width:0;}
   .emp-name-cell{display:flex;align-items:center;gap:18px;}
   .emp-name-cell > span{flex:0 1 190px;min-width:0;}
   .emp-chips{display:grid;grid-template-columns:repeat(2,104px);gap:4px 6px;flex-shrink:0;}
-  .emp-chip{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;line-height:18px;padding:1px 10px 1px 8px;border-radius:20px;border:1px solid;white-space:nowrap;cursor:default;}
+  .emp-chip{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;line-height:18px;padding:1px 10px 1px 8px;border-radius:20px;border:1px solid;white-space:nowrap;cursor:default;}
   .emp-chip::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
   .emp-chip.ok{color:var(--green-fg);background:var(--green-bg);border-color:rgba(23,117,58,.35);}
-  .emp-age{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:16px;padding:0 4px;margin-left:2px;border-radius:9px;font-size:10px;font-weight:700;color:#fff;line-height:1;}
+  .emp-age{display:inline-flex;align-items:center;justify-content:center;min-width:19px;height:16px;padding:0 4px;margin-left:2px;border-radius:9px;font-size:11px;font-weight:700;color:#fff;line-height:1;}
   .emp-age.over{background:#6D28D9;}
   .emp-age.soon{background:#D97706;}
   .emp-dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin:6px 0 14px;}
@@ -351,24 +317,24 @@
   .emp-dept-card.sel{border-color:var(--red-500);box-shadow:0 0 0 1px var(--red-500) inset;}
   .emp-dept-card .dc-code{font-weight:700;font-size:15px;}
   .emp-dept-card .dc-n{float:right;font-size:13px;color:var(--ink-2);}
-  .emp-dept-card .dc-row{margin-top:6px;font-size:12.5px;color:var(--ink-3);display:flex;gap:10px;flex-wrap:wrap;}
+  .emp-dept-card .dc-row{margin-top:6px;font-size:13px;color:var(--ink-3);display:flex;gap:10px;flex-wrap:wrap;}
   .hold-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
   .hold-form{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;}
   .hold-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--ink-3);}
   .hold-form input,.hold-form select{width:100%;box-sizing:border-box;}
   .hold-item.editing{border-color:var(--red-500);}
   .hold-item.replacing{border-color:var(--red-500);background:var(--surface-2,var(--surface));}
-  .hold-banner{font-size:12.5px;line-height:1.6;background:var(--surface-2,#f6f6f6);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin:6px 0;}
+  .hold-banner{font-size:13px;line-height:1.6;background:var(--surface-2,#f6f6f6);border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 10px;margin:6px 0;}
   .emp-choice{display:block;width:100%;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:12px 14px;margin:0 0 10px;cursor:pointer;}
   .emp-choice:hover{border-color:var(--red-500);}
-  .emp-choice b{display:block;font-size:14.5px;}
-  .emp-choice span{display:block;margin-top:3px;font-size:12.5px;color:var(--ink-3);line-height:1.5;}
+  .emp-choice b{display:block;font-size:15px;}
+  .emp-choice span{display:block;margin-top:3px;font-size:13px;color:var(--ink-3);line-height:1.5;}
   .emp-name-link{background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left;border-bottom:1px dotted var(--ink-3);}
   .emp-name-link:hover{color:var(--red-600);border-bottom-color:var(--red-600);}
   .hold-sec{font-size:12px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em;margin:18px 0 8px;}
   .hold-item{border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;margin-bottom:8px;position:relative;}
-  .hold-item .hold-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;font-size:13.5px;}
-  .hold-item .hold-meta{margin-top:4px;font-size:12.5px;color:var(--ink-3);line-height:1.5;}
+  .hold-item .hold-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;font-size:14px;}
+  .hold-item .hold-meta{margin-top:4px;font-size:13px;color:var(--ink-3);line-height:1.5;}
   .hold-item .hold-act{position:absolute;top:8px;right:8px;}
   .hold-item.past{background:var(--surface-1);}
   .hold-flow{color:var(--ink-2);}
@@ -376,11 +342,11 @@
   .hold-pick:hover{border-color:var(--red-500);}
   .hold-pick small{display:block;color:var(--ink-3);font-size:12px;margin-top:2px;}
   .emp-chip-none{font-size:12px;color:var(--ink-4);}
-  .emp-hold-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:var(--amber-bg);border:1px solid var(--line);border-radius:var(--r-md);font-size:13.5px;}
+  .emp-hold-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;padding:10px 14px;background:var(--amber-bg);border:1px solid var(--line);border-radius:var(--r-md);font-size:14px;}
   .emp-hold-bar > span{flex:1 1 320px;}
   .emp-chip.no{color:var(--red-fg);background:var(--red-bg2);border-color:rgba(190,42,32,.30);}
   .asset-cell-1l{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 8px;margin-left:5px;white-space:nowrap;}
+  .dept-warn-badge{display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--amber-fg);background:var(--amber-bg);border-radius:20px;padding:1px 8px;margin-left:5px;white-space:nowrap;}
   .sortable-col{cursor:pointer;user-select:none;}
   .sortable-col:hover{color:var(--ink);}
   .asset-thumb{width:40px;height:40px;border-radius:var(--r-sm);object-fit:cover;display:block;background:var(--surface-2);}
@@ -401,8 +367,8 @@
   .status-pill.damaged .sp-dot{background:var(--orange-fg);}
   .status-pill.unmatched{background:var(--purple-bg);color:var(--purple-fg);}
   .status-pill.unmatched .sp-dot{background:var(--purple-fg);}
-  .row-time{color:var(--ink-3);font-size:12.5px;}
-  .row-action{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:6px 12px;font-size:12.5px;font-weight:500;color:var(--ink);}
+  .row-time{color:var(--ink-3);font-size:13px;}
+  .row-action{background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:6px 12px;font-size:13px;font-weight:500;color:var(--ink);}
   .row-action:hover{background:var(--surface-1);border-color:var(--ink-4);}
 
   /* ---------- drawer ---------- */
@@ -418,7 +384,7 @@
   .photo-box{width:100%;aspect-ratio:4/3;background:var(--surface-2);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:var(--ink-4);margin-bottom:10px;overflow:hidden;}
   .photo-box img{width:100%;height:100%;object-fit:cover;}
   .photo-actions{display:flex;gap:8px;margin-bottom:22px;}
-  .photo-actions button{flex:1;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px;font-size:12.5px;font-weight:500;color:var(--ink);}
+  .photo-actions button{flex:1;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-sm);padding:8px;font-size:13px;font-weight:500;color:var(--ink);}
   .photo-actions button:hover{background:var(--surface-1);}
   .field-group{margin-bottom:18px;}
   .field-label{font-size:13px;font-weight:600;color:var(--ink-2);margin:0 0 6px;}
@@ -440,29 +406,29 @@
   .hint{font-size:12px;color:var(--ink-3);margin:6px 0 0;}
   .mono{font-family:var(--mono);font-size:13px;}
 
-  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:var(--r-md);padding:11px 20px;font-size:13.5px;z-index:950;opacity:0;transition:all .2s;pointer-events:none;box-shadow:var(--sh-lg);}
+  .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;border-radius:var(--r-md);padding:11px 20px;font-size:14px;z-index:950;opacity:0;transition:all .2s;pointer-events:none;box-shadow:var(--sh-lg);}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   /* ---------- Home dashboard (ภาพรวมทุกสาขา — ข้อมูลจริงเท่านั้น) ---------- */
   #storeChips,#storeChipsToggle{display:none !important;}
-  .home-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:18px;}
-  @media (max-width:1280px){.home-kpis{grid-template-columns:repeat(3,minmax(0,1fr));}}
-  @media (max-width:560px){.home-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  .home-kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:16px;margin-bottom:16px;}
+  @media (max-width:1279px){.home-kpis{grid-template-columns:repeat(3,minmax(0,1fr));}}
+  @media (max-width:767px){.home-kpis{grid-template-columns:repeat(2,minmax(0,1fr));}}
   .kpi-tile{display:flex;flex-direction:column;gap:4px;text-align:left;font:inherit;color:inherit;background:var(--surface);border:1px solid transparent;border-radius:var(--r-lg);padding:16px 18px 15px;box-shadow:var(--sh-xs);cursor:pointer;transition:box-shadow .12s ease,border-color .12s ease;}
   .kpi-tile:hover{box-shadow:var(--sh-md);border-color:var(--line-2);}
   .kpi-tile-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
-  .kpi-label{font-size:13.5px;font-weight:600;color:var(--ink-2);padding-top:2px;}
+  .kpi-label{font-size:14px;font-weight:600;color:var(--ink-2);padding-top:2px;}
   .kpi-icon,.attn-icon{display:flex;align-items:center;justify-content:center;border-radius:50%;flex-shrink:0;background:var(--c-bg);color:var(--c);}
   .kpi-icon{width:40px;height:40px;}
   .kpi-icon svg,.attn-icon svg{width:20px;height:20px;}
   .kpi-bar{display:block;height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin-top:8px;}
   .kpi-bar i{display:block;height:100%;width:0;background:var(--c);border-radius:inherit;transition:width .6s ease;}
   .kpi-num{font-size:30px;line-height:1.15;font-weight:700;letter-spacing:-.02em;}
-  .kpi-note{font-size:12.5px;color:var(--ink-3);}
+  .kpi-note{font-size:13px;color:var(--ink-3);}
   .c-blue{--c:var(--blue-fg);--c-bg:var(--blue-bg);} .c-green{--c:var(--green-fg);--c-bg:var(--green-bg);}
   .c-amber{--c:var(--amber-fg);--c-bg:var(--amber-bg);} .c-red{--c:var(--red-fg);--c-bg:var(--red-bg2);}
   .c-orange{--c:var(--orange-fg);--c-bg:var(--orange-bg);} .c-purple{--c:var(--purple-fg);--c-bg:var(--purple-bg);} .c-teal{--c:#0E7C86;--c-bg:#E2F5F6;}
-  .home-section{background:var(--surface);border-radius:var(--r-lg);padding:18px 20px 20px;box-shadow:var(--sh-xs);margin-bottom:18px;}
+  .home-section{background:var(--surface);border-radius:var(--r-lg);padding:18px 20px 20px;box-shadow:var(--sh-xs);margin-bottom:16px;}
   .home-section-title{font-size:16px;font-weight:700;margin:0 0 14px;letter-spacing:-.01em;}
   .home-section-sub{font-size:13px;color:var(--ink-3);font-weight:400;margin-left:6px;}
   .attn-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;}
@@ -470,13 +436,13 @@
   .attn-card:hover{box-shadow:var(--sh-md);}
   .attn-icon{width:46px;height:46px;}
   .attn-num{font-size:28px;line-height:1.1;font-weight:700;letter-spacing:-.02em;}
-  .attn-label{font-size:13.5px;font-weight:600;}
+  .attn-label{font-size:14px;font-weight:600;}
   .attn-sub{font-size:12px;color:var(--ink-3);}
   .snap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:4px 16px;}
   .snap-tile{display:flex;align-items:center;gap:12px;padding:12px 2px;min-width:0;}
   .snap-tile .kpi-icon{width:44px;height:44px;}
   .snap-num{display:block;font-size:22px;line-height:1.15;font-weight:700;letter-spacing:-.01em;}
-  .snap-label{display:block;font-size:12.5px;color:var(--ink-3);}
+  .snap-label{display:block;font-size:13px;color:var(--ink-3);}
   .trend-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px;}
   .trend-item{min-width:0;}
   .trend-label{font-size:13px;font-weight:600;color:var(--ink-2);}
@@ -496,7 +462,7 @@
   .legend-row b{margin-left:auto;font-size:16px;font-weight:700;}
   .overall-pct{font-size:52px;line-height:1.05;font-weight:700;letter-spacing:-.03em;margin:0;}
   .overall-sub{font-size:13px;color:var(--ink-3);margin:2px 0 18px;}
-  .legend-note{font-size:12.5px;color:var(--ink-3);margin-top:8px;}
+  .legend-note{font-size:13px;color:var(--ink-3);margin-top:8px;}
   .branch-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;width:100%;text-align:left;font:inherit;color:inherit;background:none;border:none;border-top:1px solid var(--line);padding:10px 4px;cursor:pointer;border-radius:0;}
   .branch-row:first-child{border-top:none;}
   .branch-row:hover{background:var(--surface-1);}
@@ -504,7 +470,7 @@
   .branch-row-left{font-size:13px;color:var(--amber-fg);font-weight:600;}
   .branch-row-bar{grid-column:1 / -1;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;}
   .branch-row-bar i{display:block;height:100%;background:var(--green-fg);border-radius:3px;}
-  .home-empty{font-size:13.5px;color:var(--ink-3);padding:8px 0;}
+  .home-empty{font-size:14px;color:var(--ink-3);padding:8px 0;}
   .workspace-head{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin:6px 0 12px;scroll-margin-top:80px;}
   .workspace-head .home-section-title{margin:0;}
 
@@ -515,15 +481,6 @@
     .summary-main{grid-template-columns:1fr;gap:18px;}
   }
   @media (max-width:900px){
-    .app{flex-direction:column;}
-    .sidebar{width:100%;height:auto;position:static;flex-direction:row;align-items:center;padding:8px 10px;overflow-x:auto;gap:6px;}
-    .sb-brand{display:none;}
-    .sb-nav{flex-direction:row;flex:none;}
-    .nav-item{white-space:nowrap;padding:8px 12px;}
-    .nav-item.active::before{left:10px;right:10px;top:auto;bottom:0;width:auto;height:3px;border-radius:3px 3px 0 0;}
-    .rail-user{border-top:none;margin:0 0 0 auto;padding:0 4px;flex-shrink:0;}
-    .rail-user-meta{flex-direction:row;align-items:center;gap:10px;}
-    .content-header{padding:0 16px;height:56px;top:0;position:static;}
     .content-body{padding:16px 16px 60px;}
     .login-aside{display:none;}
     .login-form{width:100%;}
@@ -540,11 +497,8 @@
     *{transition:none !important;animation-duration:.01ms !important;}
   }
 
-  /* ===== 3D motion (decorative only; disabled by prefers-reduced-motion) ===== */
-  .kpi-tile,.attn-card{transform:perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(0);transition:transform .18s ease-out,box-shadow .12s ease,border-color .12s ease;will-change:transform;}
-  .kpi-tile.tilting,.attn-card.tilting{transition:transform .05s linear,box-shadow .12s ease;box-shadow:var(--sh-md);}
-  .kpi-tile::after,.attn-card::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.55),transparent 60%);transition:opacity .18s;}
-  .kpi-tile.tilting::after,.attn-card.tilting::after{opacity:1;}
+  /* (ยกเลิกเอฟเฟกต์ 3D tilt ของการ์ด — ลดแอนิเมชันเกินจำเป็น) */
+  .kpi-tile::after,.attn-card::after{display:none;}
   .kpi-tile,.attn-card{position:relative;}
   .ring-wrap{display:flex;align-items:center;gap:22px;margin:4px 0 14px;perspective:600px;}
   .ring3d{position:relative;width:132px;height:132px;flex-shrink:0;transform-style:preserve-3d;animation:ringIn .9s cubic-bezier(.2,.8,.2,1) both;filter:drop-shadow(0 8px 10px rgba(16,24,40,.14));}
@@ -568,36 +522,59 @@
   }
 
   /* ============================================================
-     ธีมแดง (2026-11-20) — sidebar แดง, แบนเนอร์หน้า Dashboard, KPI แบบกราเดียนต์
-     เปลี่ยนเฉพาะสี/หน้าตา ไม่แตะ id / handler / JS
+     ธีม Bata (2026-11-20) — header, แบนเนอร์, KPI, การ์ดแผนก, ตารางกะทัดรัด
      ============================================================ */
-  :root{ --page:#F6F3F4; --rail:#B80F2B; --rail-2:rgba(255,255,255,.16); --rail-ink:#FFE4E8; }
-  .sidebar{background:linear-gradient(180deg,#D5122F 0%,#B80F2B 55%,#8F0B20 100%);}
-  .sb-brand-name{color:#fff;} .sb-brand-sub{color:#FFD3DA;}
-  .sidebar .brand-mark{background:#fff;color:var(--red-500);box-shadow:0 2px 8px rgba(80,0,12,.25);}
-  .nav-item:hover{background:rgba(255,255,255,.14);color:#fff;}
-  .nav-item.active{background:#fff;color:var(--red-500);font-weight:600;box-shadow:0 2px 10px rgba(80,0,12,.22);}
-  .nav-item.active::before{display:none;}
-  .nav-badge{background:#fff;color:var(--red-500);}
-  .rail-user{border-top-color:rgba(255,255,255,.22);}
-  .avatar{border-color:rgba(255,255,255,.45);}
-  #headerUserLabel{color:#fff;}
-  .content-header{background:rgba(255,255,255,.92);backdrop-filter:blur(6px);}
-  .content-title{color:var(--ink);}
+  .content-header{background:rgba(255,255,255,.94);backdrop-filter:blur(6px);}
   .import-btn{background:var(--red-500);border-color:var(--red-500);color:#fff;font-weight:600;}
   .import-btn:hover{background:var(--red-600);border-color:var(--red-600);}
-  .home-section{border:1px solid #EFE7E9;}
+  .home-section{border:1px solid var(--line);}
 
   /* แบนเนอร์หน้า Dashboard — ภาพ banner_fixasset.webp (ข้อความอยู่ในภาพ) */
-  .hero-banner{margin-bottom:18px;border-radius:var(--r-lg);overflow:hidden;border:1px solid #EFE7E9;box-shadow:var(--sh-xs);background:#fff;line-height:0;}
-  .hero-banner img{display:block;width:100%;height:auto;aspect-ratio:3.4/1;object-fit:cover;object-position:center top;}
+  .hero-banner{margin-bottom:16px;border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line);box-shadow:var(--sh-xs);background:#fff;line-height:0;}
+  .hero-banner img{display:block;width:100%;height:auto;aspect-ratio:4.4/1;max-height:270px;object-fit:cover;object-position:center 35%;}
+  @media (max-width:767px){.hero-banner img{aspect-ratio:3/1;object-fit:cover;object-position:left center;}}
+
   /* KPI: ใบแรกแดงทึบ ใบอื่นไล่สีอ่อนตามสีของมัน */
-  .kpi-tile{background:linear-gradient(135deg,#fff 45%,var(--c-bg) 140%);border-color:#EFE7E9;}
-  .home-kpis .kpi-tile:first-child{background:linear-gradient(135deg,#E0173A 0%,#A50D26 100%);border-color:transparent;color:#fff;box-shadow:0 10px 24px rgba(200,16,46,.28);}
-  .home-kpis .kpi-tile:first-child .kpi-label,.home-kpis .kpi-tile:first-child .kpi-note{color:rgba(255,255,255,.88);}
+  .kpi-tile{background:linear-gradient(135deg,#fff 45%,var(--c-bg) 140%);border-color:var(--line);}
+  .home-kpis .kpi-tile:first-child{background:linear-gradient(135deg,#E3001F 0%,#B00017 100%);border-color:transparent;color:#fff;box-shadow:0 8px 20px rgba(213,0,28,.25);}
+  .home-kpis .kpi-tile:first-child .kpi-label,.home-kpis .kpi-tile:first-child .kpi-note{color:rgba(255,255,255,.9);}
   .home-kpis .kpi-tile:first-child .kpi-icon{background:rgba(255,255,255,.2);color:#fff;}
   .home-kpis .kpi-tile:first-child .kpi-bar{background:rgba(255,255,255,.25);}
   .home-kpis .kpi-tile:first-child .kpi-bar i{background:#fff;}
+
+  /* การ์ดสรุปแผนก (หน้าพนักงาน) + ตารางกะทัดรัด */
+  .emp-dept-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin:8px 0 16px;}
+  .emp-dept-card{padding:8px 12px;}
+  .emp-dept-card.sel{border-color:var(--red-500);background:var(--red-bg);box-shadow:0 0 0 1px var(--red-500) inset;}
+  .as-table th{padding:8px 16px;font-size:12px;text-transform:none;}
+  .as-table td{padding:8px 16px;font-size:14px;}
+  .as-table-wrap{max-width:100%;}
+  /* top bar 72px: ชื่อหน้า + คำอธิบาย + ป้ายองค์กร (ขวา) */
+  .content-header{height:72px;padding:0 32px;gap:16px;justify-content:flex-start;border-bottom:1px solid var(--line);}
+  .content-heading{min-width:0;flex:1;}
+  .content-title{font-size:20px;font-weight:700;line-height:1.3;margin:0;}
+  .content-sub{font-size:13px;color:var(--ink-3);line-height:1.4;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .org-chip{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:6px 14px 6px 8px;border:1px solid var(--line);border-radius:999px;background:var(--surface);box-shadow:var(--sh-xs);font-size:14px;font-weight:600;}
+  .org-dot{width:24px;height:24px;border-radius:50%;background:var(--red-500);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+  .sb-toggle{display:none;flex-shrink:0;width:40px;height:40px;align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:var(--r-sm);background:var(--surface);color:var(--ink);}
+  .sb-toggle svg{width:20px;height:20px;}
+  @media (max-width:1279px){.sb-toggle{display:inline-flex;}}
+  @media (max-width:900px){.content-header{padding:0 16px;height:64px;}.org-name{display:none;}.org-chip{padding:6px;}}
+  @media (max-width:560px){.content-sub{display:none;}}
+
+  /* แถวสามแผง: ความคืบหน้า / สาขาที่เหลือมากที่สุด / สิ่งที่ต้องดูแล (To-Do) */
+  .home-trio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:16px;align-items:stretch;}
+  .home-trio .home-section{margin-bottom:0;}
+  .home-trio .attn-grid{grid-template-columns:1fr;gap:8px;}
+  .home-trio .attn-card{padding:8px 12px;gap:12px;border-bottom:1px solid var(--line);border-left:4px solid var(--c);}
+  .home-trio .attn-icon{width:36px;height:36px;}
+  .home-trio .attn-card br{display:none;}
+  .home-trio .attn-num{display:inline-block;margin-right:8px;font-size:20px;line-height:1.2;vertical-align:middle;}
+  .home-trio .attn-label{display:inline;font-size:14px;vertical-align:middle;}
+  .home-trio .attn-sub{display:block;margin-top:2px;}
+  @media (max-width:1279px){.home-trio{grid-template-columns:repeat(2,minmax(0,1fr));}.home-trio > :last-child{grid-column:1/-1;}}
+  @media (max-width:767px){.home-trio{grid-template-columns:1fr;}}
+  .kpi-tile{padding:12px 16px;} .kpi-num{font-size:26px;} .home-kpis .kpi-icon{width:32px;height:32px;} .home-kpis .kpi-icon svg{width:16px;height:16px;} .home-kpis .kpi-label{font-size:13px;}
   @media print{.hero-banner{display:none !important;}}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -677,12 +654,13 @@
 
 <div class="app" id="appRoot" style="display:none;">
   <div class="sb-edge" aria-hidden="true"></div>
-  <nav class="sidebar">
+  <div class="sb-backdrop" id="sbBackdrop" onclick="toggleSidebar(false)"></div>
+  <nav class="sidebar" id="appSidebar">
     <div class="sb-brand">
-      <div class="brand-mark">B</div>
+      <div class="brand-mark"><img src="bata_logo.png" alt="Bata" width="34" height="34"></div>
       <div>
         <span class="sb-brand-name">Bata Fix Asset</span>
-        <span class="sb-brand-sub">HQ Dashboard</span>
+        <span class="sb-brand-sub">Asset Audit System</span>
       </div>
     </div>
     <div class="sb-nav">
@@ -703,6 +681,7 @@
         <span class="nav-text">ไม่พบใน Master</span>
         <span class="nav-badge" id="navUnmatchedBadge" style="display:none;">0</span>
       </div>
+      <p class="nav-group">จัดการระบบ</p>
       <div class="nav-item" id="navEmployees" onclick="showPage('employees')" role="button" tabindex="0" title="พนักงาน" aria-label="พนักงาน">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 14.3c2.4.4 4 2.4 4 5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         <span class="nav-text">พนักงาน</span>
@@ -723,7 +702,12 @@
 
   <div class="content">
     <div class="content-header">
-      <p class="content-title" id="pageTitle">Dashboard</p>
+      <button class="sb-toggle" id="sbToggle" type="button" onclick="toggleSidebar()" aria-label="เปิด/ปิดเมนู" aria-controls="appSidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+      <div class="content-heading">
+        <p class="content-title" id="pageTitle">Dashboard</p>
+        <p class="content-sub" id="pageSubtitle">ภาพรวมการใช้งานระบบ Fix Asset</p>
+      </div>
+      <div class="org-chip" aria-label="Bata (Thailand) Limited"><span class="org-dot">B</span><span class="org-name">Bata (Thailand) Limited</span></div>
     </div>
 
     <div class="content-body">
@@ -761,7 +745,7 @@
         </div>
 
         <div class="hero-banner" id="heroBanner">
-          <img src="banner_fixasset.webp" alt="Bata Fix Asset — Asset Audit System: ตรวจนับทรัพย์สิน ติดตามสถานะ สรุปรายงาน" width="1600" height="533" decoding="async">
+          <img src="assets/fix_asset_banner.webp" alt="Bata Fix Asset — Asset Audit System: ตรวจนับทรัพย์สิน ติดตามสถานะ สรุปรายงาน" width="1800" height="600">
         </div>
 
         <div class="home-dash" id="homeDash">
@@ -802,6 +786,26 @@
       </button>
     </div>
 
+    <div class="home-trio">
+      <section class="home-section">
+        <h2 class="home-section-title">ความคืบหน้ารายสาขา</h2>
+        <div class="ring-wrap">
+          <div class="ring3d" aria-hidden="true">
+            <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" id="hmRing" cx="60" cy="60" r="52"/></svg>
+            <div class="ring-center"><p class="overall-pct" id="hmOverallPct">—</p></div>
+          </div>
+          <p class="overall-sub" style="margin:0">ของทรัพย์สินทั้งหมดสแกนแล้ว</p>
+        </div>
+        <div class="stack-bar" id="hmStackBar"><span class="sb-done" style="width:0"></span><span class="sb-progress" style="width:0"></span><span class="sb-none" style="width:0"></span></div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--green-fg)"></span>ตรวจครบแล้ว<b id="hmBrDone">—</b></div>
+        <div class="legend-row"><span class="legend-dot" style="background:#E5A100"></span>กำลังตรวจ<b id="hmBrProgress">—</b></div>
+        <div class="legend-row"><span class="legend-dot" style="background:var(--ink-4)"></span>ยังไม่เริ่ม<b id="hmBrNotStarted">—</b></div>
+        <p class="legend-note" id="hmBrEmptyNote"></p>
+      </section>
+      <section class="home-section">
+        <h2 class="home-section-title">สาขาที่ยังเหลือมากที่สุด<span class="home-section-sub">เฉพาะสาขาที่กำลังตรวจ — คลิกเพื่อดูรายละเอียด</span></h2>
+        <div id="hmTopBranches"></div>
+      </section>
     <section class="home-section">
       <h2 class="home-section-title">สิ่งที่ต้องดูแล</h2>
       <div class="attn-grid">
@@ -827,27 +831,6 @@
         </div>
       </div>
     </section>
-
-    <div class="home-cols">
-      <section class="home-section">
-        <h2 class="home-section-title">ความคืบหน้ารายสาขา</h2>
-        <div class="ring-wrap">
-          <div class="ring3d" aria-hidden="true">
-            <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/><circle class="ring-fg" id="hmRing" cx="60" cy="60" r="52"/></svg>
-            <div class="ring-center"><p class="overall-pct" id="hmOverallPct">—</p></div>
-          </div>
-          <p class="overall-sub" style="margin:0">ของทรัพย์สินทั้งหมดสแกนแล้ว</p>
-        </div>
-        <div class="stack-bar" id="hmStackBar"><span class="sb-done" style="width:0"></span><span class="sb-progress" style="width:0"></span><span class="sb-none" style="width:0"></span></div>
-        <div class="legend-row"><span class="legend-dot" style="background:var(--green-fg)"></span>ตรวจครบแล้ว<b id="hmBrDone">—</b></div>
-        <div class="legend-row"><span class="legend-dot" style="background:#E5A100"></span>กำลังตรวจ<b id="hmBrProgress">—</b></div>
-        <div class="legend-row"><span class="legend-dot" style="background:var(--ink-4)"></span>ยังไม่เริ่ม<b id="hmBrNotStarted">—</b></div>
-        <p class="legend-note" id="hmBrEmptyNote"></p>
-      </section>
-      <section class="home-section">
-        <h2 class="home-section-title">สาขาที่ยังเหลือมากที่สุด<span class="home-section-sub">เฉพาะสาขาที่กำลังตรวจ — คลิกเพื่อดูรายละเอียด</span></h2>
-        <div id="hmTopBranches"></div>
-      </section>
     </div>
 
     <div class="home-cols">
@@ -4574,6 +4557,28 @@ renderSummary();
 renderFilterChips();
 renderAssetList();
 document.getElementById('assetSearch').focus();
+
+/* ===== UI shell (2026-11-20): drawer sidebar บนจอ <1280px + คำอธิบายใต้ชื่อหน้า — ไม่เกี่ยวกับ logic/API ===== */
+function toggleSidebar(force){
+  var app = document.getElementById('appRoot');
+  var open = (typeof force === 'boolean') ? force : !app.classList.contains('sb-open');
+  app.classList.toggle('sb-open', open);
+  var b = document.getElementById('sbToggle'); if(b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+(function(){
+  var SUB = {
+    overview:'ภาพรวมการใช้งานระบบ Fix Asset', branchGrid:'สถานะ session ล่าสุดของแต่ละสาขา',
+    assetSummary:'รายการทรัพย์สินและผลการตรวจนับ', unmatched:'รายการที่สแกนแล้วแต่ไม่พบใน Master รอ HQ ตรวจสอบ',
+    employees:'รายชื่อพนักงานและอุปกรณ์ที่ถือครอง', activityLog:'ประวัติการใช้งานระบบ'
+  };
+  var _showPage = showPage;
+  showPage = function(name){
+    _showPage.apply(this, arguments);
+    var el = document.getElementById('pageSubtitle'); if(el && SUB[name]) el.textContent = SUB[name];
+    toggleSidebar(false);
+  };
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') toggleSidebar(false); });
+})();
 </script>
 </body>
 </html>
