@@ -60,26 +60,15 @@
     .sb-edge:hover ~ .sidebar,.sidebar:hover,.sidebar:focus-within{transform:none;visibility:visible;box-shadow:10px 0 36px rgba(8,14,26,.38);
       transition:transform .3s cubic-bezier(.2,.8,.2,1),box-shadow .3s ease,visibility 0s;}
   }
-  /* sidebar แบบไอคอนล้วน (2026-11-12) — เฉพาะจอกว้าง ≥901px; มือถือ/แท็บเล็ตแคบยังเป็นแถบเมนูด้านบนพร้อมข้อความตามเดิม
-     ชื่อเมนูอยู่ใน <span class="nav-text"> + title/aria-label ของ .nav-item (tooltip ตอนชี้เมาส์) */
-  @media (min-width:901px){
-    .sidebar{width:72px;padding:18px 14px 16px;align-items:center;}
-    .sb-brand{padding:2px 0 18px;justify-content:center;}
-    .sb-brand > div:last-child{display:none;}
-    .sb-nav{align-items:center;gap:6px;}
-    .nav-item{width:44px;height:44px;padding:0;justify-content:center;}
-    .nav-item .nav-text{display:none;}
-    .nav-item svg{width:22px;height:22px;}
-    .nav-badge{position:absolute;top:1px;right:-3px;margin:0;font-size:10.5px;line-height:16px;padding:0 5px;}
-    .rail-user{flex-direction:column;padding:12px 0 0;gap:8px;align-self:stretch;align-items:center;}
-    .rail-user-meta{flex:none;align-items:center;}
-    #headerUserLabel{display:none;}
-    .rail-signout{width:44px;height:44px;border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;text-decoration:none;align-self:center;}
-    .rail-signout:hover{background:var(--rail-2);}
-    .rail-signout .nav-text{display:none;}
-  }
-  .rail-signout svg{width:20px;height:20px;flex-shrink:0;}
-  @media (max-width:900px){ .rail-signout svg{display:none;} }
+  /* sidebar แสดงชื่อเมนูเต็ม แบ่งกลุ่ม สาขา / พนักงาน (2026-11-20) — เดิมเป็นไอคอนล้วนแล้วผู้ใช้ "งง" ว่าอันไหนคืออะไร
+     บนจอกว้างยังซ่อนอัตโนมัติและเลื่อนเข้าเมื่อเมาส์ไปขอบซ้าย (ข้อ 6.15) จึงไม่เสียพื้นที่หน้าจอ */
+  .nav-group{font-size:11px;font-weight:600;letter-spacing:.09em;color:#7C8AA3;padding:16px 12px 6px;text-transform:uppercase;}
+  .nav-group:first-child{padding-top:4px;}
+  @media (max-width:900px){ .nav-group{display:none;} }
+  /* หน้า Dashboard (ภาพรวม) กับหน้า Store (รายละเอียดรายสาขา) ใช้ section เดียวกัน (#pageOverview) แต่โชว์คนละส่วน */
+  #pageOverview.mode-dash .ov-store-part{display:none !important;}
+  #pageOverview.mode-store #homeDash{display:none !important;}
+  .rail-signout svg{display:none;}
   .sb-brand{display:flex;align-items:center;gap:11px;padding:2px 8px 22px;}
   .sb-brand-name{display:block;font-weight:600;font-size:15px;color:#fff;letter-spacing:.01em;}
   .sb-brand-sub{display:block;font-size:11.5px;color:var(--rail-ink);margin-top:1px;}
@@ -639,12 +628,17 @@
       </div>
     </div>
     <div class="sb-nav">
-      <div class="nav-item active" id="navOverview" onclick="showPage('overview')" role="button" tabindex="0" title="Dashboard" aria-label="Dashboard">
+      <div class="nav-group">สาขา</div>
+      <div class="nav-item active" id="navOverview" onclick="showPage('overview')" role="button" tabindex="0" title="Dashboard ภาพรวมทุกสาขา" aria-label="Dashboard ภาพรวมทุกสาขา">
         <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="3" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="14" y="12" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.7"/><rect x="3" y="16" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.7"/></svg>
         <span class="nav-text">Dashboard</span>
       </div>
-      <div class="nav-item" id="navBranchGrid" onclick="showPage('branchGrid')" role="button" tabindex="0" title="สถานะสาขา" aria-label="สถานะสาขา">
+      <div class="nav-item" id="navStore" onclick="showPage('store')" role="button" tabindex="0" title="Store รายละเอียดรายสาขา" aria-label="Store รายละเอียดรายสาขา">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0V9Z"/><path d="M5 13v7h14v-7"/></svg>
+        <span class="nav-text">Store (รายสาขา)</span>
+      </div>
+      <div class="nav-item" id="navBranchGrid" onclick="showPage('branchGrid')" role="button" tabindex="0" title="สถานะสาขา" aria-label="สถานะสาขา">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
         <span class="nav-text">สถานะสาขา</span>
       </div>
       <div class="nav-item" id="navAssetSummary" onclick="showPage('assetSummary')" role="button" tabindex="0" title="Asset Summary" aria-label="Asset Summary">
@@ -656,10 +650,12 @@
         <span class="nav-text">ไม่พบใน Master</span>
         <span class="nav-badge" id="navUnmatchedBadge" style="display:none;">0</span>
       </div>
-      <div class="nav-item" id="navEmployees" onclick="showPage('employees')" role="button" tabindex="0" title="พนักงาน" aria-label="พนักงาน">
+      <div class="nav-group">พนักงาน</div>
+      <div class="nav-item" id="navEmployees" onclick="showPage('employees')" role="button" tabindex="0" title="พนักงาน และอุปกรณ์ที่ถือครอง" aria-label="พนักงาน และอุปกรณ์ที่ถือครอง">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 20c0-3 2.5-5.5 5.5-5.5s5.5 2.5 5.5 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="17" cy="8.5" r="2.3" stroke="currentColor" stroke-width="1.7"/><path d="M15.5 14.3c2.4.4 4 2.4 4 5.2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
         <span class="nav-text">พนักงาน</span>
       </div>
+      <div class="nav-group">ระบบ</div>
       <div class="nav-item" id="navActivityLog" onclick="showPage('activityLog')" role="button" tabindex="0" title="Activity Log" aria-label="Activity Log">
         <svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5l3 3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/></svg>
         <span class="nav-text">Activity Log</span>
@@ -690,8 +686,14 @@
       </section>
 
       <!-- ============ SCREEN: OVERVIEW (audit workspace) ============ -->
-      <section class="screen2 active" id="pageOverview">
+      <section class="screen2 active mode-dash" id="pageOverview">
 
+        <div class="data-source-banner" id="overviewDataBanner">
+          <span>⚠</span>
+          <span id="overviewDataBannerText">โหลดข้อมูลจริงไม่สำเร็จ</span>
+        </div>
+
+        <div class="ov-store-part">
         <div class="print-report-header" id="overviewPrintHeader">
           <div class="print-letterhead">
             <div class="print-wordmark"><span class="print-wordmark-bata">BATA</span><span class="print-wordmark-thailand">THAILAND</span></div>
@@ -700,10 +702,6 @@
           <div style="font-size:12.5px;color:#333;margin-top:10px;" id="overviewPrintHeaderMeta"></div>
         </div>
 
-        <div class="data-source-banner" id="overviewDataBanner">
-          <span>⚠</span>
-          <span id="overviewDataBannerText">โหลดข้อมูลจริงไม่สำเร็จ</span>
-        </div>
 
         <div class="data-source-banner" id="importUndoBanner" style="background:var(--surface);color:var(--ink);border-color:var(--line-2);justify-content:space-between;">
           <span id="importUndoBannerText">Import สำเร็จ</span>
@@ -712,6 +710,8 @@
             <button class="btn-outline" onclick="document.getElementById('importUndoBanner').style.display='none'">ปิด</button>
           </div>
         </div>
+
+        </div><!-- /ov-store-part (ส่วนหัวพิมพ์ + undo banner) -->
 
         <div class="home-dash" id="homeDash">
     <div class="home-kpis">
@@ -770,10 +770,6 @@
           <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg></span>
           <span><span class="attn-num" id="atNotStarted">—</span><br><span class="attn-label">สาขาที่ยังไม่เริ่มตรวจ</span><br><span class="attn-sub">มี asset แต่ยังไม่สแกนเลย</span></span>
         </button>
-        <div class="attn-card c-orange" style="cursor:default;">
-          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span>
-          <span><span class="attn-num" id="atDeptMismatch">—</span><br><span class="attn-label">แผนกไม่ตรง</span><br><span class="attn-sub">สแกน ≠ แผนกใน master</span></span>
-        </div>
       </div>
     </section>
 
@@ -807,7 +803,6 @@
           <div class="snap-tile c-amber"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span><span class="snap-num" id="snProgress">—</span><span class="snap-label">กำลังตรวจอยู่</span></span></div>
           <div class="snap-tile c-teal"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4"/><path d="M5 4h12l-2 4 2 4H5"/></svg></span><span><span class="snap-num" id="snNotStarted">—</span><span class="snap-label">ยังไม่เริ่มตรวจ</span></span></div>
           <div class="snap-tile c-red"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 2.5 20h19L12 4Z"/><path d="M12 10v4M12 17.5v.01"/></svg></span><span><span class="snap-num" id="snEmpty">—</span><span class="snap-label">ยังไม่มี asset ใน master</span></span></div>
-          <div class="snap-tile c-purple"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span><span><span class="snap-num" id="snDepts">—</span><span class="snap-label">รหัสแผนกของ Office</span></span></div>
           <div class="snap-tile c-green"><span class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><span><span class="snap-num" id="snOffice">—</span><span class="snap-label" id="snOfficeNote">Office สแกนแล้ว</span></span></div>
         </div>
       </section>
@@ -819,6 +814,7 @@
     </div>
   </div>
 
+        <div class="ov-store-part">
         <div class="workspace-head" id="branchWorkspace">
           <h2 class="home-section-title">รายละเอียดรายสาขา</h2>
           <span class="home-section-sub">พิมพ์ชื่อหรือรหัสสาขาเพื่อเลือกดู</span>
@@ -898,6 +894,7 @@
             <div class="sig-block"><div class="sig-line"></div>ผู้ตรวจสอบ / รับรอง (HQ)<br>วันที่ ..........................</div>
           </div>
         </div>
+        </div><!-- /ov-store-part -->
 
       </section>
 
@@ -1077,6 +1074,16 @@
           <input type="file" id="empHoldFile" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;" onchange="onHoldingsFileChosen(this)">
         </div>
         <div id="empHoldImportBar" class="emp-hold-bar" style="display:none;"></div>
+        <div class="attn-grid" id="empTopCards" style="margin:16px 0;grid-template-columns:repeat(auto-fit,minmax(220px,320px));">
+        <div class="attn-card c-orange" style="cursor:default;">
+          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span>
+          <span><span class="attn-num" id="atDeptMismatch">—</span><br><span class="attn-label">แผนกไม่ตรง</span><br><span class="attn-sub">สแกน ≠ แผนกใน master</span></span>
+        </div>
+        <div class="attn-card c-purple" style="cursor:default;">
+          <span class="attn-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7h2M13 7h2M9 11h2M13 11h2M10 21v-4h4v4"/></svg></span>
+          <span><span class="attn-num" id="snDepts">—</span><br><span class="attn-label">รหัสแผนกของ Office</span><br><span class="attn-sub">แผนกที่เลือกได้ตอนสแกน</span></span>
+        </div>
+        </div>
         <div id="empDeptGrid" class="emp-dept-grid"></div>
         <p id="empResultCount" class="result-count" style="margin-top:10px;"></p>
         <p id="empHoldNote" class="result-count" style="margin:4px 0 10px;"></p>
@@ -2398,7 +2405,7 @@ function renderBranchGrid(){
 }
 
 function goToStoreFromGrid(name){
-  showPage('overview');
+  showPage('store');
   selectStore(name);
 }
 
@@ -2699,9 +2706,8 @@ function renderHomeDashboard(){
 document.addEventListener('click', function(e){
   var b = e.target.closest ? e.target.closest('.branch-row[data-store]') : null;
   if(!b) return;
+  showPage('store');
   selectStore(b.getAttribute('data-store'));
-  var w = document.getElementById('branchWorkspace');
-  if(w) w.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
 function showMoreAssets(){ overviewVisibleCount += OVERVIEW_PAGE_SIZE; renderAssetList(); }
@@ -3947,19 +3953,33 @@ function showToast(msg){
   toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2000);
 }
 
+// ทุกครั้งที่สลับเมนูต้องเริ่มที่บนสุดของหน้าเสมอ — ก่อนหน้านี้ .focus() ที่ช่องค้นหา (ซึ่งอยู่ล่างหน้า) ทำให้เบราว์เซอร์เลื่อนลงไปที่ช่องนั้นเอง
+function _focusNoScroll(id){
+  var el = document.getElementById(id);
+  if(!el) return;
+  try{ el.focus({ preventScroll: true }); } catch(e){ el.focus(); }
+  window.scrollTo(0, 0);
+}
 function showPage(name){
   document.querySelectorAll('.screen2').forEach(function(s){ s.classList.remove('active'); });
   document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  var ov = document.getElementById('pageOverview');
+  ov.classList.remove('mode-dash', 'mode-store');
+  var focusId = null;
   if(name === 'branchGrid'){
     document.getElementById('pageBranchGrid').classList.add('active');
     document.getElementById('navBranchGrid').classList.add('active');
     document.getElementById('pageTitle').textContent = 'สถานะสาขา';
     renderBranchGrid();
   } else if(name === 'overview'){
-    document.getElementById('pageOverview').classList.add('active');
+    ov.classList.add('active', 'mode-dash');
     document.getElementById('navOverview').classList.add('active');
     document.getElementById('pageTitle').textContent = 'Dashboard';
-    setTimeout(function(){ document.getElementById('assetSearch').focus(); }, 0);
+  } else if(name === 'store'){
+    ov.classList.add('active', 'mode-store');
+    document.getElementById('navStore').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'Store (รายละเอียดรายสาขา)';
+    focusId = 'assetSearch';
   } else if(name === 'assetSummary'){
     document.getElementById('pageAssetSummary').classList.add('active');
     document.getElementById('navAssetSummary').classList.add('active');
@@ -3971,25 +3991,27 @@ function showPage(name){
     } else {
       renderAssetSummary();
     }
-    setTimeout(function(){ document.getElementById('asSearch').focus(); }, 0);
+    focusId = 'asSearch';
   } else if(name === 'unmatched'){
     document.getElementById('pageUnmatched').classList.add('active');
     document.getElementById('navUnmatched').classList.add('active');
     document.getElementById('pageTitle').textContent = 'ไม่พบใน Master';
     renderUnmatchedList();
-    setTimeout(function(){ document.getElementById('umSearch').focus(); }, 0);
+    focusId = 'umSearch';
   } else if(name === 'employees'){
     document.getElementById('pageEmployees').classList.add('active');
     document.getElementById('navEmployees').classList.add('active');
     document.getElementById('pageTitle').textContent = 'พนักงาน';
     loadEmployees();
-    setTimeout(function(){ document.getElementById('empSearch').focus(); }, 0);
+    focusId = 'empSearch';
   } else if(name === 'activityLog'){
     document.getElementById('pageActivityLog').classList.add('active');
     document.getElementById('navActivityLog').classList.add('active');
     document.getElementById('pageTitle').textContent = 'Activity Log';
     renderActivityLog();
   }
+  window.scrollTo(0, 0);
+  setTimeout(function(){ if(focusId) _focusNoScroll(focusId); else window.scrollTo(0, 0); }, 0);
 }
 
 function allAssetsFlat(){
