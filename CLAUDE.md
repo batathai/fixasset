@@ -21,7 +21,7 @@
 
 - เวอร์ชัน backend ปัจจุบัน (ตาม `main.py`): **1.2.0**
 - ระบบใช้งานจริงอยู่แล้ว (production) มี login จริง มี asset master import จริง ไม่ใช่ prototype
-- คอมมิตล่าสุดใน repo นี้ (branch `main`): **2026-11-14** (`2718f12`)
+- คอมมิตล่าสุดใน repo นี้ (branch `main`): **2026-11-21** (ดู `git log`)
 - **2026-07-21 — Office Asset Scan (เวอร์ชันแรก):** หน้าใหม่ `office.html` (clone จาก `index.html`) + คอลัมน์ `department` แบบ free text
 - **2026-07-22/23 — Office Asset Scan v2 + ระบบพนักงาน (เพิ่มเข้ามาวันนี้ — ดู section 8 รายละเอียดเต็ม):**
   - เปลี่ยนช่องแผนกใน `office.html` จาก free text → `<select>` แบบ fixed list 11 แผนก (กัน typo)
@@ -41,6 +41,7 @@
   - Migration ที่รันใน Neon แล้ว: `migration_asset_writeoff.sql`, `migration_asset_location_override.sql`
   - Workflow: staging → ผู้ใช้สั่ง "merge เข้า main" → fast-forward → เทียบ md5 (มี PR #1 "Staging" ที่ผู้ใช้เปิดไว้ถูกปิดเป็น merged)
 - **2026-11-17 — ตรวจข้อมูลถือครอง/Serial เทียบ ERP (ไม่แตะโค้ด `main.py`/`dashboard.html`/schema — แก้ข้อมูลใน Neon ด้วย SQL เท่านั้น) — ดูข้อ 6.27–6.30:** วินิจฉัยชิปแดงในหน้า "พนักงาน", เทียบ master กับรายงาน ERP `Asset Com01(A) Y2020 - 2026.xls`, เติม Serial ล็อต Dell Pro14 ธ.ค. 2025 ครบ 20 เครื่อง, สรุป COM01 ที่ยังไม่มี Serial 214 แถว — **รอฝ่ายบัญชีอัปเดตข้อมูลจาก ERP** (สถานะ T/D/M, Serial, รายการหลัง 26 มิ.ย. 2026) แล้วค่อยทำต่อ
+- **2026-11-21 — Store Scan (`index.html`) ออกแบบใหม่ + แก้ตัวเลขไม่ตรง + Header กลาง (ไม่แตะ `main.py`/schema/DB) — ดูข้อ 6.35–6.36**
 - **ยังไม่ได้แก้ (ทราบปัญหาแล้ว แต่ยังไม่ทำ):** auth session เก็บใน memory ของ backend (ดูหัวข้อ 6)
 
 > ⚠️ **สำคัญ:** `docs/` เหลือแค่ไฟล์ที่ตรงกับโค้ดจริง (`database.md`, `changelog.md`) — ถ้าไม่แน่ใจเรื่อง endpoint ให้ตรวจกับ `main.py` เสมอ
@@ -65,6 +66,7 @@
 ├── migration_asset_location_override.sql # Migration: assets.location_override (HQ ย้าย location) — รันแล้วใน Neon 2026-11-12 (ถ้าตั้ง DB ใหม่ต้องรันก่อน deploy main.py ไม่งั้น GET /hq/assets 500)
 ├── migration_employee_holdings.sql   # Migration: ตาราง employee_holdings (พนักงานควรถืออุปกรณ์อะไร) — ยังไม่ได้รันใน Neon (ดูข้อ 6.21)
 ├── CNAME                              # Custom domain ของ GitHub Pages: fixasset.batathai.com
+├── assets/bata_logo_white.png          # โลโก้ Bata สีขาว (พื้นโปร่งใส 420×106 ตัดขอบจากไฟล์ทางการที่ผู้ใช้ส่งมา) — ใช้ใน Header ของ `index.html`; ห้ามวาดโลโก้ใหม่ด้วยฟอนต์/CSS
 ├── login_scan.webp                    # ภาพเคลื่อนไหวแบบนุ่ม (72 เฟรม ~37ms, พื้นโปร่งใส) พนักงานสแกนสินทรัพย์ — ใช้ในหน้า Login ทั้ง 3 หน้า
 ├── login_scan.gif                     # ไฟล์ต้นฉบับ 9 เฟรม (กระตุก) — เก็บไว้เป็น fallback ของ <picture> สำหรับเบราว์เซอร์ที่ไม่รองรับ WebP
 ├── login_scan_still.png               # เฟรมนิ่งของ GIF — ใช้แทนเมื่อเครื่องตั้ง prefers-reduced-motion
@@ -181,6 +183,16 @@
 33. **ชนิดอุปกรณ์ที่ถือครองเพิ่ม UPS (2026-11-20 ค่ำ, `9f2e381`):** เดิมมีแค่ Notebook / CPU / Monitor ทำให้เครื่องสำรองไฟ (เช่น `UPS (Eco II)` ของ Warunyupha Laoo) ถูกมอบเป็น "Notebook" — ตอนนี้เป็น **Notebook / CPU / Monitor / UPS** ทั้ง 3 จุดต้องตรงกัน: `HOLDING_DEVICE_TYPES` ใน `main.py` (มอบ/แก้/import ตอบ 400 ถ้าไม่อยู่ในลิสต์), `HOLDING_TYPES` + `HOLDING_TYPE_LABEL` ใน `dashboard.html` (ใช้ใน `_typeSelect()` ของฟอร์มแก้ไข/เพิ่มด้วย Serial เอง และ dropdown ฟอร์ม "มอบ Asset"; UPS แสดงเป็น "UPS (เครื่องสำรองไฟ)"), และ Data Validation คอลัมน์ Device Type ใน `template_employee_holdings.xlsx` (`parseHoldingsTemplate()` รับ `ups`); `guessDeviceType()` เดา UPS จากชื่อที่มี `UPS`/`สำรองไฟ`; ตาราง `employee_holdings.device_type` เป็น TEXT ไม่มี CHECK จึงไม่ต้องรัน migration; **รายการ UPS ที่เคยบันทึกเป็น Notebook ไม่เปลี่ยนเอง ต้องกด "แก้ไข" แล้วเปลี่ยนชนิด**; ถ้าจะเพิ่มชนิดใหม่อีกต้องแก้ทั้ง 3 จุดนี้ (และ parser ไฟล์ User Asset List แบบเดิมยังเดาได้แค่ CPU/Notebook/Monitor); ข้อความ error ของ backend/แถวใน Template ระบุ "Notebook / CPU / Monitor / UPS"
 34. **Compact layout สำหรับซูม 100% (2026-11-21, `dashboard.html` CSS เท่านั้น):** บล็อก `@media (min-width:1280px)` ท้าย `<style>` หลัก (ต่อจาก `@media print{.hero-banner…}`) ตั้ง token `--sb-w:200px; --hdr-h:56px; --pad-x:20px; --gap:12px; --fs-base:14px` + ลด padding/ฟอนต์ของ header, KPI (สูง ~112px), `.home-section`, ตาราง (`.as-table`, `.asset-row`) — ใช้ขนาดจริง ไม่ใช้ `zoom`/`transform:scale`; <1280px ยังเป็น drawer ค่าเดิม (header 72px, ฟอนต์ 15px); **แบนเนอร์** แก้เป็น `aspect-ratio:2148 / 348; object-fit:contain; height:auto; width:100%` (ตรงสัดส่วนไฟล์จริง ไม่ยืด) จึงสูง ~182px ที่ 1366 และ ~272px ที่ 1920 — ถ้าจะให้เตี้ยลงต้องเปลี่ยนไฟล์ภาพ ห้ามบีบ/ตัดด้วย CSS; ข้อ 6.31 เรื่อง `--sb-w:232px` ใช้เฉพาะ <1280px แล้ว
 
+35. **Store Scan (`index.html`) ออกแบบใหม่ + ตัวเลขความคืบหน้าแหล่งเดียว (2026-11-21, หน้าตา + logic ฝั่ง client ของแอพสแกนสาขา ไม่แตะ `main.py`/schema/DB/Dashboard/`office.html`):**
+   - **สาเหตุบั๊กเดิม:** หน้าสแกนรวม `CHECKLIST.length + noQRList.length` เป็นยอดรวม (200) ส่วน Summary ใช้ `S.total` ที่ตั้งเฉพาะใน `loadChecklist` และถูกรีเซ็ตเป็น 0 เมื่อโหลดล้มเหลว → ขึ้น Total 0 / Pending 0 / "ALL ASSETS SCANNED" ทั้งที่ยังไม่ตรวจครบ
+   - **โมเดลกลาง:** `getProgress()` คืน known/validated/stale/total/done/pending/flagged/matched/pct/unmatched/noqr/scannedAll/complete — นับเฉพาะรายการใน `CHECKLIST` (Master) ที่อยู่ใน `S.scanned` และ log ล่าสุดไม่ใช่ unmatched; รายงานไม่มี QR (`noQRList`) และรายการนอก Master **ไม่ปนในตัวหาร/ตัวตั้ง** (แสดงแยก, ยังไม่ผูกกับ Master — ต้องแก้ backend ถ้าจะผูก); หน้าสแกนและ Summary ใช้ฟังก์ชันนี้ร่วมกัน
+   - **สถานะ Master:** `MASTER = {ok, loadedAt, error, auth, loading}` + `SYNC = {ok, at}`; `renderMasterState()` แสดงแถบ `.mw` (auth/loading/unknown/stale/sync) และปิดปุ่ม `.js-close-btn`; `retryMaster()`; `loadChecklist` เก็บ CHECKLIST เดิมไว้เมื่อโหลดใหม่ล้มเหลว (ล้างเฉพาะเมื่อเปลี่ยนสาขาผ่าน `CHECKLIST_BRANCH`), ตีความ 401/403 และ Master ว่างเป็น "ไม่ทราบ" **ไม่ใช่ 0 หรือครบ** และไม่ขึ้น ALL ASSETS SCANNED เมื่อสถานะไม่ทราบ; `openCloseModal` เป็น async ตรวจ Master+sync ใหม่ก่อนเปิด (เพิ่ม 2 API calls) — Master ว่าง/ไม่ทราบ = ปิดงานไม่ได้; `doLogout` รีเซ็ตทั้งหมด
+   - **ไม่แตะ:** HID (`initUrovoScanner`, `S.cd`, timer 300ms, Enter), `scan()`/`commit()`/`rMatch`/`rSerial`, API, auth
+   - **หน้าตา:** ธีมแดง `#D5001C` + navy `#0B1F44`, ฟอนต์ Inter/Sarabun, วงแหวนความคืบหน้า, แท็บ Checklist (รอตรวจ/ตรวจพบ/ไม่พบ/ไม่มี QR), Scan Log มีช่องค้นหา + ชิปกรอง (`setLogFilter`/`setLogQuery`/`renderLogList`), Summary จัดลำดับ KPI (`.sm-hero` + `.kc`); ปุ่มกดได้ ≥44px; ทดสอบ 360/390/430px (Playwright 25 เคส ผ่านหมด) — **ยังไม่ได้ทดสอบกับ API จริง/เครื่อง Urovo จริง/อัปโหลดรูป/ขั้นตอนปิดงานเต็ม**
+   - **ข้อจำกัดที่ทราบ:** จำนวน "นอก Master" มาจาก log ในเครื่อง (หายถ้าล้าง localStorage เพราะ `/sessions/{id}/scans` คืนเฉพาะรายการใน Master)
+
+36. **Header กลางของ Store Scan (2026-11-21):** `<header class="hdr" id="gHdr">` อยู่ตัวเดียวเหนือ `#sl` (ไม่อยู่ใน `#ss` แล้ว) ใช้ร่วม 3 หน้า (Store Scan / Scan Log / Session Summary) — โลโก้ `assets/bata_logo_white.png` + เส้นแบ่งขาว + "Fix Asset"/"Asset Audit System" + ปุ่มเสียง `#voice-toggle-btn` (`toggleVoice()`) + Sign out (`doLogout()`) + `#hinfo` (ซ่อนด้วย CSS แต่ต้องอยู่ใน DOM เพราะ JS เขียนค่า); สูง 54px sticky `top:0 z-index:50`; **แสดงเฉพาะหลัง Login** ผ่าน `body.in-app` ที่ `go(id)` สลับ (`id !== 'sl'`) — ถ้าจะเพิ่มหน้าใหม่ที่ไม่ควรมี Header ต้องแก้เงื่อนไขนี้; Scan Log/Summary มีแถบชื่อหน้าแยก `.pg-bar` (สูง 52px sticky `top:54px z-index:45`, ปุ่ม `.pg-back` → `go('ss')`) **ชื่อหน้าห้ามอยู่ใน Header**; หน้า Store Scan ใช้การ์ด "Store Scan" เป็นชื่อหน้า; offset ที่ต้องตรงกัน: `.mw{top:54px}` (หน้าสแกน), `.pg-bar ~ .mw{top:106px}`, `.lf-bar{top:106px}` (= 54+52) — เปลี่ยนความสูง Header/แถบชื่อหน้าต้องแก้ทั้งสามจุด; `body.in-app .screen{min-height:calc(100vh - 54px)}`; CSS `.back-hdr/.back-title/.back-sub` เดิมไม่ได้ใช้แล้ว (ยังค้างในไฟล์); ไม่ได้ตั้ง `viewport-fit=cover` จึงไม่มี safe-area ด้านบน; `office.html` ยังใช้ Header เดิม (ไม่แชร์โค้ด ตามข้อ 6.8)
+
 ---
 
 ## 7. วิธีรัน / Build / Deploy
@@ -267,6 +279,7 @@ Environment variables ที่ backend ต้องการ:
 - **2026-11-20 (เย็น 2)** — แยกเมนู Store (เฉพาะสาขา) / Office (`009…` + `0068000`) / Employee, ลบช่องค้นหารหัสในหน้า Office (ดูข้อ 6.32) — หน้าตา+กรองฝั่ง client เท่านั้น ไม่แตะ backend/DB
 - **2026-11-20 (ค่ำ)** — เพิ่มชนิดอุปกรณ์ถือครอง **UPS** (`main.py`, `dashboard.html`, `template_employee_holdings.xlsx`; ดูข้อ 6.33); หน้า Employee: การ์ดอายุ 5+/5 ที่กรอง/เรียงได้ + การ์ดแผนกไอคอน (ดูข้อ 6.32)
 - **2026-11-21** — Compact layout ซูม 100% ของ `dashboard.html` (ดูข้อ 6.34) — CSS เท่านั้น ไม่แตะ backend/DB
+- **2026-11-21 (บ่าย)** — Store Scan (`index.html`): ออกแบบหน้าตาใหม่ + แก้ตัวเลข Summary ไม่ตรง/ALL ASSETS SCANNED ผิดพลาด (ตัวเลขแหล่งเดียว, สถานะ Master unknown/stale, ล็อกปิดงาน, Scan Log ค้นหา/กรอง) และ Header กลางพร้อมโลโก้ Bata สีขาวทั้ง 3 หน้า (ดูข้อ 6.35–6.36) — ไม่แตะ backend/DB/Dashboard/Office
 
 ---
 
