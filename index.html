@@ -328,6 +328,47 @@ body{font-size:14px;}
 .cl-item:has(.cl-done)::after{content:'ตรวจพบ';background:var(--green-bg);color:var(--green);border-color:var(--green-bd);}
 .cl-item:has(.cl-noqr)::after{content:'ตรวจสอบ';background:var(--red-l);color:var(--red);border-color:var(--red-bd);}
 .sc-btn,.sc-search,.sc-act,.sc-close,.nb{min-height:44px;}
+
+/* ---- สถานะข้อมูล / ปุ่มปิดงานที่ถูกล็อก ---- */
+.mw{display:none;align-items:center;gap:10px;padding:10px 14px;background:var(--amber-bg);border-bottom:1px solid var(--amber-bd);color:var(--amber);font-size:12.5px;font-weight:600;position:sticky;top:46px;z-index:40;}
+.back-hdr ~ .mw{top:59px;}
+.mw[data-state="auth"],.mw[data-state="unknown"]{background:var(--red-l);border-color:var(--red-bd);color:var(--red);}
+.mw[data-state="loading"]{background:#EEF2FF;border-color:#C7D2FE;color:#3730A3;}
+.mw .mw-t{flex:1;line-height:1.35;}
+.mw button{flex-shrink:0;min-height:36px;padding:6px 12px;border-radius:8px;border:1.5px solid currentColor;background:#fff;color:inherit;font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;}
+.ring.unk{background:conic-gradient(#CBD0D8 calc(var(--p)*1%),#E8EAEE 0);}
+.sc-close.blocked,.btn-close-session.blocked{opacity:.5;cursor:not-allowed;border-color:var(--gray4);color:var(--gray3);}
+.sc-close-hint{font-size:11.5px;color:var(--amber);text-align:center;margin-bottom:-4px;}
+/* ---- กันแถบนำทางล่างบังเนื้อหา ---- */
+#ss .main{padding-bottom:calc(24px + env(safe-area-inset-bottom));}
+#ra{scroll-margin-bottom:120px;scroll-margin-top:64px;}
+.toast{bottom:calc(96px + env(safe-area-inset-bottom));}
+/* ---- Scan Log: ค้นหา + ตัวกรอง ---- */
+.lf-bar{position:sticky;top:59px;z-index:30;background:var(--bg);padding:2px 0 8px;display:flex;flex-direction:column;gap:8px;}
+.lf-q{width:100%;min-height:44px;background:#fff;border:1.5px solid var(--border);border-radius:var(--rs);padding:10px 14px;font-family:var(--sans);font-size:14px;outline:none;}
+.lf-q:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(213,0,28,.12);}
+.lf-chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;}
+.lf-chip{flex-shrink:0;min-height:36px;padding:6px 13px;border-radius:99px;border:1.5px solid var(--border);background:#fff;color:var(--gray2);font-family:var(--sans);font-size:12.5px;font-weight:600;cursor:pointer;}
+.lf-chip.act{background:var(--red);border-color:var(--red);color:#fff;}
+/* ---- Summary: ลำดับความสำคัญของ KPI ---- */
+.sm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.sm-hero{display:flex;align-items:center;gap:14px;text-align:left;font-family:var(--sans);background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:14px;cursor:pointer;color:inherit;}
+.sm-hero.act{border-color:var(--red);box-shadow:0 0 0 1.5px var(--red) inset;}
+.sm-hero .ring{width:84px;height:84px;}
+.sm-hero.stale .ring{background:conic-gradient(#CBD0D8 calc(var(--p)*1%),#E8EAEE 0);}
+.sm-hero-k{font-size:12px;color:var(--gray3);}
+.sm-hero-n{font-size:15px;color:var(--gray2);margin:2px 0 6px;}
+.sm-hero-n b{font-size:28px;font-weight:700;color:var(--navy);letter-spacing:-.5px;}
+.sm-hero-n small{font-size:12px;color:var(--gray3);}
+.sm-hero-s{font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;line-height:1.35;}
+.sm-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);}
+.sm-green{background:var(--green-bg);color:var(--green);border:1px solid var(--green-bd);}
+.kc{display:flex;flex-direction:column;justify-content:space-between;gap:4px;min-height:74px;text-align:left;background:#fff;border:1.5px solid var(--border);border-radius:var(--r);padding:10px 11px;cursor:pointer;font-family:var(--sans);}
+.kc.act{border-color:var(--red);box-shadow:0 0 0 1.5px var(--red) inset;}
+.kc-l{font-size:11px;font-weight:600;color:var(--gray3);line-height:1.25;}
+.kc-v{font-size:24px;font-weight:700;line-height:1;}
+.kc:nth-child(n+5){min-height:62px;background:var(--offwhite);}
+.kc:nth-child(n+5) .kc-v{font-size:20px;}
 @media (prefers-reduced-motion:reduce){.sc-dot{animation:none;}}
 </style>
 </head>
@@ -404,6 +445,7 @@ body{font-size:14px;}
     </div>
   </div>
 
+  <div class="mw" role="alert" style="display:none"></div>
   <div class="main">
     <!-- Title + progress -->
     <section class="sc-card sc-prog">
@@ -489,7 +531,8 @@ body{font-size:14px;}
       <button class="sc-act primary" onclick="focusScanner()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg><span>เริ่มสแกนทรัพย์สิน<small>Scan Asset</small></span></button>
       <button class="sc-act" onclick="openNoQR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9l6 6M15 9l-6 6"/></svg><span>รายงานไม่มี QR<small>Report Missing QR</small></span></button>
     </div>
-    <button class="sc-close" onclick="openCloseModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v9"/><path d="M6.4 6.4a8 8 0 1 0 11.2 0"/></svg>ปิดงานตรวจนับ (Close Session)</button>
+    <div class="js-close-hint sc-close-hint" style="display:none">ปิดงานไม่ได้จนกว่าจะตรวจสอบข้อมูล Master ล่าสุดสำเร็จ</div>
+    <button class="sc-close js-close-btn" onclick="openCloseModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v9"/><path d="M6.4 6.4a8 8 0 1 0 11.2 0"/></svg>ปิดงานตรวจนับ (Close Session)</button>
     <div style="height:8px"></div>
   </div>
 
@@ -517,7 +560,18 @@ body{font-size:14px;}
     <div><div class="back-title">Scan Log</div><div class="back-sub" id="log-cnt">0 items</div></div>
     <button class="out-btn" onclick="go('ss')">← Back</button>
   </div>
-  <div class="main" id="log-body"></div>
+  <div class="main" id="log-body">
+    <div class="lf-bar">
+      <input id="log-q" class="lf-q" type="search" placeholder="ค้นหารหัส / ชื่อ / Serial / หมายเหตุ" oninput="setLogQuery(this.value)" autocomplete="off" aria-label="ค้นหารายการสแกน">
+      <div class="lf-chips" role="group" aria-label="กรองตามสถานะ">
+        <button type="button" class="lf-chip act" data-f="all" onclick="setLogFilter('all')">ทั้งหมด</button>
+        <button type="button" class="lf-chip" data-f="matched" onclick="setLogFilter('matched')">ตรวจพบ</button>
+        <button type="button" class="lf-chip" data-f="mismatch" onclick="setLogFilter('mismatch')">Serial ไม่ตรง</button>
+        <button type="button" class="lf-chip" data-f="unmatched" onclick="setLogFilter('unmatched')">นอก Master</button>
+      </div>
+    </div>
+    <div class="slist" id="log-list"></div>
+  </div>
 </div>
 
 <!-- ════════════════════════════════════════
@@ -528,15 +582,16 @@ body{font-size:14px;}
     <div><div class="back-title">Session Summary</div><div class="back-sub" id="sum-branch">—</div></div>
     <button class="out-btn" onclick="go('ss')">← Back</button>
   </div>
+  <div class="mw" role="alert" style="display:none"></div>
   <div class="main">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;" id="sum-stats"></div>
+    <div class="sm-grid" id="sum-stats"></div>
     <div class="sec-t">Session Info</div>
     <div id="sum-info"></div>
     <!-- HQ Status Banner (แสดงหลังปิดงาน) -->
     <div id="hq-status-banner" style="display:none;border-radius:var(--rs);padding:14px 16px;margin-bottom:4px;"></div>
 
     <div style="margin-top:8px;">
-      <button class="btn-close-session" id="btn-close-sess" onclick="openCloseModal()">
+      <button class="btn-close-session js-close-btn" id="btn-close-sess" onclick="openCloseModal()">
         🔒 ปิดงาน / Close Session
       </button>
       <div style="font-size:11px;color:var(--gray3);text-align:center;margin-top:8px;" id="close-sess-hint">
@@ -710,6 +765,11 @@ let scanQueue = [], isSyncing = false;
 const photoBlobs = {};
 let pendingUpload = false;
 let CHECKLIST = [], noQRList = [], clVisible = false;
+let CHECKLIST_BRANCH = null;                 // สาขาที่ CHECKLIST ปัจจุบันโหลดมา (กันค้างข้ามสาขา)
+// สถานะความน่าเชื่อถือของข้อมูล: Master (รายการทรัพย์สินที่ต้องตรวจ) และการซิงก์ผลสแกนจากเซิร์ฟเวอร์
+const MASTER = { ok:false, loadedAt:null, error:null, auth:false, loading:false };
+const SYNC   = { ok:null, at:null };        // ok: null=ยังไม่เคยซิงก์, true/false=ผลล่าสุด
+const escH = v => String(v==null?'':v).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let autoRefreshInterval = null;
 
 // ════════════════════════════════════════════════════════════
@@ -933,6 +993,9 @@ function doLogout() {
   stopAutoRefresh();
   S = { user:null, branch:null, branchName:null, sid:null, token:null,
         scanned:new Set(), log:[], total:0, cd:false };
+  CHECKLIST = []; CHECKLIST_BRANCH = null; noQRList = []; assetCache.clear();
+  MASTER.ok = false; MASTER.loadedAt = null; MASTER.error = null; MASTER.auth = false; MASTER.loading = false;
+  SYNC.ok = null; SYNC.at = null;
   localStorage.removeItem('bata_session');
   go('sl');
 }
@@ -1521,11 +1584,92 @@ function commit(k,n,type,extra={}) {
 }
 
 // ── PROGRESS ─────────────────────────────────────────────────
-function updatePB() {
-  const c=S.scanned.size, tot=S.total, pct=tot?Math.round(c/tot*100):0;
-  document.getElementById('pb').style.width=pct+'%';
-  document.getElementById('pb-pct').textContent=pct+'%';
-  document.getElementById('pb-cnt').textContent=c+' / '+tot;
+// ── PROGRESS (แหล่งความจริงเดียว) ─────────────────────────────
+// นิยาม: Master = CHECKLIST จาก GET /assets/branch เท่านั้น เป็นตัวหารเดียวของทุกหน้าจอ
+//  - done      = รายการใน Master ที่ถูกระบุตัวตนแล้ว (อยู่ใน S.scanned และไม่ใช่ unmatched) — Set จึงไม่นับซ้ำ
+//  - flagged   = ส่วนหนึ่งของ done ที่ serial ไม่ตรง (ยังถือว่าตรวจแล้ว ตามกติกาเดิม แต่แยกให้เห็น)
+//  - unmatched = รหัสที่สแกนแล้วไม่อยู่ใน Master — แยกต่างหาก ไม่เพิ่มความคืบหน้า
+//  - noqr      = รายงานทรัพย์สินไม่มี QR (ยังไม่ผูกกับ Master) — ไม่เข้าตัวหาร/ตัวตั้ง และไม่ทำให้ใครถูกมองว่าตรวจแล้ว
+function getProgress() {
+  const types = new Map();
+  for (const l of S.log) if (!types.has(l.k)) types.set(l.k, l.type);   // S.log เรียงใหม่สุดก่อน
+  let done = 0, flagged = 0;
+  for (const it of CHECKLIST) {
+    const isDone = S.scanned.has(it.qr_key) && types.get(it.qr_key) !== 'unmatched';
+    it.status = isDone ? 'done' : 'pending';
+    if (isDone) { done++; if (types.get(it.qr_key) === 'mismatch') flagged++; }
+  }
+  const total = CHECKLIST.length;
+  const unmatchedKeys = new Set(S.log.filter(l => l.type === 'unmatched').map(l => l.k));
+  const validated = MASTER.ok && !MASTER.auth && SYNC.ok !== false;   // ข้อมูลยืนยันล่าสุดแล้วหรือยัง
+  return {
+    known: total > 0, validated, stale: total > 0 && !validated,
+    total, done, pending: total - done, flagged, matched: done - flagged,
+    pct: total ? Math.round(done / total * 100) : 0,
+    unmatched: unmatchedKeys.size, noqr: noQRList.length, scannedAll: S.scanned.size,
+    complete: validated && total > 0 && done === total
+  };
+}
+function renderProgress() {
+  const g = id => document.getElementById(id);
+  if (!g('pb')) return;
+  const p = getProgress(), unk = !p.known;
+  const pctTxt = unk ? '—' : p.pct + '%', cntTxt = unk ? '— / —' : p.done + ' / ' + p.total;
+  g('pb').style.width = (unk ? 0 : p.pct) + '%';
+  g('pb-pct').textContent = pctTxt; g('pb-cnt').textContent = cntTxt; g('cl-nums').textContent = cntTxt;
+  g('cl-pb').style.width = (unk ? 0 : p.pct) + '%';
+  g('cl-ok').textContent = p.done; g('cl-ok-tab').textContent = p.done;
+  g('cl-unm').textContent = p.unmatched; g('cl-noqr-cnt').textContent = p.noqr;
+  g('cl-remain-n').textContent = unk ? '—' : p.pending; g('cl-remain-tab').textContent = unk ? '—' : p.pending;
+  g('cl-remain').textContent = unk ? 'ไม่ทราบจำนวน Master' : p.pending > 0 ? p.pending + ' remaining' : (p.complete ? '✓ Complete!' : '');
+  const ring = g('ring'); ring.style.setProperty('--p', unk ? 0 : p.pct); g('ring-pct').textContent = pctTxt;
+  ring.classList.toggle('unk', unk || p.stale);
+  const sp = document.querySelector('.sc-prog'); if (sp) sp.style.setProperty('--p', unk ? 0 : p.pct);
+  const bn = g('sc-branch-name'); if (bn) bn.textContent = S.branchName || S.branch || '—';
+  if (clVisible) renderChecklistPanel();
+  if (g('ssum')?.classList.contains('active')) renderSumScreen();
+  renderMasterState();
+}
+function updatePB() { renderProgress(); }
+function updateChecklist() { renderProgress(); }
+
+// เตือนเมื่อข้อมูล Master/การซิงก์ไม่น่าเชื่อถือ + คุมปุ่มปิดงาน
+function hhmm(t) { return t ? new Date(t).toLocaleTimeString('th-TH', {hour:'2-digit', minute:'2-digit'}) : '—'; }
+function renderMasterState() {
+  const p = getProgress();
+  let state = 'ok', msg = '', act = '';
+  const retryBtn = '<button type="button" onclick="retryMaster()">ลองใหม่ (Retry)</button>';
+  if (MASTER.auth) {
+    state = 'auth'; msg = 'เซสชันหมดอายุ — ยังตรวจสอบข้อมูล Master ไม่ได้ กรุณาเข้าสู่ระบบใหม่';
+    act = '<button type="button" onclick="doLogout()">เข้าสู่ระบบใหม่</button>';
+  } else if (MASTER.loading || (!MASTER.error && !MASTER.ok && !p.known)) {
+    state = 'loading'; msg = 'กำลังโหลดรายการ Master…';
+  } else if (!MASTER.ok && !p.known) {
+    state = 'unknown'; msg = 'โหลดรายการ Master ไม่สำเร็จ — ยังไม่ทราบจำนวนทรัพย์สินทั้งหมด (ไม่ใช่ 0)'; act = retryBtn;
+  } else if (!MASTER.ok) {
+    state = 'stale'; msg = 'ข้อมูล Master อาจไม่เป็นปัจจุบัน — โหลดสำเร็จล่าสุด ' + hhmm(MASTER.loadedAt); act = retryBtn;
+  } else if (SYNC.ok === false) {
+    state = 'sync'; msg = 'ซิงก์ผลสแกนจากเซิร์ฟเวอร์ไม่สำเร็จ — ตัวเลขอาจไม่รวมเครื่องอื่น'; act = retryBtn;
+  }
+  document.body.dataset.master = state;
+  document.querySelectorAll('.mw').forEach(el => {
+    el.style.display = state === 'ok' ? 'none' : 'flex';
+    el.dataset.state = state;
+    el.innerHTML = '<span class="mw-t">' + escH(msg) + '</span>' + act;
+  });
+  const canClose = p.validated && p.known;
+  document.querySelectorAll('.js-close-btn').forEach(b => {
+    if (typeof sessionClosed !== 'undefined' && sessionClosed) return;   // ปิดงานแล้ว: ปล่อยให้โค้ดเดิมคุม
+    b.disabled = !canClose; b.classList.toggle('blocked', !canClose);
+    b.title = canClose ? '' : 'ปิดงานไม่ได้จนกว่าจะตรวจสอบข้อมูล Master ล่าสุดสำเร็จ';
+  });
+  document.querySelectorAll('.js-close-hint').forEach(h => { h.style.display = canClose ? 'none' : 'block'; });
+}
+async function retryMaster() {
+  if (!S.token || !S.branch) return;
+  MASTER.auth = false;
+  await loadChecklist(S.branch);
+  await syncProgressFromDB();
 }
 function renderList() {
   const el=document.getElementById('sl-list');
@@ -1544,24 +1688,38 @@ function go(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
-function showLog() {
-  document.getElementById('log-cnt').textContent=S.log.length+' items';
-  document.getElementById('log-body').innerHTML=S.log.length
-    ?S.log.map((s,i)=>`
+let logFilter = 'all', logQuery = '';
+function setLogFilter(f) { logFilter = f; showLog(); }
+function setLogQuery(v) { logQuery = v; renderLogList(); }
+function renderLogList() {
+  const q = logQuery.trim().toLowerCase();
+  const rows = [];
+  S.log.forEach((s, i) => {                                  // เก็บ index เดิมไว้ให้ปุ่มแก้ไข (openEditModal) ชี้ถูกรายการ
+    if (logFilter !== 'all' && s.type !== logFilter) return;
+    if (q && ![s.k, s.n, s.remark, s.serial_found].some(v => String(v||'').toLowerCase().includes(q))) return;
+    rows.push([s, i]);
+  });
+  document.getElementById('log-cnt').textContent = rows.length === S.log.length ? S.log.length+' items' : rows.length+' / '+S.log.length+' items';
+  document.getElementById('log-list').innerHTML = rows.length ? rows.map(([s,i]) => `
       <div class="si" style="padding:12px 14px;flex-wrap:wrap;gap:6px;align-items:flex-start;">
         <div class="sd ${s.type==='matched'?'sd-m':s.type==='unmatched'?'sd-u':'sd-x'}" style="margin-top:4px;"></div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:12px;font-family:var(--mono);color:var(--gray3);">${s.k}</div>
-          <div style="font-size:13px;font-weight:500;margin-top:2px;">${s.n}</div>
-          ${s.remark?`<div style="font-size:11px;color:var(--gray3);margin-top:2px;">Note: ${s.remark}</div>`:''}
-          ${s.serial_found?`<div style="font-size:11px;color:var(--gray3);margin-top:2px;">Serial: ${s.serial_found}</div>`:''}
+          <div style="font-size:12px;font-family:var(--mono);color:var(--gray3);">${escH(s.k)}</div>
+          <div style="font-size:13px;font-weight:500;margin-top:2px;">${escH(s.n)}</div>
+          ${s.remark?`<div style="font-size:11px;color:var(--gray3);margin-top:2px;">Note: ${escH(s.remark)}</div>`:''}
+          ${s.serial_found?`<div style="font-size:11px;color:var(--gray3);margin-top:2px;">Serial: ${escH(s.serial_found)}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <div style="font-size:11px;color:var(--gray4);font-family:var(--mono);">${s.t}</div>
+          <div style="font-size:11px;color:var(--gray4);font-family:var(--mono);">${escH(s.t)}</div>
           <button onclick="openEditModal(${i})" style="background:var(--offwhite);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--gray2);cursor:pointer;">✏ แก้ไข</button>
         </div>
       </div>`).join('')
-    :'<div style="text-align:center;padding:40px;color:var(--gray4);font-size:13px;">No scans yet</div>';
+    : '<div style="text-align:center;padding:40px;color:var(--gray4);font-size:13px;">'+(S.log.length?'ไม่พบรายการที่ตรงกับตัวกรอง':'No scans yet')+'</div>';
+}
+function showLog() {
+  document.querySelectorAll('.lf-chip').forEach(c => c.classList.toggle('act', c.dataset.f === logFilter));
+  const q = document.getElementById('log-q'); if (q && q.value !== logQuery) q.value = logQuery;
+  renderLogList();
   go('slog');
 }
 let sumFilter = 'all';
@@ -1575,69 +1733,82 @@ function filterSum(key) {
   renderSumScreen();
 }
 function renderSumScreen() {
-  const matched=S.log.filter(s=>s.type==='matched').length;
-  const mism=S.log.filter(s=>s.type==='mismatch').length;
-  const unm=S.log.filter(s=>s.type==='unmatched').length;
-  const tot=S.scanned.size;
-  const pend=Math.max(0,S.total-tot);
-  const pct=S.total?Math.round(tot/S.total*100):0;
-  document.getElementById('sum-stats').innerHTML=
-    sc('Scanned',tot,'var(--red)','scanned')+sc('Verified',matched,'var(--green)','matched')+
-    sc('Flagged',mism,'var(--red)','mismatch')+sc('Unmatched',unm,'var(--amber)','unmatched')+
-    sc('Pending',pend,'var(--gray3)','pending')+sc('Total',S.total,'var(--gray3)','all');
+  const p = getProgress();
+  const unk = !p.known;
+  const stBanner = unk
+    ? ['amber','⚠ ยังไม่ทราบจำนวนทรัพย์สินใน Master — โหลดไม่สำเร็จ (ไม่ใช่ 0 รายการ)']
+    : !p.validated ? ['amber','⚠ ข้อมูลยังไม่ได้รับการยืนยันล่าสุด — ตัวเลขอาจไม่ครบ']
+    : p.pending > 0 ? ['amber','⚠ ยังเหลือ '+p.pending+' รายการใน Master ที่ยังไม่ถูกตรวจ']
+    : ['green','✓ ตรวจครบทุกรายการใน Master'];
+  const kcard = (l, v, c, key, big) => `<button type="button" class="kc${big?' kc-big':''}${sumFilter===key?' act':''}" onclick="filterSum('${key}')"><span class="kc-l">${l}</span><span class="kc-v" style="color:${c};">${v}</span></button>`;
+  document.getElementById('sum-stats').innerHTML = `
+    <button type="button" class="sm-hero${sumFilter==='all'?' act':''}${unk||p.stale?' stale':''}" onclick="filterSum('all')" style="grid-column:1/-1;">
+      <div class="ring" style="--p:${unk?0:p.pct}"><span>${unk?'—':p.pct+'%'}</span></div>
+      <div class="sm-hero-t">
+        <div class="sm-hero-k">ตรวจแล้ว ÷ Master (รวม Serial ไม่ตรง)</div>
+        <div class="sm-hero-n"><b>${unk?'—':p.done}</b> / ${unk?'—':p.total} <small>รายการ</small></div>
+        <div class="sm-hero-s sm-${stBanner[0]}">${stBanner[1]}</div>
+      </div>
+    </button>
+    ${kcard('ตรวจแล้ว · Serial ตรง', p.matched, 'var(--green)', 'matched')}
+    ${kcard('ตรวจแล้ว · Serial ไม่ตรง', p.flagged, 'var(--red)', 'mismatch')}
+    ${kcard('คงเหลือ (Pending)', unk?'—':p.pending, 'var(--amber)', 'pending')}
+    ${kcard('นอก Master (Unmatched)', p.unmatched, 'var(--amber)', 'unmatched')}
+    ${kcard('ไม่มี QR (รายงาน)', p.noqr, 'var(--gray2)', 'noqr')}
+    ${kcard('สแกนทั้งหมด', p.scannedAll, 'var(--gray2)', 'scanned')}`;
 
-  // รายการที่แสดงด้านล่าง ขึ้นกับ filter ที่เลือก:
-  // - 'pending' มาจาก checklist (asset ที่ยังไม่สแกน) ไม่ใช่ S.log
-  // - อื่นๆ กรองจาก S.log ตาม type (all = ทั้งหมด, scanned = ทุกอันที่สแกนแล้วไม่ว่าผลจะเป็นอะไร)
+  // รายการที่แสดงด้านล่าง ขึ้นกับ filter ที่เลือก
   let listTitle = 'รายการที่สแกน (แตะ ✏ เพื่อแก้ไข)';
   let bodyHtml;
+  const emptyRow = t => '<div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">'+t+'</div>';
   if (sumFilter === 'pending') {
-    listTitle = 'รายการที่ยังไม่ได้สแกน';
-    const pendingItems = (typeof CHECKLIST !== 'undefined' ? CHECKLIST : []).filter(i=>i.status==='pending');
-    bodyHtml = pendingItems.map(item=>`
+    listTitle = 'รายการ Master ที่ยังไม่ได้ตรวจ';
+    const pendingItems = CHECKLIST.filter(i=>i.status==='pending');
+    bodyHtml = unk ? emptyRow('ยังไม่ทราบรายการ Master') : pendingItems.map(item=>`
       <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
         <div class="sd sd-x" style="flex-shrink:0;"></div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:11px;font-family:var(--mono);color:var(--gray3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.qr_key||'—'}</div>
-          <div style="font-size:13px;font-weight:500;">${item.name||'Unknown'}</div>
+          <div style="font-size:11px;font-family:var(--mono);color:var(--gray3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(item.qr_key||'—')}</div>
+          <div style="font-size:13px;font-weight:500;">${escH(item.name||'Unknown')}</div>
         </div>
-      </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">✓ สแกนครบทุกรายการแล้ว</div>';
+      </div>`).join('') || emptyRow('✓ ตรวจครบทุกรายการใน Master แล้ว');
+  } else if (sumFilter === 'noqr') {
+    listTitle = 'รายงานทรัพย์สินไม่มี QR (ส่งให้ HQ ออกป้าย)';
+    bodyHtml = noQRList.map(n=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+        <div class="sd sd-u" style="flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:500;">${escH(n.name_guess||'')}</div>
+          <div style="font-size:11px;color:var(--gray3);">${escH([n.serial_no&&('S/N '+n.serial_no), n.location_note].filter(Boolean).join(' · '))}</div>
+        </div>
+      </div>`).join('') || emptyRow('ไม่มีรายงาน');
   } else {
-    const filtered = sumFilter==='all' ? S.log
-      : sumFilter==='scanned' ? S.log
-      : S.log.filter(s=>s.type===sumFilter);
-    bodyHtml = filtered.map((s,i)=>`
+    const filtered = (sumFilter==='all' || sumFilter==='scanned') ? S.log : S.log.filter(s=>s.type===sumFilter);
+    bodyHtml = filtered.map(s=>`
       <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
         <div class="sd ${s.type==='matched'?'sd-m':s.type==='unmatched'?'sd-u':'sd-x'}" style="flex-shrink:0;"></div>
         <div style="flex:1;min-width:0;">
-          <div style="font-size:11px;font-family:var(--mono);color:var(--gray3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${s.k}</div>
-          <div style="font-size:13px;font-weight:500;">${s.n}</div>
-          ${s.remark?`<div style="font-size:11px;color:var(--gray3);">Note: ${s.remark}</div>`:''}
+          <div style="font-size:11px;font-family:var(--mono);color:var(--gray3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(s.k)}</div>
+          <div style="font-size:13px;font-weight:500;">${escH(s.n)}</div>
+          ${s.remark?`<div style="font-size:11px;color:var(--gray3);">Note: ${escH(s.remark)}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-          <span style="font-size:10px;font-family:var(--mono);color:var(--gray4);">${s.t}</span>
+          <span style="font-size:10px;font-family:var(--mono);color:var(--gray4);">${escH(s.t)}</span>
           <button onclick="openEditModal(${S.log.indexOf(s)})" style="background:var(--offwhite);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font-size:11px;color:var(--gray2);cursor:pointer;">✏ แก้ไข</button>
         </div>
-      </div>`).join('') || '<div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">ไม่มีรายการในหมวดนี้</div>';
+      </div>`).join('') || emptyRow('ไม่มีรายการในหมวดนี้');
   }
 
   document.getElementById('sum-info').innerHTML=`
-    <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:16px;font-size:13px;color:var(--gray3);line-height:2.2;margin-bottom:10px;">
-      <div>Branch: <strong style="color:var(--gray1);">${S.branchName||S.branch}</strong></div>
-      <div>Auditor: <strong style="color:var(--gray1);">${S.user}</strong></div>
-      <div>Progress: <strong style="color:var(--red);font-size:15px;">${pct}%</strong></div>
-      <div style="margin-top:10px;padding:10px 14px;border-radius:var(--rs);font-weight:600;font-family:var(--cond);font-size:14px;${pend>0?'background:var(--amber-bg);color:var(--amber);border:1.5px solid var(--amber-bd);':'background:var(--green-bg);color:var(--green);border:1.5px solid var(--green-bd);'}">
-        ${pend>0?'⚠ '+pend+' ASSET(S) NOT YET SCANNED':'✓ ALL ASSETS SCANNED'}
-      </div>
+    <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);padding:14px 16px;font-size:13px;color:var(--gray3);line-height:2;margin-bottom:10px;">
+      <div>Branch: <strong style="color:var(--gray1);">${escH(S.branchName||S.branch)}</strong></div>
+      <div>Auditor: <strong style="color:var(--gray1);">${escH(S.user)}</strong></div>
+      <div style="font-size:11px;line-height:1.5;margin-top:4px;">ความคืบหน้านับเฉพาะรายการใน Master · รายการนอก Master และรายงานไม่มี QR แยกนับ ไม่เพิ่มความคืบหน้า</div>
     </div>
     <div class="sec-t" style="margin-bottom:6px;">${listTitle}</div>
     <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;">
       ${bodyHtml}
     </div>`;
-}
-function sc(l,v,c,key){
-  const active = sumFilter===key;
-  return `<div class="stat-card${active?' act':''}" onclick="filterSum('${key}')"><div class="stat-label">${l}</div><div class="stat-val" style="color:${c};">${v}</div></div>`;
 }
 
 // ── API CALLS ────────────────────────────────────────────────
@@ -1765,20 +1936,21 @@ async function syncProgressFromDB() {
   if (!S.sid||!S.token) return;
   try {
     const res = await fetch(API+'/sessions/'+S.sid+'/scans', {headers:{'Authorization':'Bearer '+S.token}});
-    if (!res.ok) return;
+    if (res.status === 401 || res.status === 403) { MASTER.auth = true; SYNC.ok = false; renderMasterState(); return; }
+    if (!res.ok) { SYNC.ok = false; renderMasterState(); return; }
     const data = await res.json();
-    (data.scans||[]).forEach(s => { S.scanned.add(s.qr_key); });
+    (data.scans||[]).forEach(s => { S.scanned.add(s.qr_key); });   // Set: สแกนซ้ำ/หลายเครื่องไม่ถูกนับซ้ำ
     const dbLog = (data.scans||[]).slice(0,8).map(s => ({
       k:s.qr_key, n:s.name||s.qr_key,
       type:s.serial_match===false?'mismatch':'matched',
       t:new Date(s.scanned_at).toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'})
     }));
     dbLog.forEach(dl => { if(!S.log.find(l=>l.k===dl.k)) S.log.push(dl); });
-    const now=new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+    SYNC.ok = true; SYNC.at = Date.now(); MASTER.auth = false;
     const el=document.getElementById('cl-sync-status');
-    if(el) el.textContent='synced '+now;
+    if(el) el.textContent='synced '+hhmm(SYNC.at);
     updateChecklist(); renderList();
-  } catch(e){}
+  } catch(e){ SYNC.ok = false; renderMasterState(); }
 }
 
 // ── AUTO REFRESH ──────────────────────────────────────────────
@@ -1799,73 +1971,67 @@ function stopAutoRefresh() {
 async function loadChecklist(branchId, _attempt) {
   _attempt = _attempt || 0;
   document.getElementById('cl-branch-label').textContent = branchId;
-  document.getElementById('cl-remain').textContent = 'Loading...';
-  // FIX (2026-09-07): เดิม catch กลืน error เงียบๆ ถ้า /assets/branch โหลดพัง assetCache จะว่าง
-  // ทุกการสแกนหลุดไปยิง /assets/lookup ทีละชิ้น และถ้า lookup พลาดด้วยก็กลายเป็น unmatched หลอก
-  // — เตือน + retry (สูงสุด 3 ครั้ง กัน loop ถ้าสาขานั้นไม่มี asset จริงๆ)
+  MASTER.loading = true; renderMasterState();
+  // รีโหลดล้มเหลว: ไม่ล้าง CHECKLIST ที่เคยโหลดสำเร็จ และไม่ตีความเป็น "0 รายการ" — แจ้งเตือน + ปิดงานไม่ได้ จนกว่าจะโหลดสำเร็จอีกครั้ง
   const retry = () => { if (_attempt < 3) setTimeout(() => loadChecklist(branchId, _attempt + 1), 10000); };
   try {
     const res = await fetch(API+'/assets/branch/'+branchId, {headers:{'Authorization':'Bearer '+S.token}});
+    if (res.status === 401 || res.status === 403) { const e = new Error('AUTH'); e.auth = true; throw e; }
     if (!res.ok) throw new Error('HTTP '+res.status);
     const data = await res.json();
-    CHECKLIST = (data.assets||[]).map(a=>({qr_key:a.qr_key,name:a.name,serial:a.serial_no,status:'pending'}));
+    const list = data.assets || [];
+    if (!list.length) throw new Error('EMPTY_MASTER');     // Master ว่าง = ข้อมูลไม่น่าเชื่อถือ ไม่ใช่ "ไม่มีของ"
+    CHECKLIST = list.map(a=>({qr_key:a.qr_key,name:a.name,serial:a.serial_no,status:'pending'}));
+    CHECKLIST_BRANCH = branchId;
     S.total = CHECKLIST.length;
-    buildCache(data.assets||[]);
-    if ((data.assets||[]).length === 0 && _attempt < 3) {
-      toast('⚠️ โหลดรายการ asset ไม่ได้ — จะลองใหม่ใน 10 วิ (ระหว่างนี้บางชิ้นอาจสแกนไม่เจอ)');
-      retry();
-    }
+    buildCache(list);
+    MASTER.ok = true; MASTER.loadedAt = Date.now(); MASTER.error = null; MASTER.auth = false;
   } catch(e) {
-    CHECKLIST=[]; S.total=0;
-    toast('⚠️ โหลดรายการ asset ไม่สำเร็จ — จะลองใหม่ใน 10 วิ');
-    retry();
+    MASTER.ok = false; MASTER.error = e.message || 'error'; MASTER.auth = !!e.auth;
+    if (CHECKLIST_BRANCH !== branchId) { CHECKLIST = []; S.total = 0; }   // ห้ามเอา Master ของสาขาอื่นมาใช้
+    if (e.auth) toast('⚠️ เซสชันหมดอายุ — กรุณาเข้าสู่ระบบใหม่');
+    else { toast('⚠️ โหลดรายการ asset ไม่สำเร็จ — จะลองใหม่ใน 10 วิ (ตัวเลขอาจไม่ล่าสุด)'); retry(); }
+  } finally {
+    MASTER.loading = false;
   }
   updateChecklist();
 }
-function updateChecklist() {
-  let ok=0;
-  CHECKLIST.forEach(item => {
-    if (S.scanned.has(item.qr_key)) { item.status='done'; ok++; }
-    else item.status='pending';
-  });
-  const noqr = noQRList.length;
-  const total = CHECKLIST.length + noqr;
-  const done  = ok + noqr;
-  const pct   = total ? Math.round(done/total*100) : 0;
-  const remain = total - done;
-
-  document.getElementById('cl-nums').textContent = done+' / '+total;
-  document.getElementById('cl-pb').style.width   = pct+'%';
-  document.getElementById('cl-ok').textContent   = ok;
-  document.getElementById('cl-unm').textContent  = S.log.filter(l=>l.type==='unmatched').length;
-  document.getElementById('cl-noqr-cnt').textContent = noqr;
-  document.getElementById('cl-remain').textContent = remain>0 ? remain+' remaining' : '✓ Complete!';
-  document.getElementById('pb').style.width      = pct+'%';
-  document.getElementById('pb-pct').textContent  = pct+'%';
-  document.getElementById('pb-cnt').textContent  = done+' / '+total;
-  if (clVisible) renderChecklistPanel();
+let clTab = 'pending';
+function setClTab(t) {
+  clTab = t;
+  document.querySelectorAll('.sc-tab').forEach(b => b.classList.toggle('act', b.dataset.tab === t));
+  if (!clVisible) toggleChecklist(); else renderChecklistPanel();
+}
+function _clRows() {
+  if (clTab === 'done') return CHECKLIST.filter(i => i.status === 'done');
+  if (clTab === 'noqr') return noQRList.map(n => ({...n, status:'noqr'}));
+  if (clTab === 'unm') {
+    const seen = new Set();
+    return S.log.filter(l => l.type === 'unmatched' && !seen.has(l.k) && seen.add(l.k)).map(l => ({qr_key:l.k, name:l.n || 'ไม่พบใน Master', status:'unm'}));
+  }
+  return CHECKLIST.filter(i => i.status === 'pending');
 }
 function renderChecklistPanel() {
-  const remaining = CHECKLIST.filter(i=>i.status==='pending');
-  const done      = CHECKLIST.filter(i=>i.status==='done');
-  const all       = [...remaining, ...noQRList.map(n=>({...n,status:'noqr'})), ...done];
-  document.getElementById('cl-panel-count').textContent = remaining.length+' remaining';
-  document.getElementById('cl-list').innerHTML = all.slice(0,50).map(item => {
-    const icon = item.status==='done'?'✓':item.status==='noqr'?'🏷':' ';
-    const cls  = item.status==='done'?'cl-done':item.status==='noqr'?'cl-noqr':'cl-miss';
+  const rows = _clRows();
+  const p = getProgress();
+  document.getElementById('cl-panel-count').textContent = (p.known ? p.pending : '—') + ' remaining';
+  document.getElementById('cl-list').innerHTML = rows.length ? rows.slice(0, 50).map(item => {
+    const icon = item.status==='done'?'✓':item.status==='noqr'?'🏷':item.status==='unm'?'?':' ';
+    const cls  = item.status==='done'?'cl-done':(item.status==='noqr'||item.status==='unm')?'cl-noqr':'cl-miss';
     return `<div class="cl-item">
       <div class="cl-status ${cls}">${icon}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name||item.name_guess||'Unknown'}</div>
-        <div style="font-family:var(--mono);font-size:11px;color:var(--gray3);">${item.qr_key||'NOQR-'+item.id}</div>
+        <div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escH(item.name||item.name_guess||'Unknown')}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--gray3);">${escH(item.qr_key||'NOQR-'+item.id)}</div>
       </div>
     </div>`;
-  }).join('') + (all.length>50?`<div style="padding:10px;text-align:center;font-size:12px;color:var(--gray3);">+${all.length-50} more</div>`:'');
+  }).join('') + (rows.length>50?`<div style="padding:10px;text-align:center;font-size:12px;color:var(--gray3);">+${rows.length-50} more</div>`:'')
+  : '<div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">ไม่มีรายการ</div>';
 }
 function toggleChecklist() {
   clVisible = !clVisible;
   document.getElementById('cl-panel').style.display = clVisible?'block':'none';
-  document.getElementById('cl-toggle-btn').textContent = clVisible?'Hide checklist ▴':'Show checklist ▾';
+  document.getElementById('cl-toggle-btn').textContent = clVisible?'ซ่อน ▴':'ดูทั้งหมด ▾';
   if (clVisible) renderChecklistPanel();
 }
 
@@ -1906,22 +2072,29 @@ function submitNoQR() {
 // ── CLOSE SESSION ────────────────────────────────────────────
 let sessionClosed = false;
 
-function openCloseModal() {
+async function openCloseModal() {
   if (!S.sid) { toast('ยังไม่มี session'); return; }
-  const total   = CHECKLIST.length + noQRList.length;
-  const done    = CHECKLIST.filter(i=>i.status==='done').length + noQRList.length;
-  const unmatched = S.log.filter(l=>l.type==='unmatched').length;
-  const remain  = total - done;
+  // ต้องยืนยันข้อมูลล่าสุดจากเซิร์ฟเวอร์ก่อนเสมอ (Master + ผลสแกนของทุกเครื่อง) — ถ้าไม่สำเร็จ ห้ามปิดงาน
+  toast('กำลังตรวจสอบข้อมูลล่าสุด…');
+  await loadChecklist(S.branch);
+  await syncProgressFromDB();
+  const p = getProgress();
+  if (!p.validated || !p.known) {
+    renderMasterState();
+    toast('⚠️ ปิดงานไม่ได้: ยังตรวจสอบข้อมูล Master ล่าสุดไม่สำเร็จ');
+    return;
+  }
+  const remain = p.pending;
 
   document.getElementById('close-sess-branch').textContent = S.branchName || S.branch;
   document.getElementById('close-sess-summary').innerHTML =
     '<span style="font-size:18px;">' + (remain===0?'✅':'⚠️') + '</span> ' +
-    '<strong>' + (remain===0?'สแกนครบทุกรายการแล้ว':'ยังสแกนไม่ครบ') + '</strong><br>' +
-    '✓ สแกนแล้ว: <strong>' + done + '</strong> / ' + total + ' รายการ<br>' +
-    '🏷 No QR: <strong>' + noQRList.length + '</strong> รายการ<br>' +
-    '? Unmatched: <strong>' + unmatched + '</strong> รายการ' +
+    '<strong>' + (remain===0?'ตรวจครบทุกรายการ Master แล้ว':'ยังตรวจไม่ครบ') + '</strong><br>' +
+    '✓ ตรวจแล้ว: <strong>' + p.done + '</strong> / ' + p.total + ' รายการ (Serial ไม่ตรง ' + p.flagged + ')<br>' +
+    '🏷 รายงานไม่มี QR: <strong>' + p.noqr + '</strong> รายการ<br>' +
+    '? นอก Master (Unmatched): <strong>' + p.unmatched + '</strong> รายการ' +
     (remain > 0
-      ? '<br><span style="color:var(--amber);font-weight:600;">⚠️ ยังเหลือ ' + remain + ' รายการที่ยังไม่ได้สแกน</span>'
+      ? '<br><span style="color:var(--amber);font-weight:600;">⚠️ ยังเหลือ ' + remain + ' รายการที่ยังไม่ได้ตรวจ</span>'
       : '');
 
   // แสดง/ซ่อน pending warning block
@@ -2251,55 +2424,5 @@ function toast(m) {
 }
 </script>
 
-<script>
-/* Store Scan redesign: ส่วนเสริมฝั่งหน้าตา (ไม่เปลี่ยน logic การสแกน/API) */
-var clTab = 'pending';
-function setClTab(t){
-  clTab = t;
-  document.querySelectorAll('.sc-tab').forEach(function(b){b.classList.toggle('act', b.dataset.tab===t);});
-  if(!clVisible) toggleChecklist(); else renderChecklistPanel();
-}
-function _clRows(){
-  var rem = CHECKLIST.filter(function(i){return i.status==='pending';});
-  var done = CHECKLIST.filter(function(i){return i.status==='done';});
-  if(clTab==='done') return done.map(function(i){return Object.assign({},i,{status:'done'});});
-  if(clTab==='noqr') return noQRList.map(function(n){return Object.assign({},n,{status:'noqr'});});
-  if(clTab==='unm') return S.log.filter(function(l){return l.type==='unmatched';}).map(function(l){return {qr_key:l.k||l.key,name:l.n||'ไม่พบใน Master',status:'unm'};});
-  return rem;
-}
-renderChecklistPanel = function(){
-  var rows=_clRows();
-  var rem=CHECKLIST.filter(function(i){return i.status==='pending';}).length;
-  document.getElementById('cl-panel-count').textContent = rem+' remaining';
-  var esc=function(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
-  document.getElementById('cl-list').innerHTML = rows.length ? rows.slice(0,50).map(function(item){
-    var icon=item.status==='done'?'✓':item.status==='noqr'?'🏷':item.status==='unm'?'?':' ';
-    var cls=item.status==='done'?'cl-done':item.status==='noqr'?'cl-noqr':item.status==='unm'?'cl-noqr':'cl-miss';
-    return '<div class="cl-item"><div class="cl-status '+cls+'">'+icon+'</div><div style="flex:1;min-width:0;">'+
-      '<div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(item.name||item.name_guess||'Unknown')+'</div>'+
-      '<div style="font-family:var(--mono);font-size:11px;color:var(--gray3);">'+esc(item.qr_key||('NOQR-'+item.id))+'</div></div></div>';
-  }).join('') + (rows.length>50?'<div style="padding:10px;text-align:center;font-size:12px;color:var(--gray3);">+'+(rows.length-50)+' more</div>':'')
-  : '<div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">ไม่มีรายการ</div>';
-};
-toggleChecklist = function(){
-  clVisible=!clVisible;
-  document.getElementById('cl-panel').style.display = clVisible?'block':'none';
-  document.getElementById('cl-toggle-btn').textContent = clVisible?'ซ่อน ▴':'ดูทั้งหมด ▾';
-  if(clVisible) renderChecklistPanel();
-};
-(function(){
-  var _uc = updateChecklist;
-  updateChecklist = function(){
-    _uc();
-    var g=function(id){return document.getElementById(id);};
-    var pct=parseInt(g('pb-pct').textContent,10)||0;
-    g('ring').style.setProperty('--p',pct);document.querySelector('.sc-prog').style.setProperty('--p',pct); g('ring-pct').textContent=pct+'%';
-    var ok=parseInt(g('cl-ok').textContent,10)||0;
-    var total=CHECKLIST.length+noQRList.length, done=ok+noQRList.length, remain=Math.max(total-done,0);
-    g('cl-remain-n').textContent=remain; g('cl-remain-tab').textContent=remain; g('cl-ok-tab').textContent=ok;
-    var bn=g('sc-branch-name'); if(bn) bn.textContent=S.branchName||S.branch||'—';
-  };
-})();
-</script>
 </body>
 </html>
