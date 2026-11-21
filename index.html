@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>Bata Asset Audit</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=DM+Mono:wght@400;500&display=swap');
 :root {
   --red:#CC0000;--red-d:#A30000;--red-l:#fff0f0;--red-bd:#ffcccc;
@@ -233,6 +234,101 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
   #close-report, #close-report *{visibility:visible;}
   #close-report{display:block;position:absolute;top:0;left:0;width:100%;}
 }
+
+/* ============================================================
+   Store Scan redesign (2026-11-21) — ธีม Bata Fix Asset (แดง/ขาว) หน้าตา + ขั้นตอนใช้งาน
+   ============================================================ */
+:root{--red:#D5001C;--red-d:#A80015;--red-l:#FFF1F2;--red-bd:#FBC9CE;--bg:#F5F6F9;--offwhite:#F7F8FA;--border:#E3E6EC;
+  --green:#17753A;--green-bg:#EAF7EF;--green-bd:#B5E2C6;--amber:#B0560F;--amber-bg:#FFF4E6;--amber-bd:#F8D3A5;
+  --sans:'Inter','Sarabun','Barlow',system-ui,sans-serif;--cond:'Inter','Sarabun','Barlow',system-ui,sans-serif;--r:14px;--rs:10px;}
+body{font-size:14px;}
+.hdr{background:linear-gradient(180deg,#E3001F,#C80019);padding:10px 14px;box-shadow:0 2px 8px rgba(168,0,21,.25);}
+.hdr-wm{display:flex;align-items:baseline;gap:8px;color:#fff;line-height:1;}
+.hdr-wm i{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-weight:700;font-size:25px;letter-spacing:-.5px;}
+.hdr-wm b{font-weight:600;font-size:14px;padding-left:8px;border-left:1.5px solid rgba(255,255,255,.55);}
+.hdr-info{display:none;}
+.main{padding:12px;gap:10px;}
+.sc-card{background:#fff;border:1px solid var(--border);border-radius:var(--r);padding:14px;box-shadow:0 1px 3px rgba(16,24,40,.05);}
+.sc-hidden{display:none;}
+.sc-title{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.sc-title-ico{width:38px;height:38px;border-radius:10px;background:var(--red-l);color:var(--red);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sc-title-ico svg{width:22px;height:22px;}
+.sc-title-t{font-size:17px;font-weight:700;line-height:1.2;}
+.sc-title-s{font-size:12px;color:var(--gray3);}
+.sc-prog-body{display:flex;align-items:center;gap:16px;}
+.ring{--p:0;width:82px;height:82px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+  background:conic-gradient(var(--green) calc(var(--p)*1%),#E8EAEE 0);position:relative;}
+.ring::before{content:'';position:absolute;inset:9px;background:#fff;border-radius:50%;}
+.ring span{position:relative;font-size:19px;font-weight:700;}
+.sc-prog-k{font-size:12px;color:var(--gray3);}
+.sc-prog-n{font-size:13px;color:var(--gray2);margin:2px 0 8px;}
+.sc-prog-n b{font-size:24px;font-weight:700;color:var(--gray1);letter-spacing:-.5px;}
+.sc-prog-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.chip{font-size:12px;padding:3px 9px;border-radius:99px;font-weight:500;}
+.chip b{font-weight:700;}
+.chip.ok{background:var(--green-bg);color:var(--green);}
+.chip.warn{background:var(--amber-bg);color:var(--amber);}
+.sc-strip{display:flex;align-items:center;gap:12px;background:var(--green-bg);border:1px solid var(--green-bd);border-radius:var(--r);padding:10px 14px;}
+.sc-strip-ico{width:36px;height:36px;border-radius:10px;background:#fff;color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sc-strip-ico svg{width:20px;height:20px;}
+.sc-strip-t{flex:1;min-width:0;}
+.sc-strip-t b{display:block;font-size:13px;color:var(--green);font-weight:600;}
+.sc-strip-t small{font-size:11px;color:var(--gray3);}
+#focus-status{font-size:11px!important;font-family:var(--mono);padding:4px 10px!important;border-radius:99px!important;background:#fff!important;color:var(--green)!important;font-weight:600!important;white-space:nowrap;}
+.sc-card-h{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-bottom:10px;}
+.sc-card-h small{font-weight:400;color:var(--gray3);}
+.sc-card-h-ico{color:var(--red);}
+.sc-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:blink 1.5s infinite;}
+.sc-input-wrap{position:relative;}
+.sc-bar-ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.35;}
+.sc-input{width:100%;background:var(--offwhite);border:1.5px solid var(--border);border-radius:var(--rs);padding:15px 14px 15px 42px;font-family:var(--mono);font-size:14px;color:var(--gray1);outline:none;transition:border-color .2s,box-shadow .2s;}
+.sc-input:focus{border-color:var(--red);background:#fff;box-shadow:0 0 0 3px rgba(213,0,28,.12);}
+.sc-search{width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:var(--red);color:#fff;border:none;border-radius:var(--rs);font-family:var(--sans);font-size:15px;font-weight:600;cursor:pointer;}
+.sc-search:active{background:var(--red-d);}
+.sc-link{margin-left:auto;background:none;border:none;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--sans);}
+.sc-tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;}
+.sc-tab{border:1px solid var(--border);background:#fff;border-radius:10px;padding:7px 2px;font-family:var(--sans);font-size:11px;font-weight:600;color:var(--gray2);cursor:pointer;line-height:1.25;}
+.sc-tab b{display:block;font-size:15px;font-weight:700;}
+.sc-tab.t-pend b{color:var(--amber);} .sc-tab.t-ok b{color:var(--green);} .sc-tab.t-unm b{color:var(--red);} .sc-tab.t-nq b{color:var(--gray2);}
+.sc-tab.act{background:var(--red-l);border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset;}
+.sc-sync{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--gray3);margin-top:6px;}
+.sc-remain{color:var(--red);font-weight:600;}
+.cl-panel{border-radius:10px;}
+.cl-item{padding:10px 12px;}
+.sec-t{font-size:12px;font-weight:600;color:var(--gray3);letter-spacing:.3px;text-transform:none;}
+.sc-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.sc-act{display:flex;align-items:center;gap:10px;padding:12px;border:1.5px solid var(--border);background:#fff;border-radius:var(--r);font-family:var(--sans);font-size:13px;font-weight:600;text-align:left;cursor:pointer;color:var(--gray1);}
+.sc-act svg{width:24px;height:24px;flex-shrink:0;}
+.sc-act small{display:block;font-size:10.5px;font-weight:400;color:var(--gray3);}
+.sc-act.primary{background:var(--red);border-color:var(--red);color:#fff;}
+.sc-act.primary small{color:rgba(255,255,255,.8);}
+.sc-close{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:#fff;border:1.5px solid var(--red);color:var(--red);border-radius:var(--r);font-family:var(--sans);font-size:14px;font-weight:600;cursor:pointer;}
+.sc-close:active{background:var(--red-l);}
+/* การ์ดผลสแกน (JS สร้าง) */
+.rc{border-radius:var(--r);box-shadow:0 2px 8px rgba(16,24,40,.06);}
+.rc-hdr{padding:14px 16px;}
+.rc-txt{font-family:var(--sans);font-size:15px;letter-spacing:0;}
+.btn-save,.btn-c{font-family:var(--sans);font-size:15px;font-weight:600;border-radius:var(--rs);padding:14px;}
+.btn-g,.btn-d{font-family:var(--sans);font-size:13px;font-weight:600;border-radius:var(--rs);padding:12px 8px;}
+.fi{font-size:14px;padding:11px 12px;}
+.nav{box-shadow:0 -2px 10px rgba(16,24,40,.06);}
+.nb.act{color:var(--red);}
+.nb.act svg{background:var(--red-l);border-radius:10px;padding:2px 10px;width:44px;box-sizing:content-box;}
+.back-hdr{background:linear-gradient(180deg,#E3001F,#C80019);}
+.btn-close-session{background:var(--red);}
+
+:root{--navy:#0B1F44;}
+.sc-title-t,.sc-card-h,.sc-prog-n b,.ring span{color:var(--navy);}
+.sc-bar{height:7px;border-radius:99px;background:#E8EAEE;overflow:hidden;margin:0 0 8px;}
+.sc-bar i{display:block;height:100%;width:calc(var(--p,0)*1%);background:var(--green);border-radius:inherit;transition:width .4s;}
+.sc-tab{min-height:44px;}
+.sc-tab.act{background:var(--red);border-color:var(--red);box-shadow:none;color:#fff;}
+.sc-tab.act b{color:#fff!important;}
+.cl-item::after{content:'รอตรวจ';font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-bd);flex-shrink:0;}
+.cl-item:has(.cl-done)::after{content:'ตรวจพบ';background:var(--green-bg);color:var(--green);border-color:var(--green-bd);}
+.cl-item:has(.cl-noqr)::after{content:'ตรวจสอบ';background:var(--red-l);color:var(--red);border-color:var(--red-bd);}
+.sc-btn,.sc-search,.sc-act,.sc-close,.nb{min-height:44px;}
+@media (prefers-reduced-motion:reduce){.sc-dot{animation:none;}}
 </style>
 </head>
 <body>
@@ -299,104 +395,105 @@ body{font-family:var(--sans);background:var(--bg);color:var(--gray1);min-height:
 <div class="screen" id="ss">
   <div class="hdr">
     <div class="hdr-logo">
-      <div class="hdr-b">B</div>
-      <div class="hdr-name">BATA AUDIT</div>
+      <span class="hdr-wm"><i>Bata</i><b>Fix Asset</b></span>
     </div>
     <div class="hdr-r">
       <div class="hdr-info" id="hinfo">—</div>
-      <button class="voice-btn" id="voice-toggle-btn" onclick="toggleVoice()" title="เปิด/ปิดเสียง">🔊</button>
+      <button class="voice-btn" id="voice-toggle-btn" onclick="toggleVoice()" title="เปิด/ปิดเสียง" aria-label="เปิด/ปิดเสียง">🔊</button>
       <button class="out-btn" onclick="doLogout()">Sign out</button>
     </div>
   </div>
-  <div class="prog">
-    <div class="pb-bg"><div class="pb-fill" id="pb" style="width:0%"></div></div>
-    <div class="pb-pct" id="pb-pct">0%</div>
-    <div class="pb-cnt" id="pb-cnt">0 / 0</div>
-  </div>
 
   <div class="main">
-    <!-- Scanner Input Card -->
-    <div style="background:var(--white);border:1.5px solid var(--border);border-radius:var(--r);overflow:hidden;" onclick="focusScanner()">
-      <div style="background:var(--red);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <div class="sc-dot"></div>
-          <span style="color:rgba(255,255,255,.9);font-size:13px;font-weight:500;" id="sc-stat-txt">Hardware scanner ready</span>
-        </div>
-        <div id="focus-status" style="font-size:11px;font-family:var(--mono);padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.2);color:#fff;font-weight:500;">READY</div>
+    <!-- Title + progress -->
+    <section class="sc-card sc-prog">
+      <div class="sc-title">
+        <span class="sc-title-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 21v-5h6v5M9 10h.01M12 10h.01M15 10h.01M9 13h.01M12 13h.01M15 13h.01"/></svg></span>
+        <div><div class="sc-title-t">Store Scan</div><div class="sc-title-s">ตรวจนับทรัพย์สินสาขา · <span id="sc-branch-name">—</span></div></div>
       </div>
-      <div style="padding:20px 16px;display:flex;flex-direction:column;gap:10px;">
-        <div style="font-size:12px;font-weight:600;color:var(--gray3);text-transform:uppercase;letter-spacing:.8px;">Scan QR or enter asset code</div>
-        <div style="display:flex;gap:8px;">
-          <div style="flex:1;position:relative;">
-            <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.3;" width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <rect x="2" y="4" width="2" height="16" fill="currentColor"/><rect x="5" y="4" width="1" height="16" fill="currentColor"/>
-              <rect x="7" y="4" width="3" height="16" fill="currentColor"/><rect x="11" y="4" width="1" height="16" fill="currentColor"/>
-              <rect x="13" y="4" width="2" height="16" fill="currentColor"/><rect x="16" y="4" width="1" height="16" fill="currentColor"/>
-              <rect x="18" y="4" width="3" height="16" fill="currentColor"/>
-            </svg>
-            <input id="mc"
-              style="width:100%;background:var(--offwhite);border:1.5px solid var(--border);border-radius:var(--rs);padding:14px 14px 14px 40px;font-family:var(--mono);font-size:14px;color:var(--gray1);outline:none;transition:border-color .2s;"
-              placeholder="COM012022010001SEQ001"
-              onfocus="this.style.borderColor='var(--red)'"
-              onblur="this.style.borderColor='var(--border)'"
-              autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
-            />
+      <div class="sc-prog-body">
+        <div class="ring" id="ring" style="--p:0"><span id="ring-pct">0%</span></div>
+        <div class="sc-prog-info">
+          <div class="sc-prog-k">ความคืบหน้าการตรวจนับ</div>
+          <div class="sc-prog-n"><b id="pb-cnt">0 / 0</b> รายการ</div>
+          <div class="sc-bar"><i></i></div>
+          <div class="sc-prog-chips">
+            <span class="chip ok">✓ ตรวจพบแล้ว <b id="cl-ok">0</b></span>
+            <span class="chip warn">◔ คงเหลือ <b id="cl-remain-n">0</b></span>
           </div>
-          <button style="background:var(--red);border:none;border-radius:var(--rs);padding:14px 20px;color:var(--white);font-family:var(--cond);font-size:14px;font-weight:700;letter-spacing:.3px;cursor:pointer;" onclick="handleManual()">SEARCH</button>
         </div>
-        <div style="font-size:12px;color:var(--gray3);text-align:center;">Press trigger — or type code and tap Search</div>
       </div>
+      <!-- คงไว้เพราะ JS เดิมอัปเดต element เหล่านี้ (ซ่อนจากหน้าจอ) -->
+      <div class="sc-hidden" aria-hidden="true">
+        <div class="pb-bg"><div class="pb-fill" id="pb" style="width:0%"></div></div>
+        <span id="pb-pct">0%</span><span id="cl-nums">0 / 0</span>
+        <div class="cl-pb-bg"><div class="cl-pb-fill" id="cl-pb" style="width:0%"></div></div>
+      </div>
+    </section>
+
+    <!-- Scanner status strip -->
+    <div class="sc-strip" onclick="focusScanner()">
+      <span class="sc-strip-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8h10l3 3v6a2 2 0 0 1-2 2H8l-4-4z"/><path d="M14 8V5"/></svg></span>
+      <div class="sc-strip-t"><b id="sc-stat-txt">Hardware scanner ready</b><small>เครื่องสแกนพร้อมใช้งาน (HID)</small></div>
+      <div id="focus-status" class="sc-strip-badge">READY</div>
     </div>
 
-    <!-- Checklist Progress -->
-    <div class="checklist-bar">
-      <div class="cl-row">
-        <span style="font-weight:500;font-size:13px;">Branch Checklist</span>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span id="cl-sync-status" style="font-size:10px;color:var(--gray3);font-family:var(--mono);"></span>
-          <span class="cl-nums" id="cl-nums">0 / 0</span>
+    <!-- Scan input -->
+    <section class="sc-card" onclick="focusScanner()">
+      <div class="sc-card-h"><span class="sc-dot"></span>สแกนหรือกรอกรหัสทรัพย์สิน <small>(Asset Code)</small></div>
+      <div class="sc-input-row">
+        <div class="sc-input-wrap">
+          <svg class="sc-bar-ico" width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="2" y="4" width="2" height="16" fill="currentColor"/><rect x="5" y="4" width="1" height="16" fill="currentColor"/><rect x="7" y="4" width="3" height="16" fill="currentColor"/><rect x="11" y="4" width="1" height="16" fill="currentColor"/><rect x="13" y="4" width="2" height="16" fill="currentColor"/><rect x="16" y="4" width="1" height="16" fill="currentColor"/><rect x="18" y="4" width="3" height="16" fill="currentColor"/></svg>
+          <input id="mc" class="sc-input" placeholder="สแกน Barcode / QR หรือพิมพ์รหัส"
+            autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
         </div>
       </div>
-      <div class="cl-pb-bg"><div class="cl-pb-fill" id="cl-pb" style="width:0%"></div></div>
-      <div style="display:flex;gap:12px;font-size:11px;color:var(--gray3);">
-        <span>✓ <span id="cl-ok">0</span> verified</span>
-        <span>? <span id="cl-unm">0</span> unmatched</span>
-        <span>🏷 <span id="cl-noqr-cnt">0</span> no QR</span>
-        <span style="margin-left:auto;color:var(--red);font-weight:600;" id="cl-remain"></span>
-      </div>
-    </div>
+      <button class="sc-search" onclick="handleManual()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>ค้นหา (Search)</button>
+    </section>
 
     <!-- Result Area -->
     <div id="ra" style="display:none"></div>
 
-    <!-- No QR Button -->
-    <button class="btn-noqr" onclick="openNoQR()">🏷 Asset has no QR label — tap to report</button>
-
-    <!-- Checklist Toggle -->
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <div class="sec-t">Recent Scans</div>
-      <button onclick="toggleChecklist()" style="background:none;border:none;font-size:11px;color:var(--red);font-weight:600;cursor:pointer;" id="cl-toggle-btn">Show checklist ▾</button>
-    </div>
-
-    <!-- Checklist Panel -->
-    <div class="cl-panel" id="cl-panel" style="display:none;">
-      <div class="cl-head">
-        <span>Checklist — Branch <span id="cl-branch-label">—</span></span>
-        <span id="cl-panel-count" style="color:var(--red);">0 remaining</span>
+    <!-- Checklist -->
+    <section class="sc-card sc-cl">
+      <div class="sc-card-h">
+        <span class="sc-card-h-ico">☑</span>Store Checklist
+        <button id="cl-toggle-btn" class="sc-link" onclick="toggleChecklist()">ดูทั้งหมด ▾</button>
       </div>
-      <div id="cl-list" style="max-height:300px;overflow-y:auto;">
-        <div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">Loading...</div>
+      <div class="sc-tabs" role="tablist">
+        <button class="sc-tab t-pend act" data-tab="pending" onclick="setClTab('pending')">รอตรวจ <b id="cl-remain-tab">0</b></button>
+        <button class="sc-tab t-ok" data-tab="done" onclick="setClTab('done')">ตรวจพบ <b id="cl-ok-tab">0</b></button>
+        <button class="sc-tab t-unm" data-tab="unm" onclick="setClTab('unm')">ไม่พบ <b id="cl-unm">0</b></button>
+        <button class="sc-tab t-nq" data-tab="noqr" onclick="setClTab('noqr')">ไม่มี QR <b id="cl-noqr-cnt">0</b></button>
       </div>
-    </div>
+      <div class="cl-panel" id="cl-panel" style="display:none;">
+        <div class="cl-head">
+          <span>สาขา <span id="cl-branch-label">—</span></span>
+          <span id="cl-panel-count" style="color:var(--red);">0 remaining</span>
+        </div>
+        <div id="cl-list" style="max-height:320px;overflow-y:auto;">
+          <div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">Loading...</div>
+        </div>
+      </div>
+      <div class="sc-sync"><span id="cl-sync-status"></span><span id="cl-remain" class="sc-remain"></span></div>
+    </section>
 
-    <div class="sec-t" style="margin-top:4px;">Recent Scans</div>
+    <!-- Recent scans -->
+    <div class="sec-t">สแกนล่าสุด · Recent Scans</div>
     <div class="slist" id="sl-list">
       <div style="text-align:center;padding:24px;color:var(--gray4);font-size:13px;">No scans yet</div>
     </div>
-    <div style="height:16px"></div>
+
+    <!-- Actions -->
+    <div class="sc-actions">
+      <button class="sc-act primary" onclick="focusScanner()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3"/><path d="M4 12h16"/></svg><span>เริ่มสแกนทรัพย์สิน<small>Scan Asset</small></span></button>
+      <button class="sc-act" onclick="openNoQR()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9l6 6M15 9l-6 6"/></svg><span>รายงานไม่มี QR<small>Report Missing QR</small></span></button>
+    </div>
+    <button class="sc-close" onclick="openCloseModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v9"/><path d="M6.4 6.4a8 8 0 1 0 11.2 0"/></svg>ปิดงานตรวจนับ (Close Session)</button>
+    <div style="height:8px"></div>
   </div>
 
-  <div class="nav">
+<div class="nav">
     <button class="nb act" id="nb-scan">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       Scan
@@ -2152,6 +2249,57 @@ function toast(m) {
   t.textContent=m; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
 }
+</script>
+
+<script>
+/* Store Scan redesign: ส่วนเสริมฝั่งหน้าตา (ไม่เปลี่ยน logic การสแกน/API) */
+var clTab = 'pending';
+function setClTab(t){
+  clTab = t;
+  document.querySelectorAll('.sc-tab').forEach(function(b){b.classList.toggle('act', b.dataset.tab===t);});
+  if(!clVisible) toggleChecklist(); else renderChecklistPanel();
+}
+function _clRows(){
+  var rem = CHECKLIST.filter(function(i){return i.status==='pending';});
+  var done = CHECKLIST.filter(function(i){return i.status==='done';});
+  if(clTab==='done') return done.map(function(i){return Object.assign({},i,{status:'done'});});
+  if(clTab==='noqr') return noQRList.map(function(n){return Object.assign({},n,{status:'noqr'});});
+  if(clTab==='unm') return S.log.filter(function(l){return l.type==='unmatched';}).map(function(l){return {qr_key:l.k||l.key,name:l.n||'ไม่พบใน Master',status:'unm'};});
+  return rem;
+}
+renderChecklistPanel = function(){
+  var rows=_clRows();
+  var rem=CHECKLIST.filter(function(i){return i.status==='pending';}).length;
+  document.getElementById('cl-panel-count').textContent = rem+' remaining';
+  var esc=function(x){return String(x==null?'':x).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
+  document.getElementById('cl-list').innerHTML = rows.length ? rows.slice(0,50).map(function(item){
+    var icon=item.status==='done'?'✓':item.status==='noqr'?'🏷':item.status==='unm'?'?':' ';
+    var cls=item.status==='done'?'cl-done':item.status==='noqr'?'cl-noqr':item.status==='unm'?'cl-noqr':'cl-miss';
+    return '<div class="cl-item"><div class="cl-status '+cls+'">'+icon+'</div><div style="flex:1;min-width:0;">'+
+      '<div style="font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(item.name||item.name_guess||'Unknown')+'</div>'+
+      '<div style="font-family:var(--mono);font-size:11px;color:var(--gray3);">'+esc(item.qr_key||('NOQR-'+item.id))+'</div></div></div>';
+  }).join('') + (rows.length>50?'<div style="padding:10px;text-align:center;font-size:12px;color:var(--gray3);">+'+(rows.length-50)+' more</div>':'')
+  : '<div style="padding:20px;text-align:center;color:var(--gray4);font-size:13px;">ไม่มีรายการ</div>';
+};
+toggleChecklist = function(){
+  clVisible=!clVisible;
+  document.getElementById('cl-panel').style.display = clVisible?'block':'none';
+  document.getElementById('cl-toggle-btn').textContent = clVisible?'ซ่อน ▴':'ดูทั้งหมด ▾';
+  if(clVisible) renderChecklistPanel();
+};
+(function(){
+  var _uc = updateChecklist;
+  updateChecklist = function(){
+    _uc();
+    var g=function(id){return document.getElementById(id);};
+    var pct=parseInt(g('pb-pct').textContent,10)||0;
+    g('ring').style.setProperty('--p',pct);document.querySelector('.sc-prog').style.setProperty('--p',pct); g('ring-pct').textContent=pct+'%';
+    var ok=parseInt(g('cl-ok').textContent,10)||0;
+    var total=CHECKLIST.length+noQRList.length, done=ok+noQRList.length, remain=Math.max(total-done,0);
+    g('cl-remain-n').textContent=remain; g('cl-remain-tab').textContent=remain; g('cl-ok-tab').textContent=ok;
+    var bn=g('sc-branch-name'); if(bn) bn.textContent=S.branchName||S.branch||'—';
+  };
+})();
 </script>
 </body>
 </html>
